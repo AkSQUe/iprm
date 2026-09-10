@@ -39,7 +39,9 @@
           <div class="iprm-schedule__content">
             {# h4, а не h3: над переліком може стояти підпис міста (h3), і
                рівні заголовків мусять лишатись послідовними. #}
-            <h4 class="iprm-schedule__title iprm-block-title">{{ course.t('title') }}</h4>
+            {# Тема проведення, якщо задана: під одним курсом дати можуть
+               мати різні тематичні акценти (CourseInstance.effective_title). #}
+            <h4 class="iprm-schedule__title iprm-block-title">{{ inst.effective_title }}</h4>
             <div class="iprm-schedule__meta">
               {{ location_badge(inst.event_format, inst.location) }}
               {% if inst.cpd_range[0] %}<span class="iprm-schedule__tag iprm-schedule__tag--cpd">{{ points_range(*inst.cpd_range) }}</span>{% endif %}

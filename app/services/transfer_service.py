@@ -519,7 +519,7 @@ def execute(registration, *, target_instance, initiator, tariff=None,
             transfer,
             amount=abs(transfer.difference),
             reason=(f'Різниця тарифів при перенесенні на '
-                    f'{target_instance.course.title if target_instance.course else "інший захід"}'),
+                    f'{target_instance.effective_title or "інший захід"}'),
             quoted_code='transfer_diff',
             percent=None,
         )

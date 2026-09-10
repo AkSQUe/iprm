@@ -717,6 +717,11 @@ class CourseInstanceForm(FlaskForm):
         coerce=int,
         validators=[DataRequired(message='Оберіть курс')],
     )
+    topic = StringField(
+        'Тема',
+        validators=[Optional(), Length(max=255)],
+        description='Порожньо -- береться назва курсу.',
+    )
     start_date = DateTimeLocalField(
         'Дата початку',
         format='%Y-%m-%dT%H:%M',

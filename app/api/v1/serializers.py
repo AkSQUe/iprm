@@ -201,7 +201,9 @@ def serialize_event_card(course, instance=None) -> dict:
     return {
         'id': course.id,
         'slug': course.slug,
-        'title': course.title,
+        # Instance-ефективний, як event_type нижче: тема проведення підмінює
+        # назву курсу скрізь, де захід називають (CourseInstance.effective_title).
+        'title': (instance.effective_title if instance else None) or course.title,
         'subtitle': course.subtitle,
         'short_description': course.short_description,
         # Instance-ефективний, як і сусідні event_format/status/cpd_points/...:

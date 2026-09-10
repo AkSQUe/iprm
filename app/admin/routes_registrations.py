@@ -952,7 +952,7 @@ def registration_transfer_options(reg_id):
         ]
         instances.append({
             'id': item.id,
-            'title': item.course.title if item.course else 'Захід',
+            'title': item.effective_title or 'Захід',
             'start_date': (item.start_date.strftime('%d.%m.%Y')
                            if item.start_date else ''),
             'location': item.location or '',

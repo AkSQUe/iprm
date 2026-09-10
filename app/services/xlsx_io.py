@@ -2479,7 +2479,7 @@ def export_material_reservations_xlsx(reservations) -> io.BytesIO:
     _style_header(ws, _RESV_COLS, _RESV_LABELS)
 
     for row_idx, r in enumerate(reservations, start=2):
-        course = r.instance.course.title if (r.instance and r.instance.course) else '—'
+        course = (r.instance.effective_title if r.instance else None) or '—'
         date = (r.instance.start_date.strftime('%d.%m.%Y')
                 if (r.instance and r.instance.start_date) else '')
         reserved = sum((it.quantity_reserved or 0) for it in r.items)

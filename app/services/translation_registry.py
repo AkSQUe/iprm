@@ -38,6 +38,7 @@ FIELD_LABELS = {
     'author_role': 'Роль автора', 'city': 'Місто', 'text': 'Текст',
     'company_name': 'Назва компанії', 'company_full_name': 'Повна назва',
     'address': 'Адреса', 'business_hours': 'Години роботи',
+    'topic': 'Тема',
 }
 
 
@@ -47,6 +48,7 @@ def entity_registry():
     from app.models.city import City
     from app.models.clinic import Clinic
     from app.models.course import Course
+    from app.models.course_instance import CourseInstance
     from app.models.course_tariff import CourseTariff
     from app.models.instance_tariff import InstanceTariff
     from app.models.program_block import ProgramBlock
@@ -55,6 +57,10 @@ def entity_registry():
     from app.models.trainer import Trainer
     return {
         'course': {'model': Course, 'label': 'Курс', 'name_attr': 'title'},
+        # name_attr -- ефективна назва: проведення без власної теми зветься
+        # назвою курсу, і саме її перекладач мусить бачити у breadcrumb.
+        'course_instance': {'model': CourseInstance, 'label': 'Проведення',
+                            'name_attr': 'effective_title'},
         'trainer': {'model': Trainer, 'label': 'Тренер', 'name_attr': 'full_name'},
         'blog_post': {'model': BlogPost, 'label': 'Допис блогу', 'name_attr': 'title'},
         'clinic': {'model': Clinic, 'label': 'Клініка', 'name_attr': 'name'},

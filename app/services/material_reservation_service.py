@@ -265,7 +265,7 @@ def _notify_submitter(reservation):
 def _event_meta(instance) -> dict:
     title = getattr(instance, 'effective_title', None)
     if not title and instance.course is not None:
-        title = instance.course.title
+        title = instance.effective_title
     return {
         'event_title': title,
         'event_starts_at': instance.start_date.isoformat() if instance.start_date else None,

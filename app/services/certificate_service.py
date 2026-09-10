@@ -187,8 +187,8 @@ def frame_ring_svg(width=794, height=1123, width_mm=210.0,
 def _event_snapshot(registration):
     """Витягти незмінні дані заходу з реєстрації."""
     instance = registration.instance
-    course = instance.course if instance else None
-    title = course.title if course else (registration.target_title or 'Захід')
+    title = ((instance.effective_title_for(DEFAULT_LANGUAGE) if instance else None)
+             or registration.target_title or 'Захід')
     event_date = instance.start_date if instance else None
     cpd = registration.cpd_points_awarded
     if cpd is None:
@@ -737,7 +737,7 @@ def issue_lecturer_certificate(instance, issued_by=None):
         instance_id=instance.id,
         trainer_id=trainer.id,
         recipient_name=(trainer.full_name_dative or '').strip() or trainer.full_name,
-        event_title=course.title if course else (instance.title or 'Захід'),
+        event_title=instance.effective_title_for(DEFAULT_LANGUAGE) or 'Захід',
         event_date=event_date,
         cpd_points=points,
         # DEFAULT_LANGUAGE -- та сама причина, що й у _event_snapshot вище:

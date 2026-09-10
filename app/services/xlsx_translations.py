@@ -117,11 +117,18 @@ def _instance_sheets():
         .all()
     )
 
-    def label(inst, tariff):
-        course = inst.course.title if inst.course else f'#{inst.course_id}'
-        when = inst.start_date.strftime('%d.%m.%Y') if inst.start_date else 'без дати'
-        return f'{course} ({when}) -> {tariff.name}'
+    def when(inst):
+        return inst.start_date.strftime('%d.%m.%Y') if inst.start_date else 'без дати'
 
+    def label(inst, tariff):
+        course = inst.effective_title or f'#{inst.course_id}'
+        return f'{course} ({when(inst)}) -> {tariff.name}'
+
+    # Самі проведення -- перекладна в них лише тема, тож проведення без теми
+    # у файл не потрапляє: перекладати там нічого.
+    yield 'Проведення', 'course_instance', [
+        (i, f'{i.effective_title} ({when(i)})') for i in instances if i.topic
+    ]
     yield 'Тарифи проведень', 'instance_tariff', [
         (t, label(inst, t)) for inst in instances for t in inst.tariffs
     ]

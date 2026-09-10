@@ -126,7 +126,7 @@
           {% if r.instance and r.instance.course %}
           <a href="{{ url_for('admin.instance_materials', instance_id=r.instance_id) }}"
              class="admin-clamp-2"
-             title="{{ r.instance.course.title }}"><strong>{{ r.instance.course.title }}</strong></a>
+             title="{{ r.instance.effective_title }}"><strong>{{ r.instance.effective_title }}</strong></a>
           {% else %}<span class="admin-text-muted">&mdash;</span>{% endif %}
         </td>
         <td class="admin-nowrap">

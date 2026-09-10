@@ -112,8 +112,8 @@ def _invoice_context(reg):
     if _is_enrollment(reg):
         return _enrollment_invoice_context(reg)
     settings = SiteSettings.get()
-    course = reg.instance.course if reg.instance else None
-    title = course.title if course else (reg.target_title or f'Реєстрація #{reg.id}')
+    title = ((reg.instance.effective_title if reg.instance else None)
+             or reg.target_title or f'Реєстрація #{reg.id}')
     item_name = 'Участь у заході: ' + title
     if reg.instance and reg.instance.start_date:
         item_name += f' ({ensure_utc(reg.instance.start_date).strftime("%d.%m.%Y")})'

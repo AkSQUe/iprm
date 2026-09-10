@@ -445,6 +445,10 @@ def copy_course_tariffs_to_instance(instance, replace=False):
 def populate_instance_from_form(instance, form):
     """Map CourseInstanceForm data onto a CourseInstance model instance."""
     instance.course_id = form.course_id.data
+    # Порожня тема -- це «як у курсу», тож у БД лягає NULL, а не порожній
+    # рядок: effective_title перевіряє істинність, і сміття в колонці
+    # робило б його правильним лише випадково.
+    instance.topic = _clean_text(form.topic.data)
     instance.start_date = form.start_date.data
     instance.end_date = form.end_date.data
     instance.event_format = form.event_format.data

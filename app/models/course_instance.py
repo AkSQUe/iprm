@@ -6,13 +6,14 @@ import logging
 from sqlalchemy import func, select
 
 from app.extensions import db
-from app.models.mixins import TimestampMixin, BigIntPK
+from app.models.mixins import TimestampMixin, TranslatableMixin, BigIntPK
 
 logger = logging.getLogger(__name__)
 
 
-class CourseInstance(TimestampMixin, db.Model):
+class CourseInstance(TranslatableMixin, TimestampMixin, db.Model):
     __tablename__ = 'course_instances'
+    __translatable__ = ('topic',)
 
     id = db.Column(BigIntPK, primary_key=True)
     course_id = db.Column(
@@ -21,6 +22,11 @@ class CourseInstance(TimestampMixin, db.Model):
         nullable=False,
         index=True,
     )
+
+    # Тема конкретного проведення. Порожньо -- беремо назву курсу
+    # (див. effective_title). Потрібна, коли дати одного курсу мають різні
+    # тематичні акценти, і саме тема, а не назва курсу, іде в документи БПР.
+    topic = db.Column(db.String(255))
 
     start_date = db.Column(db.DateTime(timezone=True), index=True)
     end_date = db.Column(db.DateTime(timezone=True))
@@ -176,6 +182,25 @@ class CourseInstance(TimestampMixin, db.Model):
         if self.event_type:
             return self.event_type
         return self.course.event_type if self.course else None
+
+    def effective_title_for(self, lang=None):
+        """Назва проведення мовою `lang`: власна тема, інакше назва курсу.
+
+        None (а не «Захід») для проведення без курсу: підпис для порожнечі
+        різний у кожного споживача -- прочерк у таблиці, `_('захід')` у листі.
+        """
+        topic = (self.t('topic', lang=lang) or '').strip()
+        if topic:
+            return topic
+        if self.course is None:
+            self._warn_orphan('title')
+            return None
+        return self.course.t('title', lang=lang)
+
+    @property
+    def effective_title(self):
+        """Назва проведення поточною локаллю (див. effective_title_for)."""
+        return self.effective_title_for()
 
     @property
     def event_type_label(self):

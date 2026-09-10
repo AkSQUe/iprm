@@ -25,7 +25,7 @@
       </div>
       <h1 class="admin-hero__title">Тарифи проведення</h1>
       <p class="admin-hero__subtitle">
-        {{ instance.course.title if instance.course else '' }}
+        {{ instance.effective_title or '' }}
         {% if instance.start_date %} &middot; {{ instance.start_date.strftime('%d.%m.%Y') }}{% endif %}
         &middot; {{ instance.format_label }}
       </p>

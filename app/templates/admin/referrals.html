@@ -179,7 +179,7 @@
           </td>
           <td>
             {% if reg and reg.instance and reg.instance.course %}
-            <a href="{{ url_for('admin.instance_registrations', instance_id=reg.instance_id) }}">{{ reg.instance.course.title }}</a>
+            <a href="{{ url_for('admin.instance_registrations', instance_id=reg.instance_id) }}">{{ reg.instance.effective_title }}</a>
             {% if reg.instance.start_date %}<br><small class="admin-text-muted">{{ reg.instance.start_date.strftime('%d.%m.%Y') }}</small>{% endif %}
             {% else %}
             <span class="admin-text-muted">–</span>

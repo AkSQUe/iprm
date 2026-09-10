@@ -30,7 +30,7 @@
         <p class="admin-hero__subtitle">
           {{ reg.user.email }}
           {% if instance and instance.course %}
-          &middot; {{ instance.course.title }}
+          &middot; {{ instance.effective_title }}
           {% endif %}
           {% if instance and instance.start_date %}
           &middot; {{ instance.start_date.strftime('%d.%m.%Y') }}

@@ -91,9 +91,12 @@ COLUMN_DDL = r"sa\.Column\(\s*'translations'"
 def _declares_translations(source, table):
     """Чи оголошує ця міграція translations САМЕ для цієї таблиці.
 
-    Трьома способами, якими це роблять наявні міграції:
+    Чотирма способами, якими це роблять наявні міграції:
 
     * ``op.add_column('<таблиця>', sa.Column('translations', ...))``;
+    * ``with op.batch_alter_table('<таблиця>'): batch.add_column(...)`` --
+      переважна форма в цьому репозиторії; блок обмежуємо наступним ``with``
+      або кінцем функції, інакше сусідня таблиця зарахувала б чужу колонку;
     * ``op.create_table('<таблиця>', ... sa.Column('translations', ...))`` --
       блок обмежуємо наступним ``op.``, інакше сусідня таблиця в тому ж файлі
       зарахувала б колонку і за себе, і за іншу (саме так виглядав
@@ -103,6 +106,11 @@ def _declares_translations(source, table):
     """
     if re.search(rf"add_column\(\s*'{table}'\s*,\s*{COLUMN_DDL}", source, re.S):
         return True
+
+    for block in re.split(r"\n    with op\.", source)[1:]:
+        head = re.match(r"batch_alter_table\(\s*\n?\s*'([^']+)'", block)
+        if head and head.group(1) == table and re.search(COLUMN_DDL, block):
+            return True
 
     for block in re.split(r"\n    op\.", source)[1:]:
         head = re.match(r"create_table\(\s*\n?\s*'([^']+)'", block)

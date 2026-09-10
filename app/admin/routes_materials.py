@@ -700,7 +700,7 @@ def _materials_filename(instance):
     у назві файлу."""
     import re
     date = instance.start_date.strftime('%d.%m.%Y') if instance.start_date else ''
-    course = instance.course.title if instance.course else 'Захід'
+    course = instance.effective_title or 'Захід'
     raw = f'Витр. мат-и на {date} {course}'.strip()
     safe = re.sub(r'[\\/:*?"<>|]', '', raw)          # заборонені у файлових назвах
     safe = re.sub(r'\s+', ' ', safe).strip()

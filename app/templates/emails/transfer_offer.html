@@ -3,7 +3,7 @@
 
 {% block title %}{{ _('Вашу реєстрацію перенесено') }}{% endblock %}
 
-{% set event_title = transfer.to_instance.course.title if transfer.to_instance and transfer.to_instance.course else _('захід') %}
+{% set event_title = (transfer.to_instance.effective_title if transfer.to_instance else None) or _('захід') %}
 
 {% block preview_text %}{% trans title=event_title %}Дату проведення «{{ title }}» змінено -- оберіть, що робимо далі{% endtrans %}{% endblock %}
 

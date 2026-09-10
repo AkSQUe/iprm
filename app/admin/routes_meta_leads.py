@@ -22,6 +22,7 @@ from datetime import datetime, timedelta, timezone
 
 import requests
 from flask import flash, redirect, render_template, request, url_for
+from sqlalchemy import func
 from flask_login import current_user
 
 from app.admin import _listing, admin_bp
@@ -566,8 +567,14 @@ def _offer_rows():
     from app.models.course import Course
     from app.models.course_instance import CourseInstance
 
+    # Тема проведення підмінює назву курсу вже в SQL, а не після гідрації:
+    # сенс цього запиту -- три колонки без ORM-об'єктів, і `effective_title`
+    # тут коштував би рівно того SELECT, якого функція уникає.
+    title = func.coalesce(
+        func.nullif(func.trim(CourseInstance.topic), ''), Course.title,
+    )
     return db.session.query(
-        CourseInstance.id, Course.title, CourseInstance.start_date,
+        CourseInstance.id, title, CourseInstance.start_date,
     ).join(Course, Course.id == CourseInstance.course_id)
 
 

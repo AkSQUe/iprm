@@ -263,7 +263,7 @@ class PromoCode(TimestampMixin, db.Model):
     @property
     def scope_label(self):
         if self.instance is not None:
-            title = (self.instance.course.title if self.instance.course
+            title = (self.instance.effective_title if self.instance.course
                      else f'Проведення #{self.instance_id}')
             date = (self.instance.start_date.strftime('%d.%m.%Y')
                     if self.instance.start_date else 'без дати')

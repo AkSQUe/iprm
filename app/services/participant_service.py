@@ -56,7 +56,7 @@ def event_label(instance, with_id=False, with_status=False):
     with_id     -- префікс '#<id>' (потрібен xlsx для зворотного парсингу).
     with_status -- суфікс '(Статус)' (зручно у випадних списках форми).
     """
-    title = instance.course.title if instance.course else f'Захід #{instance.id}'
+    title = instance.effective_title or f'Захід #{instance.id}'
     core = format_event_label(title, instance.start_date)
     label = f'#{instance.id} – {core}' if with_id else core
     if with_status:
