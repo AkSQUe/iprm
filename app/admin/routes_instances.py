@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 from flask import render_template, redirect, url_for, flash, request, jsonify, current_app
 from flask_login import current_user
 from sqlalchemy import func, or_
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 
 from app.admin import _listing, admin_bp
 from app.admin._helpers import (
@@ -96,8 +96,11 @@ def _instances_query(filters):
     мають рахуватись від сьогодні вгору, архів -- навпаки.
     """
     query = CourseInstance.query.options(
-        joinedload(CourseInstance.course),
-        joinedload(CourseInstance.trainer),
+        # effective_trainer читає ОБИДВА боки (свій перелік, інакше --
+        # курсовий): без селекту курсових тренерів тут ми лише пересунули
+        # б N+1 з CourseInstance.trainer на Course.trainers.
+        joinedload(CourseInstance.course).selectinload(Course.trainers),
+        selectinload(CourseInstance.trainers),
     )
     if filters['q']:
         # Пошук за назвою курсу й місцем: саме так менеджер шукає захід,

@@ -4,6 +4,8 @@
 правила розійшлись би, і розбіжність було б видно лише як «у фільтрі
 захід є, у списку немає».
 """
+from sqlalchemy import and_, exists, not_, or_, select
+
 from app.extensions import db
 from app.models.trainer_links import course_instance_trainers, course_trainers
 
@@ -47,3 +49,37 @@ def set_trainers(entity, trainer_ids):
     # Relationship уже міг завантажитись у цій сесії -- без expire читач
     # побачив би старий список.
     db.session.expire(entity)
+
+
+def course_trainer_clause(trainer_id):
+    """Курс веде цей тренер. Без fallback -- курсу успадковувати нема від кого."""
+    from app.models.course import Course
+    return exists(select(1).where(and_(
+        course_trainers.c.course_id == Course.id,
+        course_trainers.c.trainer_id == trainer_id,
+    )))
+
+
+def instance_trainer_clause(trainer_id):
+    """Проведення веде цей тренер -- із тим самим fallback, що й у моделі.
+
+    Перелік проведення перекриває курсовий ПОВНІСТЮ, тож курс
+    перевіряється лише тоді, коли у проведення немає ЖОДНОГО свого
+    тренера. Одна функція на всіх споживачів: три переклади цього
+    правила розійшлись би, і розбіжність було б видно лише як
+    «у фільтрі захід є, у списку немає».
+    """
+    from app.models.course_instance import CourseInstance
+
+    own = exists(select(1).where(and_(
+        course_instance_trainers.c.instance_id == CourseInstance.id,
+        course_instance_trainers.c.trainer_id == trainer_id,
+    )))
+    has_any_own = exists(select(1).where(
+        course_instance_trainers.c.instance_id == CourseInstance.id
+    ))
+    inherited = exists(select(1).where(and_(
+        course_trainers.c.course_id == CourseInstance.course_id,
+        course_trainers.c.trainer_id == trainer_id,
+    )))
+    return or_(own, and_(not_(has_any_own), inherited))

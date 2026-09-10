@@ -3,7 +3,7 @@ import logging
 
 from flask import render_template, redirect, url_for, flash, request
 from flask_login import current_user
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import selectinload
 
 from app.admin import _listing, admin_bp
 from app.admin._helpers import (
@@ -51,14 +51,15 @@ def courses_list():
 
     # Той самий порядок, що в публічному каталозі, -- адмін бачить реальну
     # послідовність карток (закріплені -> sort_order -> назва).
-    query = Course.query.options(joinedload(Course.trainer))
+    query = Course.query.options(selectinload(Course.trainers))
     query = _listing.apply_search(query, filters['q'], [
         Course.title, Course.slug, Course.subtitle,
     ])
     if filters['state']:
         query = query.filter(Course.is_active.is_(filters['state'] == 'active'))
     if filters['trainer_id']:
-        query = query.filter(Course.trainer_id == filters['trainer_id'])
+        from app.services.trainer_links import course_trainer_clause
+        query = query.filter(course_trainer_clause(filters['trainer_id']))
     courses = query.order_by(
         Course.is_pinned.desc(), Course.sort_order, Course.title,
     ).all()

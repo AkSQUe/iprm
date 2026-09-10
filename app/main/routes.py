@@ -1,6 +1,6 @@
 from flask import abort, flash, make_response, redirect, render_template, request, url_for
 from flask_babel import gettext as _
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import selectinload
 
 from app.extensions import csrf, db, limiter
 from app.main import main_bp
@@ -126,7 +126,7 @@ def legacy_account():
 @main_bp.route('/labs')
 def labs():
     courses = Course.query.options(
-        joinedload(Course.trainer),
+        selectinload(Course.trainers),
     ).filter(Course.is_active.is_(True)).order_by(Course.title).limit(6).all()
     return render_template('main/index.html', active_nav='labs', courses=courses)
 

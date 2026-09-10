@@ -123,11 +123,14 @@ def active_courses(featured_first=False):
         order.append(Course.is_featured.desc())
     order += [Course.sort_order, Course.title]
     return Course.query.options(
-        joinedload(Course.trainer),
+        selectinload(Course.trainers),
         # card_media -- джерело course.card_src у кожній картці лістингу;
         # без цього joinedload картки дають N+1 на медіа-реєстр.
         joinedload(Course.card_media),
-        selectinload(Course.instances).joinedload(CourseInstance.trainer),
+        # Тренери проведення -- ОБИДВА боки для effective_trainer: курсові
+        # вже тягнуться вище, тож instance.course повертає той самий
+        # об'єкт з identity map без зайвого запиту.
+        selectinload(Course.instances).selectinload(CourseInstance.trainers),
         selectinload(Course.instances).selectinload(CourseInstance.tariffs),
         # city -- джерело таблетки місця в картці каталогу; без joinedload
         # кожна картка тягнула б довідник окремим запитом.

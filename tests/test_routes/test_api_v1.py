@@ -212,7 +212,8 @@ class TestEventsList:
                           email='trainer@example.com', role='Лікар')
         db.session.add(trainer)
         db.session.flush()
-        published_event._test_instance.trainer_id = trainer.id
+        from app.services import trainer_links
+        trainer_links.set_trainers(published_event._test_instance, [trainer.id])
         db.session.commit()
 
         resp = client.get('/api/v1/events', headers={'X-API-Key': API_KEY})

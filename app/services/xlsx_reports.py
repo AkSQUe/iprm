@@ -200,9 +200,9 @@ def export_registrations_xlsx(regs, referrer_map=None,
         inst = reg.instance
         course = inst.course if inst else None
         # Ефективний тренер: тренер заходу, інакше -- тренер курсу (той самий
-        # fallback, що й у фільтрі за тренером на сторінці).
-        trainer = (inst.trainer if inst and inst.trainer else
-                   (course.trainer if course else None))
+        # fallback, що й у фільтрі за тренером на сторінці). Модель уже знає
+        # це правило -- effective_trainer, а не ручне повторення тут.
+        trainer = inst.effective_trainer if inst else None
         ref = referrer_map.get(reg.referral_code) or {}
         ref_kind = ref.get('kind')
         cert = reg.certificate
@@ -713,7 +713,7 @@ def export_instances_report_xlsx(instances, reg_counts, occupied_map=None,
     rows, row_fills = [], []
     for inst in instances:
         course = inst.course
-        trainer = inst.trainer or (course.trainer if course else None)
+        trainer = inst.effective_trainer
         taken = reg_counts.get(inst.id, 0)
         occupied = occupied_map.get(inst.id, 0)
         capacity = inst.max_participants
