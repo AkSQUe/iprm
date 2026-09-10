@@ -14,9 +14,15 @@ from datetime import datetime, timezone
 
 from flask import url_for
 
+from app.i18n import DEFAULT_LANGUAGE
+from app.services import specialties
 from app.utils import ensure_utc
 
-API_VERSION = '1.0'
+# 1.1 (10.09.2026): ключ `cpd_points` у картці заходу замінено на пару
+# `cpd_points_online` / `cpd_points_offline`. Партнеру потрібна ознака,
+# за якою відрізнити контракти -- інакше єдиний спосіб дізнатись про
+# зміну це побачити порожні бали у себе на сторінці.
+API_VERSION = '1.1'
 
 _DEFAULT_UPCOMING_STATUSES = ('published', 'active')
 _FAR_FUTURE = datetime.max.replace(tzinfo=timezone.utc)
@@ -220,14 +226,9 @@ def serialize_event_card(course, instance=None) -> dict:
         'hero_image_url': _image_url(course.hero_src),
         # Розділено за форматом участі: на гібриді онлайн і очно дають різні
         # бали, і одне число тут завжди було неправдою для половини людей.
-        'cpd_points_online': _points(
-            instance.effective_cpd_for('online') if instance
-            else course.cpd_points_online
-        ),
-        'cpd_points_offline': _points(
-            instance.effective_cpd_for('offline') if instance
-            else course.cpd_points_offline
-        ),
+        # `null` означає «цей формат участі захід не пропонує» -- див. _card_points.
+        'cpd_points_online': _points(_card_points(course, instance)[0]),
+        'cpd_points_offline': _points(_card_points(course, instance)[1]),
         'tags': course.tags or [],
         'is_featured': course.is_featured,
         'max_participants': (
@@ -259,6 +260,12 @@ def serialize_event_detail(course, instance=None) -> dict:
     data.update({
         'description': course.description,
         'target_audience': course.target_audience or [],
+        # Спеціальності заходу окремим полем: target_audience несе лише
+        # ручний допис, а перелік збирається з довідника. Мова фіксовано
+        # українська, як і решта контенту цієї відповіді -- партнер
+        # локалізує в себе, а не залежить від локалі виклику.
+        'bpr_specialties': specialties.names(
+            course.bpr_specialty_codes, lang=DEFAULT_LANGUAGE),
         'speaker_info': course.speaker_info,
         'agenda': course.agenda,
         'faq': course.faq or [],
@@ -281,6 +288,25 @@ def serialize_event_detail(course, instance=None) -> dict:
         ],
     })
     return data
+
+
+def _card_points(course, instance):
+    """(онлайнові, офлайнові) бали заходу -- лише за форматами, які він має.
+
+    Читати обидві колонки навпростець не можна: `effective_cpd_for` не питає
+    про формат заходу, а лише відкочується на однойменне поле курсу. На
+    сторінці курсу обидва default-и видно завжди, тож адмін заповнює обидва --
+    і суто очне проведення поїхало б до партнера з ненульовими «онлайновими
+    балами». Усередині ІПРМ цього не видно, бо шаблони ходять через
+    `cpd_pairs`, який фільтрує за `cpd_formats`; тут потрібен той самий фільтр.
+
+    Курс без проведення -- це шаблон без формату, і для нього віддаємо обидва
+    значення як є.
+    """
+    if instance is None:
+        return course.cpd_points_online, course.cpd_points_offline
+    by_format = dict(instance.cpd_pairs)
+    return by_format.get('online'), by_format.get('offline')
 
 
 def _points(value):

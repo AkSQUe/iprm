@@ -109,6 +109,48 @@ def hybrid_event(app, user):
     return c
 
 
+@pytest.fixture
+def offline_event_with_course_defaults(app, user):
+    """Офлайн-проведення курсу, у якого заповнені ОБИДВА default-и балів.
+
+    Найпоширеніша конфігурація: на сторінці курсу обидва поля видно завжди,
+    тож адмін заповнює обидва, а конкретне проведення буває суто очним.
+    """
+    c = Course(
+        title='Offline', slug=f'off-{_uid()}', event_type='course',
+        base_price=1000, is_active=True, created_by=user.id,
+        cpd_points_online=Decimal('7.50'), cpd_points_offline=Decimal('9.00'),
+    )
+    db.session.add(c)
+    db.session.flush()
+    inst = CourseInstance(
+        course_id=c.id, status='published', event_format='offline', price=1000,
+        start_date=datetime.now(timezone.utc) + timedelta(days=10),
+    )
+    db.session.add(inst)
+    db.session.flush()
+    c._test_instance = inst
+    return c
+
+
+def test_offline_event_does_not_claim_online_points(
+    client, partner_settings, offline_event_with_course_defaults,
+):
+    """Захід без онлайн-участі не сміє звітувати онлайнові бали.
+
+    Усередині ІПРМ це не видно: шаблони ходять через `cpd_pairs`, який
+    фільтрує за форматами заходу. Партнер такого фільтра не має і надрукує
+    діапазон «7,5-9» там, де онлайн-участі не існує взагалі.
+    """
+    resp = client.get('/api/v1/events', headers={'X-API-Key': API_KEY})
+    card = next(
+        item for item in resp.get_json()['items']
+        if item['slug'] == offline_event_with_course_defaults.slug
+    )
+    assert card['cpd_points_online'] is None
+    assert card['cpd_points_offline'] == 9.0
+
+
 def test_event_card_exposes_points_per_format(
     client, partner_settings, hybrid_event,
 ):
@@ -148,7 +190,9 @@ class TestEventsList:
         resp = client.get('/api/v1/events', headers={'X-API-Key': API_KEY})
         card = next(e for e in resp.get_json()['items'] if e['slug'] == published_event.slug)
         assert card['title'] == 'Published Event'
-        assert card['cpd_points_online'] == 5.0
+        # Проведення суто очне, тож онлайнових балів у нього немає --
+        # навіть попри заповнений default курсу.
+        assert card['cpd_points_online'] is None
         assert card['cpd_points_offline'] == 5.0
         assert card['tags'] == ['gynecology', 'ppp']
         assert card['currency'] == 'UAH'
@@ -202,6 +246,40 @@ class TestEventDetail:
         assert data['slug'] == published_event.slug
         assert 'program_blocks' in data
         assert 'description' in data
+
+    def test_detail_carries_specialty_names(
+        self, client, partner_settings, user,
+    ):
+        """Партнер має бачити перелік спеціальностей окремим полем.
+
+        target_audience тепер несе лише ручний допис: перелік для
+        сторінки збирається з довідника, і без цього ключа партнер
+        втратив би його, щойно адміністратор прибере з поля дубль.
+        """
+        from app.models.specialty import Specialty
+
+        db.session.add(Specialty(code=f'api-{_uid()}'[:60], name='Алергологія',
+                                 section='medical', sort_order=2))
+        db.session.flush()
+        code = Specialty.query.filter_by(name='Алергологія').first().code
+        c = Course(
+            title='Захід зі спеціальностями', slug=f'spec-{_uid()}',
+            event_type='seminar', base_price=0, is_active=True,
+            created_by=user.id, bpr_specialty_codes=[code],
+            target_audience=['а також усі, хто цікавиться темою'],
+        )
+        db.session.add(c)
+        db.session.flush()
+        db.session.add(CourseInstance(
+            course_id=c.id, status='published', event_format='offline',
+            price=0, start_date=datetime.now(timezone.utc) + timedelta(days=10),
+        ))
+        db.session.flush()
+
+        data = client.get(f'/api/v1/events/{c.slug}',
+                          headers={'X-API-Key': API_KEY}).get_json()
+        assert data['bpr_specialties'] == ['Алергологія']
+        assert data['target_audience'] == ['а також усі, хто цікавиться темою']
 
     def test_404_for_unknown_slug(self, client, partner_settings):
         resp = client.get(
