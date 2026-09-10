@@ -21,6 +21,7 @@ from app.rbac import permission_required
 from app.models.site_settings import SiteSettings
 from app.models.trainer import Trainer
 from app.services import certificate_batch as batch
+from app.services import specialties as specialties_service
 
 logger = logging.getLogger(__name__)
 audit_logger = logging.getLogger('audit')
@@ -44,6 +45,10 @@ def tool_certificate_generator():
 @permission_required('cert_generator.view')
 def tool_certificate_generator_template():
     """Порожній xlsx-шаблон із заголовками + приклад-рядок."""
+    # Назва береться з довідника (та ж, що й на реальних сертифікатах), а не
+    # захардкоджена окремим літералом -- перейменування узагальнення в
+    # довіднику інакше розходилось би зі зразком у шаблоні.
+    demo_specialties = specialties_service.line(['all-medical']) or 'усі лікарські спеціальності'
     wb = Workbook()
     ws = wb.active
     ws.title = 'Сертифікати'
@@ -56,14 +61,14 @@ def tool_certificate_generator_template():
     ws.append([
         'Учасник', 'Шевченко Тарас Григорович', 'семінар',
         'Сучасні протоколи PRP-терапії', '15.05.2026', 'м. Київ', 10,
-        'Абрамович Є.В.', 'усі лікарські спеціальності', '1028974', '1',
+        'Абрамович Є.В.', demo_specialties, '1028974', '1',
     ])
     # Приклад лектора: ПІБ у давальному відмінку, тип заходу в родовому,
     # номер у діапазоні 1xxxxx (окремий для лекторів), поле "ПІБ лектора" порожнє.
     ws.append([
         'Тренер', 'Абрамовичу Євгену Володимировичу', 'семінару',
         'Сучасні протоколи PRP-терапії', '15.05.2026', 'м. Київ', 20,
-        '', 'усі лікарські спеціальності', '1028974', '100001',
+        '', demo_specialties, '1028974', '100001',
     ])
     for i, w in enumerate(batch.COLUMN_WIDTHS, start=1):
         ws.column_dimensions[get_column_letter(i)].width = w

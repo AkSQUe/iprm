@@ -356,6 +356,29 @@ def _meta_date(dt):
     return f'{dt.day} {_UA_MONTHS[dt.month]} {dt.year} р.'
 
 
+def _specialties_size_class(text):
+    """Адаптивний розмір рядка «Спеціальності:» у метаблоці.
+
+    Ліміту на кількість обраних спеціальностей немає, тож довгий перелік
+    інакше виштовхнув би метаблок за межі тіла сертифіката.
+
+    Пороги підібрані за реальною шириною метаблоку (166мм тіла сертифіката)
+    і метрикою шрифту Nunito Bold, а не на око: при базовому розмірі 12.5pt
+    (--md, він же нинішній розмір `.cert__meta p` -- сертифікат з однією
+    спеціальністю не повинен змінитись) рядок з міткою «Спеціальності: »
+    вміщає ~59 символів на першому рядку і ~74 -- на кожному наступному.
+    Перевірено рендером на реальних назвах довідника (6 назв ~110-150
+    символів, 10 назв ~190-230): --sm і --xs тримають список у 2-3 рядки й
+    не наїжджають на підписи внизу тіла.
+    """
+    n = len(text or '')
+    if n <= 60:
+        return 'cert__meta-line--md'
+    if n <= 120:
+        return 'cert__meta-line--sm'
+    return 'cert__meta-line--xs'
+
+
 def _event_size_class(title):
     """Адаптивний CSS-клас розміру для назви заходу: довші назви -- дрібніший
     шрифт, щоб не переповнювати блок тіла (класи визначені у шаблоні)."""
@@ -456,6 +479,8 @@ def render_certificate_html(certificate, kind='participant', cert_format=None):
         frame_svg=frame_ring_svg(width=cw_px, height=ch_px, width_mm=spec['w_mm']),
         points_badge=points_badge_url(certificate.cpd_points),
         specialties=getattr(certificate, 'specialties', None),
+        specialties_size_class=_specialties_size_class(
+            getattr(certificate, 'specialties', None)),
         event_type=getattr(certificate, 'event_type_label', None),
         event_place=getattr(certificate, 'event_place', None),
         event_size_class=_event_size_class(certificate.event_title),
