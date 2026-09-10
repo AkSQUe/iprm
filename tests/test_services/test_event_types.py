@@ -71,11 +71,3 @@ def test_choices_add_current_even_when_deactivated(app):
 def test_choices_do_not_duplicate_current_when_active(app):
     codes = [code for code, _ in event_types.choices(current='seminar')]
     assert codes.count('seminar') == 1
-
-
-def test_usage_counts_courses_by_code(app, db_session):
-    slug = f'u-{uuid4().hex[:6]}'
-    db.session.add(Course(title='К', slug=slug, event_type='symposium'))
-    db.session.flush()
-
-    assert event_types.usage().get('symposium', 0) >= 1

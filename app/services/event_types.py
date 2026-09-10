@@ -90,13 +90,13 @@ def genitive(code):
 
 def _case(code, field):
     """Відмінок із довідника; немає -- називний з малої; немає рядка --
-    сам код. Порожній код лишається порожнім: шаблон сертифіката тоді
-    друкує запасне "захід"/"заходу"."""
+    сам код, як і в label(). Порожній код лишається порожнім: шаблон
+    сертифіката тоді друкує запасне "захід"/"заходу"."""
     if not code:
         return code
     row = directory().get(code)
     if row is None:
-        return code.lower()
+        return code
     return getattr(row, field) or row.name.lower()
 
 
@@ -114,26 +114,3 @@ def choices(current=None):
         row = rows.get(current)
         items.append((current, f'{row.name} (застарілий)' if row else current))
     return items
-
-
-def usage():
-    """{code: скільки курсів і проведень цим типом}.
-
-    Адмінці це і вага рядка, і запобіжник: вживаний тип видаляти не можна,
-    його деактивують.
-    """
-    from app.extensions import db
-    from app.models.course import Course
-    from app.models.course_instance import CourseInstance
-
-    counts = {}
-    for model in (Course, CourseInstance):
-        rows = (
-            db.session.query(model.event_type, db.func.count(model.id))
-            .filter(model.event_type.isnot(None), model.event_type != '')
-            .group_by(model.event_type)
-            .all()
-        )
-        for code, count in rows:
-            counts[code] = counts.get(code, 0) + count
-    return counts

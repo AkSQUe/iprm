@@ -31,7 +31,7 @@
 
     {% include 'partials/flash_messages.html' %}
 
-    <div class="admin-stat-cards admin-stat-cards--3">
+    <div class="admin-stat-cards admin-stat-cards--4">
       <div class="admin-stat-card">
         <span class="admin-stat-card__value">{{ active_count }}</span>
         <span class="admin-stat-card__label">Активних типів</span>
@@ -40,16 +40,29 @@
         <span class="admin-stat-card__value">{{ rows | length - active_count }}</span>
         <span class="admin-stat-card__label">Застарілих</span>
       </div>
+      <div class="admin-stat-card{% if needs_cases_count %} admin-stat-card--warning{% endif %}">
+        <span class="admin-stat-card__value">{{ needs_cases_count }}</span>
+        <span class="admin-stat-card__label">Без відмінків</span>
+      </div>
       <div class="admin-stat-card">
         <span class="admin-stat-card__value">{{ rows | length }}</span>
         <span class="admin-stat-card__label">Усього в довіднику</span>
       </div>
     </div>
 
+    {% if needs_cases_count %}
+    <p class="admin-form__section-hint">
+      У типів без відмінків сертифікат надрукує називний замість знахідного
+      («успішно завершив(-ла) наукова конференція»). Помилку видно вже на
+      виданому документі, і правка довідника її звідти не прибирає.
+    </p>
+    {% endif %}
+
     <div class="form-section">
-      <h2 class="admin-form__section-title">Додати тип</h2>
+      <h3 class="admin-form__section-title">Додати тип</h3>
       <p class="admin-form__section-hint">
         Код -- латиницею, він потрапляє в партнерське API та xlsx і надалі не змінюється.
+        Обидва відмінки обов'язкові: з них друкується сертифікат.
       </p>
       <form method="POST" action="{{ url_for('admin.event_types_add') }}" class="event-types-add">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -58,9 +71,9 @@
         <input type="text" name="name" class="form-input" maxlength="120"
                placeholder="Воркшоп" aria-label="Назва, називний відмінок">
         <input type="text" name="accusative" class="form-input" maxlength="120"
-               placeholder="воркшоп" aria-label="Знахідний відмінок">
+               placeholder="воркшоп" required aria-label="Знахідний відмінок">
         <input type="text" name="genitive" class="form-input" maxlength="120"
-               placeholder="воркшопу" aria-label="Родовий відмінок">
+               placeholder="воркшопу" required aria-label="Родовий відмінок">
         <button type="submit" class="btn-admin btn-admin--secondary">{{ icon('add') }} Додати</button>
       </form>
     </div>
@@ -85,7 +98,15 @@
           <tbody>
             {% for row in rows %}
             <tr>
-              <td class="event-types-col-code"><code>{{ row.type.code }}</code></td>
+              <td class="event-types-col-code">
+                <code>{{ row.type.code }}</code>
+                {% if row.needs_cases %}
+                <span class="badge badge--pending badge--sm"
+                      title="Сертифікат надрукує називний відмінок замість знахідного">
+                  без відмінків
+                </span>
+                {% endif %}
+              </td>
               <td>
                 <input type="text" class="form-input" maxlength="120"
                        name="name__{{ row.type.id }}" value="{{ row.type.name }}"
@@ -118,7 +139,21 @@
               </td>
               <td class="event-types-col-uses">
                 {% if row.uses %}
-                  <a href="{{ url_for('admin.courses_list') }}">{{ row.uses }}</a>
+                  <a href="{{ url_for('admin.courses_list', event_type=row.type.code) }}"
+                     title="Показати курси цього типу">{{ row.uses }}</a>
+                  {% if row.course_titles %}
+                  <details class="event-types-uses">
+                    <summary class="event-types-uses__toggle">курси</summary>
+                    <ul class="event-types-uses__list">
+                      {% for title in row.course_titles %}
+                      <li>{{ title }}</li>
+                      {% endfor %}
+                      {% if row.more_courses %}
+                      <li class="admin-text-muted">…і ще {{ row.more_courses }}</li>
+                      {% endif %}
+                    </ul>
+                  </details>
+                  {% endif %}
                 {% else %}
                   <span class="admin-text-muted" title="Тип ніде не вживається">–</span>
                 {% endif %}
@@ -132,8 +167,18 @@
                 </label>
               </td>
               <td class="event-types-col-actions">
-                {# Форма видалення живе поза формою збереження (вкладені form
-                   невалідні); кнопка прив'язана до неї атрибутом form. #}
+                {# Форми дій живуть поза формою збереження (вкладені form
+                   невалідні); кнопки прив'язані до них атрибутом form. #}
+                <button type="submit" form="event-type-up-{{ row.type.id }}"
+                        class="btn-admin btn-admin--secondary btn-admin--sm btn-admin--icon"
+                        {% if loop.first %}disabled{% endif %}>
+                  {{ icon('keyboard_arrow_up', label='Вище') }}
+                </button>
+                <button type="submit" form="event-type-down-{{ row.type.id }}"
+                        class="btn-admin btn-admin--secondary btn-admin--sm btn-admin--icon"
+                        {% if loop.last %}disabled{% endif %}>
+                  {{ icon('keyboard_arrow_down', label='Нижче') }}
+                </button>
                 <button type="submit" form="event-type-delete-{{ row.type.id }}"
                         class="btn-admin btn-admin--danger btn-admin--sm btn-admin--icon"
                         {% if row.uses %}disabled title="Тип вживається -- зніміть галку «Активний»"{% endif %}>
@@ -154,6 +199,16 @@
     <form method="POST" id="event-type-delete-{{ row.type.id }}"
           action="{{ url_for('admin.event_types_delete', type_id=row.type.id) }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    </form>
+    <form method="POST" id="event-type-up-{{ row.type.id }}"
+          action="{{ url_for('admin.event_types_move', type_id=row.type.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="direction" value="up">
+    </form>
+    <form method="POST" id="event-type-down-{{ row.type.id }}"
+          action="{{ url_for('admin.event_types_move', type_id=row.type.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="direction" value="down">
     </form>
     {% endfor %}
 
