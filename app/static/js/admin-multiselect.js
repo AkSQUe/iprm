@@ -167,8 +167,7 @@
       remove.textContent = '×';
       remove.addEventListener('click', function () {
         option.selected = false;
-        renderChips(select, ui);
-        renderList(select, ui);
+        sync(select, ui);
       });
       chip.appendChild(remove);
       ui.control.insertBefore(chip, ui.search);
@@ -215,8 +214,7 @@
           event.preventDefault();
           option.selected = true;
           ui.search.value = '';
-          renderChips(select, ui);
-          renderList(select, ui);
+          sync(select, ui);
         });
         ui.list.appendChild(item);
         shown += 1;
@@ -293,8 +291,7 @@
         });
         if (selected.length) {
           selected[selected.length - 1].selected = false;
-          renderChips(select, ui);
-          renderList(select, ui);
+          sync(select, ui);
         }
       }
     });
