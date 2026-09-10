@@ -1,6 +1,7 @@
 from app.models.mixins import TimestampMixin, BigIntPK, utcnow
 from app.models.user import User
 from app.models.rbac import Role, Permission, UserRole
+from app.models.trainer_links import course_trainers, course_instance_trainers  # noqa: F401
 from app.models.auth_identity import AuthIdentity
 from app.models.medical_profile import MedicalProfile
 from app.models.trainer import Trainer
