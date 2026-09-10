@@ -58,14 +58,31 @@ def _backfill_sql(link_table, link_fk, source_table):
 
 
 def _restore_first_trainer_sql(target_table, link_table, link_fk):
-    """Дзеркало _backfill_sql для downgrade: у колонку повертається рівно
-    той тренер, що на position=0. Тренери 1+ у джерелі UPDATE не бачить --
-    колонка вміщає одного, це і є втрата, задокументована в downgrade()."""
+    """Дзеркало _backfill_sql для downgrade: у колонку повертається тренер
+    з НАЙМЕНШОЮ позицією серед тих, що лишились -- те саме правило, що й
+    застосунок (Course.trainer / effective_trainer читають trainers[0] за
+    position), а НЕ буквально `position = 0`.
+
+    Position 0 НЕ гарантований: course_trainers.trainer_id -- ON DELETE
+    CASCADE (trainer_links.py), а Course.trainers -- viewonly, тож видалення
+    тренера з довідника прибирає його рядок звʼязку каскадом БД, не
+    перенумеровуючи сусідів. Захід [A@0, B@1] після видалення A лишає
+    рівно [B@1] -- фільтр "= 0" знайшов би НІЧОГО й затер би trainer_id на
+    NULL, хоча в застосунку B і далі головний. ORDER BY ... LIMIT 1 бере
+    того, хто фактично лідирує, незалежно від конкретного значення position.
+
+    Той самий LIMIT 1 рятує і від протилежного випадку: UNIQUE(entity,
+    position) на рівні БД немає (свідомо, trainer_links.py) -- два рядки з
+    однаковою position зробили б голий скалярний підзапит
+    (`... AND position = 0`) невизначеним ("more than one row returned by a
+    subquery used as an expression"), а ORDER BY + LIMIT 1 завжди повертає
+    рівно один рядок.
+    """
     return (
         f'UPDATE {target_table} SET trainer_id = ('
         f'SELECT {link_table}.trainer_id FROM {link_table} '
         f'WHERE {link_table}.{link_fk} = {target_table}.id '
-        f'AND {link_table}.position = 0'
+        f'ORDER BY {link_table}.position LIMIT 1'
         f')'
     )
 
@@ -108,6 +125,13 @@ def _drop_instance_unique(bind):
     for idx in inspector.get_indexes('lecturer_certificates'):
         if idx['unique'] and idx['column_names'] == ['instance_id']:
             op.drop_index(idx['name'], table_name='lecturer_certificates')
+            # Модель і далі оголошує index=True на instance_id (пошук за
+            # проведенням, не лише унікальність) -- голий unique-індекс ніс
+            # обидві ролі одночасно, тож на його місце лишаємо звичайний
+            # (не unique) індекс під тією ж назвою, а не покладаємось на
+            # те, що складений UNIQUE(instance_id, trainer_id) нижче
+            # повністю його заміщує для запитів лише за instance_id.
+            op.create_index(idx['name'], 'lecturer_certificates', ['instance_id'])
             return
     raise RuntimeError(
         'Не знайдено UNIQUE(instance_id) на lecturer_certificates -- ні '
@@ -189,10 +213,12 @@ def upgrade():
 
 
 def downgrade():
-    """УВАГА: тренери з позицій 1+ при відкаті ВТРАЧАЮТЬСЯ -- одиночна
-    колонка trainer_id вміщає рівно одного, у неї повертається лише
-    position=0. Це незворотно: другого й третього лектора заходу після
-    відкату ніде не лишається, доки міграцію не накотять знову.
+    """УВАГА: в одиночну колонку trainer_id повертається рівно ОДИН тренер
+    заходу -- той, що з найменшою позицією серед тих, що лишились (не
+    обов'язково буквально position=0, див. _restore_first_trainer_sql).
+    УСІ ІНШІ тренери заходу ВТРАЧАЮТЬСЯ -- колонка вміщає одного. Це
+    незворотно: другого й третього лектора заходу після відкату ніде не
+    лишається, доки міграцію не накотять знову.
 
     Колонка courses.speaker_info повертається ПОРОЖНЬОЮ: її вміст -- вручну
     переписані біографії тренерів, які вже дублюються в картках тренерів

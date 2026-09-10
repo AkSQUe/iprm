@@ -15,6 +15,7 @@ course_trainers/course_instance_trainers) `create_table` впав би на ду
   (Task 2), тож підмінна таблиця тут не потрібна.
 """
 import importlib.util
+import re
 from pathlib import Path
 from uuid import uuid4
 
@@ -73,12 +74,18 @@ def test_backfill_sql_targets_link_table_and_source(migration):
     assert 'trainer_id IS NOT NULL' in sql
 
 
-def test_restore_sql_reads_position_zero(migration):
+def test_restore_sql_orders_by_position_and_takes_first(migration):
+    """НЕ `position = 0`: position 0 не гарантований (ON DELETE CASCADE на
+    course_trainers.trainer_id прибирає рядок видаленого тренера, не
+    перенумеровуючи сусідів) -- SQL мусить брати НАЙМЕНШУ позицію серед
+    тих, що лишились, а не буквальний нуль."""
     sql = migration._restore_first_trainer_sql(
         'courses', 'course_trainers', 'course_id',
     )
     assert 'UPDATE courses SET trainer_id' in sql
-    assert 'course_trainers.position = 0' in sql
+    assert 'course_trainers.position = 0' not in sql
+    assert 'ORDER BY course_trainers.position' in sql
+    assert 'LIMIT 1' in sql
 
 
 # --- основний шар: SQL справді виконується на тимчасових таблицях "до
@@ -117,8 +124,9 @@ def test_upgrade_moves_trainer_id_to_position_zero(db_session, migration):
 
 
 def test_downgrade_restores_the_first_trainer(db_session, migration):
-    """Дзеркально до бекфілу: UPDATE читає рівно position=0 і повертає його
-    в колонку; заходу без жодного запису у звʼязку trainer_id лишається NULL."""
+    """Дзеркально до бекфілу: UPDATE бере тренера з найменшою позицією і
+    повертає його в колонку; заходу без жодного запису у звʼязку
+    trainer_id лишається NULL."""
     _make_old_schema_tables()
     db.session.execute(text(
         'INSERT INTO tmp_old_courses (id, trainer_id) VALUES (10, NULL), (11, NULL)'
@@ -138,13 +146,43 @@ def test_downgrade_restores_the_first_trainer(db_session, migration):
     )).scalar()
     # Позиції 1 і 2 (тренери 200, 300) -- саме та втрата, що описана
     # коментарем у downgrade(): колонка вміщає рівно одного, і це той,
-    # хто був position=0.
+    # хто лідирує (тут -- буквально position=0).
     assert row == 100
 
     untouched = db.session.execute(text(
         'SELECT trainer_id FROM tmp_old_courses WHERE id = 11'
     )).scalar()
     assert untouched is None
+
+
+def test_downgrade_restores_leader_when_position_zero_is_gone(db_session, migration):
+    """Регресія на знахідку рев'ю: position 0 -- НЕ гарантія. Видалення
+    тренера з довідника каскадно прибирає його рядок звʼязку (ON DELETE
+    CASCADE, trainer_links.py), не перенумеровуючи сусідів -- захід
+    [A@0, B@1] після видалення A лишає рівно [B@1], без жодного рядка на
+    position=0. Фільтр "= 0" знайшов би НІЧОГО й затер би trainer_id на
+    NULL, хоча B і далі головний (єдиний) тренер заходу і в базі, і за
+    правилом застосунку (trainers[0] за позицією). Фікстура навмисно БЕЗ
+    position=0 -- контигуальна з 0 фікстура вище цю діру не ловить."""
+    _make_old_schema_tables()
+    db.session.execute(text(
+        'INSERT INTO tmp_old_courses (id, trainer_id) VALUES (20, NULL)'
+    ))
+    db.session.execute(text(
+        'INSERT INTO tmp_course_trainers_link (course_id, trainer_id, position) '
+        'VALUES (20, 200, 1), (20, 300, 2)'
+    ))
+
+    sql = migration._restore_first_trainer_sql(
+        'tmp_old_courses', 'tmp_course_trainers_link', 'course_id',
+    )
+    db.session.execute(text(sql))
+
+    row = db.session.execute(text(
+        'SELECT trainer_id FROM tmp_old_courses WHERE id = 20'
+    )).scalar()
+    # Найменша наявна позиція -- 1 (тренер 200), НЕ NULL.
+    assert row == 200
 
 
 # --- guard: downgrade має впасти зрозуміло, з переліком проведень --------
@@ -180,18 +218,32 @@ def test_downgrade_fails_loudly_on_multiple_lecturer_certificates(db_session, mi
     не помилкою БД про порушення UNIQUE."""
     course = _course()
     inst = _instance(course)
+    inst_solo = _instance(course)
     a, b = _trainer('А'), _trainer('Б')
     _certificate(inst, a, f'mct-{uuid4().hex[:10]}')
     _certificate(inst, b, f'mct-{uuid4().hex[:10]}')
+    _certificate(inst_solo, a, f'mct-{uuid4().hex[:10]}')
 
     with pytest.raises(RuntimeError) as exc_info:
         migration._guard_unique_instance_restorable(db.session.get_bind())
 
     message = str(exc_info.value)
     # Не просто "якесь виключення": повідомлення називає САМЕ це проведення,
-    # а не переказує загальну помилку БД про порушення UNIQUE.
-    assert str(inst.id) in message
+    # а не переказує загальну помилку БД про порушення UNIQUE. \b, а не
+    # голий `in`: текст містить revision id 'course_trainers_20260910' --
+    # суцільний \w-рядок з цифрами (2026, 0910), тож маленький числовий id
+    # (1, 2, 6, 9...) майже завжди трапляється в ньому ПІДРЯДКОМ, і `in`
+    # проходить незалежно від того, згаданий цей id насправді, чи ні. \b
+    # ловить лише самостійне число (оточене не-\w symbolами), а не цифру
+    # всередині сусіднього \w-рядка.
+    assert re.search(rf'\b{inst.id}\b', message)
     assert 'UNIQUE' in message
+    # І не просто "якийсь текст містить цифри": id проведення БЕЗ дублікатів
+    # не має потрапити в повідомлення. Той самий \b з тієї самої причини --
+    # інакше `assert str(inst_solo.id) not in message` міг би хибно ЗНАЙТИ
+    # inst_solo.id підрядком у 'course_trainers_20260910' і провалити
+    # перевірку на цілком справному коді.
+    assert not re.search(rf'\b{inst_solo.id}\b', message)
 
 
 def test_guard_passes_when_every_instance_has_one_certificate(db_session, migration):
