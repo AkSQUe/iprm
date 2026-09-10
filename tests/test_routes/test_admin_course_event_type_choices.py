@@ -5,12 +5,14 @@
 "Not a valid choice", і адміністратор не збереже навіть правку
 заголовка, що типу взагалі не стосується.
 """
+from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 import pytest
 
 from app.extensions import db
 from app.models.course import Course
+from app.models.course_instance import CourseInstance
 from app.models.user import User
 from tests.support.rbac import grant_role
 
@@ -37,6 +39,17 @@ def _course(event_type):
     db.session.add(course)
     db.session.flush()
     return course
+
+
+def _instance(course, event_type=None):
+    instance = CourseInstance(
+        course_id=course.id, status='published', event_format='offline',
+        price=100, event_type=event_type,
+        start_date=datetime.now(timezone.utc) + timedelta(days=800),
+    )
+    db.session.add(instance)
+    db.session.flush()
+    return instance
 
 
 def test_new_course_form_offers_only_active_types(client, admin):
@@ -86,3 +99,47 @@ def test_course_can_be_switched_to_new_bpr_type(client, admin):
 
     db.session.expire(course)
     assert course.event_type == 'skills_training'
+
+
+class TestInstanceEventTypeOverride:
+    """Цикл збереження перевизначення виду заходу для проведення.
+
+    Той самий патерн прямого виклику служби через test_request_context, що
+    в tests/test_routes/test_instance_city.py::TestAdminPicker -- поле
+    міста перевіряється так само, а повний HTTP POST на
+    /admin/instances/<id>/edit довелось би обвішувати даними для полів,
+    не повʼязаних із цим сценарієм (дата, курс, статус), що лише шумить.
+    """
+
+    def test_picked_override_is_stored_and_wins_over_course_type(self, app):
+        from app.admin.forms import CourseInstanceForm
+        from app.services import course_service
+
+        course = _course('course')
+        instance = _instance(course)
+        db.session.commit()
+
+        with app.test_request_context():
+            form = CourseInstanceForm(obj=instance)
+            form.event_type.data = 'skills_training'
+            course_service.populate_instance_from_form(instance, form)
+
+        assert instance.event_type == 'skills_training'
+        assert instance.effective_event_type == 'skills_training'
+
+    def test_empty_choice_is_saved_as_null_and_falls_back_to_course_type(self, app):
+        """Порожній вибір («Як у курсу») лягає в колонку саме NULL, не ''."""
+        from app.admin.forms import CourseInstanceForm
+        from app.services import course_service
+
+        course = _course('course')
+        instance = _instance(course, event_type='skills_training')
+        db.session.commit()
+
+        with app.test_request_context():
+            form = CourseInstanceForm(obj=instance)
+            form.event_type.data = ''
+            course_service.populate_instance_from_form(instance, form)
+
+        assert instance.event_type is None
+        assert instance.effective_event_type == 'course'
