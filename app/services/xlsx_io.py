@@ -192,6 +192,7 @@ COURSE_WIDTHS = {
 INSTANCE_WIDTHS = {
     'id': 6,
     'course_slug': 32,
+    'topic': 42,
     'start_date': 22,
     'end_date': 22,
     'event_format': 14,
@@ -1267,14 +1268,19 @@ def apply_courses_plan(plan: CoursesImportPlan) -> dict:
 # ======================================================================
 
 INSTANCE_COLS = [
-    'id', 'course_slug', 'start_date', 'end_date', 'event_format',
+    'id', 'course_slug', 'topic', 'start_date', 'end_date', 'event_format',
     'price', 'cpd_points_online', 'cpd_points_offline', 'max_participants',
     'trainer_slug', 'location', 'online_link', 'status',
 ]
 
+# Колонка, додана після того, як менеджери вже мали на руках експорти:
+# її відсутність лишає тему як у БД, а не занулює (як у курсів).
+OPTIONAL_INSTANCE_COLS = ('topic',)
+
 INSTANCE_LABELS = {
     'id': 'ID',
     'course_slug': 'Курс (slug)',
+    'topic': 'Тема',
     'start_date': 'Початок',
     'end_date': 'Кінець',
     'event_format': 'Формат',
@@ -1354,6 +1360,7 @@ def export_instances_xlsx(
         values = [
             i.id,
             course_slug_by_id.get(i.course_id, ''),
+            i.topic or '',
             _to_kyiv_naive(i.start_date),
             _to_kyiv_naive(i.end_date),
             FORMAT_LABEL.get(i.event_format, i.event_format or ''),
@@ -1434,7 +1441,8 @@ def parse_instances_xlsx(path: Path) -> InstancesImportPlan:
         return plan
 
     try:
-        rows = _read_sheet(ws_i, INSTANCE_COLS, INSTANCE_LABELS)
+        rows = _read_sheet(ws_i, INSTANCE_COLS, INSTANCE_LABELS,
+                           optional=OPTIONAL_INSTANCE_COLS)
     except ValueError as exc:
         plan.errors.append(str(exc))
         return plan
@@ -1523,6 +1531,11 @@ def parse_instances_xlsx(path: Path) -> InstancesImportPlan:
                 'online_link': online_link,
                 'status': status,
             }
+            # Опційні колонки кладемо в parsed ЛИШЕ якщо вони були у файлі:
+            # відсутність колонки має лишити поле як є, а не занулити його.
+            for opt in OPTIONAL_INSTANCE_COLS:
+                if opt in raw:
+                    parsed[opt] = _str(raw.get(opt)) or None
 
             existing = None
             if parsed['id'] is not None:
@@ -1586,6 +1599,9 @@ def _diff_instance(existing: CourseInstance, parsed: dict) -> list[str]:
             changed.append(f)
     if (existing.location or '') != (parsed['location'] or ''):
         changed.append('location')
+    for opt in OPTIONAL_INSTANCE_COLS:
+        if opt in parsed and (getattr(existing, opt) or None) != (parsed[opt] or None):
+            changed.append(opt)
     ep = existing.price
     pp = parsed['price']
     if (ep is None) != (pp is None) or (ep is not None and pp is not None and ep != pp):
@@ -1624,6 +1640,9 @@ def apply_instances_plan(plan: InstancesImportPlan) -> dict:
             inst.location = p['location']
             inst.online_link = p['online_link']
             inst.status = p['status']
+            for opt in OPTIONAL_INSTANCE_COLS:
+                if opt in p:
+                    setattr(inst, opt, p[opt])
 
         db.session.commit()
         return {'ok': True, 'created': created, 'updated': updated}

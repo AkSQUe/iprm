@@ -65,3 +65,44 @@ def test_xlsx_schedule_scope_offers_instances():
     assert 'Проведення' in titles
     rows = next(rows for title, _e, rows in sheets if title == 'Проведення')
     assert any(obj.id == inst.id for obj, _label in rows)
+
+
+def _count_queries(fn):
+    """Скільки SQL-запитів видає виклик. Лічильник на рівні рушія: ORM
+    приховує ліниві довантаження, і саме їх тут треба побачити."""
+    from sqlalchemy import event
+    from sqlalchemy.engine import Engine
+
+    calls = []
+
+    def before(conn, cursor, statement, params, context, executemany):
+        calls.append(statement)
+
+    event.listen(Engine, 'before_cursor_execute', before)
+    try:
+        fn()
+    finally:
+        event.remove(Engine, 'before_cursor_execute', before)
+    return len(calls)
+
+
+def test_translation_sheets_do_not_query_per_instance(db_session):
+    """Підпис кожного рядка зве проведення, тобто торкається його курсу.
+    Без joinedload вивантаження перекладів робило б запит на кожну дату.
+    """
+    def build():
+        db.session.expire_all()
+        list(xlsx_translations.SCOPES['instances'][1]())
+
+    _instance(topic=None)
+    db.session.flush()
+    one = _count_queries(build)
+
+    for _ in range(3):
+        _instance(topic=None)
+    db.session.flush()
+    four = _count_queries(build)
+
+    assert four == one, (
+        f'запитів побільшало з {one} до {four}: курс довантажується на кожен рядок'
+    )

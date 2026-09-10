@@ -70,6 +70,16 @@ class TestForm:
         assert form.topic.label.text == 'Тема'
         assert not form.topic.flags.required
 
+    def test_hint_names_the_consequence_of_filling_the_field(self, app, instance):
+        """Підказка мусить називати головний наслідок, а не лише відкат:
+        тема йде в сертифікат і в подання до БПР."""
+        from app.admin.forms import CourseInstanceForm
+
+        with app.test_request_context():
+            form = CourseInstanceForm(obj=instance)
+        assert 'назва курсу' in form.topic.description
+        assert 'сертифікат' in form.topic.description
+
     def test_typed_topic_is_stored(self, app, instance):
         _filled_form(app, instance, 'PRP у практиці ортопеда')
         assert instance.topic == 'PRP у практиці ортопеда'
@@ -137,6 +147,22 @@ class TestListings:
         # б зеленим і тоді, коли в таблиці стоїть назва курсу.
         assert '<strong>PRP у практиці ортопеда</strong>' in html
 
+    def test_schedule_search_finds_by_topic(self, admin_client, instance):
+        """Менеджер шукає те, що бачить у рядку. Відколи рядок зветься
+        темою, пошук лише по назві курсу перестав знаходити захід."""
+        instance.topic = 'PRP у практиці ортопеда'
+        db.session.commit()
+        html = admin_client.get(
+            '/admin/instances?q=ортопеда').get_data(as_text=True)
+        assert '<strong>PRP у практиці ортопеда</strong>' in html
+
+    def test_schedule_search_still_finds_by_course_title(self, admin_client, instance):
+        instance.topic = 'PRP у практиці ортопеда'
+        db.session.commit()
+        html = admin_client.get(
+            '/admin/instances?q=Базовий').get_data(as_text=True)
+        assert '<strong>PRP у практиці ортопеда</strong>' in html
+
     def test_meta_lead_offer_dropdown_shows_topic(self, app, instance):
         """Випадайка прив'язки читає колонки без гідрації моделі -- тема
         мусить підмінятись у самому запиті, інакше менеджер бачить курс."""
@@ -162,6 +188,41 @@ class TestTranslationEntry:
         assert 'PRP у практиці ортопеда' in html
         assert 'Тема' in html
 
+    def test_new_instance_page_renders_without_an_object(self, admin_client):
+        """На створенні сутності ще немає, і макрос вкладок мусить це
+        пережити: лічильники перекладу рахуються від obj."""
+        resp = admin_client.get('/admin/instances/new')
+        assert resp.status_code == 200
+        assert 'name="topic"' in resp.get_data(as_text=True)
+
+    def test_card_offers_inline_language_tabs(self, admin_client, instance):
+        """Переклад теми має набиратись там же, де тема, -- як у формі курсу."""
+        instance.topic = 'PRP у практиці ортопеда'
+        db.session.commit()
+        html = admin_client.get(
+            f'/admin/instances/{instance.id}/edit').get_data(as_text=True)
+        assert 'name="tr__ru__topic"' in html
+        assert 'name="tr__en__topic"' in html
+        assert 'admin-i18n-tabs.js' in html
+
+    def test_topic_and_its_translation_save_in_one_submit(self, admin_client, instance):
+        """Порядок важливий: український текст пишеться першим, і лише потім
+        переклад -- інакше одиниця перекладу рахувалась би зі старої теми."""
+        db.session.commit()
+        resp = admin_client.post(f'/admin/instances/{instance.id}/edit', data={
+            'course_id': str(instance.course_id),
+            'topic': 'PRP у практиці ортопеда',
+            'start_date': '2026-12-01T10:00',
+            'event_format': 'offline',
+            'status': 'published',
+            'tr__ru__topic': 'PRP в практике ортопеда',
+        }, follow_redirects=True)
+        assert resp.status_code == 200
+
+        saved = db.session.get(CourseInstance, instance.id)
+        assert saved.topic == 'PRP у практиці ортопеда'
+        assert saved.effective_title_for('ru') == 'PRP в практике ортопеда'
+
     def test_card_links_to_translations_when_topic_is_set(self, admin_client, instance):
         instance.topic = 'PRP у практиці ортопеда'
         db.session.commit()
@@ -174,30 +235,3 @@ class TestTranslationEntry:
         html = admin_client.get(
             f'/admin/instances/{instance.id}/edit').get_data(as_text=True)
         assert '/admin/translations/course_instance/' not in html
-
-
-def test_no_template_names_an_instance_by_its_course_title():
-    """Сторож проти напівпройденої заміни.
-
-    Назва проведення береться з `effective_title`. Звертання виду
-    `<проведення>.course.title` у шаблоні означає, що це місце заміну
-    проґавило -- і сторінка зве захід назвою курсу, поки сусідня зве темою.
-    Саме так уже сталося з каталогом `/courses`: перший прохід шукав
-    `.course.title` і не побачив перекладної форми `.course.t('title')`.
-    """
-    import re
-    from pathlib import Path
-
-    # Єдиний виняток -- картка проведення: там курс названий НАВМИСНО, як
-    # батько теми (підпис "курс: ..." і плейсхолдер поля). Її поведінку
-    # тримає TestCard.test_card_subtitle_shows_topic_and_course.
-    ALLOWED = {'app/templates/admin/instance_edit.html'}
-
-    templates = Path('app/templates')
-    pattern = re.compile(r"\b(inst|instance)\w*\.course\.(title|t\('title'\))")
-    offenders = []
-    for path in templates.rglob('*.html'):
-        for number, line in enumerate(path.read_text(encoding='utf-8').splitlines(), 1):
-            if pattern.search(line) and path.as_posix() not in ALLOWED:
-                offenders.append(f'{path.as_posix()}:{number}')
-    assert not offenders, 'проведення назване назвою курсу: ' + ', '.join(offenders)

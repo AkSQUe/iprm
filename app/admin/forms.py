@@ -720,7 +720,9 @@ class CourseInstanceForm(FlaskForm):
     topic = StringField(
         'Тема',
         validators=[Optional(), Length(max=255)],
-        description='Порожньо -- береться назва курсу.',
+        description='Порожньо -- береться назва курсу. Заповнена тема стає '
+                    'назвою заходу скрізь: у розкладі, листах, рахунку, '
+                    'сертифікаті й поданні до БПР.',
     )
     start_date = DateTimeLocalField(
         'Дата початку',

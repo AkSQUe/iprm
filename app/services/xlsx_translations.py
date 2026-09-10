@@ -108,11 +108,18 @@ def _blog_sheets(posts=None):
 
 
 def _instance_sheets():
+    from sqlalchemy.orm import joinedload, selectinload
+
     from app.models.city import City
     from app.models.course_instance import CourseInstance
 
+    # Обидва довантаження -- бо кожен рядок аркуша зве проведення (назва без
+    # власної теми береться з курсу) і перебирає його тарифи. Без них
+    # вивантаження перекладів робило б по два запити на кожну дату розкладу.
     instances = (
         CourseInstance.query
+        .options(joinedload(CourseInstance.course),
+                 selectinload(CourseInstance.tariffs))
         .order_by(CourseInstance.start_date.desc().nullslast())
         .all()
     )

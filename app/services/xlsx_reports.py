@@ -58,7 +58,6 @@ def export_referral_rewards_xlsx(rewards, referrer_map,
         reg = rw.registration
         user = reg.user if reg else None
         inst = reg.instance if reg else None
-        course = inst.course if inst else None
         rows.append([
             rw.created_at.strftime('%d.%m.%Y') if rw.created_at else '',
             ref.get('name') or rw.referral_code,
