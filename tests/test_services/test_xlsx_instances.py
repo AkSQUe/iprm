@@ -74,13 +74,18 @@ def test_export_header_matches_column_list(client):
 
 def test_export_values_align_with_columns(client):
     course = _course()
-    _instance(course, location='Полтава', price=5000, cpd_points=12)
+    # Дзеркалимо міграційний бекфіл (cpd_points_online = cpd_points_offline =
+    # cpd_points): експорт читає лише нові розщеплені колонки, легасі
+    # cpd_points для нього більше не джерело значення.
+    _instance(course, location='Полтава', price=5000,
+              cpd_points_online=12, cpd_points_offline=12)
     ws = load_workbook(xlsx_io.export_instances_xlsx())['Розклад']
     header = [c.value for c in ws[1]]
     rows = [dict(zip(header, r)) for r in ws.iter_rows(min_row=2, values_only=True)]
     row = next(r for r in rows if r[xlsx_io.INSTANCE_LABELS['course_slug']] == course.slug)
     assert row[xlsx_io.INSTANCE_LABELS['location']] == 'Полтава'
-    assert row[xlsx_io.INSTANCE_LABELS['cpd_points']] == 12
+    assert row[xlsx_io.INSTANCE_LABELS['cpd_points_online']] == 12
+    assert row[xlsx_io.INSTANCE_LABELS['cpd_points_offline']] == 12
 
 
 # --- створення й оновлення --------------------------------------------------

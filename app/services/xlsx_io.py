@@ -85,6 +85,7 @@ WRAP = Alignment(wrap_text=True, vertical='top')
 # ----- Number formats ------------------------------------------------
 # Дроблені формати для різних типів даних. Use cell.number_format = ...
 FMT_INT = '0'
+FMT_POINTS = '0.##'
 FMT_CURRENCY_UAH = '#,##0 "₴"'
 FMT_DATETIME = 'YYYY-MM-DD HH:MM'
 FMT_DATE = 'DD.MM.YYYY'
@@ -95,7 +96,8 @@ NUMBER_FORMATS = {
     # Courses
     'id': FMT_INT,
     'base_price': FMT_CURRENCY_UAH,
-    'cpd_points': FMT_INT,
+    'cpd_points_online': FMT_POINTS,
+    'cpd_points_offline': FMT_POINTS,
     'max_participants': FMT_INT,
     # Instances
     'price': FMT_CURRENCY_UAH,
@@ -128,7 +130,7 @@ NUMBER_FORMATS = {
     'payment_amount': FMT_CURRENCY_UAH,
     'refunded_amount': FMT_CURRENCY_UAH,
     'discount_amount': FMT_CURRENCY_UAH,
-    'cpd_points_awarded': FMT_INT,
+    'cpd_points_awarded': FMT_POINTS,
     'experience_years': FMT_INT,
 }
 
@@ -180,7 +182,8 @@ COURSE_WIDTHS = {
     'description': 60,
     'event_type': 16,
     'base_price': 14,
-    'cpd_points': 10,
+    'cpd_points_online': 14,
+    'cpd_points_offline': 14,
     'max_participants': 12,
     'trainer_slug': 24,
     'hero_image': 50,
@@ -201,7 +204,8 @@ INSTANCE_WIDTHS = {
     'end_date': 22,
     'event_format': 14,
     'price': 14,
-    'cpd_points': 10,
+    'cpd_points_online': 14,
+    'cpd_points_offline': 14,
     'max_participants': 12,
     'trainer_slug': 24,
     'location': 18,
@@ -454,6 +458,16 @@ def _int(v) -> int | None:
         raise ValueError(f'не ціле число: {v!r}')
 
 
+def _points_cell(v) -> 'Decimal | None':
+    """Бали БПР із комірки: приймає і «7,5», і «7.5» (Excel з укр. локаллю)."""
+    from app.utils import parse_points
+
+    try:
+        return parse_points(v)
+    except ValueError:
+        raise ValueError(f'некоректні бали БПР: {v!r}')
+
+
 def _dt(v) -> datetime | None:
     """Прийняти або datetime (openpyxl auto-parses), або ISO-рядок."""
     if v is None or v == '':
@@ -477,7 +491,8 @@ def _dt(v) -> datetime | None:
 
 COURSE_COLS = [
     'id', 'slug', 'title', 'subtitle', 'short_description', 'description',
-    'event_type', 'base_price', 'cpd_points', 'max_participants',
+    'event_type', 'base_price', 'cpd_points_online', 'cpd_points_offline',
+    'max_participants',
     'trainer_slug', 'hero_image', 'card_image', 'speaker_info', 'agenda',
     'final_cta_text', 'target_audience', 'tags', 'is_active', 'is_featured',
 ]
@@ -495,7 +510,8 @@ COURSE_LABELS = {
     'description': 'Повний опис',
     'event_type': 'Тип',
     'base_price': 'Ціна (грн)',
-    'cpd_points': 'Бали БПР',
+    'cpd_points_online': 'Бали БПР онлайн',
+    'cpd_points_offline': 'Бали БПР офлайн',
     'max_participants': 'Макс. учасників',
     'trainer_slug': 'Тренер',
     'hero_image': 'Hero-зображення',
@@ -711,7 +727,8 @@ def export_courses_xlsx(active: str = 'all') -> io.BytesIO:
             c.description or '',
             EVENT_TYPE_LABEL.get(c.event_type, c.event_type or ''),
             float(c.base_price) if c.base_price is not None else 0,
-            c.cpd_points,
+            float(c.cpd_points_online) if c.cpd_points_online is not None else None,
+            float(c.cpd_points_offline) if c.cpd_points_offline is not None else None,
             c.max_participants,
             trainer_name_by_id.get(c.trainer_id, '') if c.trainer_id else '',
             # Експортуємо ОСНОВНИЙ media-URL (не варіант) -> резолвиться назад
@@ -950,7 +967,8 @@ def parse_courses_xlsx(path: Path) -> CoursesImportPlan:
                 'description': _str(raw.get('description')),
                 'event_type': event_type,
                 'base_price': _decimal(raw.get('base_price')) or Decimal(0),
-                'cpd_points': _int(raw.get('cpd_points')),
+                'cpd_points_online': _points_cell(raw.get('cpd_points_online')),
+                'cpd_points_offline': _points_cell(raw.get('cpd_points_offline')),
                 'max_participants': _int(raw.get('max_participants')),
                 'trainer_id': trainer_id,
                 'hero_image': _str(raw.get('hero_image')),
@@ -1090,7 +1108,7 @@ def _diff_course(existing: Course, parsed: dict, trainer_id_by_slug: dict) -> li
     # резолвленими id.
     fields = [
         'title', 'subtitle', 'short_description', 'description', 'event_type',
-        'cpd_points', 'max_participants', 'trainer_id',
+        'cpd_points_online', 'cpd_points_offline', 'max_participants', 'trainer_id',
         'speaker_info', 'agenda', 'is_active', 'is_featured',
     ]
     for f in fields:
@@ -1145,7 +1163,8 @@ def apply_courses_plan(plan: CoursesImportPlan) -> dict:
             course.description = p['description']
             course.event_type = p['event_type']
             course.base_price = p['base_price']
-            course.cpd_points = p['cpd_points']
+            course.cpd_points_online = p['cpd_points_online']
+            course.cpd_points_offline = p['cpd_points_offline']
             course.max_participants = p['max_participants']
             course.trainer_id = p['trainer_id']
             course.hero_media_id = _resolve_media_id(p['hero_image'])
@@ -1208,8 +1227,8 @@ def apply_courses_plan(plan: CoursesImportPlan) -> dict:
 
 INSTANCE_COLS = [
     'id', 'course_slug', 'start_date', 'end_date', 'event_format',
-    'price', 'cpd_points', 'max_participants', 'trainer_slug',
-    'location', 'online_link', 'status',
+    'price', 'cpd_points_online', 'cpd_points_offline', 'max_participants',
+    'trainer_slug', 'location', 'online_link', 'status',
 ]
 
 INSTANCE_LABELS = {
@@ -1219,7 +1238,8 @@ INSTANCE_LABELS = {
     'end_date': 'Кінець',
     'event_format': 'Формат',
     'price': 'Ціна (грн)',
-    'cpd_points': 'Бали БПР',
+    'cpd_points_online': 'Бали БПР онлайн',
+    'cpd_points_offline': 'Бали БПР офлайн',
     'max_participants': 'Макс. учасників',
     'trainer_slug': 'Тренер',
     'location': 'Локація',
@@ -1297,7 +1317,8 @@ def export_instances_xlsx(
             _to_kyiv_naive(i.end_date),
             FORMAT_LABEL.get(i.event_format, i.event_format or ''),
             float(i.price) if i.price is not None else None,
-            i.cpd_points,
+            float(i.cpd_points_online) if i.cpd_points_online is not None else None,
+            float(i.cpd_points_offline) if i.cpd_points_offline is not None else None,
             i.max_participants,
             trainer_name_by_id.get(i.trainer_id, '') if i.trainer_id else '',
             i.location or '',
@@ -1453,7 +1474,8 @@ def parse_instances_xlsx(path: Path) -> InstancesImportPlan:
                 'end_date': end_date,
                 'event_format': event_format,
                 'price': _decimal(raw.get('price')),
-                'cpd_points': _int(raw.get('cpd_points')),
+                'cpd_points_online': _points_cell(raw.get('cpd_points_online')),
+                'cpd_points_offline': _points_cell(raw.get('cpd_points_offline')),
                 'max_participants': _int(raw.get('max_participants')),
                 'trainer_id': trainer_id,
                 'location': location,
@@ -1515,8 +1537,8 @@ def _diff_instance(existing: CourseInstance, parsed: dict) -> list[str]:
     for f in ('start_date', 'end_date'):
         if ensure_utc(getattr(existing, f)) != ensure_utc(parsed[f]):
             changed.append(f)
-    for f in ('event_format', 'cpd_points', 'max_participants', 'trainer_id',
-              'online_link', 'status'):
+    for f in ('event_format', 'cpd_points_online', 'cpd_points_offline',
+              'max_participants', 'trainer_id', 'online_link', 'status'):
         ev = getattr(existing, f)
         pv = parsed[f]
         if (ev or None) != (pv or None):
@@ -1554,7 +1576,8 @@ def apply_instances_plan(plan: InstancesImportPlan) -> dict:
             inst.end_date = p['end_date']
             inst.event_format = p['event_format']
             inst.price = p['price']
-            inst.cpd_points = p['cpd_points']
+            inst.cpd_points_online = p['cpd_points_online']
+            inst.cpd_points_offline = p['cpd_points_offline']
             inst.max_participants = p['max_participants']
             inst.trainer_id = p['trainer_id']
             inst.location = p['location']
@@ -1577,8 +1600,8 @@ PARTICIPANT_COLS = [
     'reg_id', 'event', 'last_name', 'first_name', 'middle_name', 'email',
     'phone', 'participant_type', 'birth_date', 'education', 'workplace',
     'position', 'specializations', 'status', 'payment_status',
-    'payment_amount', 'attended', 'cpd_points_awarded', 'experience_years',
-    'license_number', 'admin_notes',
+    'payment_amount', 'attended', 'cpd_points_awarded', 'participation_format',
+    'experience_years', 'license_number', 'admin_notes',
 ]
 
 PARTICIPANT_LABELS = {
@@ -1600,6 +1623,7 @@ PARTICIPANT_LABELS = {
     'payment_amount': 'Сума (грн)',
     'attended': 'Присутній',
     'cpd_points_awarded': 'Бали БПР',
+    'participation_format': 'Формат участі',
     'experience_years': 'Стаж (років)',
     'license_number': 'Ліцензія',
     'admin_notes': 'Нотатки',
@@ -1632,6 +1656,7 @@ PARTICIPANT_WIDTHS = {
     'payment_amount': 14,
     'attended': 12,
     'cpd_points_awarded': 12,
+    'participation_format': 16,
     'experience_years': 12,
     'license_number': 18,
     'admin_notes': 40,
@@ -1651,6 +1676,36 @@ SPEC_CODE_BY_LABEL = {v: k for k, v in SPECIALIZATIONS}
 VALID_REG_STATUSES = set(REG_STATUS_LABEL.keys())
 VALID_PAYMENT_STATUSES = set(PAYMENT_STATUS_LABEL.keys())
 VALID_PARTICIPANT_TYPES = set(PARTICIPANT_TYPE_LABEL.keys())
+
+# Формат участі -- окремий (звужений) словник, а не FORMAT_KEY_BY_LABEL
+# заходу: там є ще й 'Гібрид', який для participation_format недопустимий
+# (це поле лише online/offline/NULL -- сам гібрид визначається на рівні
+# заходу). Ключі -- у нижньому регістрі, бо порівняння регістронезалежне.
+_PARTICIPATION_FORMAT_KEY_BY_TEXT = {
+    'online': 'online', 'offline': 'offline',
+    'онлайн': 'online', 'офлайн': 'offline',
+}
+
+
+def _parse_participation_format(raw):
+    """Формат участі з комірки -> 'online' / 'offline' / None.
+
+    Порожнє значення -- коректний стан (None): далі підхопить
+    effective_participation_format (тариф -> формат заходу). Приймає і
+    внутрішній код, і українську назву в будь-якому регістрі. Будь-що інше
+    -- зрозуміла per-row помилка тут, а не падіння на DB CHECK-констрейнті
+    у apply.
+    """
+    text = _str(raw)
+    if not text:
+        return None
+    key = _PARTICIPATION_FORMAT_KEY_BY_TEXT.get(text.strip().lower())
+    if key is None:
+        raise ValueError(
+            f'формат участі {raw!r} – допустимі: Онлайн, Офлайн (або порожньо)'
+        )
+    return key
+
 
 REG_STATUS_FILLS = {
     'pending': _fill('FEF3C7'),     # yellow
@@ -1875,6 +1930,8 @@ def export_participants_xlsx(instance_id=None, blank=False) -> io.BytesIO:
             float(reg.payment_amount) if reg.payment_amount is not None else None,
             'Так' if reg.attended else 'Ні',
             reg.cpd_points_awarded,
+            {'online': 'Онлайн', 'offline': 'Офлайн'}.get(
+                reg.effective_participation_format, ''),
             reg.experience_years,
             reg.license_number or '',
             reg.admin_notes or '',
@@ -1945,7 +2002,8 @@ _PARTICIPANT_DIFF_LABELS = {
     'birth_date': 'дата народж.', 'education': 'освіта', 'workplace': 'місце роботи',
     'position': 'посада', 'specializations': 'спеціалізації', 'status': 'статус',
     'payment_status': 'оплата', 'payment_amount': 'сума', 'attended': 'присутність',
-    'cpd_points_awarded': 'бали БПР', 'experience_years': 'стаж',
+    'cpd_points_awarded': 'бали БПР', 'participation_format': 'формат участі',
+    'experience_years': 'стаж',
     'license_number': 'ліцензія', 'admin_notes': 'нотатки',
 }
 
@@ -2001,6 +2059,8 @@ def _diff_participant(reg, data):
         changed.append(_PARTICIPANT_DIFF_LABELS['attended'])
     if data.get('cpd_points_awarded') != reg.cpd_points_awarded:
         changed.append(_PARTICIPANT_DIFF_LABELS['cpd_points_awarded'])
+    if data.get('participation_format') != reg.participation_format:
+        changed.append(_PARTICIPANT_DIFF_LABELS['participation_format'])
     if data.get('experience_years') != reg.experience_years:
         changed.append(_PARTICIPANT_DIFF_LABELS['experience_years'])
     if norm(data.get('license_number')) != norm(reg.license_number):
@@ -2131,9 +2191,11 @@ def parse_participants_xlsx(path: Path) -> ParticipantsImportPlan:
             payment_amount = _decimal(raw.get('payment_amount'))
             if payment_amount is not None and payment_amount < 0:
                 raise ValueError('сума оплати не може бути від\'ємною')
-            cpd = _int(raw.get('cpd_points_awarded'))
+            cpd = _points_cell(raw.get('cpd_points_awarded'))
             if cpd is not None and cpd < 0:
                 raise ValueError('бали БПР не можуть бути від\'ємними')
+            participation_format = _parse_participation_format(
+                raw.get('participation_format'))
             experience = _int(raw.get('experience_years'))
             if experience is not None and not (0 <= experience <= 70):
                 raise ValueError('стаж має бути в межах 0-70 років')
@@ -2159,6 +2221,7 @@ def parse_participants_xlsx(path: Path) -> ParticipantsImportPlan:
                 'payment_amount': payment_amount,
                 'attended': _bool(raw.get('attended')),
                 'cpd_points_awarded': cpd,
+                'participation_format': participation_format,
                 'experience_years': experience,
                 'license_number': _str(raw.get('license_number')),
                 'admin_notes': _str(raw.get('admin_notes')),
