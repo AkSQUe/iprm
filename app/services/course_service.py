@@ -362,7 +362,6 @@ def populate_course_from_form(course, form):
     course.card_media_id = _opt_media_id(form.card_media_id.data)
     course.target_audience = lines_to_list(form.target_audience_text.data)
     course.tags = lines_to_list(form.tags_text.data)
-    course.speaker_info = _clean_text(form.speaker_info.data)
     course.agenda = _clean_text(form.agenda.data)
     course.faq = faq_text_to_list(form.faq_text.data)
     course.final_cta_text = _clean_text(form.final_cta_text.data)
@@ -584,7 +583,6 @@ def clone_course(source, created_by_id):
         card_media_id=source.card_media_id,
         target_audience=list(source.target_audience or []),
         tags=list(source.tags or []),
-        speaker_info=source.speaker_info,
         agenda=source.agenda,
         faq=[dict(item) for item in (source.faq or [])],
         final_cta_text=source.final_cta_text,

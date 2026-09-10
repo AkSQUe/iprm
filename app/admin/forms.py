@@ -497,10 +497,6 @@ class CourseForm(FlaskForm):
         validators=[Optional()],
         description='Один тег на рядок',
     )
-    speaker_info = TextAreaField(
-        'Інформація про спікера',
-        validators=[Optional()],
-    )
     agenda = TextAreaField(
         'Програма (загальний опис)',
         validators=[Optional()],

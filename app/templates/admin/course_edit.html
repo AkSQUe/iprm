@@ -246,11 +246,6 @@
           {{ i18n.json_panes(course, 'tags') }}
         </div>
         <div class="form-group admin-form__full">
-          <label for="speaker_info">Інформація про спікера</label>
-          {{ form.speaker_info(class="form-input", id="speaker_info", rows="4") }}
-          {{ i18n.panes(tr, 'speaker_info', widget='textarea', rows=4, obj=course) }}
-        </div>
-        <div class="form-group admin-form__full">
           <label for="agenda">Програма (загальний опис)</label>
           {{ form.agenda(class="form-input", id="agenda", rows="4") }}
           {{ i18n.panes(tr, 'agenda', widget='textarea', rows=4, obj=course) }}

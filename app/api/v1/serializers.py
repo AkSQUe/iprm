@@ -282,7 +282,6 @@ def serialize_event_detail(course, instance=None) -> dict:
         # локалізує в себе, а не залежить від локалі виклику.
         'bpr_specialties': specialties.names(
             course.bpr_specialty_codes, lang=DEFAULT_LANGUAGE),
-        'speaker_info': course.speaker_info,
         'agenda': course.agenda,
         'faq': course.faq or [],
         'program_blocks': [

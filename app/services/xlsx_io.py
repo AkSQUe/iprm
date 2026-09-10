@@ -186,7 +186,6 @@ COURSE_WIDTHS = {
     'trainer_slugs': 36,
     'hero_image': 50,
     'card_image': 50,
-    'speaker_info': 40,
     'agenda': 40,
     'final_cta_text': 50,
     'target_audience': 50,
@@ -564,7 +563,7 @@ COURSE_COLS = [
     'id', 'slug', 'title', 'subtitle', 'short_description', 'description',
     'event_type', 'base_price', 'cpd_points_online', 'cpd_points_offline',
     'max_participants',
-    'trainer_slugs', 'hero_image', 'card_image', 'speaker_info', 'agenda',
+    'trainer_slugs', 'hero_image', 'card_image', 'agenda',
     'final_cta_text', 'target_audience', 'tags', 'is_active', 'is_featured',
 ]
 
@@ -587,7 +586,6 @@ COURSE_LABELS = {
     'trainer_slugs': 'Тренери',
     'hero_image': 'Hero-зображення',
     'card_image': 'Зображення картки',
-    'speaker_info': 'Інфо про спікера',
     'agenda': 'Програма (опис)',
     'final_cta_text': 'Фінальний заклик',
     'target_audience': 'Цільова аудиторія',
@@ -792,7 +790,6 @@ def export_courses_xlsx(active: str = 'all') -> io.BytesIO:
             # у реєстр за file_path на імпорті (_resolve_media_id).
             c.hero_media.url if c.hero_media else '',
             c.card_media.url if c.card_media else '',
-            c.speaker_info or '',
             c.agenda or '',
             c.final_cta_text or '',
             _to_lines(c.target_audience),
@@ -1020,7 +1017,6 @@ def parse_courses_xlsx(path: Path) -> CoursesImportPlan:
                 'trainer_ids': trainer_ids,
                 'hero_image': _str(raw.get('hero_image')),
                 'card_image': _str(raw.get('card_image')),
-                'speaker_info': _str(raw.get('speaker_info')),
                 'agenda': _str(raw.get('agenda')),
                 'target_audience': _from_lines(raw.get('target_audience')),
                 'tags': _from_lines(raw.get('tags')),
@@ -1156,7 +1152,7 @@ def _diff_course(existing: Course, parsed: dict) -> list[str]:
     fields = [
         'title', 'subtitle', 'short_description', 'description', 'event_type',
         'cpd_points_online', 'cpd_points_offline', 'max_participants',
-        'speaker_info', 'agenda', 'is_active', 'is_featured',
+        'agenda', 'is_active', 'is_featured',
     ]
     for f in fields:
         if (getattr(existing, f) or None) != (parsed[f] or None) and not (
@@ -1219,7 +1215,6 @@ def apply_courses_plan(plan: CoursesImportPlan) -> dict:
             course.max_participants = p['max_participants']
             course.hero_media_id = _resolve_media_id(p['hero_image'])
             course.card_media_id = _resolve_media_id(p['card_image'])
-            course.speaker_info = p['speaker_info']
             course.agenda = p['agenda']
             course.target_audience = p['target_audience']
             course.tags = p['tags']

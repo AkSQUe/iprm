@@ -14,7 +14,7 @@ class Course(TranslatableMixin, TimestampMixin, db.Model):
     __tablename__ = 'courses'
     __translatable__ = (
         'title', 'subtitle', 'description', 'short_description',
-        'target_audience', 'tags', 'speaker_info', 'agenda', 'faq',
+        'target_audience', 'tags', 'agenda', 'faq',
         'roi_hint', 'final_cta_text',
         'proof_stats', 'benefits', 'practice_note_title', 'practice_note_text',
         'gallery_intro',

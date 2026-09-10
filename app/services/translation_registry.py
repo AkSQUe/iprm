@@ -24,7 +24,7 @@ from app.i18n import PREFIXED_LANGUAGES, source_key, walk_leaves
 FIELD_LABELS = {
     'title': 'Назва', 'subtitle': 'Підзаголовок', 'description': 'Опис',
     'short_description': 'Короткий опис', 'target_audience': 'Цільова аудиторія',
-    'tags': 'Теги', 'speaker_info': 'Про спікера', 'agenda': 'Програма (agenda)',
+    'tags': 'Теги', 'agenda': 'Програма (agenda)',
     'faq': 'FAQ', 'roi_hint': 'ROI-підказка',
     'final_cta_text': 'Фінальний заклик',
     'full_name': 'ПІБ', 'full_name_dative': 'ПІБ (давальний)', 'role': 'Роль',
