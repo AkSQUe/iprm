@@ -110,7 +110,9 @@ def plural(n, key, lang=None):
     try:
         number = abs(float(n))
     except (TypeError, ValueError):
-        return forms[-1]
+        # Не forms[-1]: у наборів із четвертою (дробовою) формою остання --
+        # саме вона, і нерозбірне значення друкувало б «бала БПР».
+        return forms[2] if len(forms) > 2 else forms[-1]
     if number != int(number):
         return forms[3] if len(forms) > 3 else forms[-1]
     n = int(number)

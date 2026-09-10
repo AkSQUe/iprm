@@ -80,6 +80,14 @@ def test_plural_fraction_without_fourth_form_falls_back_to_many():
     assert plural(Decimal('2.5'), 'seats', lang='uk') == 'місць'
 
 
+def test_unparsable_falls_back_to_many_not_fraction():
+    """Остання форма набору тепер дробова, тож `forms[-1]` як запасна дала б
+    «бала БПР» на будь-якому смітті. Запасна мусить лишатись «багато»."""
+    assert plural(None, 'bpr_points', lang='uk') == 'балів БПР'
+    assert plural('abc', 'points', lang='uk') == 'балів'
+    assert plural(None, 'seats', lang='uk') == 'місць'
+
+
 def test_uk_plural_fraction():
     assert uk_plural(Decimal('4.5'), 'бал', 'бали', 'балів', 'бала') == 'бала'
     assert uk_plural(Decimal('4.5'), 'бал', 'бали', 'балів') == 'балів'
