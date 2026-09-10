@@ -263,9 +263,44 @@ class TestEventsList:
         assert card['trainers'][0]['id'] == trainer.id
         assert card['trainers'][0]['email'] == 'trainer@example.com'
         assert card['trainers'][0]['full_name'] == 'Іван Тренер'
-        # bio -- сире значення колонки, не переклад: партнерський блок
-        # спікера читає його напряму, як і решту полів цієї відповіді.
+        # Під дефолтною (укр) локаллю запиту trainer.bio і trainer.t('bio')
+        # дають БАЙТ-У-БАЙТ однаковий результат (t() для lang == DEFAULT_LANGUAGE
+        # повертає ту саму колонку) -- цей рядок підтверджує лише ЗНАЧЕННЯ, не
+        # шлях коду. Що поле лишається сирим (а не тихо переходить на .t()) --
+        # довід test_bio_stays_raw_under_non_default_locale нижче, під ru.
         assert card['trainers'][0]['bio'] == 'Біографія Івана.'
+
+    def test_bio_stays_raw_under_non_default_locale(
+            self, client, partner_settings, published_event):
+        """`bio` -- сире значення колонки, а не `trainer.t('bio')`.
+
+        Під дефолтною (укр) локаллю обидва варіанти дають однаковий байт --
+        test_card_carries_trainer_identity вище НЕ може відрізнити один від
+        одного. Тут locale запиту -- 'ru' (через Accept-Language; /api/v1 не
+        локалізований блюпринт, g.lang_code не виставляється, тож
+        get_locale() падає на request.accept_languages -- перевірено окремо
+        на app.test_request_context). Якщо серіалізатор колись підмінять на
+        trainer.t('bio'), відповідь почне повертати РОСІЙСЬКИЙ переклад --
+        і саме це тут і ловиться.
+        """
+        from app.models.trainer import Trainer
+        from app.services import trainer_links
+
+        trainer = Trainer(full_name='Тренер', slug=f'tr-{_uid()}', role='Лікар',
+                          bio='Українська біографія.')
+        db.session.add(trainer)
+        db.session.flush()
+        trainer.set_translation('ru', 'bio', 'Русская биография.')
+        trainer_links.set_trainers(published_event._test_instance, [trainer.id])
+        db.session.commit()
+
+        resp = client.get('/api/v1/events', headers={
+            'X-API-Key': API_KEY, 'Accept-Language': 'ru',
+        })
+        card = next(e for e in resp.get_json()['items']
+                    if e['slug'] == published_event.slug)
+
+        assert card['trainers'][0]['bio'] == 'Українська біографія.'
 
     def test_event_card_serializes_trainers_as_ordered_array(
             self, client, partner_settings, published_event):
