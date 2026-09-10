@@ -74,10 +74,42 @@
     return { wrap: wrap, control: control, search: search, list: list };
   }
 
+  // Поміняти місцями обраний <option> із сусіднім ОБРАНИМ у бік step.
+  // Невибрані пункти пропускаємо: між двома чіпами їх у списку не видно,
+  // і зупинка на них виглядала б як кнопка, що нічого не робить.
+  function swapSelected(select, option, step) {
+    var chosen = Array.prototype.filter.call(select.options, function (o) {
+      return o.selected;
+    });
+    var at = chosen.indexOf(option);
+    var target = chosen[at + step];
+    if (!target) { return; }
+    if (step < 0) {
+      select.insertBefore(option, target);
+    } else {
+      select.insertBefore(target, option);
+    }
+  }
+
+  // Перемальовує чіпи й список, а тоді сигналізує форму: перестановка
+  // <option> не чіпає .selected, тож браузер САМ change не надішле (він
+  // реагує лише на дії користувача над рідним контролом, не на скрипт),
+  // а порядок -- це і є те, що піде на сервер при сабміті. Той самий
+  // прийом, що й у admin-course-gallery.js/admin-instance-points.js:
+  // локальний sync(), що завершується dispatchEvent.
+  function sync(select, ui) {
+    renderChips(select, ui);
+    renderList(select, ui);
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
   function renderChips(select, ui) {
     Array.prototype.slice.call(
       ui.control.querySelectorAll('.admin-multiselect__chip')
     ).forEach(function (chip) { chip.remove(); });
+
+    var ordered = select.hasAttribute('data-multiselect-ordered');
+    var isFirst = true;
 
     Array.prototype.filter.call(select.options, function (option) {
       return option.selected;
@@ -85,6 +117,49 @@
       var chip = document.createElement('span');
       chip.className = 'admin-multiselect__chip';
       chip.textContent = option.textContent.trim();
+
+      // Перший обраний у впорядкованому полі -- головний лектор: його
+      // підпис іде на сертифікат учасника. Рамка й жирність -- візуальний
+      // маркер, title -- підказка для миші, але жодне з двох не гарантовано
+      // дістається скрінрідера (title читають не всі, не завжди й не
+      // одразу). Тому сенс дублюємо текстом: .visually-hidden не бачить
+      // ніхто зряче, але його читає кожен скрінрідер разом з іменем чіпа.
+      if (ordered && isFirst) {
+        chip.classList.add('admin-multiselect__chip--primary');
+        chip.title = 'Головний: його підпис іде на сертифікат учасника';
+        var badge = document.createElement('span');
+        badge.className = 'visually-hidden';
+        badge.textContent = ' (головний, підпис на сертифікаті)';
+        chip.appendChild(badge);
+      }
+      isFirst = false;
+
+      // Порядок обраних <option> у DOM = порядок сабміту (браузер сам
+      // гарантує це для select multiple), тож кнопки нижче рухають САМ
+      // <option>, а не якийсь окремий стан -- окремого поля з індексами
+      // немає й не буде.
+      if (ordered) {
+        // Назва змінної навмисно НЕ "move" -- у файлі вже є функція
+        // move(ui, delta) для клавіатурної навігації списком; однойменна
+        // локальна var усередині forEach її б не зламала (різні області
+        // видимості), але читалась би як та сама сутність.
+        [['◀', -1, 'Перемістити ліворуч'],
+         ['▶', 1, 'Перемістити праворуч']].forEach(function (spec) {
+          var moveBtn = document.createElement('button');
+          moveBtn.type = 'button';
+          moveBtn.className = 'admin-multiselect__chip-move';
+          moveBtn.textContent = spec[0];
+          moveBtn.setAttribute(
+            'aria-label', spec[2] + ': ' + option.textContent.trim()
+          );
+          moveBtn.addEventListener('click', function () {
+            swapSelected(select, option, spec[1]);
+            sync(select, ui);
+          });
+          chip.appendChild(moveBtn);
+        });
+      }
+
       var remove = document.createElement('button');
       remove.type = 'button';
       remove.className = 'admin-multiselect__chip-remove';

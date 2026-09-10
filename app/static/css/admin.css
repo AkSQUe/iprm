@@ -3660,6 +3660,20 @@ th.access-perm__label {
   border: 0; background: none; cursor: pointer; padding: 0;
   color: var(--iprm-text-secondary); line-height: 1;
 }
+/* Кнопки переставлення -- лише коли поле має data-multiselect-ordered
+   (admin-multiselect.js домальовує їх умовно). Поле спеціальностей
+   лишається без них -- і без цього класу в його розмітці теж. */
+.admin-multiselect__chip-move {
+  border: 0; background: none; cursor: pointer; padding: 0 2px;
+  color: var(--iprm-text-secondary); font-size: 11px; line-height: 1;
+}
+.admin-multiselect__chip-move:hover { color: var(--iprm-text); }
+/* Перший чіп впорядкованого поля -- головний лектор (сертифікат учасника).
+   Колір рамки -- лише підсилення: сенс несе й title на самому чіпі (JS),
+   і ds-hint у каталозі, тож інформація не тримається на кольорі самотою. */
+.admin-multiselect__chip--primary {
+  border: 1px solid var(--iprm-accent); font-weight: 600;
+}
 .admin-multiselect__search {
   flex: 1 1 120px; min-width: 120px; border: 0; outline: none;
   background: none; color: var(--iprm-text); font: inherit; padding: 4px;
