@@ -95,6 +95,7 @@
        fields=[
          {'name': 'course_id', 'label': 'Курс', 'placeholder': 'Всі курси', 'options': course_options},
          {'name': 'status', 'label': 'Статус', 'placeholder': 'Усі статуси', 'options': status_options},
+         {'name': 'event_type', 'label': 'Вид заходу', 'placeholder': 'Усі види', 'options': event_type_options},
        ],
        base_args={'quick': filters.quick},
        export_endpoint='admin.instances_report_export',
@@ -163,8 +164,12 @@
              успадкований; перевизначений позначаємо, бо саме відхилення від
              курсу і треба помітити оком. #}
           {% if inst.event_type_label %}
+          {# Зірочка сама по собі нічого не каже: тултипа немає на дотику, а
+             скрінрідер прочитав би «Тренінг зірочка». Підпис до неї -- у
+             .visually-hidden (common.css, глобальний), тултип лишається
+             зручністю для миші, а не єдиним носієм змісту. #}
           <small class="admin-text-muted admin-subline"
-                 title="{% if inst.event_type %}Вид заходу перевизначено для цієї дати{% else %}Вид заходу успадковано від курсу{% endif %}">{{ inst.event_type_label }}{% if inst.event_type %} *{% endif %}</small>
+                 title="{% if inst.event_type %}Вид заходу перевизначено для цієї дати{% else %}Вид заходу успадковано від курсу{% endif %}">{{ inst.event_type_label }}{% if inst.event_type %} <span aria-hidden="true">*</span><span class="visually-hidden">(перевизначено для цієї дати)</span>{% endif %}</small>
           {% endif %}
         </td>
         <td>

@@ -220,3 +220,16 @@ class TestInstancesListShowsType:
         html = client.get('/admin/instances').get_data(as_text=True)
 
         assert 'Фахова (тематична) школа' in html
+
+
+    def test_override_marker_carries_a_readable_label(self, client, admin):
+        """Зірочка не мусить бути єдиним носієм змісту."""
+        _login(client, admin)
+        course = _course('seminar')
+        _instance(course, event_type='training')
+        db.session.commit()
+
+        html = client.get('/admin/instances').get_data(as_text=True)
+
+        assert 'visually-hidden">(перевизначено для цієї дати)' in html
+        assert 'aria-hidden="true">*' in html

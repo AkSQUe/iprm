@@ -391,3 +391,80 @@ def test_round_trip_keeps_inheritance_intact(client, tmp_path):
 
     xlsx_io.apply_instances_plan(plan)
     assert db.session.get(CourseInstance, inst.id).event_type is None
+
+
+def test_optional_columns_are_real_columns_of_the_sheet(client):
+    """Перелік опційних тепер виводиться з таблиці розбирачів, тож розійтись
+    з нею не може. Лишається помилка друку в самій назві -- її й ловимо."""
+    assert set(xlsx_io.OPTIONAL_INSTANCE_COLS) <= set(xlsx_io.INSTANCE_COLS)
+
+
+def test_import_sets_the_event_type_on_a_brand_new_instance(client, tmp_path):
+    """Створення (порожній id), а не правка: інша гілка apply_instances_plan."""
+    course = _course()
+    path = _write(tmp_path, [_row(course, event_type='Тренінг')])
+    plan = xlsx_io.parse_instances_xlsx(path)
+    assert plan.is_valid, plan.errors
+    assert xlsx_io.apply_instances_plan(plan)['created'] == 1
+
+    created = (CourseInstance.query
+               .filter_by(course_id=course.id)
+               .order_by(CourseInstance.id.desc()).first())
+    assert created.event_type == 'training'
+
+
+def test_schedule_type_dropdown_allows_a_blank_cell(client):
+    """Порожня клітинка тут має власне значення «як у курсу».
+
+    Заборона порожнього (як у решти випадайок розкладу) змусила б проставити
+    вид у кожну дату руками -- саме те, від чого колонка й рятує.
+    """
+    _instance(_course())
+    ws = load_workbook(xlsx_io.export_instances_xlsx())['Розклад']
+    from openpyxl.utils import get_column_letter
+    letter = get_column_letter(xlsx_io.INSTANCE_COLS.index('event_type') + 1)
+
+    by_column = {dv: str(dv.sqref) for dv in ws.data_validations.dataValidation}
+    ours = [dv for dv, ref in by_column.items() if ref.startswith(f'{letter}2')]
+    assert ours, f'на колонці {letter} немає data-validation'
+    assert ours[0].allow_blank is True
+
+    fmt_letter = get_column_letter(
+        xlsx_io.INSTANCE_COLS.index('event_format') + 1)
+    others = [dv for dv, ref in by_column.items()
+              if ref.startswith(f'{fmt_letter}2')]
+    assert others and others[0].allow_blank is False, (
+        'решта випадайок розкладу порожнього приймати не мусить')
+
+
+def test_export_writes_the_canonical_ukrainian_name_in_any_locale(client):
+    """Файл -- контракт, а не переклад.
+
+    Експорт бере base_name, а не label: адмін, що працює в російській чи
+    англійській локалі, інакше вивантажив би назви, яких імпорт не приймає.
+    """
+    from flask_babel import force_locale
+
+    from app.models.event_type import EventType
+    from app.services import event_types
+
+    # Без ЖИВОГО перекладу рядка довідника перевірка порожня: label()
+    # тоді й сам відкочується на українську назву, і зламаний експорт
+    # (label замість base_name) пройшов би непоміченим.
+    row_en = EventType.query.filter_by(code='training').one()
+    saved = row_en.translations
+    row_en.translations = dict(saved or {}, en={'name': 'Training'})
+    db.session.commit()
+    event_types.reset_cache()
+    try:
+        course = _course()
+        _instance(course, event_type='training')
+        with force_locale('en'):
+            assert event_types.label('training') == 'Training', (
+                'переклад не живий -- перевірка була б порожньою')
+            row = _exported_row(course)
+        assert row[xlsx_io.INSTANCE_LABELS['event_type']] == 'Тренінг'
+    finally:
+        row_en.translations = saved
+        db.session.commit()
+        event_types.reset_cache()

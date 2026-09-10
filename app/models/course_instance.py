@@ -220,6 +220,33 @@ class CourseInstance(TranslatableMixin, TimestampMixin, db.Model):
         from app.services import event_types
         return event_types.label(self.effective_event_type)
 
+    @property
+    def distinct_event_type(self):
+        """Код виду, лише якщо він відрізняється від курсового; інакше None.
+
+        Те саме правило й та сама причина, що в distinct_difficulty_level:
+        вид, спільний для всіх дат, уже названо один раз біля опису курсу
+        (hero-чип) і бейджем на картці курсу в списку. Повторений на кожному
+        рядку розкладу, він перестає щось розрізняти -- а саме розрізняти
+        дати між собою розклад і покликаний.
+
+        Курс без власного виду + дата з видом -- теж відмінність: сказати
+        про неї нема де більше.
+        """
+        own = self.event_type
+        if not own:
+            return None
+        course_type = self.course.event_type if self.course else None
+        return None if own == course_type else own
+
+    @property
+    def distinct_event_type_label(self):
+        """Назва distinct_event_type активною мовою; None -- якщо нічого
+        не відрізняється."""
+        from app.services import event_types
+        code = self.distinct_event_type
+        return event_types.label(code) if code else None
+
     def _warn_orphan(self, context):
         """Логувати якщо instance без course (дата-інтегріті issue)."""
         logger.warning(

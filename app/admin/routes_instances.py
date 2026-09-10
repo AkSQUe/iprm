@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 from flask import render_template, redirect, url_for, flash, request, jsonify, current_app
 from flask_login import current_user
-from sqlalchemy import func, or_
+from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import joinedload
 
 from app.admin import _listing, admin_bp
@@ -20,7 +20,7 @@ from app.extensions import db, limiter
 from app.models.course import Course
 from app.models.course_instance import CourseInstance
 from app.models.registration import EventRegistration
-from app.services import course_service
+from app.services import course_service, event_types
 from app.services.course_service import InvalidStatusTransition
 from app.services.seating import occupied_clause, occupied_counts
 
@@ -132,12 +132,45 @@ _QUICK_PRESETS = (
 )
 
 
+def _effective_type_clause(code):
+    """Умова «ЕФЕКТИВНИЙ вид заходу дати == code».
+
+    Не `CourseInstance.event_type == code`: перевизначення мають одиниці, і
+    такий фільтр згубив би всі дати, що вид успадковують -- тобто майже всі.
+    Екран виглядав би правдоподібно порожнім, а не зламаним.
+
+    Успадкування перевіряємо через EXISTS (`.has`), а не join: `_instances_query`
+    приєднує Course лише під пошук, і безумовний join довелося б там
+    узгоджувати. Порожній рядок нарівні з NULL -- так само, як у
+    CourseInstance.effective_event_type, де перевірка на істинність.
+    """
+    inherits = or_(
+        CourseInstance.event_type.is_(None),
+        CourseInstance.event_type == '',
+    )
+    return or_(
+        CourseInstance.event_type == code,
+        and_(inherits, CourseInstance.course.has(Course.event_type == code)),
+    )
+
+
+def _event_type_options():
+    """Пари (код, назва) для фільтра -- з довідника, а не з констант.
+
+    choice_arg звіряє значення саме з цим переліком, тож ?event_type=<сміття>
+    тихо падає в порожній фільтр, а не в порожній екран (як у courses_list).
+    """
+    return [(code, row.name) for code, row in event_types.directory().items()]
+
+
 def _instance_filters():
     """Фільтри списку проведень -- спільні для сторінки й експорту."""
     return {
         'q': _listing.text_arg('q'),
         'course_id': _listing.int_arg('course_id'),
         'status': _listing.choice_arg('status', dict(CourseInstance.STATUSES)),
+        'event_type': _listing.choice_arg(
+            'event_type', {code for code, _ in _event_type_options()}),
         'quick': _listing.choice_arg('quick', _QUICK_PRESETS),
     }
 
@@ -165,6 +198,8 @@ def _instances_query(filters):
         query = query.filter(CourseInstance.course_id == filters['course_id'])
     if filters['status']:
         query = query.filter(CourseInstance.status == filters['status'])
+    if filters['event_type']:
+        query = query.filter(_effective_type_clause(filters['event_type']))
 
     # ----- Таблетки швидких фільтрів (взаємовиключні пресети) -----
     quick = filters['quick']
@@ -301,6 +336,7 @@ def instances_list():
             for c in Course.query.filter_by(is_active=True).order_by(Course.title).all()
         ],
         status_options=CourseInstance.STATUSES,
+        event_type_options=_event_type_options(),
     )
 
 
@@ -339,6 +375,8 @@ def instances_report_export():
             ('Пошук', filters['q'] or '–'),
             ('Курс', course.title if course else 'Усі'),
             ('Статус', dict(CourseInstance.STATUSES).get(filters['status'], 'Усі')),
+            ('Вид заходу', event_types.base_name(filters['event_type'])
+             if filters['event_type'] else 'Усі'),
             ('Швидкий фільтр', filters['quick'] or '–'),
         ],
         len(instances),

@@ -54,6 +54,10 @@
   <div class="iprm-datecard__meta">
     {{ location_badge(inst.event_format, inst.location) }}
     {% if inst.cpd_range[0] %}<span class="iprm-schedule__tag iprm-schedule__tag--cpd">{{ points_range(*inst.cpd_range) }}</span>{% endif %}
+    {# Вид заходу -- за тим самим правилом, що й рівень нижче: лише там, де
+       ця дата вибивається з курсу. Вид, спільний для всіх дат, уже стоїть
+       hero-чипом біля назви курсу (distinct_event_type). #}
+    {% if inst.distinct_event_type %}<span class="iprm-schedule__tag iprm-schedule__tag--type">{{ inst.distinct_event_type_label }}</span>{% endif %}
     {# Рівень -- лише там, де ця дата вибивається з курсу: рівень, спільний
        для всіх дат, уже названо один раз біля опису (distinct_difficulty_level). #}
     {% if inst.distinct_difficulty_level %}<span class="iprm-schedule__tag iprm-schedule__tag--level" title="{{ inst.difficulty_label }}">{% trans level=inst.distinct_difficulty_level %}Рівень {{ level }}/3{% endtrans %}</span>{% endif %}
