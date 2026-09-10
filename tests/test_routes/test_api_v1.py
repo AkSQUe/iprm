@@ -25,6 +25,45 @@ def _uid():
     return uuid4().hex[:8]
 
 
+def _record_selects(fn):
+    """Зібрати SELECT-и SQL-журналу, виконані під час виклику fn().
+
+    Той самий прийом, що й у test_admin_export_ceiling._record_selects /
+    test_meta_admin._count_selects -- слухач `before_cursor_execute`.
+    Повертає СПИСОК statement-ів (не лише число), щоб виклик міг відфільтрувати
+    саме запити до `trainers` і не зачепити чужий, вже наявний N+1 (напр.
+    `instance_tariffs`, який до тренерів стосунку не має і не входить у цю
+    задачу).
+    """
+    from sqlalchemy import event as sa_event
+
+    selects = []
+
+    def _listener(_conn, _cursor, statement, _params, _context, _many):
+        if statement.lstrip().upper().startswith('SELECT'):
+            selects.append(statement)
+
+    sa_event.listen(db.engine, 'before_cursor_execute', _listener)
+    try:
+        fn()
+    finally:
+        sa_event.remove(db.engine, 'before_cursor_execute', _listener)
+    return selects
+
+
+def _count_trainer_selects(fn):
+    """Скільки SELECT-ів у журналі читають таблицю `trainers`.
+
+    selectinload по `Course.trainers` / `CourseInstance.trainers` завжди дає
+    РІВНО один SELECT на кожен рівень вкладеності -- незалежно від того,
+    скільки курсів чи проведень на сторінці. Якщо число зростає разом з
+    кількістю заходів -- це і є N+1: тренери підвантажуються по одному
+    заходу, а не пакетно.
+    """
+    selects = _record_selects(fn)
+    return sum(1 for s in selects if 'trainers' in s.lower())
+
+
 @pytest.fixture
 def partner_settings(app):
     s = SiteSettings.get()
@@ -209,7 +248,8 @@ class TestEventsList:
         from app.models.trainer import Trainer
 
         trainer = Trainer(full_name='Іван Тренер', slug=f'tr-{_uid()}',
-                          email='trainer@example.com', role='Лікар')
+                          email='trainer@example.com', role='Лікар',
+                          bio='Біографія Івана.')
         db.session.add(trainer)
         db.session.flush()
         from app.services import trainer_links
@@ -220,9 +260,130 @@ class TestEventsList:
         card = next(e for e in resp.get_json()['items']
                     if e['slug'] == published_event.slug)
 
-        assert card['trainer']['id'] == trainer.id
-        assert card['trainer']['email'] == 'trainer@example.com'
-        assert card['trainer']['full_name'] == 'Іван Тренер'
+        assert card['trainers'][0]['id'] == trainer.id
+        assert card['trainers'][0]['email'] == 'trainer@example.com'
+        assert card['trainers'][0]['full_name'] == 'Іван Тренер'
+        # bio -- сире значення колонки, не переклад: партнерський блок
+        # спікера читає його напряму, як і решту полів цієї відповіді.
+        assert card['trainers'][0]['bio'] == 'Біографія Івана.'
+
+    def test_event_card_serializes_trainers_as_ordered_array(
+            self, client, partner_settings, published_event):
+        """Порядок у відповіді -- порядок position, не id.
+
+        Тренерів заводимо в set_trainers у порядку, зворотному до їхніх id
+        (другий створений іде першим за position) -- інакше збіг position
+        і id-порядку пропустив би баг сортування за id непоміченим.
+        """
+        from app.models.trainer import Trainer
+        from app.services import trainer_links
+
+        first = Trainer(full_name='Перший', slug=f'tr-{_uid()}', role='Лікар')
+        second = Trainer(full_name='Другий', slug=f'tr-{_uid()}', role='Лікар')
+        db.session.add_all([first, second])
+        db.session.flush()
+        assert first.id < second.id, 'фікстура тесту неправильна: id мають зростати'
+
+        # position 0 -- той, що має БІЛЬШИЙ id: інакше й id-порядок, і
+        # position-порядок збіглися б, і сортування-за-id пройшло б тест.
+        trainer_links.set_trainers(
+            published_event._test_instance, [second.id, first.id])
+        db.session.commit()
+
+        resp = client.get('/api/v1/events', headers={'X-API-Key': API_KEY})
+        card = next(e for e in resp.get_json()['items']
+                    if e['slug'] == published_event.slug)
+
+        assert [t['id'] for t in card['trainers']] == [second.id, first.id]
+
+    def test_trainer_key_is_gone(self, client, partner_settings,
+                                 published_event):
+        """Поле замінюється, не дублюється: гілка сумісності назавжди --
+        це другий формат, про який ніхто не знатиме, який актуальний."""
+        from app.models.trainer import Trainer
+        from app.services import trainer_links
+
+        trainer = Trainer(full_name='Тренер', slug=f'tr-{_uid()}', role='Лікар')
+        db.session.add(trainer)
+        db.session.flush()
+        trainer_links.set_trainers(published_event._test_instance, [trainer.id])
+        db.session.commit()
+
+        resp = client.get('/api/v1/events', headers={'X-API-Key': API_KEY})
+        card = next(e for e in resp.get_json()['items']
+                    if e['slug'] == published_event.slug)
+
+        assert 'trainer' not in card
+        assert 'trainers' in card
+
+    def test_event_with_no_trainers_yields_empty_array(
+            self, client, partner_settings, published_event):
+        """Без тренерів -- [], а не [None]: `serialize_trainer` для
+        порожнього значення повертає None, і без фільтрації голий
+        list-comprehension по відсутньому тренеру дав би шум у масиві."""
+        resp = client.get('/api/v1/events', headers={'X-API-Key': API_KEY})
+        card = next(e for e in resp.get_json()['items']
+                    if e['slug'] == published_event.slug)
+
+        assert card['trainers'] == []
+
+    def test_events_list_does_not_n_plus_one_on_trainers(
+            self, client, partner_settings, user):
+        """Список заходів -- рівно та форма запиту, де N+1 виникає непомітно.
+
+        Порівнюємо кількість SELECT-ів ДО таблиці trainers на 2 заходи і на 6
+        (обидва мають курсового і власного тренера проведення -- обидва боки
+        effective_trainers): якщо воно не зростає разом з кількістю заходів,
+        тренери підвантажені пакетно (selectinload), а не по одному на захід.
+        Рахуємо саме trainer-запити, а не всі SELECT-и підряд: у відповіді є й
+        інший, вже наявний N+1 (instance_tariffs), який до цієї задачі не
+        стосується -- голий підрахунок усіх SELECT-ів впав би на ньому.
+        """
+        from app.models.trainer import Trainer
+        from app.services import trainer_links
+
+        def _seed(n):
+            for i in range(n):
+                c = Course(
+                    title=f'N1 Event {_uid()}-{i}', slug=f'n1-{_uid()}',
+                    event_type='course', base_price=1000, is_active=True,
+                    created_by=user.id,
+                )
+                db.session.add(c)
+                db.session.flush()
+                inst = CourseInstance(
+                    course_id=c.id, status='published', event_format='offline',
+                    price=1000,
+                    start_date=datetime.now(timezone.utc) + timedelta(days=10 + i),
+                )
+                db.session.add(inst)
+                db.session.flush()
+                course_trainer = Trainer(
+                    full_name=f'Course T {_uid()}', slug=f'n1-ct-{_uid()}', role='Лікар')
+                instance_trainer = Trainer(
+                    full_name=f'Instance T {_uid()}', slug=f'n1-it-{_uid()}', role='Лікар')
+                db.session.add_all([course_trainer, instance_trainer])
+                db.session.flush()
+                # Курсовий (fallback-бік) і власний тренер проведення
+                # (перекриваючий бік) -- обидва мають бути preloaded, інакше
+                # N+1 переїде лише на один з двох боків effective_trainers.
+                trainer_links.set_trainers(c, [course_trainer.id])
+                trainer_links.set_trainers(inst, [instance_trainer.id])
+            db.session.commit()
+
+        _seed(2)
+        small_n = _count_trainer_selects(
+            lambda: client.get('/api/v1/events', headers={'X-API-Key': API_KEY}))
+
+        _seed(4)
+        large_n = _count_trainer_selects(
+            lambda: client.get('/api/v1/events', headers={'X-API-Key': API_KEY}))
+
+        assert large_n == small_n, (
+            f'SELECT-ів до trainers зросло з {small_n} (2 заходи) до {large_n} '
+            '(6 заходів) -- тренери підвантажуються по одному на захід, а не '
+            'пакетно через selectinload'
+        )
 
     def test_pagination_bounds(self, client, partner_settings, published_event):
         """per_page > MAX_PER_PAGE -> 400 Bad Request з error-повідомленням."""
