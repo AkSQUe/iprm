@@ -25,6 +25,110 @@
     </div>
   </div>
 
+  <!-- ===== HERO ПРОДАЖНОЇ СТОРІНКИ ===== -->
+  <div class="ds-section" id="hero-landing">
+    <p class="ds-label">Components</p>
+    <h2 class="ds-title">Hero продажної сторінки</h2>
+
+    <div class="ds-demo ds-demo--flush">
+      <div class="apple-page">
+        <div class="iprm-hero-wrap">
+          <section class="iprm-hero iprm-hero--landing" aria-label="Hero курсу">
+            <div class="iprm-hero__content">
+              <div class="iprm-hero__copy">
+                <div class="iprm-hero__chips">
+                  <span class="iprm-hero__chip">Курс</span>
+                  <span class="iprm-hero__chip">Базовий</span>
+                  <span class="iprm-hero__chip">Очний</span>
+                  <span class="iprm-hero__chip">Очна участь + індивідуальна практика</span>
+                </div>
+                <h1 class="iprm-hero__title iprm-hero__title--xlong">Біль у суглобах і відновлення після травм: сучасні PRP-протоколи для <span class="apple-gradient-text">ортопеда-травматолога</span></h1>
+                <p class="iprm-hero__subtitle">Від лабораторного протоколу до клінічного рішення: теоретичні основи, практикум і розбір клінічних кейсів.</p>
+                <div class="iprm-hero__actions iprm-hero__actions--detail">
+                  <a href="#" class="apple-btn apple-btn--accent">Забронювати місце</a>
+                  <a href="#" class="apple-btn apple-btn--white">Отримати програму</a>
+                </div>
+              </div>
+
+              <div class="iprm-hero__visual">
+                <img class="iprm-hero__photo" src="{{ url_for('static', filename='images/og-default.png') }}" alt="" width="1200" height="630">
+                <div class="iprm-hero__seats">
+                  <p class="iprm-hero__seats-date"><time datetime="2026-09-12T10:00">12.09.2026, 10:00</time></p>
+                  <span class="iprm-hero__seats-kicker">Набір відкрито</span>
+                  <span class="iprm-hero__seats-value">6 вільних місць</span>
+                  <div class="iprm-progress" role="img" aria-label="4 з 10 місць уже зайнято">
+                    <span class="iprm-progress__fill" data-progress="40"></span>
+                  </div>
+                  <p class="iprm-hero__seats-city">Харків</p>
+                  <p class="iprm-hero__seats-note">вул. Григорія Сковороди, 80, ДУ «ІПХС ім. проф. М. І. Ситенка НАМН України»</p>
+                </div>
+              </div>
+
+              <div class="iprm-hero__meta" aria-label="Ключові параметри курсу">
+                <div class="iprm-hero__meta-item">
+                  <span class="iprm-hero__meta-value">1 день</span>
+                  <span class="iprm-hero__meta-label">тривалість</span>
+                </div>
+                <div class="iprm-hero__meta-item">
+                  <span class="iprm-hero__meta-value">7,5</span>
+                  <span class="iprm-hero__meta-label">балів БПР, Онлайн</span>
+                </div>
+                <div class="iprm-hero__meta-item">
+                  <span class="iprm-hero__meta-value">9</span>
+                  <span class="iprm-hero__meta-label">балів БПР, Офлайн</span>
+                </div>
+                <div class="iprm-hero__meta-item">
+                  <span class="iprm-hero__meta-value">до 10</span>
+                  <span class="iprm-hero__meta-label">у групі</span>
+                </div>
+                <div class="iprm-hero__meta-item">
+                  <span class="iprm-hero__meta-value">від 1 000 &#8372;</span>
+                  <span class="iprm-hero__meta-label">вартість</span>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+    <p class="ds-hint">Двоколонковий тёмний варіант hero (<code class="ds-code">.iprm-hero--landing</code>, course-landing.css), спільний для сторінки очного курсу й онлайн-курсу. Колонка візуалу ширша за колонку тексту (1.06 проти 0.94): зображення має врівноважувати текст, а не супроводжувати його.</p>
+
+    <h3 class="ds-section-heading">Ступені заголовка за довжиною назви</h3>
+    <div class="ds-demo ds-demo--flush">
+      <div class="apple-page">
+        <section class="iprm-hero iprm-hero--landing" aria-label="Ступені заголовка">
+          <div class="iprm-hero__content">
+            <div class="iprm-hero__copy">
+              <h1 class="iprm-hero__title">PRP у <span class="apple-gradient-text">травматології</span></h1>
+              <h1 class="iprm-hero__title iprm-hero__title--long">Плазмотерапія в дерматології: базовий <span class="apple-gradient-text">протокол</span></h1>
+              <h1 class="iprm-hero__title iprm-hero__title--xlong">Біль у суглобах і відновлення після травм: сучасні PRP-протоколи для <span class="apple-gradient-text">ортопеда-травматолога</span></h1>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+    <p class="ds-hint">Клемп відповідає лише за ширину екрана; довжину назви CSS не знає, тож її передає шаблон (<code class="ds-code">hero_title_len</code> у <code class="ds-code">partials/_course_hero.html</code>): до 40 символів — базовий clamp(34px, 1.6vw + 22px, 46px), 41&#8211;75 — <code class="ds-code">--long</code>, понад 75 — <code class="ds-code">--xlong</code>. Без цього назва в 96 символів давала п'ять рядків по 72px і виштовхувала лід, кнопки й параметри за межі першого екрана.</p>
+
+    <h3 class="ds-section-heading">Теги характеристик</h3>
+    <div class="ds-demo ds-demo--flush">
+      <div class="apple-page">
+        <section class="iprm-hero iprm-hero--landing" aria-label="Теги">
+          <div class="iprm-hero__content">
+            <div class="iprm-hero__copy">
+              <div class="iprm-hero__chips">
+                <span class="iprm-hero__chip">Курс</span>
+                <span class="iprm-hero__chip">Базовий</span>
+                <span class="iprm-hero__chip">Очний</span>
+                <span class="iprm-hero__chip iprm-hero__chip--accent">Акцентний тег</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+    <p class="ds-hint">Компактний тег на тёмному: 5/11px, 12px/700, розділені межею rgba(255,255,255,.28) — 2.22 до фону hero на світлішому кінці градієнта, 2.41 на тёмнішому. Модифікатор <code class="ds-code">--accent</code> (золото) лишається для випадку, коли один тег справді головніший за решту — за правилом «золото це дія, терракота це мітка» його вживають ощадно.</p>
+  </div>
+
   <!-- ===== FEATURE CARDS ===== -->
   <div class="ds-section" id="feature-cards">
     <p class="ds-label">Components</p>
@@ -304,18 +408,20 @@
       </div>
       <p class="ds-hint">Базовий варіант — 4 колонки. Модифікатор --band: тонка смуга одразу під hero (у парі з секцією .iprm-section--band)</p>
 
-      <h3 class="ds-section-heading">Progress + seats card</h3>
+      <h3 class="ds-section-heading">Картка проведення (progress + seats)</h3>
       <div class="ds-demo">
         <div class="iprm-hero__seats">
+          <p class="iprm-hero__seats-date"><time datetime="2026-09-12T10:00">12.09.2026, 10:00</time></p>
           <span class="iprm-hero__seats-kicker">Набір відкрито</span>
           <span class="iprm-hero__seats-value">6 вільних місць</span>
           <div class="iprm-progress" role="img" aria-label="4 з 10 місць уже зайнято">
             <span class="iprm-progress__fill" data-progress="40"></span>
           </div>
-          <p class="iprm-hero__seats-note">Київ, клініка «Мультимед»</p>
+          <p class="iprm-hero__seats-city">Київ</p>
+          <p class="iprm-hero__seats-note">вул. Хрещатик, 1, клініка «Мультимед»</p>
         </div>
       </div>
-      <p class="ds-hint">Заповнення — CSS-змінна --iprm-progress, яку виставляє JS із data-progress (No Inline Policy). У hero — накладка на фото, до 768px стає звичайним блоком</p>
+      <p class="ds-hint">Порядок рядків — питання відвідувача в тому порядку, в якому він їх ставить: дата/час (.iprm-hero__seats-date) → статус набору (.iprm-hero__seats-kicker) → вільні місця (.iprm-hero__seats-value) → смужка → місто (.iprm-hero__seats-city) → адреса (.iprm-hero__seats-note). Кожен рядок необов'язковий: захід без обмеження місць лишається з датою й адресою. Заповнення смужки — CSS-змінна --iprm-progress, яку виставляє JS із data-progress (No Inline Policy). У hero картка стоїть ПІД фото в тій самій колонці, а не накладкою на нього: з п'ятьма рядками накладка закривала нижню третину зображення</p>
 
       <h3 class="ds-section-heading">Benefit cards</h3>
       <div class="ds-demo">

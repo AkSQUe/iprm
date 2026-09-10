@@ -4,7 +4,6 @@
 {% block recaptcha %}{% include 'partials/_recaptcha.html' %}{% endblock %}
 {% from 'partials/_location_badge.html' import location_badge %}
 {% from 'partials/_money.html' import money %}
-{% from 'partials/_bpr_points.html' import points_by_format, points_range %}
 
 {% block title %}{% trans title=course.t('title') %}{{ title }} | ІПРМ{% endtrans %}{% endblock %}
 {% block meta_description %}{{ course.t('subtitle') or course.t('short_description') or course.t('title') }}{% endblock %}
@@ -173,17 +172,25 @@
   {% set _hero_media = course.hero_media or course.card_media %}
   {% set hero_image_size = (_hero_media.width, _hero_media.height) if _hero_media else none %}
 
+  {# Чипи -- тільки характеристики заходу. Дати й адреси тут більше немає:
+     чип із датою й повною адресою розтягувався на два рядки на всю
+     колонку й читався як плашка, а не як тег. Обоє переїхали в картку
+     проведення поруч із фото, де стоять у порядку "коли -> де". #}
   {% set hero_chips = [] %}
-  {% if open_inst and open_inst.start_date %}
-    {% set _chip_date = open_inst.start_date.strftime('%d.%m.%Y') %}
-    {% set _chip_place = _('Онлайн') if open_inst.event_format == 'online' else (open_inst.location | localize_location if open_inst.location else none) %}
-    {% set _discard = hero_chips.append({'text': [_chip_date, _chip_place] | select | join(' · '), 'accent': true}) %}
-  {% endif %}
   {% if course.event_type %}{% set _discard = hero_chips.append(course.event_type_label) %}{% endif %}
   {# Теги курсу -- редакторські чипи, вони тут головні. Місткість свідомо НЕ
-     дублюємо чипом: вона вже є в рядку ключових параметрів нижче. #}
+     дублюємо чипом: вона вже є в рядку ключових параметрів нижче.
+
+     Тег, який слово в слово повторює вид заходу, друкувався другим разом:
+     редактори вписують "Курс" тегом, не знаючи, що вид заходу вже дав
+     такий самий чип. Звірка без урахування регістру -- саме так вони й
+     розходяться ("Курс" проти "курс"). #}
+  {% set _chip_seen = [(course.event_type_label or '') | lower] %}
   {% for tag in course.t('tags') or [] %}
-    {% set _discard = hero_chips.append(tag) %}
+    {% if (tag or '') | lower not in _chip_seen %}
+      {% set _discard = hero_chips.append(tag) %}
+      {% set _discard = _chip_seen.append((tag or '') | lower) %}
+    {% endif %}
   {% endfor %}
 
   {% set hero_meta = [] %}
@@ -191,10 +198,25 @@
     {% set _days = (open_inst.end_date.date() - open_inst.start_date.date()).days + 1 %}
     {% if _days > 0 %}{% set _discard = hero_meta.append({'value': '%s %s' % (_days, _days | plural('days')), 'label': _('тривалість')}) %}{% endif %}
   {% endif %}
-  {# Бали БПР сюди не йдуть: на гібриді їх два (онлайн/очно), а hero_meta --
-     пара value/label під ОДНЕ число. Показуємо чипом окремим рядком під
-     hero (нижче), через points_by_format -- він сам вирішує, писати одне
-     число чи обидва підписаними. #}
+  {# Бали БПР -- у тому самому рядку параметрів, а не чипом під hero: чип
+     висів окремою плашкою під тёмною секцією й не читався як характеристика
+     заходу. Різні бали за формат участі дають ДВІ клітинки, підписані
+     форматом, а не одну з двома числами: у клітинці 20px/700 рядок
+     "Онлайн 7,5 · Офлайн 9" не поміщається й ламається посередині. #}
+  {% if open_inst and open_inst.cpd_pairs %}
+    {% set _cpd_values = open_inst.cpd_pairs | map(attribute=1) | list %}
+    {% if _cpd_values | unique | list | length > 1 %}
+      {% for _fmt, _value in open_inst.cpd_pairs %}
+        {% set _discard = hero_meta.append({
+          'value': _value | points,
+          'label': '%s, %s' % (_value | plural('bpr_points'),
+                               _('Онлайн') if _fmt == 'online' else _('Офлайн'))}) %}
+      {% endfor %}
+    {% else %}
+      {% set _discard = hero_meta.append({'value': _cpd_values[0] | points,
+                                          'label': _cpd_values[0] | plural('bpr_points')}) %}
+    {% endif %}
+  {% endif %}
   {% if capacity %}{% set _discard = hero_meta.append({'value': '%s %s' % (_('до'), capacity), 'label': _('у групі')}) %}{% endif %}
   {% if min_price and min_price > 0 %}
     {# Через макрос, а не рядком: символ гривні -- HTML-сутність, і зібраний
@@ -203,24 +225,55 @@
     {% set _discard = hero_meta.append({'value': _price_value, 'label': _('вартість')}) %}
   {% endif %}
 
-  {# Картка вільних місць. Плейсхолдери підпису передаємо аргументами
-     gettext, а не через %: flask_babel інтерполює сам, і зовнішній %
-     падав би на порожньому словнику. #}
+  {# Картка найближчого проведення. Була карткою ЛИШЕ вільних місць, тепер
+     відповідає на чотири питання поспіль: коли -> чи ще беруть -> скільки
+     лишилось -> де. Тому будується від наявності проведення, а не від
+     наявності лічильника місць: у заходу без обмеження місткості дата й
+     адреса нікуди не діваються.
+
+     Місто й адреса -- РІЗНІ рядки. `location` -- вільний текст із адресою,
+     `city` -- запис довідника; місто відповідає на "чи це моє місто",
+     адреса -- на "куди їхати", і в одному рядку перше губилось у другому.
+     Немає прив'язки до довідника -- рядок міста просто не друкується, а
+     адреса лишається такою, як її вписали.
+
+     Плейсхолдери підпису передаємо аргументами gettext, а не через %:
+     flask_babel інтерполює сам, і зовнішній % падав би на порожньому
+     словнику. #}
   {% set hero_seats = none %}
-  {% if seats_left is not none %}
-    {% set _taken = ((capacity - seats_left) * 100 / capacity) | round | int if capacity and capacity > 0 else none %}
+  {% if open_inst %}
+    {% set _online = open_inst.event_format == 'online' %}
+    {% set _taken = ((capacity - seats_left) * 100 / capacity) | round | int
+                    if (seats_left is not none and capacity and capacity > 0) else none %}
     {% set _seats_label = _('%(taken)s з %(total)s місць уже зайнято',
                             taken=(capacity - seats_left), total=capacity) if _taken is not none else '' %}
-    {% set _seats_note = (_('Онлайн') if open_inst.event_format == 'online'
-                          else (open_inst.location | localize_location if open_inst.location else none)) if open_inst else none %}
-    {% set hero_seats = {
-      'value': '%s %s' % (seats_left, seats_left | plural('free_seats')),
+    {% set _card = {
+      'value': ('%s %s' % (seats_left, seats_left | plural('free_seats'))) if seats_left is not none else none,
       'taken_percent': _taken,
       'progress_label': _seats_label,
-      'note': _seats_note
+      'city': _('Онлайн') if _online else (open_inst.city.t('name') if open_inst.city else none),
+      'note': none if _online else (open_inst.location | localize_location if open_inst.location else none)
     } %}
+    {# Видимий підпис -- голий strftime, як у листах, підтвердженнях
+       реєстрації та стрічці календаря: значення показується рівно так, як
+       його ввели в адмінці (DateTimeLocalField пише наївний datetime і
+       читає його назад тим самим). Машинозчитуване date_iso -- isoformat
+       того ж значення, тобто та сама заява, що вже стоїть у startDate
+       JSON-LD цієї ж сторінки (_event_jsonld). Розсинхронізувати їх було б
+       гірше, ніж мати одну спільну умовність. #}
+    {% if open_inst.start_date %}
+      {% set _discard = _card.update({
+        'date': open_inst.start_date.strftime('%d.%m.%Y, %H:%M'),
+        'date_iso': open_inst.start_date.isoformat()}) %}
+    {% endif %}
+    {# Порожня картка -- це рамка з самим написом "Набір відкрито": ані
+       дати, ані місць, ані міста. Такої на сторінці бути не повинно. #}
+    {% if _card.date or _card.value or _card.city or _card.note %}
+      {% set hero_seats = _card %}
+    {% endif %}
   {% endif %}
 
+  {% set hero_title_len = course.t('title') | length %}
   {% set hero_title %}
     {% set title_words = course.t('title').rsplit(' ', 1) %}
     {% if title_words | length > 1 %}{{ title_words[0] }} <span class="apple-gradient-text">{{ title_words[1] }}</span>{% else %}{{ course.t('title') }}{% endif %}
@@ -244,14 +297,6 @@
   {% endset %}
 
   {% include 'partials/_course_hero.html' %}
-
-  {# Бали БПР показаного проведення -- окремим чипом під hero: value/label
-     hero_meta вище пари не тримає, а тут (гібрид) значень часто два. #}
-  {% if open_inst and open_inst.cpd_pairs %}
-  <div class="iprm-section__inner">
-    <span class="iprm-schedule__tag iprm-schedule__tag--cpd">{{ points_by_format(open_inst.cpd_pairs) }}</span>
-  </div>
-  {% endif %}
 
   {# ===================================================================
      Порядок секцій -- еталонний (WS-A плану міграції,

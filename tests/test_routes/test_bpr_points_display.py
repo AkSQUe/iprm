@@ -31,17 +31,51 @@ def _published_hybrid(app):
 
 
 def test_course_page_shows_both_formats(client, app):
+    """Різні бали за формат -- ДВІ клітинки рядка параметрів hero.
+
+    Перевіряємо саме пару "число + його підпис У ТІЙ САМІЙ клітинці": два
+    числа й два слова, розкидані по сторінці, нічого не доводять. Раніше
+    бали стояли окремим чипом під hero одним рядком ("Онлайн 7,5 · Офлайн
+    9"), тепер -- клітинками, бо в рядку 20px/700 той рядок ламався
+    посередині.
+    """
     course, _ = _published_hybrid(app)
     html = client.get(f'/courses/{course.slug}').get_data(as_text=True)
-    online_pos = html.find('7,5')
-    offline_pos = html.find('9')
-    assert online_pos != -1 and offline_pos != -1
-    # "Онлайн" і "Офлайн" мусять стояти поруч зі "своїми" цифрами -- інакше
-    # це просто два числа, що трапились на сторінці з інших причин.
-    assert 'Онлайн 7,5' in html
-    assert 'Офлайн 9' in html
+    cells = re.findall(
+        r'<div class="iprm-hero__meta-item">(.*?)</div>', html, re.DOTALL,
+    )
+    online = [c for c in cells if 'Онлайн' in c]
+    offline = [c for c in cells if 'Офлайн' in c]
+    assert len(online) == 1 and len(offline) == 1, (
+        'бали за формат мусять бути двома клітинками рядка параметрів'
+    )
+    assert '7,5' in online[0] and '9' not in online[0]
+    assert '9' in offline[0] and '7,5' not in offline[0]
     assert '7.50' not in html
     assert '9.00' not in html
+
+
+def test_course_page_shows_one_cell_when_formats_agree(client, app):
+    """Однакові бали -- одна клітинка без підпису формату.
+
+    Інакше сторінка двічі повідомляє те саме число й наводить на думку, що
+    їх можна скласти.
+    """
+    course = Course(title='Однакові', slug='same-bpr', is_active=True)
+    db.session.add(course)
+    db.session.flush()
+    db.session.add(CourseInstance(
+        course_id=course.id, event_format='hybrid', status='published',
+        cpd_points_online=Decimal('9.00'), cpd_points_offline=Decimal('9.00'),
+    ))
+    db.session.commit()
+
+    html = client.get(f'/courses/{course.slug}').get_data(as_text=True)
+    cells = re.findall(
+        r'<div class="iprm-hero__meta-item">(.*?)</div>', html, re.DOTALL,
+    )
+    assert not [c for c in cells if 'Онлайн' in c or 'Офлайн' in c]
+    assert len([c for c in cells if 'балів БПР' in c]) == 1
 
 
 def test_schedule_tag_shows_range(client, app):

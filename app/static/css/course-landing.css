@@ -58,12 +58,21 @@
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
-  gap: 62px;
+  /* Візуалу віддано БІЛЬШУ половину, ніж тексту. Раніше було навпаки
+     (1.08 проти 0.92), і при 72px заголовку текст займав два екрани, а
+     фото висіло серед порожнечі: `align-items: center` центрує коротшу
+     колонку у висоті довшої. Зменшений заголовок і ширша колонка візуалу
+     врівноважують блок з обох боків одразу. */
+  grid-template-columns: minmax(0, 0.94fr) minmax(0, 1.06fr);
+  /* Розділені навмисно: рядок параметрів -- третій елемент сітки на всю
+     ширину, і спільний `gap` дав би йому той самий відступ, що й між
+     колонками, плюс власний margin. Було 92px порожнечі під карткою. */
+  column-gap: 48px;
+  row-gap: 44px;
   align-items: center;
   max-width: var(--iprm-max-content);
   margin: 0 auto;
-  padding: 78px 24px 72px;
+  padding: 66px 24px 60px;
   text-align: left;
   color: var(--iprm-on-accent);
 }
@@ -73,33 +82,69 @@
   min-width: 0;
 }
 
+/* Заголовок продажного hero.
+
+   Базовий клемп (apple-pages.css) -- clamp(40px, 5.5vw, 72px) -- зроблений
+   під короткий заголовок по центру екрана. У двоколонковому hero та сама
+   формула на назві в 96 символів дає п'ять рядків: лід, кнопки й рядок
+   параметрів їдуть за межі першого екрана, а фото поруч виглядає марком.
+
+   Масштаб іде за двома вимірами. Ширину бере клемп; довжину назви CSS не
+   знає в принципі, тож вона приходить модифікатором із шаблону
+   (partials/_course_hero.html, hero_title_len). Пороги -- 40 і 75
+   символів: до 40 назва вкладається в рядок-два будь-де, після 75
+   починається абзац. */
 .apple-page .iprm-hero--landing .iprm-hero__title {
   color: var(--iprm-on-accent);
+  font-size: clamp(34px, 1.6vw + 22px, 46px);
+  margin-bottom: 18px;
+}
+
+.apple-page .iprm-hero--landing .iprm-hero__title--long {
+  font-size: clamp(30px, 1.4vw + 18px, 40px);
+}
+
+.apple-page .iprm-hero--landing .iprm-hero__title--xlong {
+  font-size: clamp(27px, 1.15vw + 15px, 34px);
+  letter-spacing: -0.025em;
 }
 
 .apple-page .iprm-hero--landing .iprm-hero__subtitle {
   max-width: 670px;
-  margin: 0 0 26px;
+  margin: 0 0 22px;
   color: rgba(255, 255, 255, 0.77);
   font-size: 19px;
   text-align: left;
 }
 
-/* Чипи: дата/місто, формат, розмір групи. */
+/* Теги характеристик: вид заходу, рівень, формат участі.
+
+   Компактні навмисно. Дати й адреси серед них більше немає (вона поїхала в
+   картку проведення), тож усі чипи -- короткі слова одного класу, і 13px з
+   падінгом 8/13 робили з трьох слів смугу на пів колонки. Роздільна робота
+   лежить на межі, а не на заливці: заливка в 0.09 дає до фону hero 1.25,
+   тобто сама по собі тега не окреслює. */
 .iprm-hero__chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 9px;
-  margin-bottom: 24px;
+  gap: 8px;
+  margin-bottom: 20px;
 }
 
 .iprm-hero__chip {
-  padding: 8px 13px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 5px 11px;
+  /* Контраст межі до фону hero: 2.22 на світлішому кінці градієнта, 2.41
+     на тёмнішому (було 1.63/1.67). До формальних 3.0 для графіки не
+     тягнемо навмисно -- це вимагало б альфи 0.38, тобто майже білого
+     обведення на кожному з чотирьох тегів, і мітка почала б читатись як
+     кнопка з обведенням. Сам зміст тега несе текст: 10.95 на світлішому
+     кінці, 15.66 на тёмнішому. */
+  border: 1px solid rgba(255, 255, 255, 0.28);
   border-radius: var(--iprm-radius-pill);
-  background: rgba(255, 255, 255, 0.08);
-  font-size: 13px;
+  background: rgba(255, 255, 255, 0.09);
+  font-size: 12px;
   font-weight: 700;
+  line-height: 1.35;
 }
 
 .iprm-hero__chip--accent {
@@ -116,12 +161,17 @@
   justify-content: flex-start;
 }
 
-/* Рядок ключових параметрів. Показуємо лише заповнені -- тому auto-fit. */
+/* Рядок ключових параметрів. Показуємо лише заповнені -- тому auto-fit.
+
+   Стоїть під ОБОМА колонками, а не в колонці тексту: клітинок буває
+   п'ять (тривалість, бали онлайн, бали офлайн, група, вартість), і в
+   половині ширини hero значення 20px/700 ламалось усередині -- "від
+   1 000 ₴" переносилось після "від". */
 .iprm-hero__meta {
+  grid-column: 1 / -1;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
   gap: 1px;
-  margin-top: 34px;
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: var(--iprm-radius-md);
   overflow: hidden;
@@ -150,8 +200,15 @@
   text-transform: uppercase;
 }
 
+/* Колонка візуалу -- фото плюс картка проведення під ним. `align-content:
+   start` тримає їх злиплими зверху: без нього grid розтягує рядки на всю
+   висоту колонки, і між фото й карткою відкривається діра тим більша, чим
+   довший текст ліворуч. */
 .iprm-hero__visual {
   position: relative;
+  display: grid;
+  gap: 14px;
+  align-content: start;
 }
 
 /* Своїх пропорцій рамці НЕ задаємо: зображення курсів різні -- від майже
@@ -170,19 +227,46 @@
   box-shadow: 0 32px 75px rgba(5, 0, 14, 0.36);
 }
 
-/* Картка "вільні місця" -- світла пляма поверх тёмного hero. */
+/* Картка проведення -- світла пляма під фото.
+
+   Була накладкою на фото (position: absolute, left/bottom -28px). Поки в
+   ній стояли два рядки, накладка працювала; з датою, містом і адресою
+   картка виросла до п'яти рядків і закривала нижню третину зображення --
+   тобто рівно те, що цей екран мав ПОКАЗАТИ більшим. Тепер вона сусід
+   фото по колонці, а не пляма поверх нього: обидва мають повну ширину, і
+   мобільний злам для картки більше не потрібен. */
 .iprm-hero__seats {
-  position: absolute;
-  left: -28px;
-  bottom: -28px;
-  width: min(330px, 80%);
-  padding: 22px;
+  width: 100%;
+  padding: 20px 22px;
   /* 18px -- метрика еталона; --iprm-radius-md дає 16px і картка виглядала
      жорсткіше за сусідні поверхні hero. */
   border-radius: 18px;
   background: var(--iprm-white);
   color: var(--iprm-text);
   box-shadow: var(--iprm-shadow-card);
+}
+
+/* Дата й час -- ПЕРШИЙ рядок картки: "коли" відвідувач питає раніше, ніж
+   "чи ще беруть". Відбивається лінією, бо решта картки -- про набір, а це
+   про сам захід. */
+.iprm-hero__seats-date {
+  margin: 0 0 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--iprm-border);
+  color: var(--iprm-text);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+/* Місто окремим рядком від адреси. Місто відповідає на "чи це моє місто",
+   адреса -- на "куди їхати"; поки вони стояли одним рядком, місто
+   губилось усередині назви установи. */
+.iprm-hero__seats-city {
+  margin: 10px 0 0;
+  color: var(--iprm-text);
+  font-size: 14px;
+  font-weight: 700;
 }
 
 .iprm-hero__seats-kicker {
@@ -205,9 +289,10 @@
 }
 
 .iprm-hero__seats-note {
-  margin: 0;
+  margin: 2px 0 0;
   color: var(--iprm-text-light);
   font-size: 13px;
+  line-height: 1.4;
 }
 
 /* Заповнення передається змінною --iprm-progress з шаблону (No Inline Policy:
@@ -1416,10 +1501,6 @@
     max-width: 720px;
   }
 
-  .iprm-hero__seats {
-    left: 18px;
-  }
-
   .iprm-trust-stats,
   .iprm-benefit-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -1448,15 +1529,8 @@
     grid-template-columns: 1fr 1fr;
   }
 
-  /* Картка місць перестає бути накладкою: на вузькому екрані вона
-     перекривала б фото. */
-  .iprm-hero__seats {
-    position: relative;
-    left: auto;
-    bottom: auto;
-    width: calc(100% - 28px);
-    margin: -32px auto 0;
-  }
+  /* Правила "картка перестає бути накладкою" тут більше немає: вона не
+     накладка й на десктопі -- див. .iprm-hero__seats вище. */
 
   .iprm-benefit-grid,
   .iprm-audience-grid,

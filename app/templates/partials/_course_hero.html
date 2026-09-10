@@ -2,6 +2,11 @@
 
    Спільний для очного й онлайн-курсу. Очікує:
      hero_title      -- заголовок (рядок або Markup);
+     hero_title_len  -- довжина заголовка В СИМВОЛАХ. Клемп у CSS відповідає
+                        лише за ширину екрана, а довжину назви знає тільки
+                        шаблон: 96-символьна назва тим самим кеглем дає
+                        п'ять рядків там, де 20-символьна дає один. Звідси
+                        два модифікатори -- --long і --xlong;
      hero_subtitle   -- лід (може бути порожнім);
      hero_image      -- URL ілюстрації або нічого -> одноколонковий варіант;
      hero_image_size -- (w, h) справжнього файлу; рамка малюється за формою
@@ -12,7 +17,13 @@
      hero_meta       -- [{value, label}] -- рядок ключових параметрів;
      hero_actions    -- Markup із кнопками (рендерить сторінка: у очного й
                         онлайн курсу різні цілі CTA);
-     hero_seats      -- {value, note, taken_percent} або нічого.
+     hero_seats      -- картка найближчого проведення або нічого:
+                        {date, date_iso, status, value, taken_percent,
+                         progress_label, city, note}. Порядок рядків у
+                         картці -- відповідь на питання відвідувача в тому
+                         порядку, в якому він їх ставить: коли -> чи ще
+                         беруть -> скільки лишилось -> де місто -> яка
+                         адреса.
 
    Фото декоративне поруч із заголовком, тому alt порожній: назву курсу
    скрінрідер уже прочитав у h1, а дубль лише заважає. #}
@@ -33,38 +44,47 @@
         </div>
         {% endif %}
 
-        <h1 class="iprm-hero__title">{{ hero_title }}</h1>
+        {% set _title_len = hero_title_len | default(0, true) %}
+        <h1 class="iprm-hero__title{% if _title_len > 75 %} iprm-hero__title--xlong{% elif _title_len > 40 %} iprm-hero__title--long{% endif %}">{{ hero_title }}</h1>
 
         {% if hero_subtitle %}
         <p class="iprm-hero__subtitle">{{ hero_subtitle }}</p>
         {% endif %}
 
         {{ hero_actions }}
-
-        {% if hero_meta %}
-        <div class="iprm-hero__meta" aria-label="{{ _('Ключові параметри курсу') }}">
-          {% for item in hero_meta %}
-          <div class="iprm-hero__meta-item">
-            <span class="iprm-hero__meta-value">{{ item.value }}</span>
-            <span class="iprm-hero__meta-label">{{ item.label }}</span>
-          </div>
-          {% endfor %}
-        </div>
-        {% endif %}
       </div>
 
-      {% if hero_image %}
+      {# Картка живе в колонці візуалу й тоді, коли ілюстрації немає: дата,
+         місто й адреса -- не декор при фото, а єдине місце на першому
+         екрані, де вони взагалі названі. #}
+      {% if hero_image or hero_seats %}
       <div class="iprm-hero__visual">
+        {% if hero_image %}
         {% set _hero_size = hero_image_size | default((640, 500), true) %}
         <img class="iprm-hero__photo" src="{{ hero_image }}" alt=""
              fetchpriority="high" decoding="async"
              width="{{ _hero_size[0] }}" height="{{ _hero_size[1] }}">
+        {% endif %}
 
         {% if hero_seats %}
         <div class="iprm-hero__seats">
-          <span class="iprm-hero__seats-kicker">{{ _('Набір відкрито') }}</span>
+          {% if hero_seats.get('date') %}
+          <p class="iprm-hero__seats-date">
+            {%- if hero_seats.get('date_iso') -%}
+            <time datetime="{{ hero_seats.date_iso }}">{{ hero_seats.date }}</time>
+            {%- else -%}
+            {{ hero_seats.date }}
+            {%- endif -%}
+          </p>
+          {% endif %}
+
+          <span class="iprm-hero__seats-kicker">{{ hero_seats.get('status') or _('Набір відкрито') }}</span>
+
+          {% if hero_seats.get('value') %}
           <span class="iprm-hero__seats-value">{{ hero_seats.value }}</span>
-          {% if hero_seats.taken_percent is not none %}
+          {% endif %}
+
+          {% if hero_seats.get('taken_percent') is not none %}
           {# Смужка з [hidden]: заповнення ставить progress-fill.js. Без JS
              порожній індикатор читався б як "зайнято 0%" -- тобто брехав. #}
           <div class="iprm-progress" role="img" hidden
@@ -72,11 +92,29 @@
             <span class="iprm-progress__fill" data-progress="{{ hero_seats.taken_percent }}"></span>
           </div>
           {% endif %}
-          {% if hero_seats.note %}
+
+          {% if hero_seats.get('city') %}
+          <p class="iprm-hero__seats-city">{{ hero_seats.city }}</p>
+          {% endif %}
+          {% if hero_seats.get('note') %}
           <p class="iprm-hero__seats-note">{{ hero_seats.note }}</p>
           {% endif %}
         </div>
         {% endif %}
+      </div>
+      {% endif %}
+
+      {# Рядок параметрів -- на всю ширину hero, а не в колонці тексту: у
+         півколонки чотири-п'ять клітинок стискаються так, що "від 1 000 ₴"
+         переноситься всередині значення. #}
+      {% if hero_meta %}
+      <div class="iprm-hero__meta" aria-label="{{ _('Ключові параметри курсу') }}">
+        {% for item in hero_meta %}
+        <div class="iprm-hero__meta-item">
+          <span class="iprm-hero__meta-value">{{ item.value }}</span>
+          <span class="iprm-hero__meta-label">{{ item.label }}</span>
+        </div>
+        {% endfor %}
       </div>
       {% endif %}
 

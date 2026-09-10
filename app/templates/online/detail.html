@@ -120,6 +120,7 @@
   {# Місць у навчанні без дат немає, тож картки вільних місць теж. #}
   {% set hero_seats = none %}
 
+  {% set hero_title_len = course.effective_title | length %}
   {% set hero_title %}
     {% set title_words = course.effective_title.rsplit(' ', 1) %}
     {% if title_words | length > 1 %}{{ title_words[0] }} <span class="apple-gradient-text">{{ title_words[1] }}</span>{% else %}{{ course.effective_title }}{% endif %}
