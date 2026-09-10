@@ -9,6 +9,7 @@
 латинський рядок замість назви.
 """
 import logging
+import re
 
 from flask import flash, redirect, render_template, request, url_for
 from flask_login import current_user
@@ -22,6 +23,13 @@ from app.rbac import permission_required
 from app.services import event_types
 
 audit_logger = logging.getLogger('audit')
+
+# Код їде далі в партнерське API й xlsx як є (без FK, це природний ключ).
+# HTML-форма підказує ("латиницею", maxlength=30), але без серверної
+# перевірки код з пробілом чи кирилицею пройшов би і зламав обидва
+# контракти нижче за течією. Дефіс лишаємо поруч із підкресленням --
+# обидва вже трапляються в кодах (напр. службові тестові коди).
+_CODE_RE = re.compile(r'[a-z0-9_-]{1,30}')
 
 
 def _rows():
@@ -96,6 +104,11 @@ def event_types_add():
     name = (request.form.get('name') or '').strip()
     if not code or not name:
         flash('Вкажіть і код, і назву типу', 'error')
+        return redirect(url_for('admin.event_types_list'))
+
+    if not _CODE_RE.fullmatch(code):
+        flash('Код мусить бути латиницею, цифрами й підкресленням, '
+              'без пробілів (до 30 символів)', 'error')
         return redirect(url_for('admin.event_types_list'))
 
     if EventType.query.filter_by(code=code).first():

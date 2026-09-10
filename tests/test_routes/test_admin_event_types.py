@@ -117,6 +117,24 @@ def test_add_rejects_empty_code_or_name(client, admin):
     assert EventType.query.count() == before
 
 
+def test_add_rejects_code_with_spaces_or_cyrillic(client, admin):
+    """Код іде далі в партнерський API і xlsx як є (нижній регістр, без
+    пробілів). HTML-форма це підказує (maxlength, "латиницею"), але без
+    серверної перевірки хибний код проходить і псує обидва контракти."""
+    _login(client, admin)
+    before = EventType.query.count()
+
+    client.post('/admin/event-types/add', data={
+        'code': 'не код', 'name': 'Погана назва',
+    })
+    assert EventType.query.count() == before, 'кирилиця в коді не мала пройти'
+
+    client.post('/admin/event-types/add', data={
+        'code': 'has space', 'name': 'Ще одна погана',
+    })
+    assert EventType.query.count() == before, 'пробіл у коді не мав пройти'
+
+
 def test_delete_removes_unused_row(client, admin):
     _login(client, admin)
     row = _custom()
