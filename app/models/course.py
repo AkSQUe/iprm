@@ -46,8 +46,6 @@ class Course(TranslatableMixin, TimestampMixin, db.Model):
     base_price = db.Column(db.Numeric(10, 2), default=0)
     # Бали БПР окремо за форматом участі: на гібридному заході онлайн і очно
     # дають різну кількість. Дробові (Numeric), бо 4,5 і 7,5 -- норма.
-    # ТИМЧАСОВО поруч лишається cpd_points -- прибирається в Task 10.
-    cpd_points = db.Column(db.Integer)
     cpd_points_online = db.Column(db.Numeric(5, 2))
     cpd_points_offline = db.Column(db.Numeric(5, 2))
     max_participants = db.Column(db.Integer)
@@ -114,10 +112,6 @@ class Course(TranslatableMixin, TimestampMixin, db.Model):
             name='ck_courses_event_type',
         ),
         db.CheckConstraint('base_price >= 0', name='ck_courses_base_price_non_negative'),
-        db.CheckConstraint(
-            'cpd_points >= 0 OR cpd_points IS NULL',
-            name='ck_courses_cpd_points_non_negative',
-        ),
         db.CheckConstraint(
             'cpd_points_online >= 0 OR cpd_points_online IS NULL',
             name='ck_courses_cpd_points_online_non_negative',

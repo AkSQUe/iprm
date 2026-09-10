@@ -153,7 +153,7 @@ def quizzes_list():
             'overrides': overrides,
             # Без цих даних тест не відкриється, тож показуємо причину поруч.
             'bpr_missing': not (course.bpr_event_number or '').strip()
-                           or not course.cpd_points,
+                           or not (course.cpd_points_online or course.cpd_points_offline),
         })
 
     return render_template(

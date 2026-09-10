@@ -8,7 +8,7 @@ from app.models.course_instance import CourseInstance
 
 @pytest.fixture
 def parent_course(db_session):
-    course = Course(title='Parent', slug='ci-parent', base_price=1000, cpd_points=10, max_participants=30)
+    course = Course(title='Parent', slug='ci-parent', base_price=1000, max_participants=30)
     db_session.add(course)
     db_session.flush()
     return course

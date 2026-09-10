@@ -26,6 +26,7 @@ from app.extensions import db
 from app.models.online_course import OnlineCourse
 from app.models.site_settings import SiteSettings
 from app.services.online_course_sync import generate_unique_slug
+from app.utils import parse_points
 
 audit_logger = logging.getLogger('audit')
 
@@ -161,6 +162,21 @@ def _parse_positive_int(raw, label):
     return value, None
 
 
+def _parse_cpd_points(raw):
+    """Бали БПР онлайн-курсу -- дробові, через спільний parse_points.
+
+    Формат повернення (значення, помилка) -- як у _parse_positive_int, щоб
+    виклик у _save_course лишався однаковим для всіх полів форми.
+    """
+    try:
+        value = parse_points(raw)
+    except ValueError:
+        return None, 'Бали БПР: введіть число, напр. 4,5'
+    if value is not None and value < 0:
+        return None, 'Бали БПР не можуть бути від\'ємними'
+    return value, None
+
+
 def _save_course(course):
     price, err = _parse_price(request.form.get('price'))
     if err:
@@ -181,7 +197,7 @@ def _save_course(course):
         flash(err, 'error')
         return redirect(url_for('admin.online_course_edit', course_id=course.id))
 
-    cpd, err = _parse_positive_int(request.form.get('cpd_points'), 'Бали БПР')
+    cpd, err = _parse_cpd_points(request.form.get('cpd_points'))
     if err:
         flash(err, 'error')
         return redirect(url_for('admin.online_course_edit', course_id=course.id))

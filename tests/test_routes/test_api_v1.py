@@ -53,9 +53,7 @@ def published_event(app, user):
     c = Course(
         title='Published Event', slug=f'pub-{_uid()}',
         short_description='desc', event_type='course',
-        base_price=1500, cpd_points=5, tags=['gynecology', 'ppp'],
-        # Бекфіл, як у справжній міграції: стара колонка дублюється в обидві
-        # нові, бо історично невідомо, для якого формату призначались бали.
+        base_price=1500, tags=['gynecology', 'ppp'],
         cpd_points_online=5, cpd_points_offline=5,
         is_active=True, created_by=user.id,
     )
@@ -63,7 +61,7 @@ def published_event(app, user):
     db.session.flush()
     inst = CourseInstance(
         course_id=c.id, status='published',
-        event_format='offline', price=1500, cpd_points=5,
+        event_format='offline', price=1500,
         cpd_points_online=5, cpd_points_offline=5,
         start_date=datetime.now(timezone.utc) + timedelta(days=10),
         end_date=datetime.now(timezone.utc) + timedelta(days=11),

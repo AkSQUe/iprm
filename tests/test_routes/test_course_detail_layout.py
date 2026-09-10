@@ -31,7 +31,6 @@ def _make_course(suffix=''):
         description='<p>Опис</p>',
         short_description='Короткий опис',
         target_audience=['Лікарі'],
-        cpd_points=12,
         base_price=6000,
         trainer_id=trainer.id,
         faq=[{'question': 'Питання 1?', 'answer': 'Відповідь 1'},

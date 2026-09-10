@@ -14,6 +14,7 @@
 {% from 'admin/partials/_filter_bar.html' import filter_bar, pager, empty_state  %}
 {% from 'admin/partials/_registration_actions.html' import registration_actions %}
 {% import 'admin/partials/_registration_progress.html' as progress %}
+{% from 'partials/_bpr_points.html' import points_by_format %}
 
 {% block content %}
 {# Куди повернутись після дії в рядку: поточний URL із фільтрами. #}
@@ -35,7 +36,7 @@
         <h1 class="admin-hero__title">{{ course.title if course else 'Захід' }}</h1>
         <p class="admin-hero__subtitle">
           {% if instance.start_date %}{{ instance.start_date.strftime('%d.%m.%Y') }}{% endif %}
-          {% if instance.effective_cpd_points %} &middot; {{ instance.effective_cpd_points }} балів БПР{% endif %}
+          {% if instance.cpd_pairs %} &middot; {{ points_by_format(instance.cpd_pairs) }} БПР{% endif %}
         </p>
       </div>
       <div class="admin-hero__actions">

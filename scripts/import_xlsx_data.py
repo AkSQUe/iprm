@@ -225,7 +225,7 @@ def phase_schedule(report):
         else:
             inst = CourseInstance(
                 course_id=course.id, start_date=start, end_date=end,
-                event_format=fmt, price=price, cpd_points=None,
+                event_format=fmt, price=price,
                 max_participants=MAX_PARTICIPANTS, trainer_id=course.trainer_id,
                 status='completed', location=location,
             )

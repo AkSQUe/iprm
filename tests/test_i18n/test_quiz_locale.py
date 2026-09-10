@@ -37,7 +37,8 @@ def ready_registration(app):
 
     course = Course(
         title=f'Курс {uuid4().hex[:4]}', slug=f'ql-{uuid4().hex[:6]}',
-        is_active=True, event_type='course', cpd_points=12,
+        is_active=True, event_type='course',
+        cpd_points_online=12, cpd_points_offline=12,
         bpr_event_number=str(next(_event_numbers)),
     )
     db.session.add(course)

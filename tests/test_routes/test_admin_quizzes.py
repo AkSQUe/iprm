@@ -64,9 +64,9 @@ def _login(client, user):
 def _course(event_num=None, cpd_points=12):
     course = Course(
         title=f'Курс {uuid4().hex[:4]}', slug=f'aq-{uuid4().hex[:6]}',
-        is_active=True, event_type='course', cpd_points=cpd_points,
-        # Дзеркалимо міграційний бекфіл (cpd_points_online = cpd_points_offline
-        # = cpd_points): due_cpd_points читає лише нові розщеплені колонки.
+        is_active=True, event_type='course',
+        # due_cpd_points читає розщеплені колонки, тож заповнюємо обидві
+        # тим самим значенням -- формат участі тут для тестів не важливий.
         cpd_points_online=cpd_points, cpd_points_offline=cpd_points,
         bpr_event_number=(event_num if event_num is not None
                           else str(next(_event_numbers))),

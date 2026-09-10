@@ -159,25 +159,25 @@ class TestCheckConstraints:
         assert course.max_participants == 30
 
     def test_course_cpd_points_negative_rejected(self, db_session):
-        """CHECK constraint: cpd_points не може бути від'ємним."""
-        course = Course(title='C', slug='c-ck-cpd-neg', cpd_points=-1)
+        """CHECK constraint: cpd_points_online не може бути від'ємним."""
+        course = Course(title='C', slug='c-ck-cpd-neg', cpd_points_online=-1)
         db_session.add(course)
         with pytest.raises(Exception):
             db_session.flush()
 
     def test_course_cpd_points_zero_allowed(self, db_session):
-        """cpd_points = 0 допустимий."""
-        course = Course(title='C', slug='c-ck-cpd-zero', cpd_points=0)
+        """cpd_points_online = 0 допустимий."""
+        course = Course(title='C', slug='c-ck-cpd-zero', cpd_points_online=0)
         db_session.add(course)
         db_session.flush()
-        assert course.cpd_points == 0
+        assert course.cpd_points_online == 0
 
     def test_course_cpd_points_null_allowed(self, db_session):
-        """cpd_points NULL допустимий."""
-        course = Course(title='C', slug='c-ck-cpd-null', cpd_points=None)
+        """cpd_points_online NULL допустимий."""
+        course = Course(title='C', slug='c-ck-cpd-null', cpd_points_online=None)
         db_session.add(course)
         db_session.flush()
-        assert course.cpd_points is None
+        assert course.cpd_points_online is None
 
     def test_course_base_price_negative_rejected(self, db_session):
         """CHECK constraint: base_price не може бути від'ємним."""

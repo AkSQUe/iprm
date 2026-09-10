@@ -28,9 +28,7 @@ class CourseInstance(TimestampMixin, db.Model):
     event_format = db.Column(db.String(20))
 
     price = db.Column(db.Numeric(10, 2))
-    # Бали БПР окремо за форматом участі -- те саме розмежування, що й у
-    # Course. ТИМЧАСОВО поруч лишається cpd_points -- прибирається в Task 10.
-    cpd_points = db.Column(db.Integer)
+    # Бали БПР окремо за форматом участі -- те саме розмежування, що й у Course.
     cpd_points_online = db.Column(db.Numeric(5, 2))
     cpd_points_offline = db.Column(db.Numeric(5, 2))
     max_participants = db.Column(db.Integer)
@@ -76,10 +74,6 @@ class CourseInstance(TimestampMixin, db.Model):
         db.CheckConstraint(
             'price >= 0 OR price IS NULL',
             name='ck_course_instances_price_non_negative',
-        ),
-        db.CheckConstraint(
-            'cpd_points >= 0 OR cpd_points IS NULL',
-            name='ck_course_instances_cpd_points_non_negative',
         ),
         db.CheckConstraint(
             'cpd_points_online >= 0 OR cpd_points_online IS NULL',
@@ -214,15 +208,6 @@ class CourseInstance(TimestampMixin, db.Model):
         """True, коли effective_price -- це "від N" (кілька різних тарифів)."""
         prices = {t.price for t in self.active_tariffs}
         return len(prices) > 1
-
-    @property
-    def effective_cpd_points(self):
-        if self.cpd_points is not None:
-            return self.cpd_points
-        if self.course is None:
-            self._warn_orphan('cpd_points')
-            return None
-        return self.course.cpd_points
 
     @property
     def effective_specialty_codes(self):

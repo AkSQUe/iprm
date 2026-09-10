@@ -228,7 +228,8 @@ def test_quiz_bank_size_and_passing_score_link_to_course_quiz_edit(client, admin
     """Обидва значення живуть у тесті КУРСУ -- редактор той самий, що й
     кнопка «Редагувати» цього рядка."""
     course = Course(title=f'Курс {_uid()}', slug=f'sl-{_uid()}', is_active=True,
-                    bpr_event_number=_uid(), cpd_points=10)
+                    bpr_event_number=_uid(),
+                    cpd_points_online=10, cpd_points_offline=10)
     db.session.add(course)
     db.session.flush()
     quiz = _quiz_with_bank(course, bank=2, passing_score=1)

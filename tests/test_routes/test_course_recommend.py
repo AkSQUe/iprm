@@ -32,7 +32,7 @@ def _uid():
     return uuid4().hex[:8]
 
 
-def _course(title, tags=None, price=6000, cpd=12, sort_order=0):
+def _course(title, tags=None, price=6000, sort_order=0):
     course = Course(
         slug=f'rec-{_uid()}',
         title=title,
@@ -40,7 +40,6 @@ def _course(title, tags=None, price=6000, cpd=12, sort_order=0):
         event_type='course',
         short_description='Короткий опис курсу для картки.',
         base_price=price,
-        cpd_points=cpd,
         tags=tags or [],
         sort_order=sort_order,
     )

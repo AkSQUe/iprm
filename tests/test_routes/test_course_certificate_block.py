@@ -34,9 +34,9 @@ def provider_number(app):
 def _course(event_num=None, cpd_points=12):
     course = Course(
         title=f'Курс {uuid4().hex[:4]}', slug=f'cb-{uuid4().hex[:6]}',
-        is_active=True, event_type='course', cpd_points=cpd_points,
-        # Дублюємо в нові колонки як бекфіл, адже гейт блоку тестування
-        # тепер читає саме online/offline, не стару cpd_points.
+        is_active=True, event_type='course',
+        # Гейт блоку тестування читає online/offline; заповнюємо обидва
+        # тим самим значенням -- формат участі тут не має значення.
         cpd_points_online=cpd_points,
         cpd_points_offline=cpd_points,
         bpr_event_number=(event_num if event_num is not None

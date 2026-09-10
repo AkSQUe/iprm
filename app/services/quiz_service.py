@@ -737,8 +737,8 @@ def award_and_issue(registration):
         registration.status = 'completed'
     if registration.cpd_points_awarded is None:
         # Бали САМЕ цієї людини: на гібриді онлайн і очно отримують різну
-        # кількість, і effective_cpd_points (агрегат по проведенню) тут
-        # підставив би не той формат.
+        # кількість, і бали проведення без прив'язки до формату тут
+        # підставили б не той формат.
         registration.cpd_points_awarded = registration.due_cpd_points
     # Окремим комітом, до видачі: інакше провал видачі на рівні БД забрав би
     # разом із собою присутність і нараховані бали.

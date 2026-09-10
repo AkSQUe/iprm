@@ -319,8 +319,8 @@
           </div>
           <div class="form-group">
             <label for="cpd_points">Бали БПР (довідково)</label>
-            <input type="number" name="cpd_points" id="cpd_points" class="form-input"
-                   min="1" step="1" value="{{ course.cpd_points or '' }}">
+            <input type="text" name="cpd_points" id="cpd_points" class="form-input"
+                   inputmode="decimal" value="{{ course.cpd_points | points }}">
             <p class="form-hint">Сертифікати за онлайн-курси поки не видаються.</p>
           </div>
         </div>

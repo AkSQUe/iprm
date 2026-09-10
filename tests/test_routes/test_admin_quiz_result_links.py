@@ -70,7 +70,8 @@ def _login(client, user):
 def _course():
     course = Course(
         title=f'Курс {_uid()}', slug=f'qrl-{_uid()}', is_active=True,
-        event_type='course', bpr_event_number=_uid(), cpd_points=12,
+        event_type='course', bpr_event_number=_uid(),
+        cpd_points_online=12, cpd_points_offline=12,
     )
     db.session.add(course)
     db.session.flush()
