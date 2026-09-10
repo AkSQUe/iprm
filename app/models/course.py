@@ -40,7 +40,6 @@ class Course(TranslatableMixin, TimestampMixin, db.Model):
 
     target_audience = db.Column(db.JSON, default=list)
     tags = db.Column(db.JSON, default=list)
-    speaker_info = db.Column(db.Text)
     agenda = db.Column(db.Text)
     faq = db.Column(db.JSON, default=list)
 
@@ -84,12 +83,6 @@ class Course(TranslatableMixin, TimestampMixin, db.Model):
     # (entity_type='course', usage_type='gallery'), а не тут.
     gallery_intro = db.Column(db.String(500))
 
-    trainer_id = db.Column(
-        db.BigInteger,
-        db.ForeignKey('trainers.id', ondelete='SET NULL'),
-        nullable=True,
-        index=True,
-    )
     created_by = db.Column(
         db.BigInteger,
         db.ForeignKey('users.id', ondelete='SET NULL'),

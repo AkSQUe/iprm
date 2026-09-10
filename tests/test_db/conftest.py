@@ -29,15 +29,23 @@ def sample_trainer(db_session):
 
 @pytest.fixture
 def sample_course(db_session, sample_trainer):
-    """Базовий курс (каталожна сутність) для db-тестів."""
+    """Базовий курс (каталожна сутність) для db-тестів.
+
+    Тренер прив'язується через course_trainers (trainer_links.set_trainers),
+    а не колонкою trainer_id -- її на Course більше немає (Task 13 плану
+    "кілька тренерів").
+    """
+    from app.services import trainer_links
+
     course = Course(
         title='Test Course',
         slug='test-course-db',
         is_active=True,
-        trainer_id=sample_trainer.id,
         base_price=500,
     )
     db_session.add(course)
+    db_session.flush()
+    trainer_links.set_trainers(course, [sample_trainer.id])
     db_session.flush()
     return course
 

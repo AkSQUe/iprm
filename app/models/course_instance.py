@@ -57,13 +57,6 @@ class CourseInstance(TimestampMixin, db.Model):
     # Перевизначення спеціальностей проведення. NULL/порожньо -- беремо курс.
     bpr_specialty_codes = db.Column(db.JSON)
 
-    trainer_id = db.Column(
-        db.BigInteger,
-        db.ForeignKey('trainers.id', ondelete='SET NULL'),
-        nullable=True,
-        index=True,
-    )
-
     status = db.Column(db.String(20), default='draft', nullable=False, index=True)
 
     # start_date має index=True на колонці -- окремого ix_course_instances_start_date не додаємо.
