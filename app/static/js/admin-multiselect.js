@@ -29,6 +29,15 @@
     list.setAttribute('role', 'listbox');
     list.setAttribute('aria-multiselectable', 'true');
 
+    if (select.id) {
+      // id-и поля пошуку й списку -- від select.id, щоб на сторінці з
+      // кількома мультиселектами (наприклад, у майбутньому) вони не
+      // збігались між компонентами.
+      search.id = select.id + '-search';
+      list.id = select.id + '-listbox';
+      search.setAttribute('aria-controls', list.id);
+    }
+
     control.appendChild(search);
     wrap.appendChild(control);
     wrap.appendChild(list);
@@ -36,8 +45,15 @@
     select.hidden = true;
     select.setAttribute('tabindex', '-1');
 
+    // <label for="..."> лишався прив'язаним до тепер прихованого select --
+    // клік по підпису переставав фокусувати будь-що. Перенаправляємо for
+    // на видиме поле пошуку; aria-label лишаємо -- він задає доступне ім'я
+    // явно й переживе можливу відсутність <label> взагалі.
     var label = select.id && document.querySelector('label[for="' + select.id + '"]');
-    if (label) { search.setAttribute('aria-label', label.textContent.trim()); }
+    if (label) {
+      search.setAttribute('aria-label', label.textContent.trim());
+      if (search.id) { label.setAttribute('for', search.id); }
+    }
 
     return { wrap: wrap, control: control, search: search, list: list };
   }
@@ -71,6 +87,9 @@
   function renderList(select, ui) {
     var needle = normalize(ui.search.value);
     ui.list.textContent = '';
+    // Список перебудовується щоразу -- попередній підсвічений <li> вже не
+    // існує, тож посилання на нього лишати не можна.
+    ui.search.removeAttribute('aria-activedescendant');
     var shown = 0;
 
     Array.prototype.forEach.call(select.children, function (node) {
@@ -91,6 +110,13 @@
       matching.forEach(function (option) {
         var item = document.createElement('li');
         item.className = 'admin-multiselect__option';
+        // id для aria-activedescendant поля пошуку (нижче, у move()).
+        // Список тут показує лише НЕвибрані опції (matching відсіює
+        // option.selected), тож aria-selected для них завжди чесно
+        // "false" -- і саме тому цей атрибут більше НЕ використовується
+        // як індикатор клавіатурної підсвітки (це робить окремий клас
+        // is-active + aria-activedescendant, а не aria-selected).
+        item.id = (ui.list.id || 'admin-multiselect') + '-option-' + shown;
         item.textContent = option.textContent.trim();
         item.setAttribute('role', 'option');
         item.setAttribute('aria-selected', 'false');
@@ -117,10 +143,11 @@
   function open(ui, isOpen) {
     ui.list.hidden = !isOpen;
     ui.search.setAttribute('aria-expanded', String(isOpen));
+    if (!isOpen) { ui.search.removeAttribute('aria-activedescendant'); }
   }
 
   function active(ui) {
-    return ui.list.querySelector('.admin-multiselect__option[aria-selected="true"]');
+    return ui.list.querySelector('.admin-multiselect__option.is-active');
   }
 
   function move(ui, delta) {
@@ -129,11 +156,12 @@
     );
     if (!items.length) { return; }
     var current = items.indexOf(active(ui));
-    items.forEach(function (item) { item.setAttribute('aria-selected', 'false'); });
+    items.forEach(function (item) { item.classList.remove('is-active'); });
     var next = items[Math.min(items.length - 1, Math.max(0, current + delta))]
       || items[0];
-    next.setAttribute('aria-selected', 'true');
+    next.classList.add('is-active');
     next.scrollIntoView({ block: 'nearest' });
+    ui.search.setAttribute('aria-activedescendant', next.id);
   }
 
   function enhance(select) {

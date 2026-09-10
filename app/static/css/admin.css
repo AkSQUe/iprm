@@ -3677,5 +3677,5 @@ th.access-perm__label {
 }
 .admin-multiselect__option { padding: 6px 12px; cursor: pointer; }
 .admin-multiselect__option:hover,
-.admin-multiselect__option[aria-selected="true"] { background: var(--iprm-surface-inset); }
+.admin-multiselect__option.is-active { background: var(--iprm-surface-inset); }
 .admin-multiselect__empty { padding: 8px 12px; color: var(--iprm-text-secondary); }

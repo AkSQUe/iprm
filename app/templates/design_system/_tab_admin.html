@@ -570,6 +570,7 @@
 
     <h3 class="ds-section-heading">Мультиселект</h3>
     <div class="ds-demo">
+      <label for="ds-multiselect-demo-search" class="visually-hidden">Пошук спеціальності</label>
       <div class="admin-multiselect">
         <div class="admin-multiselect__control">
           <span class="admin-multiselect__chip">Алергологія
@@ -578,16 +579,16 @@
           <span class="admin-multiselect__chip">Дерматовенерологія
             <button type="button" class="admin-multiselect__chip-remove" aria-label="Прибрати Дерматовенерологія">&times;</button>
           </span>
-          <input type="text" class="admin-multiselect__search" placeholder="Пошук…" aria-label="Пошук спеціальності">
+          <input type="text" id="ds-multiselect-demo-search" class="admin-multiselect__search" placeholder="Пошук…" aria-label="Пошук спеціальності" role="combobox" aria-expanded="true" aria-autocomplete="list" aria-controls="ds-multiselect-demo-listbox" aria-activedescendant="ds-multiselect-demo-option-1">
         </div>
-        <ul class="admin-multiselect__list" role="listbox" aria-multiselectable="true">
+        <ul id="ds-multiselect-demo-listbox" class="admin-multiselect__list" role="listbox" aria-multiselectable="true">
           <li class="admin-multiselect__group" role="presentation">Лікарські</li>
-          <li class="admin-multiselect__option" role="option" aria-selected="false">Ендокринологія</li>
-          <li class="admin-multiselect__option" role="option" aria-selected="true">Кардіологія</li>
+          <li id="ds-multiselect-demo-option-0" class="admin-multiselect__option" role="option" aria-selected="false">Ендокринологія</li>
+          <li id="ds-multiselect-demo-option-1" class="admin-multiselect__option is-active" role="option" aria-selected="false">Кардіологія</li>
           <li class="admin-multiselect__empty">Нічого не знайдено</li>
         </ul>
       </div>
     </div>
-    <p class="ds-hint">.admin-multiselect: чіпи й пошук поверх нативного &lt;select multiple data-multiselect&gt; (admin-multiselect.js). Джерело правди -- сам select, тож без JS форма лишається робочою, а сабміт іде звичайним getlist. Тут демо статичне: список показано розгорнутим навмисно.</p>
+    <p class="ds-hint">.admin-multiselect: чіпи й пошук поверх нативного &lt;select multiple data-multiselect&gt; (admin-multiselect.js). Джерело правди -- сам select, тож без JS форма лишається робочою, а сабміт іде звичайним getlist. &lt;label for&gt; веде на поле пошуку (не на прихований select) -- клік по підпису фокусує саме його. Підсвітку клавіатурою показує клас .is-active + aria-activedescendant на полі пошуку, а не aria-selected -- цей атрибут на &lt;li role="option"&gt; лишається завжди false, бо список показує тільки НЕвибрані пункти. Тут демо статичне: список показано розгорнутим навмисно.</p>
   </div>
 
