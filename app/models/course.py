@@ -166,14 +166,6 @@ class Course(TranslatableMixin, TimestampMixin, db.Model):
         from app.models.media_file import MediaFile
         return MediaFile.for_entity('course', self.id, 'gallery').all()
 
-    EVENT_TYPES = [
-        ('seminar', 'Семінар'),
-        ('webinar', 'Вебінар'),
-        ('course', 'Курс'),
-        ('masterclass', 'Майстер-клас'),
-        ('conference', 'Конференція'),
-    ]
-
     DIFFICULTY_LEVELS = [
         (1, 'Рівень 1 — базовий'),
         (2, 'Рівень 2 — просунутий'),

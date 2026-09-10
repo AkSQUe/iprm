@@ -224,13 +224,8 @@ FAQ_WIDTHS = {
 
 TRAINER_WIDTHS = {'slug': 28, 'full_name': 36, 'role': 50}
 
-VALID_EVENT_TYPES = {t[0] for t in Course.EVENT_TYPES}
 VALID_FORMATS = {t[0] for t in CourseInstance.FORMATS}
 VALID_STATUSES = {t[0] for t in CourseInstance.STATUSES}
-
-# key -> Ukrainian label (для відображення в xlsx).
-EVENT_TYPE_LABEL = dict(Course.EVENT_TYPES)
-EVENT_TYPE_KEY_BY_LABEL = {v: k for k, v in EVENT_TYPE_LABEL.items()}
 
 FORMAT_LABEL = dict(CourseInstance.FORMATS)  # 'online' -> 'Онлайн' тощо
 FORMAT_KEY_BY_LABEL = {v: k for k, v in FORMAT_LABEL.items()}
@@ -425,6 +420,46 @@ def _from_lines(value: str | None) -> list[str]:
     if not value:
         return []
     return [line.strip() for line in str(value).splitlines() if line.strip()]
+
+
+def event_type_dropdown_options():
+    """Назви активних типів для drop-down у згенерованому файлі."""
+    from app.services import event_types
+    return [name for _code, name in event_types.choices()]
+
+
+def normalize_event_type(raw):
+    """Код виду заходу з того, що написали у клітинці.
+
+    Приймає і внутрішній код ('seminar'), і українську назву з drop-down
+    ('Семінар'), і застарілий тип: старі вигрузки мусять заходити далі.
+    """
+    from app.services import event_types
+
+    value = (raw or '').strip()
+    if not value:
+        return None
+
+    rows = event_types.directory()
+    if value in rows:
+        return value
+
+    by_label = {row.name: code for code, row in rows.items()}
+    if value in by_label:
+        return by_label[value]
+
+    # Резервний пошук без урахування регістру: файл редагується руками,
+    # і користувач міг набрати назву в іншому регістрі.
+    value_cf = value.casefold()
+    for code in rows:
+        if code.casefold() == value_cf:
+            return code
+    for name, code in by_label.items():
+        if name.casefold() == value_cf:
+            return code
+
+    allowed = sorted(rows) + sorted(by_label)
+    raise ValueError(f'event_type={value!r} – допустимі: {allowed}')
 
 
 def _bool(v) -> bool:
@@ -687,6 +722,8 @@ def export_courses_xlsx(active: str = 'all') -> io.BytesIO:
       active: 'all' | 'true' | 'false' -- фільтр за полем is_active.
               Дефолтно 'all' (історична поведінка -- усі курси).
     """
+    from app.services import event_types
+
     wb = Workbook()
     ws = wb.active
     ws.title = 'Курси'
@@ -709,7 +746,7 @@ def export_courses_xlsx(active: str = 'all') -> io.BytesIO:
             c.subtitle or '',
             c.short_description or '',
             c.description or '',
-            EVENT_TYPE_LABEL.get(c.event_type, c.event_type or ''),
+            event_types.label(c.event_type) if c.event_type else '',
             float(c.base_price) if c.base_price is not None else 0,
             c.cpd_points,
             c.max_participants,
@@ -791,13 +828,14 @@ def export_courses_xlsx(active: str = 'all') -> io.BytesIO:
         trainers_last_row=trainers_last_row,
     )
 
-    # Drop-down для типу заходу.
+    # Drop-down для типу заходу -- лише активні типи з довідника.
+    _event_type_options = event_type_dropdown_options()
     _add_inline_dropdown(
         ws, 'event_type', COURSE_COLS,
-        options=[label for _key, label in Course.EVENT_TYPES],
+        options=_event_type_options,
         last_data_row=courses_last_row,
         title='Тип заходу',
-        hint='Оберіть зі списку: Семінар, Вебінар, Курс, Майстер-клас, Конференція',
+        hint='Оберіть зі списку: ' + ', '.join(_event_type_options),
     )
 
     # Excel Tables (forматовані з зеброю + auto-filter).
@@ -915,15 +953,10 @@ def parse_courses_xlsx(path: Path) -> CoursesImportPlan:
                 raise ValueError(f'дублюючий slug у файлі: {slug!r}')
             seen_slugs.add(slug)
 
-            event_type_raw = _str(raw.get('event_type')) or 'course'
-            # Приймаємо і англ. internal key ('course'), і українську назву
-            # з drop-down ('Курс'). Нормалізуємо у key.
-            event_type = EVENT_TYPE_KEY_BY_LABEL.get(event_type_raw, event_type_raw)
-            if event_type not in VALID_EVENT_TYPES:
-                allowed = sorted(VALID_EVENT_TYPES) + sorted(EVENT_TYPE_KEY_BY_LABEL.keys())
-                raise ValueError(
-                    f'event_type={event_type_raw!r} – допустимі: {allowed}'
-                )
+            # Приймаємо і внутрішній код ('seminar'), і українську назву з
+            # drop-down ('Семінар'); застарілі типи теж проходять --
+            # інакше архівні вигрузки перестали б імпортуватись.
+            event_type = normalize_event_type(raw.get('event_type')) or 'seminar'
 
             # Колонка "Тренер" може містити або slug (старі файли), або ПІБ
             # (новий експорт + drop-down). Спершу шукаємо за slug, потім за
