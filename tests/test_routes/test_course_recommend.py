@@ -9,7 +9,9 @@
 тега (спільний тег ставить потрібний курс над рештою каталогу), а тести
 сервісу беруть свідомо великий limit замість дефолтної трійки.
 """
+import re
 from datetime import datetime, timedelta, timezone
+from decimal import Decimal
 from uuid import uuid4
 
 import pytest
@@ -281,6 +283,24 @@ class TestRecommendCard:
         db.session.commit()
         html = _render_card(app, course)
         assert 'iprm-course-card__price' not in html
+
+    def test_dateless_range_shows_min_before_max_when_online_pricier(self, app):
+        # Курс БЕЗ майбутніх проведень: cpd_min/cpd_max раніше рахувались
+        # `online or offline` / `offline or online` -- при online > offline
+        # це друкувало перевернутий діапазон "9-7,5" замість "7,5-9".
+        course = _course('Без проведень, онлайн дорожчий')
+        course.cpd_points_online = Decimal('9.00')
+        course.cpd_points_offline = Decimal('7.50')
+        db.session.commit()
+        html = _render_card(app, course)
+        m = re.search(
+            r'iprm-card-badge--cpd">(.*?)</span>', html, re.DOTALL,
+        )
+        assert m, 'бейдж балів БПР не знайдено на картці'
+        badge = m.group(1)
+        assert badge.find('7,5') < badge.find('9')
+        assert '9&ndash;7,5' not in badge
+        assert '9–7,5' not in badge
 
     def test_tags_use_translated_values(self, app):
         course = _course('З тегами', tags=['плазмотерапія'])
