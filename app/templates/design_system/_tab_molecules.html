@@ -133,6 +133,31 @@
           </div>
         </div>
         <p class="ds-hint">Живе в partials/_course_trainer.html (courses/online detail). Базовий варіант -- картка з рамкою й тінню; --rich (без тегів/цифр не вмикається взагалі) знімає картку і збільшує фото до 360px -- саме так виглядає на реальних сторінках курсу, з тегами зі skills тренера. Фото тут без файлу -- показано лише placeholder-градієнт компонента.</p>
+
+        <p class="ds-label">Components</p>
+        <h2 class="ds-title">Trainer grid (кілька спікерів)</h2>
+        <div class="ds-demo">
+          <div class="iprm-trainer-grid">
+            <div class="iprm-trainer-block iprm-trainer-block--rich">
+              <img class="iprm-trainer-block__photo" alt="">
+              <div class="iprm-trainer-block__body">
+                <h3>Перший Спікер</h3>
+                <p class="iprm-trainer-block__role">Головний лектор</p>
+                <div class="iprm-trainer-block__tags">
+                  <span class="iprm-trainer-block__tag">Дерматологія</span>
+                </div>
+              </div>
+            </div>
+            <div class="iprm-trainer-block">
+              <img class="iprm-trainer-block__photo" alt="">
+              <div class="iprm-trainer-block__body">
+                <h3>Другий Спікер</h3>
+                <p class="iprm-trainer-block__role">Співведучий</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="ds-hint">.iprm-trainer-grid -- обгортка карток тренера, коли курс має більше одного спікера (Course.trainers, Задача 7). Рівно з одним тренером партіал цю обгортку не малює взагалі -- курс рендериться так само, як і до множинності. Кожна картка отримує --rich незалежно: тут перший спікер із тегами, другий -- без.</p>
     </div>
   </div>
 

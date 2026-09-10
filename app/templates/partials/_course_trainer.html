@@ -1,27 +1,39 @@
-{# Блок тренера на сторінці курсу.
+{# Блок спікерів на сторінці курсу.
 
    Спільний партіал. Збагачений варіант (--rich) вмикається лише коли є що
    показати додатково: теги (trainer.skills) або цифри (trainer.highlights).
    Без них лишається базова розкладка -- інакше широка колонка під фото
-   виглядала б порожньою.
+   виглядала б порожньою. tags/highlights/is_rich рахуються ВСЕРЕДИНІ циклу
+   для кожного тренера окремо: один спікер може мати теги, інший -- ні, і
+   картка одного не повинна "збагачувати" картку іншого.
 
    Теги беремо з наявного skills: заводити окреме поле "теги" означало б
    просити редактора вести той самий перелік двічі. Рядки з двокрапкою там
    за домовленістю є підзаголовками груп (див. Trainer.skills), тож у теги
-   вони не годяться -- відсіюємо. #}
-{% if course.trainer %}
-{% set trainer = course.trainer %}
-{% set tags = [] %}
-{% for skill in trainer.t('skills') or [] %}
-  {% if ':' not in skill and tags | length < 4 %}{% set _discard = tags.append(skill) %}{% endif %}
-{% endfor %}
-{% set highlights = trainer.t('highlights') or [] %}
-{% set is_rich = tags or highlights %}
+   вони не годяться -- відсіюємо.
+
+   Обгортка .iprm-trainer-grid зʼявляється лише коли тренерів більше одного:
+   з рівно одним курс мусить рендеритись байт-у-байт як і раніше -- на це
+   зважає майже кожна вже опублікована сторінка курсу. #}
+{% if course.trainers %}
+{% set is_multi = course.trainers | length > 1 %}
 <section id="trainer" class="iprm-section apple-section-gray" aria-labelledby="trainer-title">
   <div class="iprm-section__inner">
     <h2 id="trainer-title" class="iprm-section__title apple-reveal">
+      {% if is_multi %}
+      {{ _('Ваші <span class="apple-gradient-text">тренери</span>') }}
+      {% else %}
       {{ _('Ваш <span class="apple-gradient-text">тренер</span>') }}
+      {% endif %}
     </h2>
+    {% if is_multi %}<div class="iprm-trainer-grid">{% endif %}
+    {% for trainer in course.trainers %}
+    {% set tags = [] %}
+    {% for skill in trainer.t('skills') or [] %}
+      {% if ':' not in skill and tags | length < 4 %}{% set _discard = tags.append(skill) %}{% endif %}
+    {% endfor %}
+    {% set highlights = trainer.t('highlights') or [] %}
+    {% set is_rich = tags or highlights %}
     <div class="iprm-trainer-block{% if is_rich %} iprm-trainer-block--rich{% endif %} apple-reveal">
       {% if trainer.photo_src %}
       <img src="{{ trainer.photo_src }}" alt="{{ trainer.t('full_name') }}"
@@ -55,6 +67,8 @@
         {% endif %}
       </div>
     </div>
+    {% endfor %}
+    {% if is_multi %}</div>{% endif %}
   </div>
 </section>
 {% endif %}

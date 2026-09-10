@@ -5088,6 +5088,9 @@ msgstr "Продажи завершены"
 msgid "Ваш <span class=\"apple-gradient-text\">тренер</span>"
 msgstr "Ваш <span class=\"apple-gradient-text\">тренер</span>"
 
+msgid "Ваші <span class=\"apple-gradient-text\">тренери</span>"
+msgstr "Ваши <span class=\"apple-gradient-text\">тренеры</span>"
+
 msgid "Умови отримання <span class=\"apple-gradient-text\">сертифікату</span>"
 msgstr "Условия получения <span class=\"apple-gradient-text\">сертификата</span>"
 
