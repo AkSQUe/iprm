@@ -1,5 +1,7 @@
 """Рядок «Спеціальності:» у сертифікаті: джерело, порядок, розмір шрифту."""
+import re
 from datetime import datetime, timedelta, timezone
+from types import SimpleNamespace
 from uuid import uuid4
 
 import pytest
@@ -12,7 +14,7 @@ from app.models.site_settings import SiteSettings
 from app.models.specialty import Specialty
 from app.models.user import User
 from app.services import certificate_service
-from app.services.certificate_service import _specialties_size_class
+from app.services.certificate_service import _specialties_size_class, render_certificate_html
 
 
 def test_short_line_keeps_base_size():
@@ -33,6 +35,64 @@ def test_mid_length_line_gets_sm_class():
     line = ', '.join(['Дерматовенерологія', 'Ендокринологія', 'Кардіологія',
                       'Неврологія', 'Педіатрія'])
     assert _specialties_size_class(line) == 'cert__meta-line--sm'
+
+
+# --- наскрізна перевірка: клас доїжджає з сервісу в розмітку -----------------
+#
+# Тести вище перевіряють ЧИСТУ функцію і `certificate.specialties`, але не
+# те, що `render_certificate_html` справді передає `specialties_size_class`
+# у шаблон і що шаблон справді ставить його в `class=` того самого `<p>`.
+# Без цього тесту прибрати рядок `specialties_size_class=...` з контексту
+# рендеру (app/services/certificate_service.py) можна непомітно -- решта
+# тестів файлу лишиться зеленою.
+
+def _fake_certificate(specialties):
+    """Легкий об'єкт для render_certificate_html -- той самий набір полів,
+    що збирає render_adhoc_pdf (SimpleNamespace, без запису в БД)."""
+    return SimpleNamespace(
+        number='2026-2738-1000555-000001',
+        recipient_name='Тестовий Тест Тестович',
+        event_title='Сучасний курс',
+        event_date=None,
+        cpd_points=10,
+        lecturer_name=None,
+        lecturer_signature=None,
+        specialties=specialties,
+        event_type_label='семінар',
+        event_place='м. Київ',
+        issued_at=datetime.now(timezone.utc),
+    )
+
+
+def _specialties_p_class(html):
+    """Клас <p> рядка «Спеціальності:» у розмітці, або None, якщо рядка нема."""
+    m = re.search(r'<p class="([^"]*)">Спеціальності:', html)
+    return m.group(1) if m else None
+
+
+def test_render_context_puts_md_class_on_short_specialties_paragraph(app):
+    html = render_certificate_html(_fake_certificate('Алергологія'), cert_format='a4')
+    assert _specialties_p_class(html) == 'cert__meta-line--md'
+
+
+def test_render_context_puts_xs_class_on_long_specialties_paragraph(app):
+    # 10 реальних назв довідника -- той самий перелік, яким перевірялось
+    # прев'ю очима (189 символів, > порогу xs у 120).
+    from app.data.specialties import SPECIALTIES
+    names = [n for _, n, section, _ in SPECIALTIES if section == 'medical'][:10]
+    line = ', '.join(names)
+    assert len(line) > 120  # страхуємось від тихої зміни довідника
+
+    html = render_certificate_html(_fake_certificate(line), cert_format='a4')
+    assert _specialties_p_class(html) == 'cert__meta-line--xs'
+
+
+def test_render_context_omits_specialties_paragraph_when_empty(app):
+    # Не шукаємо просто підрядок «Спеціальності:» -- він є і в CSS-коментарі
+    # над класами розміру, незалежно від даних. Перевіряємо саме відсутність
+    # самого <p> рядка.
+    html = render_certificate_html(_fake_certificate(None), cert_format='a4')
+    assert _specialties_p_class(html) is None
 
 
 # --- знімок сертифіката: джерело й незалежність від подальших правок довідника ---
