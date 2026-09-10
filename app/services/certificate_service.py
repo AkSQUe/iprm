@@ -194,7 +194,7 @@ def _event_snapshot(registration):
     lecturer = trainer.full_name if trainer else None
     signature = (trainer.signature or '').strip() if trainer and trainer.signature else None
     specialties = (course.bpr_specialties or '').strip() if course and course.bpr_specialties else None
-    event_type = course.event_type_label.lower() if course and course.event_type else None
+    event_type = event_type_accusative_for(instance)
     place = (instance.location or '').strip() if instance and instance.location else None
     return title, event_date, cpd, lecturer, signature, specialties, event_type, place
 
@@ -364,28 +364,20 @@ def _event_size_class(title):
     return 'cert__event--xs'
 
 
-# Родовий відмінок типу заходу для рядка "лектору(-ці) <тип>" на лекторському
-# сертифікаті (напр. "тренінг" -> "тренінгу"). Невідомий тип -> як є.
-_EVENT_TYPE_GENITIVE = {
-    'семінар': 'семінару',
-    'вебінар': 'вебінару',
-    'курс': 'курсу',
-    'майстер-клас': 'майстер-класу',
-    'конференція': 'конференції',
-    'конгрес': 'конгресу',
-    'симпозіум': 'симпозіуму',
-    'тренінг': 'тренінгу',
-    'фахова школа': 'фахової школи',
-    'фахову школу': 'фахової школи',
-}
+def event_type_accusative_for(instance):
+    """Знахідний виду заходу проведення: "завершив(-ла) наукову конференцію".
+
+    Береться ефективний тип -- власний тип проведення, а якщо його немає,
+    тип курсу.
+    """
+    from app.services import event_types
+    return event_types.accusative(instance.effective_event_type) if instance else None
 
 
-def event_type_genitive(label):
-    """Родовий відмінок типу заходу для лекторського серта ('заходу' за умовч.)."""
-    key = (label or '').strip().lower()
-    if not key:
-        return 'заходу'
-    return _EVENT_TYPE_GENITIVE.get(key, key)
+def event_type_genitive_for(instance):
+    """Родовий виду заходу проведення: "лектору(-ці) наукової конференції"."""
+    from app.services import event_types
+    return event_types.genitive(instance.effective_event_type) if instance else None
 
 
 def resolve_signature(lecturer_name):
@@ -723,7 +715,7 @@ def issue_lecturer_certificate(instance, issued_by=None):
     issued_at = utcnow()
     event_date = instance.start_date
     year = (event_date or issued_at).year
-    event_type = event_type_genitive(course.event_type_label) if course and course.event_type else None
+    event_type = event_type_genitive_for(instance)
 
     lc = LecturerCertificate(
         instance_id=instance.id,
