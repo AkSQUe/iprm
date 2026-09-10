@@ -13,7 +13,7 @@
   <header class="quiz-head">
     <h1 class="quiz-head__title">{{ _('Тестування') }}</h1>
     <p class="quiz-head__event">
-      {{ instance.course.t('title') if instance and instance.course else _('Захід') }}
+      {{ (instance.effective_title if instance else None) or _('Захід') }}
       {%- if instance and instance.start_date %},
       {{ instance.start_date.strftime('%d.%m.%Y') }}
       {%- endif %}

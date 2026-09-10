@@ -13,7 +13,7 @@
   <section class="quiz-card quiz-done">
     <h1 class="quiz-done__title">{{ _('Вітаємо!') }}</h1>
     <p class="quiz-done__lead">
-      {% trans title=(instance.course.t('title') if instance and instance.course else _('заходу')) %}
+      {% trans title=((instance.effective_title if instance else None) or _('заходу')) %}
       Ви успішно завершили навчання за програмою «{{ title }}» і склали тестування.
       {% endtrans %}
     </p>
