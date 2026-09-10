@@ -107,10 +107,6 @@ class Course(TranslatableMixin, TimestampMixin, db.Model):
     __table_args__ = (
         db.Index('ix_courses_active_featured', 'is_active', 'is_featured'),
         db.Index('ix_courses_created_at', 'created_at'),
-        db.CheckConstraint(
-            "event_type IN ('seminar', 'webinar', 'course', 'masterclass', 'conference')",
-            name='ck_courses_event_type',
-        ),
         db.CheckConstraint('base_price >= 0', name='ck_courses_base_price_non_negative'),
         db.CheckConstraint(
             'cpd_points_online >= 0 OR cpd_points_online IS NULL',
@@ -180,14 +176,6 @@ class Course(TranslatableMixin, TimestampMixin, db.Model):
         from app.models.media_file import MediaFile
         return MediaFile.for_entity('course', self.id, 'gallery').all()
 
-    EVENT_TYPES = [
-        ('seminar', 'Семінар'),
-        ('webinar', 'Вебінар'),
-        ('course', 'Курс'),
-        ('masterclass', 'Майстер-клас'),
-        ('conference', 'Конференція'),
-    ]
-
     DIFFICULTY_LEVELS = [
         (1, 'Рівень 1 — базовий'),
         (2, 'Рівень 2 — просунутий'),
@@ -196,7 +184,13 @@ class Course(TranslatableMixin, TimestampMixin, db.Model):
 
     @property
     def event_type_label(self):
-        return dict(self.EVENT_TYPES).get(self.event_type, self.event_type)
+        """Назва виду заходу з довідника, активною мовою.
+
+        Перелік більше не константа: він живе в таблиці event_types і
+        редагується в /admin/event-types.
+        """
+        from app.services import event_types
+        return event_types.label(self.event_type)
 
     @property
     def difficulty_label(self):

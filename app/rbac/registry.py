@@ -73,6 +73,8 @@ MODULES = (
            endpoint='admin.cities_list'),
     Module('specialties', 'Довідник спеціальностей', 'content', _VMD,
            endpoint='admin.specialties_list'),
+    Module('event_types', 'Довідник типів заходів', 'content', _VMD,
+           endpoint='admin.event_types_list'),
     Module('quizzes', 'Тестування', 'content', _VMD,
            endpoint='admin.quizzes_list'),
     Module('course_requests', 'Запити на курси', 'content', ('view', 'manage', 'delete', 'export'),

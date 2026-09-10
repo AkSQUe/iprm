@@ -49,6 +49,12 @@ def app():
         _db.create_all()
         from app.rbac import service as rbac_service
         rbac_service.sync()
+
+        from app.models.event_type import SEED_ROWS, EventType
+        for row in SEED_ROWS:
+            if not EventType.query.filter_by(code=row['code']).first():
+                _db.session.add(EventType(**row))
+
         _db.session.commit()
         yield app
         _db.drop_all()
@@ -75,6 +81,9 @@ def db_session(app):
     звичайний двигун -- одне з'єднання SQLite на два потоки дало б помилку
     замість ізоляції, і незакомічену транзакцію тесту вони бачити не мають.
     """
+    from app.services import event_types
+    event_types.reset_cache()
+
     with app.app_context():
         connection = _db.engine.connect()
         transaction = connection.begin()

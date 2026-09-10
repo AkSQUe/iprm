@@ -8,7 +8,11 @@ from sqlalchemy import func, or_
 from sqlalchemy.orm import joinedload
 
 from app.admin import _listing, admin_bp
-from app.admin._helpers import try_commit, populate_trainer_choices
+from app.admin._helpers import (
+    populate_event_type_choices,
+    populate_trainer_choices,
+    try_commit,
+)
 from app.rbac import permission_required
 from app.admin.forms import CourseInstanceForm
 from app.extensions import db, limiter
@@ -57,6 +61,13 @@ def _populate_choices(form, preselected_course_id=None, instance=None):
     # записано зараз (як і в course_edit -- current=course.bpr_specialty_codes).
     instance_codes = instance.bpr_specialty_codes if instance else None
     form.bpr_specialty_codes.choices = specialties.choices(current=instance_codes)
+
+    # Той самий доказ, що й у спеціальностей вище: чинний вид заходу беремо
+    # зі збереженого проведення, а не з form.data.
+    populate_event_type_choices(
+        form, current=(instance.event_type if instance else None),
+        empty_label='– Як у курсу –',
+    )
 
 
 _INSTANCES_PER_PAGE = 25

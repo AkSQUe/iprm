@@ -464,8 +464,13 @@ class CourseForm(FlaskForm):
     )
     event_type = SelectField(
         'Тип',
-        choices=Course.EVENT_TYPES,
+        # choices не можна рахувати тут: перелік живе в БД, а тіло класу
+        # виконується на імпорті модуля, коли контексту застосунку ще
+        # немає. Заповнюється в роуті через populate_event_type_choices.
+        choices=[],
         validators=[DataRequired()],
+        description='Вид заходу за номенклатурою БПР. Перелік редагується '
+                    'у «Довідник типів заходів».',
     )
     difficulty_level = SelectField(
         'Рівень складності',
@@ -726,6 +731,12 @@ class CourseInstanceForm(FlaskForm):
         'Формат',
         choices=CourseInstance.FORMATS,
         validators=[DataRequired()],
+    )
+    event_type = SelectField(
+        'Вид заходу',
+        choices=[],
+        validators=[Optional()],
+        description='Порожньо -- береться вид заходу курсу.',
     )
     status = SelectField(
         'Статус',

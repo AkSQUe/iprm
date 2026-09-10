@@ -141,14 +141,6 @@ def _fill(hex_color: str) -> PatternFill:
     return PatternFill('solid', fgColor=hex_color)
 
 
-EVENT_TYPE_FILLS = {
-    'course': _fill('DBEAFE'),       # blue-100
-    'seminar': _fill('FED7AA'),      # orange-200
-    'webinar': _fill('D1FAE5'),      # green-100 (для онлайн-формату)
-    'masterclass': _fill('E9D5FF'),  # purple-200
-    'conference': _fill('FEF3C7'),   # yellow-100
-}
-
 EVENT_FORMAT_FILLS = {
     'online': _fill('DBEAFE'),       # blue
     'offline': _fill('D1FAE5'),      # green
@@ -228,13 +220,8 @@ FAQ_WIDTHS = {
 
 TRAINER_WIDTHS = {'slug': 28, 'full_name': 36, 'role': 50}
 
-VALID_EVENT_TYPES = {t[0] for t in Course.EVENT_TYPES}
 VALID_FORMATS = {t[0] for t in CourseInstance.FORMATS}
 VALID_STATUSES = {t[0] for t in CourseInstance.STATUSES}
-
-# key -> Ukrainian label (для відображення в xlsx).
-EVENT_TYPE_LABEL = dict(Course.EVENT_TYPES)
-EVENT_TYPE_KEY_BY_LABEL = {v: k for k, v in EVENT_TYPE_LABEL.items()}
 
 FORMAT_LABEL = dict(CourseInstance.FORMATS)  # 'online' -> 'Онлайн' тощо
 FORMAT_KEY_BY_LABEL = {v: k for k, v in FORMAT_LABEL.items()}
@@ -431,6 +418,46 @@ def _from_lines(value: str | None) -> list[str]:
     return [line.strip() for line in str(value).splitlines() if line.strip()]
 
 
+def event_type_dropdown_options():
+    """Назви активних типів для drop-down у згенерованому файлі."""
+    from app.services import event_types
+    return [name for _code, name in event_types.choices()]
+
+
+def normalize_event_type(raw):
+    """Код виду заходу з того, що написали у клітинці.
+
+    Приймає і внутрішній код ('seminar'), і українську назву з drop-down
+    ('Семінар'), і застарілий тип: старі вигрузки мусять заходити далі.
+    """
+    from app.services import event_types
+
+    value = _str(raw) or ''
+    if not value:
+        return None
+
+    rows = event_types.directory()
+    if value in rows:
+        return value
+
+    by_label = {row.name: code for code, row in rows.items()}
+    if value in by_label:
+        return by_label[value]
+
+    # Резервний пошук без урахування регістру: файл редагується руками,
+    # і користувач міг набрати назву в іншому регістрі.
+    value_cf = value.casefold()
+    for code in rows:
+        if code.casefold() == value_cf:
+            return code
+    for name, code in by_label.items():
+        if name.casefold() == value_cf:
+            return code
+
+    allowed = sorted(rows) + sorted(by_label)
+    raise ValueError(f'event_type={value!r} – допустимі: {allowed}')
+
+
 def _bool(v) -> bool:
     if isinstance(v, bool):
         return v
@@ -606,30 +633,40 @@ def _add_inline_dropdown(ws, column_key: str, columns: list[str],
     """Прикріпити drop-down зі статичним списком значень.
 
     Використовується для невеликих enum-полів (event_type, формат, статус).
-    Excel-обмеження inline-list у formula1 -- 255 символів; для довших
-    списків потрібен окремий sheet з reference-значеннями.
+    Excel (OOXML) обмежує КОЖЕН із трьох рядків -- formula1, error, prompt --
+    255 символами ОКРЕМО; довший список потребує reference-sheet.
     """
     if not options:
         return
     col_letter = get_column_letter(columns.index(column_key) + 1)
     # Inline-list у formula1 має бути обгорнутий лапками й розділений комами.
     formula = '"' + ','.join(options) + '"'
-    if len(formula) > 255:
-        # Мовчки віддати файл, який Excel вважає пошкодженим, гірше, ніж
-        # віддати його без цієї випадайки.
-        logger.warning(
-            'Drop-down для %r пропущено: список %s символів (ліміт Excel 255). '
-            'Для довших списків потрібен reference-sheet.',
-            column_key, len(formula),
-        )
-        return
+    # error навмисно короткий і БЕЗ переліку значень: повний список -- лише
+    # в prompt (hint), бо formula1/error/prompt ділять один ліміт на рядок
+    # (255 симв.), а formula1 із 12 активних видів заходу вже займає 221 --
+    # запасу лишається ~34 символи, тобто десь два нові коди. Дублювання
+    # переліку в error перше впиралося б у межу.
+    error_message = 'Оберіть значення зі списку (стрілочка праворуч клітинки).'
+    for part_name, text in (
+        ('formula1', formula), ('error', error_message), ('prompt', hint),
+    ):
+        if len(text) > 255:
+            # Мовчки віддати файл, який Excel вважає пошкодженим, гірше, ніж
+            # віддати його без цієї випадайки.
+            logger.warning(
+                'Drop-down для %r пропущено: %s -- %s символів (ліміт Excel '
+                '255 на кожен з formula1/error/prompt). Для довших списків '
+                'потрібен reference-sheet.',
+                column_key, part_name, len(text),
+            )
+            return
     dv = DataValidation(
         type='list',
         formula1=formula,
         allow_blank=False,
         showDropDown=False,  # False у XML = ПОКАЗУВАТИ стрілочку
         errorStyle='stop',
-        error=f'Оберіть значення зі списку: {", ".join(options)}',
+        error=error_message,
         errorTitle='Невалідне значення',
         prompt=hint,
         promptTitle=title,
@@ -703,6 +740,8 @@ def export_courses_xlsx(active: str = 'all') -> io.BytesIO:
       active: 'all' | 'true' | 'false' -- фільтр за полем is_active.
               Дефолтно 'all' (історична поведінка -- усі курси).
     """
+    from app.services import event_types
+
     wb = Workbook()
     ws = wb.active
     ws.title = 'Курси'
@@ -725,7 +764,7 @@ def export_courses_xlsx(active: str = 'all') -> io.BytesIO:
             c.subtitle or '',
             c.short_description or '',
             c.description or '',
-            EVENT_TYPE_LABEL.get(c.event_type, c.event_type or ''),
+            event_types.base_name(c.event_type) if c.event_type else '',
             float(c.base_price) if c.base_price is not None else 0,
             float(c.cpd_points_online) if c.cpd_points_online is not None else None,
             float(c.cpd_points_offline) if c.cpd_points_offline is not None else None,
@@ -753,12 +792,12 @@ def export_courses_xlsx(active: str = 'all') -> io.BytesIO:
     _apply_zebra(ws, len(COURSE_COLS), first_data_row=2, last_data_row=courses_last_row)
 
     # ----- Кольори за значенням -----------------------------------------
-    et_col = COURSE_COLS.index('event_type') + 1
+    # event_type тут колись мав власну заливку (EVENT_TYPE_FILLS), поки видів
+    # було п'ять і вони жили в коді. Дванадцять редагованих у БД видів такій
+    # мапі більше не піддаються -- прибрано разом з константою.
     ia_col = COURSE_COLS.index('is_active') + 1
     if_col = COURSE_COLS.index('is_featured') + 1
     for row_idx, c in enumerate(courses, start=2):
-        if c.event_type and c.event_type in EVENT_TYPE_FILLS:
-            ws.cell(row=row_idx, column=et_col).fill = EVENT_TYPE_FILLS[c.event_type]
         ws.cell(row=row_idx, column=ia_col).fill = (
             BOOL_TRUE_FILL if c.is_active else BOOL_FALSE_FILL
         )
@@ -808,13 +847,14 @@ def export_courses_xlsx(active: str = 'all') -> io.BytesIO:
         trainers_last_row=trainers_last_row,
     )
 
-    # Drop-down для типу заходу.
+    # Drop-down для типу заходу -- лише активні типи з довідника.
+    _event_type_options = event_type_dropdown_options()
     _add_inline_dropdown(
         ws, 'event_type', COURSE_COLS,
-        options=[label for _key, label in Course.EVENT_TYPES],
+        options=_event_type_options,
         last_data_row=courses_last_row,
         title='Тип заходу',
-        hint='Оберіть зі списку: Семінар, Вебінар, Курс, Майстер-клас, Конференція',
+        hint='Оберіть зі списку: ' + ', '.join(_event_type_options),
     )
 
     # Excel Tables (forматовані з зеброю + auto-filter).
@@ -932,15 +972,16 @@ def parse_courses_xlsx(path: Path) -> CoursesImportPlan:
                 raise ValueError(f'дублюючий slug у файлі: {slug!r}')
             seen_slugs.add(slug)
 
-            event_type_raw = _str(raw.get('event_type')) or 'course'
-            # Приймаємо і англ. internal key ('course'), і українську назву
-            # з drop-down ('Курс'). Нормалізуємо у key.
-            event_type = EVENT_TYPE_KEY_BY_LABEL.get(event_type_raw, event_type_raw)
-            if event_type not in VALID_EVENT_TYPES:
-                allowed = sorted(VALID_EVENT_TYPES) + sorted(EVENT_TYPE_KEY_BY_LABEL.keys())
-                raise ValueError(
-                    f'event_type={event_type_raw!r} – допустимі: {allowed}'
-                )
+            # Приймаємо і внутрішній код ('seminar'), і українську назву з
+            # drop-down ('Семінар'); застарілі типи теж проходять --
+            # інакше архівні вигрузки перестали б імпортуватись.
+            #
+            # Дефолт для порожньої комірки -- 'seminar', а не колишній
+            # 'course': 'course' деактивований, тож він показував би голий
+            # код на публічній сторінці. Свідомо міняємо стару поведінку,
+            # хоча архівний файл із порожніми клітинками тепер завозить
+            # «Семінар» замість «Курс» -- ризик визнано прийнятним.
+            event_type = normalize_event_type(raw.get('event_type')) or 'seminar'
 
             # Колонка "Тренер" може містити або slug (старі файли), або ПІБ
             # (новий експорт + drop-down). Спершу шукаємо за slug, потім за

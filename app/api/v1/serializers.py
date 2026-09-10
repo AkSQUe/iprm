@@ -198,7 +198,11 @@ def serialize_event_card(course, instance=None) -> dict:
         'title': course.title,
         'subtitle': course.subtitle,
         'short_description': course.short_description,
-        'event_type': course.event_type,
+        # Instance-ефективний, як і сусідні event_format/status/cpd_points/...:
+        # проведення може перевизначити вид заходу окремо від курсу.
+        'event_type': (
+            instance.effective_event_type if instance else course.event_type
+        ),
         'event_format': instance.event_format if instance else None,
         'status': instance.status if instance else 'draft',
         'start_date': instance.start_date.isoformat() if instance and instance.start_date else None,

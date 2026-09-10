@@ -27,6 +27,11 @@ class CourseInstance(TimestampMixin, db.Model):
 
     event_format = db.Column(db.String(20))
 
+    # Перевизначення виду заходу для конкретного проведення. Порожньо --
+    # береться тип курсу (див. effective_event_type). Потрібне, коли той
+    # самий курс раз проводять тренінгом, а раз -- фаховою школою.
+    event_type = db.Column(db.String(30))
+
     price = db.Column(db.Numeric(10, 2))
     # Бали БПР окремо за форматом участі -- те саме розмежування, що й у Course.
     cpd_points_online = db.Column(db.Numeric(5, 2))
@@ -164,6 +169,18 @@ class CourseInstance(TimestampMixin, db.Model):
     @property
     def format_label(self):
         return dict(self.FORMATS).get(self.event_format, self.event_format)
+
+    @property
+    def effective_event_type(self):
+        """Код виду заходу: власний, а якщо порожній -- курсовий."""
+        if self.event_type:
+            return self.event_type
+        return self.course.event_type if self.course else None
+
+    @property
+    def event_type_label(self):
+        from app.services import event_types
+        return event_types.label(self.effective_event_type)
 
     def _warn_orphan(self, context):
         """Логувати якщо instance без course (дата-інтегріті issue)."""

@@ -223,6 +223,56 @@ class TestEventDetail:
         assert resp.get_json()['slug'] == draft_event.slug
 
 
+class TestEventTypeOverride:
+    """Проведення може перевизначити вид заходу окремо від курсу (наприклад,
+    курс "Семінар" провели разово як "Тренінг"). Партнерський API мусить
+    віддавати ефективний (перевизначений) код, як і всі сусідні instance-
+    ефективні поля (event_format, status, cpd_points, ...)."""
+
+    def test_list_returns_instance_override_not_course_type(
+        self, client, partner_settings, user,
+    ):
+        c = Course(
+            title='Перевизначений тип', slug=f'ovr-{_uid()}',
+            event_type='seminar', base_price=0, is_active=True,
+            created_by=user.id,
+        )
+        db.session.add(c)
+        db.session.flush()
+        inst = CourseInstance(
+            course_id=c.id, status='published', event_format='offline',
+            event_type='training', price=0,
+            start_date=datetime.now(timezone.utc) + timedelta(days=10),
+        )
+        db.session.add(inst)
+        db.session.flush()
+
+        resp = client.get('/api/v1/events', headers={'X-API-Key': API_KEY})
+        card = next(e for e in resp.get_json()['items'] if e['slug'] == c.slug)
+        assert card['event_type'] == 'training'
+
+    def test_detail_returns_instance_override_not_course_type(
+        self, client, partner_settings, user,
+    ):
+        c = Course(
+            title='Перевизначений тип у деталях', slug=f'ovr-{_uid()}',
+            event_type='seminar', base_price=0, is_active=True,
+            created_by=user.id,
+        )
+        db.session.add(c)
+        db.session.flush()
+        inst = CourseInstance(
+            course_id=c.id, status='published', event_format='offline',
+            event_type='training', price=0,
+            start_date=datetime.now(timezone.utc) + timedelta(days=10),
+        )
+        db.session.add(inst)
+        db.session.flush()
+
+        resp = client.get(f'/api/v1/events/{c.slug}', headers={'X-API-Key': API_KEY})
+        assert resp.get_json()['event_type'] == 'training'
+
+
 class TestSeatsLeft:
     # Читаємо detail-ендпоінт, а не перший аркуш списку: список
     # посторінковий (50 на сторінку), а спільна тестова БД накопичує

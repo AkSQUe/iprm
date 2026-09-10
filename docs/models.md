@@ -38,7 +38,7 @@
 | `subtitle` | String(500) | Підзаголовок |
 | `description` | Text | Повний опис |
 | `short_description` | String(500) | Короткий опис для карток |
-| `event_type` | String(30) | seminar/webinar/course/masterclass/conference |
+| `event_type` | String(30) | Код виду заходу з довідника `EventType.code` — рядок, без FK (див. розділ [EventType](#eventtype-довідник-видів-заходів-бпр)) |
 | `hero_image`, `card_image` | String(500) | URL зображень |
 | `target_audience`, `tags`, `faq` | JSON | Списки |
 | `speaker_info`, `agenda` | Text | Текстові блоки |
@@ -73,6 +73,7 @@
 | `event_format` | String(20) | online/offline/hybrid |
 | `price`, `max_participants` | Overrides | null = взяти з Course |
 | `cpd_points_online`, `cpd_points_offline` | Numeric(5,2), overrides | null = взяти з Course; `effective_cpd_for(fmt)` / `cpd_pairs` / `cpd_range` читають обидва |
+| `event_type` | String(30) | Необов'язковий override коду з довідника `EventType`; null = взяти з `Course.event_type` (`effective_event_type`) |
 | `location`, `online_link` | String | Локація |
 | `trainer_id` | FK trainers | Override тренера |
 | `status` | String(20) | draft/published/active/completed/cancelled |
@@ -90,6 +91,41 @@ xlsx-звіти.
 розібрали. Гроші не відхиляються, натомість подія стає видимою -- у
 розкладі адмінки колонка «Місця» червоніє (`7/6`), а адміністраторам
 (адресати правила `payment`) йде лист `overbooking_alert`.
+
+## EventType (довідник видів заходів БПР)
+
+Номенклатура видів заходів (семінар, конгрес, симпозіум...) — редагована
+таблиця, а не константа в коді, бо перелік мусить збігатися з нормативною
+номенклатурою БПР і мінятись без деплою. Сторінка адмінки —
+`/admin/event-types` (права `event_types.view|manage|delete`).
+
+| Поле | Тип | Опис |
+|------|-----|------|
+| `id` | BigInt | PK |
+| `code` | String(30) unique | Стабільний природний ключ; саме його зберігають `Course.event_type` і `CourseInstance.event_type`, і його ж віддає партнерське API/xlsx |
+| `name` | String(120) | Називний відмінок з великої літери — бейдж на картці курсу |
+| `name_accusative` | String(120) | Знахідний з малої — для тексту сертифіката («…завершив(-ла) наукову конференцію») |
+| `name_genitive` | String(120) | Родовий з малої — для тексту сертифіката лектора («…лектору(-ці) наукової конференції») |
+| `sort_order` | Integer | Порядок у випадаючому списку й у таблиці довідника |
+| `is_active` | Boolean | Чи пропонується у виборі нового курсу/проведення |
+
+`Course.event_type` і `CourseInstance.event_type` посилаються на `code` як
+на звичайний рядок, без зовнішнього ключа: код уже їде в партнерське API
+та xlsx-вигрузки, і заміна на числовий `id` зламала б обидва контракти.
+Натомість цілісність тримає заборона видаляти рядок, на який ще посилається
+хоч один курс, — типу, якого прибрали з номенклатури, знімають `is_active`
+замість видалення чи перемапування; курси, де він уже стоїть, і далі
+показують коректну назву й відмінки, а сам код зникає лише з вибору для
+нових курсів. Так застарілі коди (`course`, `webinar`, `conference`)
+лишаються в довіднику деактивованими.
+
+Служба `app/services/event_types.py` кешує довідник на час запиту
+(`g`) і дає `label()`, `base_name()`, `accusative()`, `genitive()`,
+`choices(current=None)`.
+
+xlsx-вигрузка проведень (`export_instances_xlsx`) не має колонки
+`event_type` — override, який задають лише через адмінку, у файлі
+розкладу не видно й не редагується.
 
 ## CourseRequest (запит на курс)
 

@@ -6,6 +6,7 @@ from app.admin import routes_reviews  # noqa: F401
 from app.admin import routes_quizzes  # noqa: F401
 from app.admin import routes_cities  # noqa: F401
 from app.admin import routes_specialties  # noqa: F401
+from app.admin import routes_event_types  # noqa: F401
 from app.admin import routes_participants  # noqa: F401
 from app.admin import routes_payments  # noqa: F401
 from app.admin import routes_refunds  # noqa: F401

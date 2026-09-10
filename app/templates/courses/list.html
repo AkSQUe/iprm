@@ -160,8 +160,8 @@
             <h3 class="iprm-schedule__title iprm-block-title">{{ inst.course.t('title') }}</h3>
             <div class="iprm-schedule__meta">
               {{ location_badge(inst.event_format, inst.location) }}
-              {% if inst.course.event_type %}
-              <span class="iprm-schedule__tag iprm-schedule__tag--type">{{ inst.course.event_type_label }}</span>
+              {% if inst.effective_event_type %}
+              <span class="iprm-schedule__tag iprm-schedule__tag--type">{{ inst.event_type_label }}</span>
               {% endif %}
               {% if inst.cpd_range[0] %}
               <span class="iprm-schedule__tag iprm-schedule__tag--cpd">{{ points_range(*inst.cpd_range) }}</span>

@@ -448,6 +448,11 @@ def populate_instance_from_form(instance, form):
     instance.start_date = form.start_date.data
     instance.end_date = form.end_date.data
     instance.event_format = form.event_format.data
+    # Порожній вибір -- це «Як у курсу» з пікера; у БД він мусить лягти як
+    # NULL, а не як порожній рядок, інакше effective_event_type спрацював би
+    # правильно лише випадково (перевіряє істинність), а колонка накопичила
+    # б сміття.
+    instance.event_type = form.event_type.data or None
     instance.price = form.price.data
     instance.cpd_points_online = form.cpd_points_online.data
     instance.cpd_points_offline = form.cpd_points_offline.data

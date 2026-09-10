@@ -137,8 +137,8 @@ def _serialize_event(inst, capacity):
         'slug': inst.course.slug,
         'format': inst.event_format,
         'format_label': inst.format_label,
-        'event_type': inst.course.event_type,
-        'event_type_label': inst.course.event_type_label,
+        'event_type': inst.effective_event_type,
+        'event_type_label': inst.event_type_label,
         'tags': inst.course.t('tags') or [],
         'trainer': inst.effective_trainer.t('full_name') if inst.effective_trainer else None,
         # Готовий локалізований рядок, а не число: інакше плюралізацію й

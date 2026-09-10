@@ -1,0 +1,162 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Довідник типів заходів | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-event-types.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout admin-layout--wide">
+
+    <div class="admin-hero">
+      <div>
+        <div class="admin-breadcrumb">
+          <a href="{{ url_for('admin.courses_list') }}" class="admin-breadcrumb__link">Курси</a>
+          <span class="admin-breadcrumb__sep">/</span>
+          <span class="admin-breadcrumb__current">Довідник типів заходів</span>
+        </div>
+        <h1 class="admin-hero__title">Довідник типів заходів</h1>
+        <p class="admin-hero__subtitle">
+          Номенклатура видів заходів БПР. Знята галка «Активний» прибирає тип із вибору,
+          але курси, де він уже стоїть, показуються як раніше. Відмінки друкуються
+          в сертифікатах, тому пишуться з малої літери.
+        </p>
+      </div>
+    </div>
+
+    {% include 'partials/flash_messages.html' %}
+
+    <div class="admin-stat-cards admin-stat-cards--3">
+      <div class="admin-stat-card">
+        <span class="admin-stat-card__value">{{ active_count }}</span>
+        <span class="admin-stat-card__label">Активних типів</span>
+      </div>
+      <div class="admin-stat-card">
+        <span class="admin-stat-card__value">{{ rows | length - active_count }}</span>
+        <span class="admin-stat-card__label">Застарілих</span>
+      </div>
+      <div class="admin-stat-card">
+        <span class="admin-stat-card__value">{{ rows | length }}</span>
+        <span class="admin-stat-card__label">Усього в довіднику</span>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h2 class="admin-form__section-title">Додати тип</h2>
+      <p class="admin-form__section-hint">
+        Код -- латиницею, він потрапляє в партнерське API та xlsx і надалі не змінюється.
+      </p>
+      <form method="POST" action="{{ url_for('admin.event_types_add') }}" class="event-types-add">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="text" name="code" class="form-input" maxlength="30"
+               placeholder="workshop" aria-label="Код типу">
+        <input type="text" name="name" class="form-input" maxlength="120"
+               placeholder="Воркшоп" aria-label="Назва, називний відмінок">
+        <input type="text" name="accusative" class="form-input" maxlength="120"
+               placeholder="воркшоп" aria-label="Знахідний відмінок">
+        <input type="text" name="genitive" class="form-input" maxlength="120"
+               placeholder="воркшопу" aria-label="Родовий відмінок">
+        <button type="submit" class="btn-admin btn-admin--secondary">{{ icon('add') }} Додати</button>
+      </form>
+    </div>
+
+    <form method="POST" action="{{ url_for('admin.event_types_save') }}" class="admin-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="admin-table-wrap">
+        <table class="admin-table event-types-table">
+          <thead>
+            <tr>
+              <th class="event-types-col-code">Код</th>
+              <th>Назва</th>
+              <th>Знахідний</th>
+              <th>Родовий</th>
+              {% for lang in languages %}<th>{{ 'Російська' if lang == 'ru' else 'Англійська' }}</th>{% endfor %}
+              <th class="event-types-col-sort">Порядок</th>
+              <th class="event-types-col-uses" title="Курсів і проведень цим типом">Вжито</th>
+              <th class="event-types-col-status">Активний</th>
+              <th class="event-types-col-actions">Дії</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in rows %}
+            <tr>
+              <td class="event-types-col-code"><code>{{ row.type.code }}</code></td>
+              <td>
+                <input type="text" class="form-input" maxlength="120"
+                       name="name__{{ row.type.id }}" value="{{ row.type.name }}"
+                       aria-label="Назва типу {{ row.type.code }}">
+              </td>
+              <td>
+                <input type="text" class="form-input" maxlength="120"
+                       name="accusative__{{ row.type.id }}"
+                       value="{{ row.type.name_accusative or '' }}" placeholder="–"
+                       aria-label="{{ row.type.name }} – знахідний відмінок">
+              </td>
+              <td>
+                <input type="text" class="form-input" maxlength="120"
+                       name="genitive__{{ row.type.id }}"
+                       value="{{ row.type.name_genitive or '' }}" placeholder="–"
+                       aria-label="{{ row.type.name }} – родовий відмінок">
+              </td>
+              {% for lang in languages %}
+              <td>
+                <input type="text" class="form-input" maxlength="120"
+                       name="tr__{{ lang }}__{{ row.type.id }}" value="{{ row.tr[lang] }}"
+                       placeholder="–"
+                       aria-label="{{ row.type.name }} – {{ 'російська' if lang == 'ru' else 'англійська' }}">
+              </td>
+              {% endfor %}
+              <td class="event-types-col-sort">
+                <input type="number" class="form-input" name="sort__{{ row.type.id }}"
+                       value="{{ row.type.sort_order }}"
+                       aria-label="Порядок типу {{ row.type.name }}">
+              </td>
+              <td class="event-types-col-uses">
+                {% if row.uses %}
+                  <a href="{{ url_for('admin.courses_list') }}">{{ row.uses }}</a>
+                {% else %}
+                  <span class="admin-text-muted" title="Тип ніде не вживається">–</span>
+                {% endif %}
+              </td>
+              <td class="event-types-col-status">
+                <input type="checkbox" name="active__{{ row.type.id }}"
+                       id="active__{{ row.type.id }}"
+                       {% if row.type.is_active %}checked{% endif %}>
+                <label for="active__{{ row.type.id }}" class="visually-hidden">
+                  Активний: {{ row.type.name }}
+                </label>
+              </td>
+              <td class="event-types-col-actions">
+                {# Форма видалення живе поза формою збереження (вкладені form
+                   невалідні); кнопка прив'язана до неї атрибутом form. #}
+                <button type="submit" form="event-type-delete-{{ row.type.id }}"
+                        class="btn-admin btn-admin--danger btn-admin--sm btn-admin--icon"
+                        {% if row.uses %}disabled title="Тип вживається -- зніміть галку «Активний»"{% endif %}>
+                  {{ icon('delete', label='Видалити') }}
+                </button>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="admin-form__actions">
+        <button type="submit" class="btn-admin btn-admin--primary">Зберегти довідник</button>
+      </div>
+    </form>
+
+    {% for row in rows %}
+    <form method="POST" id="event-type-delete-{{ row.type.id }}"
+          action="{{ url_for('admin.event_types_delete', type_id=row.type.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    </form>
+    {% endfor %}
+
+  </div>
+</div>
+{% endblock %}

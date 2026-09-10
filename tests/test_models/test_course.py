@@ -17,9 +17,14 @@ def test_course_creation(db_session):
 
 
 def test_course_event_type_label(db_session):
-    """Computed property event_type_label."""
-    course = Course(title='C', slug='c-type', event_type='course')
-    assert course.event_type_label == 'Курс'
+    """Назва береться з довідника, а не з константи моделі."""
+    course = Course(title='C', slug='c-type', event_type='seminar')
+    assert course.event_type_label == 'Семінар'
+
+
+def test_course_event_type_label_of_unknown_code_is_the_code(db_session):
+    course = Course(title='C', slug='c-type-x', event_type='no-such')
+    assert course.event_type_label == 'no-such'
 
 
 def test_course_trainer_relationship(db_session):
