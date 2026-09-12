@@ -10,17 +10,6 @@ from app.models.user import User
 from app.services.partner_auth import issuer_label
 
 
-def _partner_issuer(user):
-    """issuer партнера, якщо акаунт заведено партнерським лінком, інакше None."""
-    from app.models.auth_identity import AuthIdentity
-    identity = AuthIdentity.query.filter_by(
-        user_id=user.id, provider=AuthIdentity.PROVIDER_PARTNER,
-    ).first()
-    if identity is None:
-        return None
-    return (identity.raw_claims or {}).get('issuer')
-
-
 class CertificateDataForm(UserNameFieldsMixin, MedicalProfileFieldsMixin, FlaskForm):
     """Анкета "Дані для сертифіката" (МОЗ №725 п.13) в особистому кабінеті.
 
@@ -126,7 +115,7 @@ class RegistrationForm(FlaskForm):
         # prefill-лінк з сайту партнера, і пароля вона не знає. Нейтральний
         # текст нижче читався б тут як помилка сайту, тому називаємо джерело
         # і ведемо на відновлення паролю -- єдиний шлях, що спрацює.
-        issuer = _partner_issuer(user)
+        issuer = user.partner_issuer
         if issuer is not None and not user.has_password:
             raise ValidationError(Markup(_(
                 'Цей email уже зареєстровано через %(partner)s. Пароль для '

@@ -1014,19 +1014,28 @@ def partner_relink(email, issuer, dry_run):
     from app.extensions import db
     from app.models.auth_identity import AuthIdentity
     from app.models.user import User
-    from app.services.partner_auth import _partner_sub
+    from app.services.partner_auth import ALLOWED_ISSUERS
+
+    if issuer not in ALLOWED_ISSUERS:
+        # Значення йде в raw_claims, а звідти -- у текст на формі
+        # реєстрації. Сміття з командного рядка побачив би користувач.
+        raise click.ClickException(
+            f'Невідомий партнер {issuer!r}. Дозволені: '
+            + ', '.join(sorted(ALLOWED_ISSUERS)) + '.')
 
     address = (email or '').strip().lower()
     user = User.query.filter_by(email=address).first()
     if user is None:
         raise click.ClickException(f'Користувача {address} не знайдено.')
 
-    password_identity = AuthIdentity.query.filter_by(
-        user_id=user.id, provider=AuthIdentity.PROVIDER_PASSWORD,
+    # Саме хеш, а не рядок identity: порожня password-identity (OAuth-юзер,
+    # який пароля ще не ставив) входу не дає й прибирати її нема потреби.
+    password_identity = AuthIdentity.query.filter(
+        AuthIdentity.user_id == user.id,
+        AuthIdentity.provider == AuthIdentity.PROVIDER_PASSWORD,
+        AuthIdentity.password_hash.isnot(None),
     ).first()
-    marker = AuthIdentity.query.filter_by(
-        user_id=user.id, provider=AuthIdentity.PROVIDER_PARTNER,
-    ).first()
+    marker = AuthIdentity.find_partner(user.id)
 
     if password_identity is not None and user.last_login_at is not None:
         # Людина вже входила -- пароль вона знає, і це не той випадок.
@@ -1052,13 +1061,6 @@ def partner_relink(email, issuer, dry_run):
     if password_identity is not None:
         db.session.delete(password_identity)
     if marker is None:
-        db.session.add(AuthIdentity(
-            user_id=user.id,
-            provider=AuthIdentity.PROVIDER_PARTNER,
-            provider_sub=_partner_sub(issuer, user.email),
-            email=user.email,
-            email_verified=bool(user.email_confirmed),
-            raw_claims={'issuer': issuer},
-        ))
+        AuthIdentity.attach_partner(user, issuer)
     db.session.commit()
     click.echo('Готово. Вхід -- через "Забули пароль".')

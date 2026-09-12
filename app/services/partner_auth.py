@@ -18,7 +18,6 @@ import jwt
 from app.extensions import db
 from app.models.site_settings import SiteSettings
 from app.models.auth_identity import AuthIdentity
-from app.models.medical_profile import MedicalProfile
 from app.models.user import User
 
 logger = logging.getLogger(__name__)
@@ -93,67 +92,32 @@ def get_or_create_partner_user(payload: PrefillPayload) -> User:
     already authenticated them.
     """
     user = User.query.filter_by(email=payload.email).first()
-    if user:
+    created = user is None
+    if created:
+        # Акаунт БЕЗ пароля -- як гість після покупки. Доти сюди ставили
+        # secrets.token_urlsafe(32): акаунт виглядав як такий, що має
+        # пароль, хоча його не знав ніхто, і людина не могла ні увійти,
+        # ні встановити пароль у кабінеті.
+        user = User.create_partner_linked(
+            email=payload.email,
+            issuer=payload.issuer,
+            first_name=payload.first_name,
+            last_name=payload.last_name,
+        )
+    else:
         if not user.email_confirmed:
             user.email_confirmed = True
-            db.session.commit()
-        _ensure_partner_identity(user, payload.issuer)
-        return user
+        # Маркер походження чіпляємо і до акаунтів, що існували раніше:
+        # за ним форма реєстрації називає джерело.
+        AuthIdentity.attach_partner(user, payload.issuer)
 
-    # Акаунт БЕЗ пароля -- як гість після покупки. Доти сюди ставили
-    # secrets.token_urlsafe(32): акаунт виглядав як такий, що має пароль,
-    # хоча його не знав ніхто. Людина не могла ні увійти, ні встановити
-    # пароль у кабінеті (сторінка відшивала "Пароль уже встановлено"), і
-    # єдиним виходом лишалось відновлення пароля, про яке ніхто не казав.
-    # Identity provider='partner' -- маркер походження, не спосіб входу:
-    # за ним форма реєстрації називає джерело акаунта.
-    user = User.create_with_oauth(
-        provider=AuthIdentity.PROVIDER_PARTNER,
-        sub=_partner_sub(payload.issuer, payload.email),
-        email=payload.email,
-        email_verified=True,
-        first_name=payload.first_name or '',
-        last_name=payload.last_name or '',
-        raw_claims={'issuer': payload.issuer},
-        profile_source=MedicalProfile.SOURCE_PARTNER,
-    )
     db.session.commit()
-    logger.info(
-        'Created partner-linked user id=%d email=%s from issuer=%s',
-        user.id, user.email, payload.issuer,
-    )
+    if created:
+        logger.info(
+            'Created partner-linked user id=%d email=%s from issuer=%s',
+            user.id, user.email, payload.issuer,
+        )
     return user
-
-
-def _partner_sub(issuer: str, email: str) -> str:
-    """Стабільний provider_sub партнерської identity.
-
-    Не str(user.id), як у password-identity: id ще не існує на момент
-    виклику фабрики. UNIQUE(provider, provider_sub) тримає пару
-    issuer+email, тож два партнерські акаунти не стикаються.
-    """
-    return f'{issuer}:{email}'
-
-
-def _ensure_partner_identity(user: User, issuer: str) -> None:
-    """Домалювати маркер партнера акаунту, який існував раніше.
-
-    Повторний prefill не має плодити рядки, тому спершу шукаємо наявний.
-    """
-    existing = AuthIdentity.query.filter_by(
-        user_id=user.id, provider=AuthIdentity.PROVIDER_PARTNER,
-    ).first()
-    if existing is not None:
-        return
-    db.session.add(AuthIdentity(
-        user_id=user.id,
-        provider=AuthIdentity.PROVIDER_PARTNER,
-        provider_sub=_partner_sub(issuer, user.email),
-        email=user.email,
-        email_verified=bool(user.email_confirmed),
-        raw_claims={'issuer': issuer},
-    ))
-    db.session.commit()
 
 
 def _clean(value) -> str | None:
