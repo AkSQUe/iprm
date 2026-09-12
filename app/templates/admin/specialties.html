@@ -41,7 +41,7 @@
 
     <div class="form-section">
       <h2 class="form-section__title">Додати спеціальність вручну</h2>
-      <p class="admin-text-muted">
+      <p class="admin-form__section-hint">
         Код рядка генерується з назви автоматично й не змінюється надалі --
         переклади й видимість правляться нижче, у таблиці.
       </p>
@@ -54,7 +54,7 @@
           <option value="{{ code }}">{{ label }}</option>
           {% endfor %}
         </select>
-        <button type="submit" class="btn-admin btn-admin--secondary">{{ icon('add') }} Додати</button>
+        <button type="submit" class="btn-admin btn-admin--secondary specialties-add__submit">{{ icon('add') }} Додати</button>
       </form>
     </div>
 
@@ -72,7 +72,11 @@
     <form method="POST" action="{{ url_for('admin.specialties_save') }}" class="admin-form specialties-form">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="admin-table-wrap">
-        <table class="admin-table specialties-table">
+        {# --wide (admin.css): дев'ять колонок, з яких п'ять мають фіксовану
+           ширину. Без нижньої межі на 980px полям перекладу лишалось по 68px
+           -- поле, у якому не видно жодного слова. Поріг той самий, що в
+           решти широких реєстрів, і в картковому режимі він знімається. #}
+        <table class="admin-table admin-table--wide specialties-table">
           <thead>
             <tr>
               <th>Українська (оригінал)</th>
@@ -90,15 +94,18 @@
               <td class="admin-cell-title">
                 <input type="hidden" name="row__{{ row.specialty.id }}" value="1">
                 <strong>{{ row.specialty.name }}</strong>
+                {# Помітка ПРИ назві, а не стан рядка: середня крапка з тьмяним
+                   словом відривалась від назви на переносі й читалась як другий
+                   підрядок поруч із кодом. #}
                 {% if row.specialty.is_group %}
-                  <span class="admin-text-muted">&middot; узагальнення</span>
+                  <span class="badge badge--draft badge--sm">узагальнення</span>
                 {% endif %}
-                <div class="admin-text-muted">{{ row.specialty.code }}</div>
+                <div class="admin-subline admin-mono admin-text-muted">{{ row.specialty.code }}</div>
               </td>
               <td class="specialties-col-section">{{ row.specialty.section_label }}</td>
               {% for lang in languages %}
               <td>
-                <input type="text" class="form-input specialties-input" maxlength="200"
+                <input type="text" class="form-input form-input--fallback specialties-input" maxlength="200"
                        name="tr__{{ lang }}__{{ row.specialty.id }}"
                        value="{{ row.tr[lang] }}"
                        placeholder="–"
@@ -120,7 +127,7 @@
               </td>
               <td class="specialties-col-uses">
                 {% if row.uses %}
-                  {{ row.uses }}
+                  <span class="admin-num">{{ row.uses }}</span>
                 {% else %}
                   <span class="admin-text-muted" title="Код не вживається в курсах чи проведеннях">–</span>
                 {% endif %}
@@ -142,7 +149,7 @@
       </div>
 
       <div class="admin-form__actions">
-        <span class="admin-text-muted specialties-savebar__hint">
+        <span class="admin-text-muted admin-form__actions-hint">
           Зміни в полях не зберігаються самі -- натисніть «Зберегти».
         </span>
         <button type="submit" class="btn-admin btn-admin--primary">
