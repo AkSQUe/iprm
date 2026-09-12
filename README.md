@@ -5,7 +5,7 @@
 ## Технології
 
 - **Backend:** Flask 3.0+, SQLAlchemy ORM, Flask-Login, Flask-WTF, Flask-Migrate, Flask-Limiter
-- **Frontend:** Jinja2, CSS + Tailwind CSS (гібридна архітектура), Canvas API
+- **Frontend:** Jinja2, власна CSS-дизайн-система (токени й компоненти в `common.css`, посторінкові `page-*.css`; каталог -- `/admin/design-system`), Canvas API. Tailwind **не використовується**
 - **База даних:** SQLite (dev), PostgreSQL (prod, через pg8000), Alembic-міграції
 - **Деплой:** GitHub Actions, rsync на VPS, systemd + gunicorn
 - **Безпека:** CSRF, rate limiting, security headers, admin-декоратор
