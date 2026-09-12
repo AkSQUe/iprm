@@ -101,5 +101,12 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.lock -r requirements-dev.txt
+      # Скомпільованих каталогів у git немає: вони похідні від .po і лежать
+      # у .gitignore. Без них Flask-Babel мовчки віддає українське джерело
+      # замість ru/en, і два десятки перевірок перекладу падають на раннері,
+      # лишаючись зеленими локально, де .mo зібрані вручну. Джоба deploy
+      # компілює їх на сервері; тестовій потрібен той самий крок.
+      - name: Compile translation catalogs
+        run: pybabel compile -d app/translations
       - name: Run tests
         run: pytest -q
