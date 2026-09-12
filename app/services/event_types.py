@@ -84,7 +84,7 @@ def accusative(code):
 
 
 def genitive(code):
-    """Родовий для лекторського сертифіката: "лектору(-ці) <genitive>"."""
+    """Родовий для лекторського сертифіката: "тренера <genitive>"."""
     return _case(code, 'name_genitive')
 
 

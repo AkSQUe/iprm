@@ -390,7 +390,7 @@ def event_type_accusative_for(instance):
 
 
 def event_type_genitive_for(instance):
-    """Родовий виду заходу проведення: "лектору(-ці) наукової конференції"."""
+    """Родовий виду заходу проведення: "тренера наукової конференції"."""
     from app.services import event_types
     return event_types.genitive(instance.effective_event_type) if instance else None
 

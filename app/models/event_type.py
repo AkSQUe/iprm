@@ -32,7 +32,7 @@ class EventType(TranslatableMixin, TimestampMixin, db.Model):
 
     # Відмінки друкуються всередині речення сертифіката, тож зберігаються
     # з малої. Знахідний: "успішно завершив(-ла) наукову конференцію".
-    # Родовий: "лектору(-ці) наукової конференції".
+    # Родовий: "тренера наукової конференції".
     name_accusative = db.Column(db.String(120))
     name_genitive = db.Column(db.String(120))
 

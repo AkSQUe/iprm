@@ -190,7 +190,7 @@
         {% if cert_kind == 'lecturer' %}
         <p class="cert__eyebrow">виданий</p>
         <p class="cert__name">{{ certificate.recipient_name }}</p>
-        <p class="cert__lead">лектору(-ці) {{ event_type or 'заходу' }}</p>
+        <p class="cert__lead">тренера {{ event_type or 'заходу' }}</p>
         {% else %}
         <p class="cert__eyebrow">Цей сертифікат засвідчує, що</p>
         <p class="cert__name">{{ certificate.recipient_name }}</p>
