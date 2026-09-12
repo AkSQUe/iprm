@@ -103,7 +103,7 @@
 
   {# ===== Нагадування: email не підтверджено ===== #}
   {% if not current_user.email_confirmed %}
-  <aside class="reg-certdata-reminder reg-certdata-reminder--email" role="note">
+  <aside class="reg-certdata-reminder" role="note">
     <div class="reg-certdata-reminder__icon" aria-hidden="true">@</div>
     <div class="reg-certdata-reminder__body">
       <p class="reg-certdata-reminder__title">{{ _('Підтвердіть ваш email') }}</p>
