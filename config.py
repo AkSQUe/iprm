@@ -122,6 +122,20 @@ class Config:
     BACKUP_RETENTION_DAYS = int(os.environ.get('BACKUP_RETENTION_DAYS', '30'))
     BACKUP_OPERATION_TIMEOUT = int(os.environ.get('BACKUP_OPERATION_TIMEOUT', '3600'))
     BACKUP_MAX_CONCURRENT = int(os.environ.get('BACKUP_MAX_CONCURRENT', '1'))
+    # Підлога retention: стільки найсвіжіших копій лишається ЗАВЖДИ, хоч би
+    # які старі вони були. Без неї місяць без нових бекапів означав нуль
+    # копій саме тоді, коли вони найпотрібніші.
+    BACKUP_MIN_KEEP = int(os.environ.get('BACKUP_MIN_KEEP', '3'))
+    # Запобіжна копія перед відновленням живе коротко: вона страхує одну
+    # конкретну операцію, а не історію.
+    BACKUP_PRE_RESTORE_RETENTION_DAYS = int(
+        os.environ.get('BACKUP_PRE_RESTORE_RETENTION_DAYS', '1'))
+    # Тривога на сторінці, якщо найсвіжіша копія старша за це. Мовчазна
+    # смерть системи -- головна біда цього модуля, тож вік видно в UI.
+    BACKUP_MAX_AGE_HOURS = int(os.environ.get('BACKUP_MAX_AGE_HOURS', '48'))
+    # Тривога про місце: повний диск кладе весь сайт, не лише копії.
+    BACKUP_DISK_FREE_MIN_PERCENT = int(
+        os.environ.get('BACKUP_DISK_FREE_MIN_PERCENT', '10'))
 
     # Експорт юридичних сторінок у .docx (flask legal-docx)
     LEGAL_DOCX_LETTERHEAD = os.environ.get(

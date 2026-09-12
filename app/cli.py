@@ -872,6 +872,19 @@ def backup_validate_cmd(backup_id):
         raise SystemExit(1)
 
 
+@backup_group.command('validate-all')
+@with_appcontext
+def backup_validate_all_cmd():
+    """Перевірити цілісність усіх придатних копій."""
+    from app.services.backup_service import BackupService
+
+    result = BackupService.validate_all_backups()
+    click.echo(f'Придатних: {result["checked"]}')
+    if result['corrupted']:
+        click.echo(f'ПОШКОДЖЕНИХ: {result["corrupted"]}', err=True)
+        raise SystemExit(1)
+
+
 @backup_group.command('cleanup')
 @click.option('--dry-run', is_flag=True, help='Лише показати, що буде видалено.')
 @with_appcontext

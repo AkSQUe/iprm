@@ -50,6 +50,54 @@ def test_missing_pg_tools_still_raises_the_alarm(app, monkeypatch, notifications
     assert 'postgresql-client' in notifications[0]
 
 
+class TestWeeklyIntegrityReport:
+    """Тиша означала і «все добре», і «система мертва». Звіт розводить ці два."""
+
+    @pytest.fixture
+    def reports(self, monkeypatch):
+        sent = []
+        monkeypatch.setattr(
+            scheduler_service, '_notify_backup_report',
+            lambda stats, integrity: sent.append((stats, integrity)),
+        )
+        return sent
+
+    def test_report_checks_every_copy(self, app, monkeypatch, reports):
+        calls = []
+        monkeypatch.setattr(
+            'app.services.backup_service.BackupService.validate_all_backups',
+            classmethod(lambda cls: calls.append(1) or {'checked': 4, 'corrupted': 0}),
+        )
+
+        scheduler_service._run_backup_integrity_report()
+
+        assert calls, 'перевірка копій мусила виконатись'
+
+    def test_report_carries_the_integrity_result(self, app, monkeypatch, reports):
+        monkeypatch.setattr(
+            'app.services.backup_service.BackupService.validate_all_backups',
+            classmethod(lambda cls: {'checked': 3, 'corrupted': 1}),
+        )
+
+        scheduler_service._run_backup_integrity_report()
+
+        assert len(reports) == 1
+        _, integrity = reports[0]
+        assert integrity == {'checked': 3, 'corrupted': 1}
+
+    def test_report_carries_storage_state(self, app, monkeypatch, reports):
+        monkeypatch.setattr(
+            'app.services.backup_service.BackupService.validate_all_backups',
+            classmethod(lambda cls: {'checked': 1, 'corrupted': 0}),
+        )
+
+        scheduler_service._run_backup_integrity_report()
+
+        stats, _ = reports[0]
+        assert 'is_stale' in stats
+        assert 'disk_free_display' in stats
+
+
 def test_healthy_environment_creates_the_copy(app, monkeypatch, notifications):
     calls = []
 

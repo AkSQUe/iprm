@@ -76,6 +76,92 @@ def test_schema_only_copy_is_refused_for_restore(pg_url, monkeypatch):
     assert 'схем' in str(exc.value).lower()
 
 
+class TestFilenamesAreUnique:
+    """Два дампи не мають ділити один файл."""
+
+    def test_same_second_gives_different_names(self, app):
+        """Мітка часу була з точністю до секунди.
+
+        Ручна копія і щоденна джоба, що зійшлись в одну секунду, давали
+        однакове ім'я: другий pg_dump перезаписував файл першого, а два
+        рядки в базі вказували на нього разом. Видалення одного забирало
+        файл у другого.
+        """
+        first = BackupService._build_filename(DatabaseBackup.TYPE_FULL)
+        second = BackupService._build_filename(DatabaseBackup.TYPE_FULL)
+
+        assert first != second
+
+    def test_name_still_carries_type_and_date(self, app):
+        name = BackupService._build_filename(DatabaseBackup.TYPE_SCHEMA_ONLY)
+
+        assert name.startswith('backup_schema_only_')
+        assert name.endswith('.dump')
+
+
+class TestDatabaseSizeWithoutSubprocess:
+    """Розмір бази беремо з'єднанням, яке вже відкрите."""
+
+    def test_no_psql_process_is_spawned(self, app, monkeypatch):
+        """Доти розмір діставали через subprocess psql -- із SQL, зібраним
+        f-рядком, і з незадекларованою залежністю: psql немає в
+        PG_REQUIRED_BINARIES, тож на сервері без нього db_size_bytes тихо
+        лишався NULL.
+        """
+        def _forbidden(*args, **kwargs):
+            raise AssertionError('subprocess тут більше не потрібен')
+
+        monkeypatch.setattr('subprocess.run', _forbidden)
+
+        assert BackupService._get_db_size() is None, 'на SQLite розміру немає'
+
+
+class TestValidateDistinguishesMissingReference:
+
+    def test_unrecorded_size_is_not_a_mismatch(self, app, tmp_path):
+        """Незаписаний розмір означає «еталона немає», а не «не збігається».
+
+        Колонка має default=0, тож незаповнений розмір приходить нулем, а не
+        None -- і пряме порівняння `actual != expected` маркувало цілу копію
+        як пошкоджену. Еталон цілісності тут checksum, і він збігається.
+        """
+        import hashlib
+        path = tmp_path / 'nosize.dump'
+        path.write_bytes(b'payload')
+        backup = DatabaseBackup(
+            filename=path.name,
+            file_path=str(path),
+            file_size_bytes=0,
+            backup_type=DatabaseBackup.TYPE_FULL,
+            status=DatabaseBackup.STATUS_COMPLETED,
+            checksum_sha256=hashlib.sha256(b'payload').hexdigest(),
+        )
+        db.session.add(backup)
+        db.session.commit()
+
+        assert BackupService.validate_backup(backup.id) is True
+        assert backup.status == DatabaseBackup.STATUS_COMPLETED
+
+    def test_real_size_mismatch_is_still_caught(self, app, tmp_path):
+        """Запобіжник не має ослабнути: записаний розмір досі порівнюється."""
+        import hashlib
+        path = tmp_path / 'short.dump'
+        path.write_bytes(b'payload')
+        backup = DatabaseBackup(
+            filename=path.name,
+            file_path=str(path),
+            file_size_bytes=99999,
+            backup_type=DatabaseBackup.TYPE_FULL,
+            status=DatabaseBackup.STATUS_COMPLETED,
+            checksum_sha256=hashlib.sha256(b'payload').hexdigest(),
+        )
+        db.session.add(backup)
+        db.session.commit()
+
+        assert BackupService.validate_backup(backup.id) is False
+        assert backup.status == DatabaseBackup.STATUS_CORRUPTED
+
+
 def test_pg_tools_available_follows_binaries(monkeypatch):
     monkeypatch.setattr('shutil.which', lambda name: None)
     assert BackupService.pg_tools_available() is False

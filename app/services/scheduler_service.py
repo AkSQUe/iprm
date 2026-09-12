@@ -157,6 +157,16 @@ def init_scheduler(app):
     )
 
     scheduler.add_job(
+        backup_integrity_report,
+        # Раз на тиждень: звіряння контрольних сум читає кожен файл цілком,
+        # а на 1 vCPU це не та робота, яку варто робити щодня.
+        trigger=CronTrigger(day_of_week='sun', hour=5, minute=0),
+        id='backup_integrity_report',
+        replace_existing=True,
+        name='Щотижневий звіт про стан резервних копій',
+    )
+
+    scheduler.add_job(
         purge_soft_deleted,
         trigger=CronTrigger(hour=4, minute=30),  # daily at 4:30 AM
         id='soft_deleted_purge',
@@ -912,6 +922,84 @@ def backup_cleanup():
                     logger.info('Backup cleanup: deleted %d old backups', result['deleted'])
             except Exception:
                 logger.exception('Backup cleanup failed')
+
+
+def backup_integrity_report():
+    """Щотижнева звірка контрольних сум усіх копій плюс звіт адмінам."""
+    app = scheduler._app
+    with app.app_context():
+        with _job_lock('backup_integrity_report') as got:
+            if not got:
+                logger.debug('backup report: another worker holds the lock')
+                return
+            try:
+                _run_backup_integrity_report()
+            except Exception:
+                logger.exception('Щотижневий звіт про копії не склався')
+
+
+def _run_backup_integrity_report():
+    """Перевірити всі копії й надіслати звіт про стан сховища.
+
+    Лист іде і тоді, коли все добре. Доти тиша означала водночас «усе
+    гаразд» і «система мертва» -- через цю двозначність бекапів не було три
+    місяці, і ніхто цього не помітив. Щотижневий лист робить різницю
+    видимою: він або приходить, або його відсутність сама є сигналом.
+    """
+    from app.services.backup_service import BackupService
+
+    integrity = BackupService.validate_all_backups()
+    stats = BackupService.get_storage_stats()
+    _notify_backup_report(stats, integrity)
+
+
+def _notify_backup_report(stats, integrity):
+    """Надіслати адмінам щотижневий звіт про стан резервних копій."""
+    try:
+        from flask import url_for
+
+        from app.models.email_settings import EmailSettings
+        from app.models.site_settings import SiteSettings
+        from app.services.email_service import EmailService
+
+        email_settings = EmailSettings.get()
+        if not email_settings.smtp_server:
+            return
+
+        manager_emails = SiteSettings.get().event_manager_emails or []
+        if not manager_emails:
+            return
+
+        try:
+            admin_url = url_for('admin.backups', _external=True)
+        except Exception:
+            admin_url = '/admin/backups'
+
+        # Тема несе підсумок: у списку листів видно стан, не відкриваючи.
+        troubled = stats.get('is_stale') or stats.get('disk_low') or integrity['corrupted']
+        subject = ('[ІПРМ] Резервні копії: ПОТРІБНА УВАГА' if troubled
+                   else '[ІПРМ] Резервні копії: усе гаразд')
+
+        context = {
+            'stats': stats,
+            'integrity': integrity,
+            'troubled': bool(troubled),
+            'admin_url': admin_url,
+        }
+
+        for email in manager_emails:
+            try:
+                EmailService.send_email(
+                    to=email,
+                    subject=subject,
+                    template_name='backup_report',
+                    context=context,
+                    trigger='backup_report',
+                )
+            except Exception:
+                logger.exception('Не вдалось надіслати звіт про копії на %s', email)
+    except Exception:
+        logger.exception('Не вдалось надіслати звіт про копії')
 
 
 def _notify_backup_failure(error_message):

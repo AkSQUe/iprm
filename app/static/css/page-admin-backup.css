@@ -1,27 +1,9 @@
-/* page-admin-backup.css -- Database backup admin page */
+/* page-admin-backup.css -- розкладка сторінки резервних копій.
 
-.admin-page {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 32px 24px 80px;
-}
-
-.admin-page__header {
-  margin-bottom: 32px;
-}
-
-.admin-page__header h1 {
-  font-size: clamp(1.5rem, 3vw, 2rem);
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  color: var(--iprm-text);
-  margin-bottom: 4px;
-}
-
-.admin-page__subtitle {
-  font-size: 0.9375rem;
-  color: var(--iprm-text-light);
-}
+   Оболонку (відступи, заголовок, підзаголовок) сторінка НЕ оголошує: вона
+   бере спільні admin-hero / admin-layout, як решта адмінки. Доти тут жили
+   власні .admin-page / __header / __subtitle -- той самий компонент,
+   написаний заново, і саме через нього сторінка лишалась без сайдбара. */
 
 /* Stats cards */
 .backup-stats {
@@ -81,7 +63,16 @@
   min-width: 200px;
 }
 
+/* Тут стоять дві окремі форми -- пакетна перевірка і очищення, -- бо це два
+   різні POST. Проміжок однаковий і між формами, і між кнопками всередині
+   очищення, щоб ряд читався як один набір дій. */
 .backup-actions__cleanup {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.backup-actions__cleanup form {
   display: flex;
   gap: 8px;
 }
@@ -310,10 +301,6 @@
 }
 
 @media (max-width: 768px) {
-  .admin-page {
-    padding: 24px 16px 64px;
-  }
-
   .backup-stats {
     grid-template-columns: 1fr 1fr;
     gap: 12px;
