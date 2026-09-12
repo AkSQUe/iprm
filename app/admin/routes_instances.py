@@ -155,6 +155,19 @@ def _issued_bpr(instance):
     return {'count': count, 'numbers': numbers} if count else None
 
 
+def _lecturer_cert(instance):
+    """Виданий сертифікат лектора цієї дати -- або None.
+
+    Кнопка перевидачі має сенс лише коли є що перевидавати; без запису
+    адмін бачить звичайну видачу.
+    """
+    from app.models.lecturer_certificate import LecturerCertificate
+
+    if instance is None or instance.id is None:
+        return None
+    return LecturerCertificate.query.filter_by(instance_id=instance.id).first()
+
+
 _INSTANCES_PER_PAGE = 25
 
 
@@ -461,7 +474,7 @@ def instance_create():
     # issued_bpr -- лише для правки: у щойно створеної дати сертифікатів
     # немає за визначенням, але шаблон один на обидва режими.
     return render_template('admin/instance_edit.html', form=form, instance=None,
-                           issued_bpr=None)
+                           issued_bpr=None, lecturer_cert=None)
 
 
 @admin_bp.route('/instances/<int:instance_id>/edit', methods=['GET', 'POST'])
@@ -486,7 +499,8 @@ def instance_edit(instance_id):
             flash(str(exc), 'error')
             return render_template('admin/instance_edit.html', form=form,
                                    instance=instance,
-                                   issued_bpr=_issued_bpr(instance))
+                                   issued_bpr=_issued_bpr(instance),
+                                   lecturer_cert=_lecturer_cert(instance))
         apply_inline_translations(instance)
         if try_commit(log_context=f'instance_edit id={instance.id}'):
             audit_logger.info(
@@ -496,7 +510,8 @@ def instance_edit(instance_id):
             return redirect(url_for('admin.instances_list'))
 
     return render_template('admin/instance_edit.html', form=form, instance=instance,
-                           issued_bpr=_issued_bpr(instance))
+                           issued_bpr=_issued_bpr(instance),
+                           lecturer_cert=_lecturer_cert(instance))
 
 
 @admin_bp.route('/instances/<int:instance_id>/lecturer-certificate', methods=['POST'])
@@ -523,6 +538,40 @@ def instance_lecturer_certificate(instance_id):
         return redirect(url_for('admin.instance_edit', instance_id=instance_id))
 
     audit_logger.info('Admin %s issued lecturer cert %s instance=%s',
+                      current_user.email, lc.number, instance_id)
+    return send_file(io.BytesIO(pdf), mimetype='application/pdf',
+                     as_attachment=True, download_name=f'lecturer-{lc.number}.pdf')
+
+
+@admin_bp.route('/instances/<int:instance_id>/lecturer-certificate/reissue',
+                methods=['POST'])
+@permission_required('instances.manage')
+def instance_lecturer_certificate_reissue(instance_id):
+    """Перевидати сертифікат лектора за поточними даними й віддати PDF.
+
+    Потрібне після виправлення номера заходу в проведенні: видача номер
+    уже виданого серта не переписує (див. certificate_service.reissue_*).
+    """
+    import io
+    from flask import send_file
+    from app.services import certificate_service as cs
+
+    instance = db.session.get(CourseInstance, instance_id)
+    if not instance:
+        flash('Проведення не знайдено', 'error')
+        return redirect(url_for('admin.instances_list'))
+    try:
+        lc = cs.reissue_lecturer_certificate(instance, issued_by=current_user)
+        pdf = cs.render_lecturer_pdf(lc)
+    except ValueError as exc:
+        flash(str(exc), 'error')
+        return redirect(url_for('admin.instance_edit', instance_id=instance_id))
+    except Exception:
+        current_app.logger.exception('lecturer cert reissue failed')
+        flash('Не вдалося перевидати сертифікат лектора', 'error')
+        return redirect(url_for('admin.instance_edit', instance_id=instance_id))
+
+    audit_logger.info('Admin %s reissued lecturer cert %s instance=%s',
                       current_user.email, lc.number, instance_id)
     return send_file(io.BytesIO(pdf), mimetype='application/pdf',
                      as_attachment=True, download_name=f'lecturer-{lc.number}.pdf')

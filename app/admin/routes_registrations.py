@@ -388,6 +388,61 @@ def registration_certificate_resend(reg_id):
     return _redirect_after_action(reg)
 
 
+@admin_bp.route('/registrations/<int:reg_id>/certificate/reissue', methods=['POST'])
+@permission_required('certificates.manage')
+def registration_certificate_reissue(reg_id):
+    """Перевидати сертифікат за поточними даними заходу і надіслати на email.
+
+    Окрема дія, а не поведінка «Переслати»: перевидача міняє номер на руках
+    у людини, тож вона мусить бути свідомим натисканням, а не побічним
+    ефектом повторного листа.
+    """
+    reg = db.session.get(EventRegistration, reg_id)
+    if not reg or reg.certificate is None:
+        flash('Сертифікат не знайдено', 'error')
+        return redirect(url_for('admin.registrations_all'))
+
+    previous_number = reg.certificate.number
+    try:
+        from app.services.certificate_service import reissue_certificate
+        cert = reissue_certificate(reg, issued_by=current_user)
+        # Ті самі граблі, що й у видачі: номер капчимо до email-виклику, бо
+        # після невдалої відправки сесія в rolled-back-стані, і ліниве
+        # перечитування в flash кинуло б PendingRollbackError.
+        cert_number = cert.number
+        audit_logger.info(
+            'Admin %s reissued certificate %s (was %s) for reg %d',
+            current_user.email, cert_number, previous_number, reg_id,
+        )
+        changed = cert_number != previous_number
+        try:
+            from app.services.email_service import EmailService
+            EmailService.send_certificate(cert)
+            email_sent = True
+        except Exception:
+            db.session.rollback()
+            logger.exception('Failed to email reissued certificate for reg %d', reg_id)
+            email_sent = False
+        if changed:
+            what = f'Сертифікат перевидано: {previous_number} -> {cert_number}'
+        else:
+            what = f'Сертифікат {cert_number} перевидано (номер не змінився)'
+        if email_sent:
+            flash(f'{what}, оновлений надіслано на email', 'success')
+        else:
+            flash(f'{what}. Email не відправлено -- надішліть повторно '
+                  'з картки реєстрації.', 'warning')
+    except ValueError as exc:
+        db.session.rollback()
+        flash(str(exc), 'error')
+    except Exception:
+        logger.exception('Failed to reissue certificate for reg %d', reg_id)
+        db.session.rollback()
+        flash('Помилка при перевидачі сертифіката', 'error')
+
+    return _redirect_after_action(reg)
+
+
 @admin_bp.route('/registrations/<int:reg_id>/certificate/download')
 @permission_required('registrations.view')
 def registration_certificate_download(reg_id):

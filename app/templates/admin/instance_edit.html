@@ -54,6 +54,18 @@
           {{ icon('workspace_premium') }} Сертифікат лектора
         </button>
       </form>
+      {% if lecturer_cert %}
+      {# Виданий серт номер уже не міняє -- після правки номера заходу його
+         треба перевидати явно. #}
+      <form method="POST" action="{{ url_for('admin.instance_lecturer_certificate_reissue', instance_id=instance.id) }}"
+            data-confirm="Перевидати сертифікат лектора за поточними даними? Номер може змінитись."
+            data-confirm-ok="Перевидати">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn-admin btn-admin--secondary">
+          {{ icon('refresh') }} Перевидати сертифікат лектора
+        </button>
+      </form>
+      {% endif %}
       {% endif %}
       {# Лише коли тема задана: без неї проведення зветься назвою курсу, і
          перекладати тут нічого -- переклад назви живе в картці курсу. #}
