@@ -72,7 +72,8 @@ def _answers(correct=0):
 
 def _setup(bank=12, per_attempt=10, passing=8, max_attempts=3,
            shuffle=False, active=True, cpd_points=12, event_num=None,
-           paid=True, started_days_ago=1, profile=True, instance_quiz=None):
+           paid=True, started_days_ago=1, profile=True, instance_quiz=None,
+           instance_event_num=None):
     """Курс + проведення + активний тест з банком + оплачена реєстрація."""
     course = Course(
         title=f'Курс {uuid4().hex[:4]}', slug=f'qs-{uuid4().hex[:6]}',
@@ -91,6 +92,7 @@ def _setup(bank=12, per_attempt=10, passing=8, max_attempts=3,
     inst = CourseInstance(
         course_id=course.id, status='completed', event_format='offline',
         location='Київ', start_date=start,
+        bpr_event_number=instance_event_num,
     )
     db.session.add(inst)
     db.session.flush()
@@ -240,6 +242,13 @@ def test_missing_bpr_event_number_blocks_start(app):
     """Інакше людина склала б тест і отримала помилку замість сертифіката."""
     reg, _ = _setup(event_num='')
     assert quiz_service.eligibility(reg).status == quiz_service.BPR_NOT_CONFIGURED
+
+
+def test_instance_number_unblocks_start_when_course_has_none(app):
+    """Номер, виписаний лише на дату, -- достатня підстава пустити в тест:
+    сертифікат візьме саме його."""
+    reg, _ = _setup(event_num='', instance_event_num='1031500')
+    assert quiz_service.eligibility(reg).status != quiz_service.BPR_NOT_CONFIGURED
 
 
 def test_missing_provider_number_blocks_start(app, bpr_ready):

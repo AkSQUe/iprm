@@ -37,7 +37,7 @@ from app.extensions import db
 from app.models.course_instance import CourseInstance
 from app.models.medical_profile import MedicalProfile
 from app.models.registration import EventRegistration
-from app.models.specializations import SPECIALIZATIONS
+from app.data.specializations import SPECIALIZATIONS
 from app.models.user import User
 
 from ._common import (

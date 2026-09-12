@@ -1,17 +1,18 @@
 {% extends "admin/base_admin.html" %}
-{% from 'admin/partials/_filter_bar.html' import empty_state %}
+{% from 'admin/partials/_filter_bar.html' import empty_state, stat_cards %}
 
 {% block title %}Форми Meta | ІПРМ{% endblock %}
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-meta-forms.css') }}?v={{ assets_version }}">
 {% endblock %}
 
 {% block content %}
 <div class="admin-with-sidebar">
   {% include 'admin/partials/_sidebar.html' %}
-  <div class="admin-layout">
+  <div class="admin-layout admin-layout--wide">
 
   <div class="admin-hero">
     <div>
@@ -22,58 +23,109 @@
       </div>
       <h1 class="admin-hero__title">Форми Meta</h1>
       <p class="admin-hero__subtitle">
-        Meta про наші курси не знає нічого -- про який захід кожна форма,
-        вирішує тут людина.
+        Meta про наші курси не знає нічого &mdash; про який захід кожна форма,
+        вирішує тут людина
       </p>
     </div>
+    {# Кнопка живе під іншим правом (`meta_leads.settings`), ніж сама
+       сторінка (`meta_leads.view`): показана тому, хто на неї не має права,
+       вона обіцяє дію і віддає 403. #}
+    {% if can('meta_leads.settings') %}
     <div class="admin-hero__actions">
       <form method="POST" action="{{ url_for('admin.meta_leads_sync_forms') }}"
             data-confirm="Забрати з Meta підписи питань і варіантів відповіді?" data-confirm-ok="Оновити">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">Оновити підписи форм</button>
+        <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('refresh') }} Оновити підписи форм</button>
       </form>
     </div>
+    {% endif %}
   </div>
 
   {% include 'partials/flash_messages.html' %}
 
   {% if forms %}
+  {# «Без заходу» -- єдина картка, заради якої сторінку відкривають: решта
+     три дають їй масштаб. --alert, а не --warning: другий у цій системі
+     синій і читається як «очікує», а не як «глянь сюди». #}
+  {{ stat_cards([
+       {'value': summary.total, 'label': 'Форм на Сторінці'},
+       {'value': summary.active, 'label': 'Активних у Meta'},
+       {'value': summary.linked, 'label': 'Прив\'язано до заходу'},
+       {'value': summary.needs_offer, 'label': 'Без заходу',
+        'mod': 'alert' if summary.needs_offer else none}], cols=4) }}
+
   <div class="admin-table-wrap">
-  <table class="admin-table">
+  <table class="admin-table mlf-table">
     <thead>
       <tr>
-        <th>Назва</th>
-        <th>form_id</th>
-        <th>Стан</th>
-        <th>Питань</th>
-        <th>Синхронізовано</th>
-        <th>Захід</th>
+        <th class="mlf-col--form">Форма</th>
+        <th class="mlf-col--status">Стан</th>
+        <th class="mlf-col--questions">Питань</th>
+        <th class="mlf-col--synced">Синхронізовано</th>
+        <th class="mlf-col--offer">Захід</th>
       </tr>
     </thead>
     <tbody>
       {% for form in forms %}
       <tr>
-        <td>{{ form.name or '–' }}</td>
-        <td><code class="admin-code">{{ form.form_id }}</code></td>
-        <td>
-          {% if form.status %}<span class="badge {{ status_badge(form.status) }}">{{ form.status }}</span>
-          {% else %}–{% endif %}
+        {# Назва й позначка -- в одній обгортці: у картковому режимі комірка
+           стає flex-рядом, і бейдж як окремий елемент ряду відривався від
+           назви на власний рядок, до ЛІВОГО краю картки. #}
+        <td class="admin-cell-title">
+          <span>
+            <strong>{{ form.name or 'Без назви' }}</strong>
+            {%- if form.id in needs_offer %}
+            <span class="badge badge--warning badge--sm"
+                  title="Жива форма без заходу: заявки з неї нікуди не приписуються">без заходу</span>
+            {%- endif %}
+          </span>
+          <span class="admin-subline"><code class="admin-code admin-nowrap">{{ form.form_id }}</code></span>
         </td>
-        <td>{{ form.questions_count }}</td>
-        <td>{{ form.synced_at | kyiv or '–' }}</td>
         <td>
-          <form method="POST" action="{{ url_for('admin.meta_lead_form_offer', form_row_id=form.id) }}">
+          {% if form.status %}
+          <span class="badge {{ status_badge(form.status) }}"
+                title="Стан у Meta: {{ form.status }}">{{ status_label(form.status) }}</span>
+          {% else %}
+          <span class="admin-text-muted">&ndash;</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if form.questions_count %}
+          <span class="admin-num">{{ form.questions_count }}</span>
+          {% else %}
+          <span class="admin-text-muted" title="Схему ще не забрано з Meta">&ndash;</span>
+          {% endif %}
+        </td>
+        <td class="admin-nowrap">{{ form.synced_at | kyiv or '–' }}</td>
+        <td>
+          {% if can('meta_leads.manage') %}
+          <form method="POST" action="{{ url_for('admin.meta_lead_form_offer', form_row_id=form.id) }}"
+                class="admin-inline-form mlf-offer">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <select name="course_instance_id" class="form-input">
-              <option value="">{{ '– не прив\'язано –' }}</option>
+            <select name="course_instance_id" class="form-input form-input--sm"
+                    aria-label="Захід для форми {{ form.name or form.form_id }}">
+              <option value="">Не прив'язано</option>
               {% for choice in offer_choices[form.id] %}
               <option value="{{ choice.id }}"{% if choice.id == form.course_instance_id %} selected{% endif %}>
                 {{ choice.title }}{% if choice.start_date %} — {{ choice.start_date.strftime('%d.%m.%Y') }}{% endif %}
               </option>
               {% endfor %}
             </select>
-            <button type="submit" class="btn-admin btn-admin--sm">Зберегти</button>
+            <button type="submit" title="Зберегти прив'язку"
+                    class="btn-admin btn-admin--secondary btn-admin--sm btn-admin--icon">
+              {{ icon('check', label='Зберегти прив\'язку') }}
+            </button>
           </form>
+          {%- elif form.course_instance %}
+          {# Без права `meta_leads.manage` прив'язку видно, але не змінити:
+             випадайка, що віддає 403, обіцяє дію, якої немає. #}
+          <span>{{ form.course_instance.effective_title or 'Захід №' ~ form.course_instance_id }}</span>
+          {%- if form.course_instance.start_date %}
+          <span class="admin-subline admin-text-muted">{{ form.course_instance.start_date.strftime('%d.%m.%Y') }}</span>
+          {%- endif %}
+          {%- else %}
+          <span class="admin-text-muted">Не прив'язано</span>
+          {%- endif %}
         </td>
       </tr>
       {% endfor %}
@@ -81,9 +133,15 @@
   </table>
   </div>
   {% else %}
-  {% call empty_state(icon_name='campaign', title='Форм ще немає') %}
-    <p>Натисніть «Оновити підписи форм» -- система забере всі інстант-форми
+  {% call empty_state(icon_name='dynamic_form', title='Форм ще немає') %}
+    {% if can('meta_leads.settings') %}
+    <p>Натисніть «Оновити підписи форм» &mdash; система забере всі інстант-форми
     Сторінки з Graph API разом із їхніми питаннями.</p>
+    {% else %}
+    {# Порожній стан не має радити дію, кнопки якої на екрані немає. #}
+    <p>Схеми форм забирає з Graph API той, хто має доступ до налаштувань
+    Meta Lead Ads.</p>
+    {% endif %}
   {% endcall %}
   {% endif %}
 

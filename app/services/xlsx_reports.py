@@ -677,13 +677,14 @@ def export_error_logs_xlsx(logs, applied_filters=None) -> io.BytesIO:
 
 
 _INST_REPORT_COLS = ['id', 'course', 'start_date', 'end_date', 'event_format',
-                     'location', 'trainer', 'price',
+                     'event_type', 'location', 'trainer', 'price',
                      'cpd_points_online', 'cpd_points_offline',
                      'max_participants', 'registrations', 'occupied',
                      'seats_left', 'status']
 _INST_REPORT_LABELS = {
     'id': 'ID', 'course': 'Курс', 'start_date': 'Початок', 'end_date': 'Кінець',
-    'event_format': 'Формат', 'location': 'Місце', 'trainer': 'Тренер',
+    'event_format': 'Формат', 'event_type': 'Вид заходу',
+    'location': 'Місце', 'trainer': 'Тренер',
     'price': 'Ціна', 'cpd_points_online': 'Бали БПР онлайн',
     'cpd_points_offline': 'Бали БПР офлайн', 'max_participants': 'Місць',
     'registrations': 'Реєстрацій', 'occupied': 'Оплачено місць',
@@ -691,7 +692,8 @@ _INST_REPORT_LABELS = {
 }
 _INST_REPORT_WIDTHS = {
     'id': 8, 'course': 46, 'start_date': 18, 'end_date': 18,
-    'event_format': 14, 'location': 20, 'trainer': 26, 'price': 14,
+    'event_format': 14, 'event_type': 26, 'location': 20, 'trainer': 26,
+    'price': 14,
     'cpd_points_online': 14, 'cpd_points_offline': 14, 'max_participants': 10,
     'registrations': 12,
     'occupied': 14, 'seats_left': 10, 'status': 16,
@@ -724,6 +726,11 @@ def export_instances_report_xlsx(instances, reg_counts, occupied_map=None,
             _to_kyiv_naive(inst.start_date),
             _to_kyiv_naive(inst.end_date),
             FORMAT_LABEL.get(inst.event_format, inst.event_format or ''),
+            # Ефективний, як і решта полів цього звіту: тут друкують те, чим
+            # дата Є, а не те, чим вона відрізняється. Аркуш «Розклад»
+            # поводиться навпаки й свідомо -- там порожньо мусить лишитись
+            # порожнім, щоб успадкування пережило round-trip.
+            inst.event_type_label or '',
             inst.location or '',
             (trainer.full_name if trainer else ''),
             float(inst.effective_price) if inst.effective_price else None,

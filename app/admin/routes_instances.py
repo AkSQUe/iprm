@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 from flask import render_template, redirect, url_for, flash, request, jsonify, current_app
 from flask_login import current_user
-from sqlalchemy import func, or_
+from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import joinedload, selectinload
 
 from app.admin import _listing, admin_bp
@@ -20,7 +20,7 @@ from app.extensions import db, limiter
 from app.models.course import Course
 from app.models.course_instance import CourseInstance
 from app.models.registration import EventRegistration
-from app.services import course_service
+from app.services import course_service, event_types
 from app.services.course_service import InvalidStatusTransition
 from app.services.seating import occupied_clause, occupied_counts
 
@@ -72,7 +72,7 @@ def _populate_choices(form, preselected_course_id=None, instance=None):
     # зі збереженого проведення, а не з form.data.
     populate_event_type_choices(
         form, current=(instance.event_type if instance else None),
-        empty_label='– Як у курсу –',
+        empty_label=_inherited_type_label(instance, preselected_course_id),
     )
 
     form.difficulty_level.choices = (
@@ -80,6 +80,56 @@ def _populate_choices(form, preselected_course_id=None, instance=None):
             _inherited_source(instance, preselected_course_id)))]
         + Course.DIFFICULTY_LEVELS
     )
+
+    form.bpr_event_number.render_kw = {
+        'placeholder': _inherited_event_number_hint(instance, preselected_course_id),
+    }
+
+
+_BARE_INHERITED = '– Як у курсу –'
+
+# Підказка порожнього поля номера, коли курс іще не відомий (чисте /new).
+_BARE_EVENT_NUMBER_HINT = '7 цифр'
+
+
+def _inherited_event_number_hint(instance, preselected_course_id=None):
+    """Плейсхолдер поля «Реєстраційний номер заходу БПР».
+
+    Порожнє поле означає «візьметься номер курсу», і саме його адмін і має
+    побачити: сертифікат піде під ним, а перевіряти це в картці курсу --
+    зайвий перехід. Та сама логіка, що в підписів виду заходу й рівня.
+    """
+    course = _known_course(instance, preselected_course_id)
+    number = (course.bpr_event_number or '').strip() if course else ''
+    return f'{number} (з курсу)' if number else _BARE_EVENT_NUMBER_HINT
+
+
+def _inherited_type_label(instance, preselected_course_id=None):
+    """Підпис порожнього варіанта поля «Вид заходу».
+
+    Голе «Як у курсу» не повідомляє нічого: щоб дізнатись, тренінг це чи
+    фахова школа, довелось би відкрити картку курсу. Тому називаємо тип у
+    дужках скрізь, де курс уже відомий -- і в правці наявної дати, і в
+    створенні з картки курсу (?course_id=). На чистому /new курс обирають
+    у тій самій формі, називати ще нічого.
+    """
+    course = _known_course(instance, preselected_course_id)
+    if course is None or not course.event_type:
+        return _BARE_INHERITED
+    return f'– Як у курсу ({course.event_type_label}) –'
+
+
+def _known_course(instance, preselected_course_id=None):
+    """Курс, до якого належить (чи належатиме) проведення, якщо він відомий.
+
+    Спільне для всіх успадкованих полів: у правці дати курс беремо з неї,
+    у створенні з картки курсу -- з ?course_id=. На чистому /new курс
+    обирають у тій самій формі, тож відомого курсу ще немає.
+    """
+    course = instance.course if instance is not None else None
+    if course is None and preselected_course_id:
+        course = db.session.get(Course, preselected_course_id)
+    return course
 
 
 def _inherited_source(instance, preselected_course_id=None):
@@ -106,8 +156,21 @@ def _inherited_level_label(course):
     уже відомий.
     """
     if course is None or not course.difficulty_level:
-        return '– Як у курсу –'
+        return _BARE_INHERITED
     return f'– Як у курсу ({course.difficulty_label}) –'
+
+
+def _issued_bpr(instance):
+    """(к-сть, номери заходу) вже виданих сертифікатів цієї дати -- або None.
+
+    Потрібне рівно для застереження біля поля номера: якщо сертифікати вже
+    пішли під іншим номером, адмін мусить це побачити ДО правки, бо видані
+    номери не переписуються.
+    """
+    from app.services import certificate_service
+
+    count, numbers = certificate_service.issued_event_numbers(instance)
+    return {'count': count, 'numbers': numbers} if count else None
 
 
 _INSTANCES_PER_PAGE = 25
@@ -119,12 +182,45 @@ _QUICK_PRESETS = (
 )
 
 
+def _effective_type_clause(code):
+    """Умова «ЕФЕКТИВНИЙ вид заходу дати == code».
+
+    Не `CourseInstance.event_type == code`: перевизначення мають одиниці, і
+    такий фільтр згубив би всі дати, що вид успадковують -- тобто майже всі.
+    Екран виглядав би правдоподібно порожнім, а не зламаним.
+
+    Успадкування перевіряємо через EXISTS (`.has`), а не join: `_instances_query`
+    приєднує Course лише під пошук, і безумовний join довелося б там
+    узгоджувати. Порожній рядок нарівні з NULL -- так само, як у
+    CourseInstance.effective_event_type, де перевірка на істинність.
+    """
+    inherits = or_(
+        CourseInstance.event_type.is_(None),
+        CourseInstance.event_type == '',
+    )
+    return or_(
+        CourseInstance.event_type == code,
+        and_(inherits, CourseInstance.course.has(Course.event_type == code)),
+    )
+
+
+def _event_type_options():
+    """Пари (код, назва) для фільтра -- з довідника, а не з констант.
+
+    choice_arg звіряє значення саме з цим переліком, тож ?event_type=<сміття>
+    тихо падає в порожній фільтр, а не в порожній екран (як у courses_list).
+    """
+    return [(code, row.name) for code, row in event_types.directory().items()]
+
+
 def _instance_filters():
     """Фільтри списку проведень -- спільні для сторінки й експорту."""
     return {
         'q': _listing.text_arg('q'),
         'course_id': _listing.int_arg('course_id'),
         'status': _listing.choice_arg('status', dict(CourseInstance.STATUSES)),
+        'event_type': _listing.choice_arg(
+            'event_type', {code for code, _ in _event_type_options()}),
         'quick': _listing.choice_arg('quick', _QUICK_PRESETS),
     }
 
@@ -149,6 +245,8 @@ def _instances_query(filters):
         query = query.filter(CourseInstance.course_id == filters['course_id'])
     if filters['status']:
         query = query.filter(CourseInstance.status == filters['status'])
+    if filters['event_type']:
+        query = query.filter(_effective_type_clause(filters['event_type']))
 
     # ----- Таблетки швидких фільтрів (взаємовиключні пресети) -----
     quick = filters['quick']
@@ -285,6 +383,7 @@ def instances_list():
             for c in Course.query.filter_by(is_active=True).order_by(Course.title).all()
         ],
         status_options=CourseInstance.STATUSES,
+        event_type_options=_event_type_options(),
     )
 
 
@@ -334,6 +433,8 @@ def instances_report_export():
             ('Пошук', filters['q'] or '–'),
             ('Курс', course.title if course else 'Усі'),
             ('Статус', dict(CourseInstance.STATUSES).get(filters['status'], 'Усі')),
+            ('Вид заходу', event_types.base_name(filters['event_type'])
+             if filters['event_type'] else 'Усі'),
             ('Швидкий фільтр', filters['quick'] or '–'),
         ],
         len(instances),
@@ -378,6 +479,9 @@ def _render_instance_form(form, instance, preselected_course_id=None):
         form=form,
         instance=instance,
         inherited=_inherited_source(instance, preselected_course_id),
+        # Застереження біля поля номера заходу: у щойно створеної дати
+        # сертифікатів немає за визначенням, але шаблон один на обидва режими.
+        issued_bpr=_issued_bpr(instance),
         lecturers=lecturers,
         lecturer_certs=certs,
         # Сертифікат, виданий тренеру, якого зі складу вже прибрали (або який
@@ -523,6 +627,57 @@ def instance_lecturer_certificate(instance_id):
 
     audit_logger.info('Admin %s issued lecturer cert %s instance=%s',
                       current_user.email, lc.number, instance_id)
+    return send_file(io.BytesIO(pdf), mimetype='application/pdf',
+                     as_attachment=True, download_name=f'lecturer-{lc.number}.pdf')
+
+
+@admin_bp.route('/instances/<int:instance_id>/lecturer-certificate/reissue',
+                methods=['POST'])
+@permission_required('instances.manage')
+def instance_lecturer_certificate_reissue(instance_id):
+    """Перевидати сертифікат лектора за поточними даними й віддати PDF.
+
+    Потрібне після виправлення номера заходу в проведенні: видача номер
+    уже виданого серта не переписує (див. certificate_service.reissue_*).
+
+    Адресуємо саме сертифікат (`cert_id`), а не тренера, і тренера беремо з
+    нього: у заходу їх кілька, а склад заходу з часом міняється -- виданий
+    документ мусить лишатись перевидаваним і після того, як людину зі
+    складу прибрали (та сама межа, що й у завантаженні вище).
+    """
+    import io
+    from flask import send_file
+    from app.models.lecturer_certificate import LecturerCertificate
+    from app.services import certificate_service as cs
+
+    instance = db.session.get(CourseInstance, instance_id)
+    if not instance:
+        flash('Проведення не знайдено', 'error')
+        return redirect(url_for('admin.instances_list'))
+
+    cert_id = request.form.get('cert_id', type=int)
+    lc = LecturerCertificate.query.filter_by(
+        id=cert_id, instance_id=instance.id,
+    ).first() if cert_id is not None else None
+    if lc is None:
+        flash('Сертифікат не знайдено', 'error')
+        return redirect(url_for('admin.instance_edit', instance_id=instance_id))
+
+    try:
+        lc = cs.reissue_lecturer_certificate(
+            instance, lc.trainer, issued_by=current_user,
+        )
+        pdf = cs.render_lecturer_pdf(lc)
+    except ValueError as exc:
+        flash(str(exc), 'error')
+        return redirect(url_for('admin.instance_edit', instance_id=instance_id))
+    except Exception:
+        current_app.logger.exception('lecturer cert reissue failed')
+        flash('Не вдалося перевидати сертифікат лектора', 'error')
+        return redirect(url_for('admin.instance_edit', instance_id=instance_id))
+
+    audit_logger.info('Admin %s reissued lecturer cert %s instance=%s trainer=%s',
+                      current_user.email, lc.number, instance_id, lc.trainer_id)
     return send_file(io.BytesIO(pdf), mimetype='application/pdf',
                      as_attachment=True, download_name=f'lecturer-{lc.number}.pdf')
 

@@ -475,6 +475,10 @@ def populate_instance_from_form(instance, form):
     # 0 -- це «Як у курсу» з пікера; NULL, а не 0, бо шкала починається з 1,
     # і нуль у колонці означав би неіснуючий рівень.
     instance.difficulty_level = form.difficulty_level.data or None
+    # Порожньо -- саме NULL, а не '': effective_bpr_event_number відкочується
+    # на курс лише за відсутністю власного значення, і порожній рядок у базі
+    # читався б адміном як "номер уже вписано".
+    instance.bpr_event_number = _clean_text(form.bpr_event_number.data)
     # Гвард і тут, а не лише в `change_instance_status`: форма
     # редагування писала статус напряму, тобто повз ОБИДВІ перевірки.
     # Половина гварда гірша за його відсутність — вона створює

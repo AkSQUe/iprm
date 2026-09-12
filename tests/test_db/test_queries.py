@@ -205,3 +205,116 @@ class TestUserRegistrationCount:
         """registration_count property використовує _cached_reg_count якщо встановлено."""
         sample_user._cached_reg_count = 7
         assert sample_user.registration_count == 7
+
+
+# ---- перф-інваріант каталогу ------------------------------------------------
+
+def _count_selects(client, url):
+    """Скільки SELECT-ів коштує одна віддача сторінки."""
+    from sqlalchemy import event
+
+    counted = []
+
+    def _count(_conn, _cursor, statement, _params, _context, _many):
+        if statement.lstrip().upper().startswith('SELECT'):
+            counted.append(statement)
+
+    event.listen(db.engine, 'before_cursor_execute', _count)
+    try:
+        assert client.get(url).status_code == 200
+    finally:
+        event.remove(db.engine, 'before_cursor_execute', _count)
+    return len(counted)
+
+
+def _add_instances(db_session, course, count, start_at=30):
+    from datetime import datetime, timedelta, timezone
+
+    now = datetime.now(timezone.utc)
+    for k in range(count):
+        db_session.add(CourseInstance(
+            course_id=course.id,
+            start_date=now + timedelta(days=start_at + k),
+            end_date=now + timedelta(days=start_at + k, hours=4),
+            event_format='offline', status='published', price=500,
+        ))
+    db_session.flush()
+
+
+def test_catalog_query_count_does_not_grow_with_instances(
+        client, db_session, sample_course, sample_user):
+    """Каталог не має дорожчати з кожним проведенням -- і для залогіненого теж.
+
+    Картка календаря бере готовий рядок балів БПР із `render_template`, і той
+    виклик -- повноцінний рендер Flask: на КОЖНОМУ з них заново відпрацьовують
+    усі context processors. Один із них (`inject_certdata_reminder`) робить
+    запит до `event_registrations`, тож сторінка коштувала один SELECT на
+    кожне проведення -- але лише для залогіненого користувача, бо анонім
+    виходить із процесора раніше. Тому міряємо саме під логіном.
+
+    Міряємо ПРИРІСТ, а не абсолют: постійна ціна сторінки залежить від речей
+    поза цим тестом, і поріг на абсолютне число ламався б від чужих тестів.
+
+    Профіль користувачу навмисно не створюємо: із заповненою анкетою процесор
+    виходить до запиту, і тест перестав би стерегти те, заради чого написаний.
+    """
+    from tests.support.rbac import switch_user
+
+    switch_user(client, sample_user)
+
+    _add_instances(db_session, sample_course, 1)
+    client.get('/courses/')
+    baseline = _count_selects(client, '/courses/')
+
+    _add_instances(db_session, sample_course, 5, start_at=60)
+    # Тестова сесія живе через усі запити тесту, і вже завантажену колекцію
+    # `course.instances` наступний selectinload не перечитує -- без цього
+    # рядка друга віддача каталогу показувала б старі проведення, а тест
+    # мовчки не міряв би нічого. У проді кожен запит має власну сесію.
+    db_session.expire_all()
+    client.get('/courses/')
+    grown = _count_selects(client, '/courses/')
+
+    assert grown - baseline <= 1, (
+        f'+5 проведень додали {grown - baseline} запитів '
+        f'({baseline} -> {grown}): рендер картки тягне запит на кожне проведення'
+    )
+
+
+def test_catalog_cpd_text_stays_localized(client, db_session, sample_course):
+    """Рядок балів у картці календаря лишається перекладеним.
+
+    `_cpd_text` рендерить партіал повз `render_template` -- саме тим і дешевий.
+    Ціна помилки тут: фільтри й gettext живуть у jinja_env, і якби переклад
+    брався з контексту запиту, англійська й російська картки мовчки поїхали б
+    українською, а помітили б це не тестом, а на проді.
+    """
+    from datetime import datetime, timedelta, timezone
+
+    now = datetime.now(timezone.utc)
+    # Гібрид: два формати з РІЗНИМИ балами -- лише ця гілка макроса друкує
+    # слова "Онлайн"/"Офлайн", тобто лише вона взагалі щось перекладає.
+    db_session.add(CourseInstance(
+        course_id=sample_course.id,
+        start_date=now + timedelta(days=10),
+        end_date=now + timedelta(days=10, hours=4),
+        event_format='hybrid', status='published', price=500,
+        cpd_points_online=3, cpd_points_offline=5,
+    ))
+    db_session.flush()
+
+    # Flask-Babel кешує обрану локаль на `g`, а session-scoped app-фікстура
+    # тримає один app-контекст на всі запити тесту -- без скидання друга
+    # віддача просто повторила б мову першої (ідіома tests/test_i18n/conftest).
+    from flask import g
+
+    g.pop('_flask_babel', None)
+    uk = client.get('/courses/').get_data(as_text=True)
+    g.pop('_flask_babel', None)
+    en = client.get('/en/courses/').get_data(as_text=True)
+    # Прибираємо за собою: інакше наступний тест у цьому ж app-контексті
+    # успадкував би закешовану англійську й упав би за кілометр звідси.
+    g.pop('_flask_babel', None)
+
+    assert 'Онлайн' in uk
+    assert 'Online' in en

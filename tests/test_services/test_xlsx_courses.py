@@ -128,6 +128,42 @@ def test_import_accepts_old_audience_header(client, tmp_path):
         'а також усі, хто цікавиться темою']
 
 
+def test_export_labels_event_type_column_the_same_as_the_schedule(client):
+    """Один довідник -- один підпис у всій книзі.
+
+    Аркуш курсів звався «Тип», розклад -- «Вид заходу», хоча колонки беруть
+    коди з того самого довідника EventType. Різні імена читались як різні
+    поняття.
+    """
+    _course()
+    assert xlsx_io.COURSE_LABELS['event_type'] == 'Вид заходу'
+    assert xlsx_io.COURSE_LABELS['event_type'] == xlsx_io.INSTANCE_LABELS['event_type']
+    assert xlsx_io.COURSE_LABELS['event_type'] in _header(_export_sheet())
+
+
+def test_import_accepts_old_event_type_header(client, tmp_path):
+    """Файл зі старим підписом «Тип» має лишатись робочим."""
+    from openpyxl import Workbook
+
+    c = _course()          # _course завжди ставить event_type='course'
+    cols = list(xlsx_io.COURSE_COLS)
+    labels = [('Тип' if col == 'event_type' else xlsx_io.COURSE_LABELS[col])
+              for col in cols]
+    row = _base_row(c, event_type='Тренінг')
+    wb = Workbook()
+    ws = wb.active
+    ws.title = 'Курси'
+    ws.append(labels)
+    ws.append([row.get(col, '') for col in cols])
+    path = tmp_path / f'oldtype-{uuid4().hex[:6]}.xlsx'
+    wb.save(path)
+
+    plan = xlsx_io.parse_courses_xlsx(path)
+    assert plan.is_valid, plan.errors
+    assert xlsx_io.apply_courses_plan(plan)['ok']
+    assert db.session.get(Course, c.id).event_type == 'training'
+
+
 # --- нова колонка -----------------------------------------------------------
 
 def test_import_sets_final_cta_text(client, tmp_path):

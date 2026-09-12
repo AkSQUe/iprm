@@ -24,6 +24,7 @@ from app.services.token_service import (
     generate_password_reset_token, confirm_password_reset_token,
 )
 from app.services.email_service import EmailService
+from app.services.partner_auth import issuer_label
 from app.services.recaptcha import verify_request as verify_recaptcha
 
 logger = logging.getLogger(__name__)
@@ -514,6 +515,7 @@ def connections():
     has_password = bool(pw_identity and pw_identity.password_hash)
     has_google = AuthIdentity.PROVIDER_GOOGLE in by_provider
     has_apple = AuthIdentity.PROVIDER_APPLE in by_provider
+    issuer = current_user.partner_issuer
     return render_template(
         'auth/connections.html',
         identities=idents,
@@ -521,6 +523,7 @@ def connections():
         has_password=has_password,
         has_google=has_google,
         has_apple=has_apple,
+        partner_label=issuer_label(issuer) if issuer else None,
         google_oauth_available=_google_oauth_available(),
         apple_signin_available=_apple_signin_available(),
     )

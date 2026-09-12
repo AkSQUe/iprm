@@ -183,7 +183,7 @@ suppression перед постановкою в чергу.
 ([MM] `app/services/iprm/identity.py:331-357`). Паралельно існує
 `IprmRegistration.specialty` - текстовий знімок анкети, не звірений із першим полем.
 
-**Дія:** перенести 78 кодів з [app/models/specializations.py](app/models/specializations.py)
+**Дія:** перенести 78 кодів з [app/data/specializations.py](app/data/specializations.py)
 у довідник mm-medic; таблиця `user_specializations` (M2M) замість обрізаного
 рядка; бекфіл із двох джерел; ІПРМ віддає `specialization_labels` (Фаза 3).
 

@@ -17,11 +17,20 @@ import jwt
 
 from app.extensions import db
 from app.models.site_settings import SiteSettings
+from app.models.auth_identity import AuthIdentity
 from app.models.user import User
 
 logger = logging.getLogger(__name__)
 
 ALLOWED_ISSUERS = {'mm-medic'}
+
+# Як звати партнера в текстах для людей. Ключ -- issuer з prefill-токена.
+ISSUER_LABELS = {'mm-medic': 'MM Medic'}
+
+
+def issuer_label(issuer: str) -> str:
+    """Людська назва партнера; невідомий issuer лишається як є."""
+    return ISSUER_LABELS.get(issuer, issuer or '')
 
 
 @dataclass(frozen=True)
@@ -83,30 +92,31 @@ def get_or_create_partner_user(payload: PrefillPayload) -> User:
     already authenticated them.
     """
     user = User.query.filter_by(email=payload.email).first()
-    if user:
+    created = user is None
+    if created:
+        # Акаунт БЕЗ пароля -- як гість після покупки. Доти сюди ставили
+        # secrets.token_urlsafe(32): акаунт виглядав як такий, що має
+        # пароль, хоча його не знав ніхто, і людина не могла ні увійти,
+        # ні встановити пароль у кабінеті.
+        user = User.create_partner_linked(
+            email=payload.email,
+            issuer=payload.issuer,
+            first_name=payload.first_name,
+            last_name=payload.last_name,
+        )
+    else:
         if not user.email_confirmed:
             user.email_confirmed = True
-            db.session.commit()
-        return user
+        # Маркер походження чіпляємо і до акаунтів, що існували раніше:
+        # за ним форма реєстрації називає джерело.
+        AuthIdentity.attach_partner(user, payload.issuer)
 
-    import secrets
-    # Phase 2: фабрика створює User + password-identity + порожній
-    # MedicalProfile. Партнер-юзери мають password з token_urlsafe (для
-    # внутрішнього використання); у Фазі 3+ можна додати окремий
-    # provider='partner' identity замість password.
-    user = User.create_with_password(
-        email=payload.email,
-        password=secrets.token_urlsafe(32),
-        first_name=payload.first_name or '',
-        last_name=payload.last_name or '',
-        email_confirmed=True,
-        is_active=True,
-    )
     db.session.commit()
-    logger.info(
-        'Created partner-linked user id=%d email=%s from issuer=%s',
-        user.id, user.email, payload.issuer,
-    )
+    if created:
+        logger.info(
+            'Created partner-linked user id=%d email=%s from issuer=%s',
+            user.id, user.email, payload.issuer,
+        )
     return user
 
 

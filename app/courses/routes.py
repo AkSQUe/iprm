@@ -132,6 +132,22 @@ def _event_jsonld(inst, is_open):
     return node
 
 
+def _cpd_text(pairs):
+    """Локалізований рядок балів БПР для картки календаря.
+
+    Свідомо НЕ `render_template`: той на кожному виклику проганяє всі
+    context processors додатка, а картка рендериться на кожне проведення.
+    Один із процесорів (`inject_certdata_reminder`) робить запит до
+    `event_registrations`, тож каталог коштував залогіненому користувачу
+    окремий SELECT на КОЖНУ дату -- і тим дорожчав, чим більше заходів у
+    розкладі. Партіалу з контексту не треба нічого, крім `pairs`: фільтри
+    (`points`, `plural`) і gettext живуть у самому jinja_env.
+    """
+    return current_app.jinja_env.get_template(
+        'partials/_bpr_points_text.html',
+    ).render(pairs=pairs).strip()
+
+
 def _serialize_event(inst, capacity):
     """Серіалізує CourseInstance у dict для календаря (inline + JSON-feed).
 
@@ -154,9 +170,7 @@ def _serialize_event(inst, capacity):
         'trainer': inst.effective_trainer.t('full_name') if inst.effective_trainer else None,
         # Готовий локалізований рядок, а не число: інакше плюралізацію й
         # роздільник довелося б повторювати в JS, і вони розійшлися б.
-        'cpd_text': render_template(
-            'partials/_bpr_points_text.html', pairs=inst.cpd_pairs,
-        ).strip(),
+        'cpd_text': _cpd_text(inst.cpd_pairs),
         'price': (
             int(inst.effective_price)
             if inst.effective_price and inst.effective_price > 0

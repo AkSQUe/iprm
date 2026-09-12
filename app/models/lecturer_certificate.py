@@ -64,7 +64,7 @@ class LecturerCertificate(TimestampMixin, db.Model):
     # Знімок спеціальностей заходу на момент видачі (назви через кому).
     # Text, а не String(500): ліміту на кількість обраних позицій немає.
     specialties = db.Column(db.Text)
-    # Тип заходу у РОДОВОМУ відмінку ("тренінгу") для рядка "лектору(-ці) ...".
+    # Тип заходу у РОДОВОМУ відмінку ("тренінгу") для рядка "тренера ...".
     event_type_label = db.Column(db.String(100))
     event_place = db.Column(db.String(255))
 

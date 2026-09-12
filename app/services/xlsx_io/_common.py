@@ -32,7 +32,7 @@ from app.models.medical_profile import MedicalProfile
 from app.models.media_file import MediaFile
 from app.models.program_block import ProgramBlock
 from app.models.registration import EventRegistration
-from app.models.specializations import SPECIALIZATIONS
+from app.data.specializations import SPECIALIZATIONS
 from app.models.trainer import Trainer
 from app.models.user import User
 from app.services import trainer_links
@@ -179,6 +179,9 @@ INSTANCE_WIDTHS = {
     'start_date': 22,
     'end_date': 22,
     'event_format': 14,
+    # Найдовша назва виду («Фахова (тематична) школа») -- 24 символи, і саме
+    # вона, а не мітка шапки, задає ширину цієї колонки.
+    'event_type': 26,
     'price': 14,
     'cpd_points_online': 14,
     'cpd_points_offline': 14,
@@ -719,7 +722,8 @@ def _add_trainers_sheet(wb) -> int:
 
 def _add_inline_dropdown(ws, column_key: str, columns: list[str],
                          options: list[str], last_data_row: int,
-                         title: str = '', hint: str = '') -> None:
+                         title: str = '', hint: str = '',
+                         allow_blank: bool = False) -> None:
     """Прикріпити drop-down зі статичним списком значень.
 
     Використовується для невеликих enum-полів (event_type, формат, статус).
@@ -753,7 +757,10 @@ def _add_inline_dropdown(ws, column_key: str, columns: list[str],
     dv = DataValidation(
         type='list',
         formula1=formula,
-        allow_blank=False,
+        # За замовчуванням порожньо -- помилка: у більшості enum-колонок
+        # порожня клітинка не означає нічого. Кличний виняток -- вид заходу
+        # в розкладі, де порожньо це «як у курсу».
+        allow_blank=allow_blank,
         showDropDown=False,  # False у XML = ПОКАЗУВАТИ стрілочку
         errorStyle='stop',
         error=error_message,
@@ -778,6 +785,10 @@ LEGACY_HEADERS = {
     # target_audience звузився до допису: перелік спеціальностей на сторінці
     # збирається з довідника, а не з цього поля.
     'Цільова аудиторія': 'target_audience',
+    # Аркуш курсів звався «Тип», розклад -- «Вид заходу», хоча обидві колонки
+    # беруть коди з довідника EventType. Зведено до одного підпису; старі
+    # вигрузки менеджерів мусять лишатись робочими.
+    'Тип': 'event_type',
 }
 
 

@@ -68,6 +68,13 @@ class CourseInstance(TranslatableMixin, TimestampMixin, db.Model):
     # Перевизначення спеціальностей проведення. NULL/порожньо -- беремо курс.
     bpr_specialty_codes = db.Column(db.JSON)
 
+    # Реєстраційний номер заходу БПР саме цього подання. Порожньо -- беремо
+    # курсовий (див. effective_bpr_event_number). Номер видає реєстр на КОЖНЕ
+    # подання окремо, тож курсовий -- це відкат для дат, яким номер ще не
+    # виписали, а не спільне значення: інакше сертифікати різних дат ішли б
+    # під одним номером реєстру.
+    bpr_event_number = db.Column(db.String(20))
+
     # Перевизначення рівня складності (шкала Course.DIFFICULTY_LEVELS, 1..3).
     # NULL -- беремо рівень курсу (див. effective_difficulty_level). Потрібне,
     # коли дати одного курсу мають різну підготовку: та сама програма раз іде
@@ -227,6 +234,33 @@ class CourseInstance(TranslatableMixin, TimestampMixin, db.Model):
         from app.services import event_types
         return event_types.label(self.effective_event_type)
 
+    @property
+    def distinct_event_type(self):
+        """Код виду, лише якщо він відрізняється від курсового; інакше None.
+
+        Те саме правило й та сама причина, що в distinct_difficulty_level:
+        вид, спільний для всіх дат, уже названо один раз біля опису курсу
+        (hero-чип) і бейджем на картці курсу в списку. Повторений на кожному
+        рядку розкладу, він перестає щось розрізняти -- а саме розрізняти
+        дати між собою розклад і покликаний.
+
+        Курс без власного виду + дата з видом -- теж відмінність: сказати
+        про неї нема де більше.
+        """
+        own = self.event_type
+        if not own:
+            return None
+        course_type = self.course.event_type if self.course else None
+        return None if own == course_type else own
+
+    @property
+    def distinct_event_type_label(self):
+        """Назва distinct_event_type активною мовою; None -- якщо нічого
+        не відрізняється."""
+        from app.services import event_types
+        code = self.distinct_event_type
+        return event_types.label(code) if code else None
+
     def _warn_orphan(self, context):
         """Логувати якщо instance без course (дата-інтегріті issue)."""
         logger.warning(
@@ -278,6 +312,23 @@ class CourseInstance(TranslatableMixin, TimestampMixin, db.Model):
             return list(self.bpr_specialty_codes)
         course = self.course
         return list(course.bpr_specialty_codes or []) if course else []
+
+    @property
+    def effective_bpr_event_number(self):
+        """Номер заходу БПР: власний, а якщо порожній -- курсовий.
+
+        Повертає вже обрізаний рядок ('' замість None, коли номера немає
+        ніде): усі споживачі однаково питають "чи є чим заповнити сегмент
+        номера сертифіката", і робити цей `.strip()` у кожному з чотирьох
+        місць означало б чотири нагоди його забути.
+        """
+        own = (self.bpr_event_number or '').strip()
+        if own:
+            return own
+        if self.course is None:
+            self._warn_orphan('bpr_event_number')
+            return ''
+        return (self.course.bpr_event_number or '').strip()
 
     @property
     def effective_difficulty_level(self):

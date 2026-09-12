@@ -29,6 +29,9 @@
           {% else %}
             Всього: {{ total_found }}
           {% endif %}
+          {% if partner_total %}
+            <span class="badge badge--format badge--sm">Партнерських: {{ partner_total }}</span>
+          {% endif %}
         </p>
       </div>
     </div>
@@ -74,7 +77,15 @@
             <strong><a href="{{ url_for('admin.user_detail', user_id=user.id) }}">{{ user.first_name or '' }} {{ user.last_name or '' }}</a></strong>
             {% for role in user.roles %}<span class="badge badge--role badge--sm role-color--{{ role.color }}">{{ role.display_name }}</span>{% endfor %}
           </td>
-          <td>{{ user.email }}</td>
+          <td>
+            {{ user.email }}
+            {# Партнерські акаунти поводяться інакше -- у них немає пароля,
+               і людина заводила їх не сама. У списку вони доти нічим не
+               відрізнялись. #}
+            {% if user._cached_partner_issuer %}
+              <span class="badge badge--format badge--sm">{{ issuer_label(user._cached_partner_issuer) }}</span>
+            {% endif %}
+          </td>
           <td>
             {# Картка контакту показує ВСІ реєстрації цієї людини, зокрема
                скасовані, тож перелік ширший за число поруч (воно рахує лише

@@ -21,7 +21,7 @@ from app.models.medical_profile import MedicalProfile
 from app.models.meta_lead import MetaLead
 from app.models.promo_code import PromoCode
 from app.models.registration import EventRegistration
-from app.models.specializations import SPECIALIZATIONS
+from app.data.specializations import SPECIALIZATIONS
 from app.rbac import registry as _rbac_registry
 
 
@@ -805,6 +805,14 @@ class CourseInstanceForm(FlaskForm):
         'Спеціальності (для сертифіката)',
         validators=[Optional()],
         description='Залиште порожнім щоб взяти з курсу',
+    )
+    # placeholder виставляється в _populate_choices: порожнє поле мусить
+    # називати номер, який реально піде в сертифікат.
+    bpr_event_number = StringField(
+        'Реєстраційний номер заходу БПР',
+        validators=[Optional(), Length(max=20)],
+        description='Номер цього подання в реєстрі. Порожньо -- береться '
+                    'номер курсу.',
     )
     # choices доповнюються в _populate_choices: підпис порожнього варіанта
     # називає успадкований рівень («– Як у курсу (Рівень 2 — просунутий) –»).

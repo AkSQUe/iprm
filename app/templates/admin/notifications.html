@@ -108,6 +108,11 @@
           <input type="checkbox" name="is_enabled" id="is_enabled"{% if settings.is_enabled %} checked{% endif %}>
           <label for="is_enabled">Відправка увімкнена</label>
         </div>
+        <div class="form-checkbox">
+          <input type="checkbox" name="bounce_polling_enabled" id="bounce_polling_enabled"{% if settings.bounce_polling_enabled %} checked{% endif %}>
+          <label for="bounce_polling_enabled">Читати відмови (IMAP)</label>
+        </div>
+        <div class="form-hint">Адреси з жорстких відмов потрапляють у стоп-лист, щоб не псувати репутацію відправника повторними спробами.</div>
       </div>
     </div>
     <div class="admin-form__actions">

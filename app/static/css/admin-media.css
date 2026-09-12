@@ -7,6 +7,7 @@
   background: var(--iprm-card-bg); color: var(--iprm-text-secondary);
   transition: border-color 0.15s, background-color 0.15s;
 }
+.media-upload__icon { font-size: 36px; line-height: 1; }
 .media-upload:hover,
 .media-upload--drag { border-color: var(--iprm-nav-active); background: var(--iprm-white); }
 .media-upload--busy { opacity: 0.6; pointer-events: none; }
@@ -38,10 +39,19 @@
   background: var(--iprm-white); border: 1px solid var(--iprm-border);
   border-radius: var(--iprm-radius-sm); padding: 10px;
 }
-.media-card__check {
-  position: absolute; top: 14px; left: 14px; z-index: 1;
-  width: 18px; height: 18px; cursor: pointer;
+/* Ціль дотику -- мітка 44x44 (мінімум для пальця), сам чекбокс лишається
+   18px: збільшений квадрат виглядав би чужим серед решти адмінки. */
+.media-card__pick {
+  position: absolute; top: 4px; left: 4px; z-index: 1;
+  display: flex; align-items: center; justify-content: center;
+  width: 44px; height: 44px; cursor: pointer;
 }
+.media-card__check { width: 18px; height: 18px; cursor: pointer; }
+/* Дата зачистки в кошику -- попередження, а не звичайний рядок службових
+   даних: після неї файла не поверне вже ніхто. Токен саме --iprm-error-text:
+   він заведений під ТЕКСТ (4.5 на білому) і перевизначений у тёмній темі,
+   на відміну від --iprm-alert, який навмисно живе лише в :root. */
+.media-card__purge { color: var(--iprm-error-text); }
 .media-card__used { color: var(--iprm-text-secondary); }
 .media-card__thumb {
   display: block; aspect-ratio: 4 / 3; overflow: hidden;
@@ -68,7 +78,7 @@
 /* Кільце фокуса -- через спільне з common.css правило .form-input:focus:
    .media-card__alt завжди стоїть поряд із .form-input, окрема утиліта
    .iprm-focus-ring тут була зайвою й прибрана з розмітки. */
-.media-card__alt--saved { border-color: #34c759; }
+.media-card__alt--saved { border-color: var(--iprm-success); }
 
 /* ---- Пікер вибору з бібліотеки (модалка) ---- */
 .admin-dropzone__library {
@@ -93,6 +103,7 @@
   background: var(--iprm-white); border-radius: var(--iprm-radius-md);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3); overflow: hidden;
 }
+.media-picker__search { padding: 12px 20px 0; }
 .media-picker__head {
   display: flex; align-items: center; justify-content: space-between;
   padding: 16px 20px; border-bottom: 1px solid var(--iprm-border);

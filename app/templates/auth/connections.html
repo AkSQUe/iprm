@@ -102,6 +102,21 @@
           </div>
         </div>
 
+        {# Партнерське походження -- довідковий рядок, а не спосіб входу:
+           дій тут немає свідомо. Людина бачить, звідки взявся кабінет,
+           якого вона не заводила. #}
+        {% if partner_label %}
+        <div class="connection-item">
+          <div class="connection-item__title">{{ _('Походження акаунта') }}</div>
+          <div class="connection-item__email">
+            {{ _('Кабінет створено через %(partner)s', partner=partner_label) }}
+          </div>
+          <div class="connection-item__status">
+            <span class="badge badge--format">{{ _('Партнерський') }}</span>
+          </div>
+        </div>
+        {% endif %}
+
       </div>
     </div>
   </section>

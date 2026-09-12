@@ -23,7 +23,7 @@ def test_every_module_has_view_or_manage_and_known_group():
 def test_sensitive_actions_live_only_where_spec_says():
     owners = {
         'refund': {'registrations'}, 'settings': {'meta_leads'},
-        'keys': {'integrations'}, 'restore': {'backup'},
+        'keys': {'integrations'},
         'receive': {'notifications'}, 'assign': {'access'},
     }
     for action, expected in owners.items():
@@ -41,7 +41,7 @@ def test_admin_defaults_exclude_access_settings_and_keys():
     admin = next(r for r in registry.ROLES if r.name == 'admin')
     for forbidden in ('access.view', 'access.manage', 'access.assign',
                       'settings.manage', 'integrations.keys',
-                      'backup.restore', 'backup.delete'):
+                      'backup.delete'):
         assert forbidden not in admin.defaults
     assert 'courses.manage' in admin.defaults
     assert 'registrations.refund' in admin.defaults

@@ -165,7 +165,7 @@ class TestSpecializationsDirectory:
 
     def test_codes_match_the_source_of_truth(self, client, partner_settings):
         """Другий перелік розійшовся б із першим — тому віддаємо саме його."""
-        from app.models.specializations import SPECIALIZATION_CODES
+        from app.data.specializations import SPECIALIZATION_CODES
 
         response = client.get('/api/v1/specializations', headers=HEADERS)
 

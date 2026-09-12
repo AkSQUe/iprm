@@ -1,7 +1,7 @@
 """Admin: database backup management."""
 import logging
 
-from flask import render_template, request, jsonify, flash, redirect, url_for, send_file
+from flask import render_template, request, flash, redirect, url_for, send_file
 from flask_login import current_user
 
 from app.admin import _listing, admin_bp
@@ -31,6 +31,7 @@ def backups():
         backups=pagination.items,
         pagination=pagination,
         stats=stats,
+        missing_pg_tools=BackupService.missing_pg_tools(),
     )
 
 
@@ -67,30 +68,23 @@ def backup_create():
     return redirect(url_for('admin.backups'))
 
 
-@admin_bp.route('/backups/<int:backup_id>/restore', methods=['POST'])
-@permission_required('backup.restore')
-def backup_restore(backup_id):
-    from app.services.backup_service import BackupService, BackupError
-
-    force = request.form.get('force') == 'true'
-
-    try:
-        BackupService.restore_backup(backup_id, force=force, created_by_id=current_user.id)
-        audit_logger.warning(
-            'Admin %s restored backup #%d', current_user.email, backup_id,
-        )
-        flash('Базу даних успішно відновлено.', 'success')
-    except BackupError as exc:
-        flash(f'Помилка відновлення: {exc}', 'error')
-        audit_logger.exception('Admin %s restore failed for backup #%d', current_user.email, backup_id)
-
-    return redirect(url_for('admin.backups'))
+# Відновлення свідомо НЕ має веб-маршруту. pg_restore --clean проти робочої
+# бази, поки gunicorn тримає з'єднання, або падає на блокуваннях, або зносить
+# таблиці посеред роботи сайту, а відкотити це вже нічим. Операція рідка й
+# усвідомлена, тому живе лише в CLI: `flask backup restore <id>` при
+# зупиненому сервісі. Сервіс BackupService.restore_backup лишається на місці.
 
 
-@admin_bp.route('/backups/<int:backup_id>/validate')
-@permission_required('backup.view')
+# POST, а не GET: перевірка МІНЯЄ стан копії (completed -> corrupted/failed).
+# Під GET вона працювала без CSRF, а префетч посилання браузером міг зіпсувати
+# статус без жодної дії людини. Право теж піднято: перегляд не дає права
+# перемарковувати копії.
+@admin_bp.route('/backups/<int:backup_id>/validate', methods=['POST'])
+@permission_required('backup.manage')
 def backup_validate(backup_id):
     from app.services.backup_service import BackupService, BackupError
+
+    DatabaseBackup.query.get_or_404(backup_id)
 
     try:
         valid = BackupService.validate_backup(backup_id)
@@ -109,8 +103,9 @@ def backup_validate(backup_id):
 def backup_delete(backup_id):
     from app.services.backup_service import BackupService, BackupError
 
+    filename = DatabaseBackup.query.get_or_404(backup_id).filename
+
     try:
-        filename = DatabaseBackup.query.get(backup_id).filename
         BackupService.delete_backup(backup_id)
         audit_logger.info(
             'Admin %s deleted backup #%d (%s)', current_user.email, backup_id, filename,
@@ -146,6 +141,34 @@ def backup_download(backup_id):
     )
 
 
+@admin_bp.route('/backups/validate-all', methods=['POST'])
+@permission_required('backup.manage')
+def backup_validate_all():
+    """Перевірити цілісність усіх придатних копій за один раз.
+
+    Поштучна перевірка знаходить гниль лише там, куди адмін сам клікнув, а
+    копія потрібна рівно один раз -- і саме тоді виявляється, що файл давно
+    побитий.
+    """
+    from app.services.backup_service import BackupService
+
+    result = BackupService.validate_all_backups()
+
+    if result['corrupted']:
+        flash(
+            f'Перевірено копій: {result["checked"] + result["corrupted"]}. '
+            f'ПОШКОДЖЕНИХ: {result["corrupted"]} -- їх позначено в списку.',
+            'error',
+        )
+    else:
+        flash(f'Перевірено копій: {result["checked"]}. Усі придатні.', 'success')
+
+    audit_logger.info(
+        'Admin %s ran batch backup validation: %s', current_user.email, result,
+    )
+    return redirect(url_for('admin.backups'))
+
+
 @admin_bp.route('/backups/cleanup', methods=['POST'])
 @permission_required('backup.manage')
 def backup_cleanup():
@@ -163,9 +186,7 @@ def backup_cleanup():
     return redirect(url_for('admin.backups'))
 
 
-@admin_bp.route('/backups/stats')
-@permission_required('backup.view')
-def backup_stats():
-    from app.services.backup_service import BackupService
-    stats = BackupService.get_storage_stats()
-    return jsonify(stats)
+# JSON-ендпоінта /backups/stats тут свідомо немає. Він віддавав 500, щойно
+# існувала хоч одна копія: jsonify() отримував у stats['last_backup'] інстанс
+# моделі. Споживача в коді не було жодного, тож маршрут прибрано, а не
+# залатано -- статистика і так рендериться в шаблоні картками.

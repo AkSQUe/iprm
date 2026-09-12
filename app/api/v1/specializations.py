@@ -11,7 +11,7 @@
 одного разу, він розійшовся б із нашим за місяці, і кожен новий код партнеру
 довелося б заводити руками — тобто помічати його вручну.
 
-Список — константа в коді (`app/models/specializations.py`), не таблиця; цей
+Список — константа в коді (`app/data/specializations.py`), не таблиця; цей
 роут просто віддає його назовні. Публічних даних тут немає, але ключ усе одно
 потрібен: він же обмежує частоту й дає нам знати, хто саме читає.
 """
@@ -21,7 +21,7 @@ from app.api.v1 import api_v1_bp
 from app.api.v1.auth import require_api_key
 from app.api.v1.serializers import API_VERSION
 from app.extensions import csrf, limiter
-from app.models.specializations import SPECIALIZATIONS
+from app.data.specializations import SPECIALIZATIONS
 
 
 @api_v1_bp.route('/specializations', methods=['GET'])

@@ -157,7 +157,7 @@ class MedicalProfile(TimestampMixin, db.Model):
 
     @property
     def specialization_labels(self):
-        from app.models.specializations import labels_for_codes
+        from app.data.specializations import labels_for_codes
         return labels_for_codes(self.specializations or [])
 
     def __repr__(self):

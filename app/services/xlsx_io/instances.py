@@ -36,7 +36,7 @@ from app.extensions import db
 from app.models.course import Course
 from app.models.course_instance import CourseInstance
 from app.models.trainer import Trainer
-from app.services import trainer_links
+from app.services import event_types, trainer_links
 from app.utils import ensure_utc
 
 from ._common import (
@@ -52,6 +52,8 @@ from ._common import (
     WRAP,
     _APPLY_FAILED_MESSAGE,
     _add_inline_dropdown,
+    event_type_dropdown_options,
+    normalize_event_type,
     _add_trainers_sheet,
     _apply_number_formats,
     _apply_table_style,
@@ -81,13 +83,24 @@ from ._common import (
 
 INSTANCE_COLS = [
     'id', 'course_slug', 'topic', 'start_date', 'end_date', 'event_format',
-    'price', 'cpd_points_online', 'cpd_points_offline', 'max_participants',
-    'trainer_slugs', 'location', 'online_link', 'status',
+    'event_type', 'price', 'cpd_points_online', 'cpd_points_offline',
+    'max_participants', 'trainer_slugs', 'location', 'online_link', 'status',
 ]
 
-# Колонка, додана після того, як менеджери вже мали на руках експорти:
-# її відсутність лишає тему як у БД, а не занулює (як у курсів).
-OPTIONAL_INSTANCE_COLS = ('topic',)
+# Колонки, додані після того, як менеджери вже мали на руках експорти:
+# їх відсутність лишає значення як у БД, а не занулює (як у курсів).
+# Значення -- розбирач клітинки. Вид заходу тут не вільний текст: його
+# треба звести до коду довідника (приймаючи і код, і українську назву), а
+# сміття завалити помилкою рядка, а не тихо записати.
+_OPTIONAL_INSTANCE_PARSERS = {
+    'topic': lambda v: _str(v) or None,
+    'event_type': normalize_event_type,
+}
+
+# Один список, а не два: розбіжність між переліком і розбирачами дала б
+# KeyError УСЕРЕДИНІ per-row try, і кожен рядок файлу впав би з
+# повідомленням «'newcol'» замість зрозумілої помилки формату.
+OPTIONAL_INSTANCE_COLS = tuple(_OPTIONAL_INSTANCE_PARSERS)
 
 INSTANCE_LABELS = {
     'id': 'ID',
@@ -96,6 +109,7 @@ INSTANCE_LABELS = {
     'start_date': 'Початок',
     'end_date': 'Кінець',
     'event_format': 'Формат',
+    'event_type': 'Вид заходу',
     'price': 'Ціна (грн)',
     'cpd_points_online': 'Бали БПР онлайн',
     'cpd_points_offline': 'Бали БПР офлайн',
@@ -182,6 +196,12 @@ def export_instances_xlsx(
             _to_kyiv_naive(i.start_date),
             _to_kyiv_naive(i.end_date),
             FORMAT_LABEL.get(i.event_format, i.event_format or ''),
+            # ЛИШЕ власний вид дати, не effective_event_type: успадкування
+            # мусить пережити round-trip. Друк успадкованого виду означав би,
+            # що вивантаження й завантаження назад запише курсовий тип у
+            # кожну дату твердою копією, і наступна правка курсу нікуди
+            # не дійде.
+            event_types.base_name(i.event_type) if i.event_type else '',
             float(i.price) if i.price is not None else None,
             float(i.cpd_points_online) if i.cpd_points_online is not None else None,
             float(i.cpd_points_offline) if i.cpd_points_offline is not None else None,
@@ -232,6 +252,17 @@ def export_instances_xlsx(
         last_data_row=instances_last_row,
         title='Статус',
         hint='Чернетка / Опубліковано / Активний / Завершено / Скасовано',
+    )
+    # allow_blank -- на відміну від курсів: у розкладі порожня клітинка має
+    # власне значення «вид як у курсу», і заборона порожнього змусила б
+    # проставити вид у кожну дату руками.
+    _add_inline_dropdown(
+        ws, 'event_type', INSTANCE_COLS,
+        options=event_type_dropdown_options(),
+        last_data_row=instances_last_row,
+        allow_blank=True,
+        title='Вид заходу БПР',
+        hint='Порожньо -- як у курсу. Інакше оберіть зі списку.',
     )
 
     # Excel Table style.
@@ -351,7 +382,7 @@ def parse_instances_xlsx(path: Path) -> InstancesImportPlan:
             # відсутність колонки має лишити поле як є, а не занулити його.
             for opt in OPTIONAL_INSTANCE_COLS:
                 if opt in raw:
-                    parsed[opt] = _str(raw.get(opt)) or None
+                    parsed[opt] = _OPTIONAL_INSTANCE_PARSERS[opt](raw.get(opt))
             _check_min_values(parsed)
 
             existing = None

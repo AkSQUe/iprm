@@ -80,6 +80,15 @@
       <input type="hidden" name="next" value="{{ back_url }}">
       <button type="submit" class="admin-actions-menu__item">{{ icon('forward_to_inbox') }} Переслати сертифікат</button>
     </form>
+    {# Перевидача -- окрема дія, бо міняє номер на руках у людини: «Переслати»
+       мусить лишатись просто повторним листом з тим самим документом. #}
+    <form method="POST" action="{{ url_for('admin.registration_certificate_reissue', reg_id=reg.id) }}"
+          data-confirm="Перевидати сертифікат за поточними даними заходу? Номер може змінитись."
+          data-confirm-ok="Перевидати">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="next" value="{{ back_url }}">
+      <button type="submit" class="admin-actions-menu__item">{{ icon('refresh') }} Перевидати сертифікат</button>
+    </form>
     {% elif reg.status != 'cancelled' %}
     <form method="POST" action="{{ url_for('admin.registration_certificate_issue', reg_id=reg.id) }}" data-confirm="Видати сертифікат і надіслати на email?" data-confirm-ok="Видати">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

@@ -8,9 +8,15 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-media.css') }}?v={{ assets_version }}">
 {% endblock %}
 
-{% from 'admin/partials/_filter_bar.html' import filter_bar, empty_state  %}
+{% from 'admin/partials/_filter_bar.html' import filter_bar, pager, empty_state, stat_cards %}
 
 {% block content %}
+{# Кошик -- це «поточний вид», а не звуження вибірки: він переживає скидання
+   фільтрів, інакше «скинути» з порожнього кошика викидало б у зовсім інший
+   список. Звідси base_args для empty_state. #}
+{% set state_args = {'state': filters.state} if filters.state else {} %}
+{% set can_edit = can('media.manage') %}
+{% set can_bulk = can_edit if trash else can('media.delete') %}
 <div class="admin-with-sidebar">
   {% include 'admin/partials/_sidebar.html' %}
   <div class="admin-layout">
@@ -20,105 +26,174 @@
         <div class="admin-breadcrumb">
           <a href="{{ url_for('admin.courses_list') }}" class="admin-breadcrumb__link">Панель</a>
           <span class="admin-breadcrumb__sep">/</span>
+          {% if trash %}
+          <a href="{{ url_for('admin.media_library') }}" class="admin-breadcrumb__link">Медіа</a>
+          <span class="admin-breadcrumb__sep">/</span>
+          <span class="admin-breadcrumb__current">Кошик</span>
+          {% else %}
           <span class="admin-breadcrumb__current">Медіа</span>
+          {% endif %}
         </div>
-        <h1 class="admin-hero__title">Медіа-бібліотека</h1>
-        <p class="admin-hero__subtitle">Усього: {{ stats.total }} · без прив'язки: {{ stats.unattached }}</p>
+        <h1 class="admin-hero__title">{{ 'Кошик медіа' if trash else 'Медіа-бібліотека' }}</h1>
+        <p class="admin-hero__subtitle">
+          {%- if trash -%}
+          Видалені файли лежать тут 30 днів, потім зникають назавжди
+          {%- else -%}
+          Реєстр усіх завантажених зображень сайту
+          {%- endif -%}
+        </p>
       </div>
     </div>
 
     {% include 'partials/flash_messages.html' %}
 
+    {# Числа -- по всій бібліотеці, незалежно від фільтра: це підсумок
+       сховища. Скільки знайдено в поточному зрізі -- каже пагінатор. #}
+    {{ stat_cards([
+         {'value': stats.total, 'label': 'Усього файлів',
+          'href': url_for('admin.media_library'),
+          'active': not trash and not filters.entity_type},
+         {'value': stats.unattached, 'label': "Без прив'язки",
+          'href': url_for('admin.media_library', entity_type='none'),
+          'active': filters.entity_type == 'none'},
+         {'value': stats.bytes | filesizeformat, 'label': 'Займають на диску'},
+         {'value': stats.trashed, 'label': 'У кошику',
+          'mod': 'alert' if stats.trashed else none,
+          'href': url_for('admin.media_library', state='trash'),
+          'active': trash},
+       ], cols=4) }}
+
+    {# Токен для fetch-запитів скрипта (завантаження й alt). Живе поза формою
+       навмисно: форми карток зникають на порожньому списку, а завантажити
+       перший файл у порожню бібліотеку треба саме тоді. #}
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-    <!-- Завантаження -->
+    {% if can_edit and not trash %}
     <div class="form-section admin-mb-md">
       <h2 class="admin-form__section-title">Завантажити</h2>
       <div class="media-upload" id="media-upload">
         <input type="file" id="media-upload-input" class="admin-file-input" accept="image/png,image/jpeg,image/webp,.heic,.heif" multiple>
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        {{ icon('upload', cls='media-upload__icon') }}
         <p>Перетягніть зображення або <span class="admin-dropzone__link">оберіть файли</span></p>
         <small class="admin-text-muted">PNG, JPG, WebP, HEIC. Конвертуються у WebP. Макс. 25 MB.</small>
       </div>
     </div>
+    {% endif %}
 
-    <!-- Фільтри -->
     {{ filter_bar(
          endpoint='admin.media_library',
-         values={'q': search, 'entity_type': entity_type, 'usage_type': usage_type},
+         values=filters,
          search={'name': 'q', 'placeholder': 'Пошук за назвою файлу або alt-текстом'},
          fields=[
            {'name': 'entity_type', 'label': 'Прив\'язка', 'placeholder': 'Усі прив\'язки',
-            'options': [('none', 'Без прив\'язки'), ('blog_post', 'Блог'),
-                        ('trainer', 'Тренери'), ('course', 'Курси')]},
+            'options': entity_options},
            {'name': 'usage_type', 'label': 'Використання', 'placeholder': 'Будь-яке',
-            'options': usage_type_options},
+            'options': usage_options},
+           {'name': 'state', 'label': 'Стан', 'placeholder': 'Активні',
+            'options': state_options},
+           {'name': 'sort', 'label': 'Порядок', 'placeholder': 'Спершу нові',
+            'options': sort_options, 'narrowing': False},
          ],
        ) }}
 
-    {% set ent_labels = {'blog_post': 'Допис', 'trainer': 'Тренер', 'course': 'Курс'} %}
+    {# Завантаження, збереження alt і лічильник вибраного відбуваються без
+       перезавантаження -- без цього рядка скрінрідер про них не дізнається. #}
+    <p class="visually-hidden" id="media-status" role="status" aria-live="polite"></p>
+
     {% if items %}
+    {% if can_bulk %}
     <div class="media-bulkbar">
       <label class="media-bulkbar__all"><input type="checkbox" id="media-select-all"> Вибрати всі на сторінці</label>
-      <button type="submit" form="media-bulk-form" id="media-bulk-delete" class="btn-admin btn-admin--danger btn-admin--sm" disabled>
-        Видалити вибране (<span id="media-sel-count">0</span>)
+      <button type="submit" form="media-bulk-form" id="media-bulk-delete"
+              class="btn-admin btn-admin--sm {{ 'btn-admin--secondary' if trash else 'btn-admin--danger' }}" disabled>
+        {{ 'Повернути вибране' if trash else 'Видалити вибране' }} (<span id="media-sel-count">0</span>)
       </button>
     </div>
-    <form method="POST" action="{{ url_for('admin.media_bulk_delete') }}" id="media-bulk-form"
-          data-confirm="Видалити вибрані медіафайли? Прив'язані зникнуть із контенту."
-          data-confirm-ok="Видалити вибрані" data-confirm-danger>
+    {# Зріз їде в action-URL: після дії `back_redirect` перечитує його тими
+       самими перевірками, що й роут списку, і повертає на ту саму сторінку. #}
+    <form method="POST" id="media-bulk-form"
+          action="{{ url_for('admin.media_restore' if trash else 'admin.media_bulk_delete', **back_args) }}"
+          {% if not trash %}data-confirm="Видалити вибрані медіафайли? Прив'язані зникнуть із контенту."
+          data-confirm-ok="Видалити вибрані" data-confirm-danger{% endif %}>
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <input type="hidden" name="entity_type" value="{{ entity_type }}">
-      <input type="hidden" name="usage_type" value="{{ usage_type }}">
     </form>
+    {% endif %}
     <div class="media-grid">
       {% for m in items %}
       <div class="media-card" id="media-{{ m.id }}">
-        <input type="checkbox" class="media-card__check" value="{{ m.id }}" aria-label="Вибрати медіафайл {{ m.id }}">
+        {% if can_bulk %}
+        <label class="media-card__pick">
+          <input type="checkbox" class="media-card__check" value="{{ m.id }}"
+                 aria-label="Вибрати {{ m.original_name or m.file_path }}">
+        </label>
+        {% endif %}
         <a class="media-card__thumb" href="{{ m.url }}" target="_blank" rel="noopener">
           <img src="{{ m.variant_url('thumb') }}" alt="{{ m.alt_text or '' }}" loading="lazy">
         </a>
         <div class="media-card__meta">
-          {% if m.width %}{{ m.width }}×{{ m.height }}{% endif %}
-          {% if m.entity_type %}· <span class="media-card__used">{{ ent_labels.get(m.entity_type, m.entity_type) }} #{{ m.entity_id }} · {{ m.usage_type }}</span>{% else %}· без прив'язки{% endif %}
+          {% if m.width %}{{ m.width }}&times;{{ m.height }} &middot; {% endif %}{{ m.file_size | filesizeformat }}
         </div>
-        <input class="form-input media-card__alt" data-id="{{ m.id }}" value="{{ m.alt_text or '' }}" placeholder="Alt-текст" maxlength="255">
+        <div class="media-card__meta">
+          {% if m.entity_type %}<span class="media-card__used">{{ entity_labels.get(m.entity_type, m.entity_type) }} #{{ m.entity_id }} &middot; {{ usage_labels.get(m.usage_type, m.usage_type) }}</span>{% else %}без прив'язки{% endif %}
+        </div>
+        <div class="media-card__meta">
+          {{ m.created_at | kyiv('%d.%m.%Y') }}{% if m.uploader %} &middot; {{ m.uploader.full_name or m.uploader.email }}{% endif %}
+        </div>
+        {% if trash %}
+        <div class="media-card__meta media-card__purge">Зникне назавжди {{ m.purge_at | kyiv('%d.%m.%Y') }}</div>
+        {% endif %}
+        {% if can_edit and not trash %}
+        <input class="form-input media-card__alt" data-id="{{ m.id }}" value="{{ m.alt_text or '' }}"
+               aria-label="Alt-текст для {{ m.original_name or m.file_path }}"
+               placeholder="Alt-текст" maxlength="255">
+        {% elif m.alt_text %}
+        <div class="media-card__meta">Alt: {{ m.alt_text }}</div>
+        {% endif %}
+        {% if trash %}
+          {% if can_edit %}
+          <form method="POST" action="{{ url_for('admin.media_restore', **back_args) }}" class="admin-inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="ids" value="{{ m.id }}">
+            <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">Повернути</button>
+          </form>
+          {% endif %}
+        {% elif can('media.delete') %}
         {# Привʼязаний файл питає підтвердження: видалення ще й чистить
            посилання на нього в контенті, і цього відкат не поверне.
            Непривʼязаний видаляється одразу -- з тостом "Повернути". #}
-        <form method="POST" action="{{ url_for('admin.media_delete', media_id=m.id) }}" class="admin-inline"
-              {% if m.entity_type %}data-confirm="Файл використовується ({{ ent_labels.get(m.entity_type, m.entity_type) }} #{{ m.entity_id }}) — після видалення зображення зникне з контенту, і повернути його буде не можна."
+        <form method="POST" action="{{ url_for('admin.media_delete', media_id=m.id, **back_args) }}" class="admin-inline"
+              {% if m.entity_type %}data-confirm="Файл використовується ({{ entity_labels.get(m.entity_type, m.entity_type) }} #{{ m.entity_id }}) — після видалення зображення зникне з контенту, і повернути його буде не можна."
               data-confirm-ok="Видалити файл" data-confirm-danger{% endif %}>
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <input type="hidden" name="entity_type" value="{{ entity_type }}">
-          <input type="hidden" name="usage_type" value="{{ usage_type }}">
-          <input type="hidden" name="page" value="{{ pagination.page }}">
           <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">Видалити</button>
         </form>
+        {% endif %}
       </div>
       {% endfor %}
     </div>
 
-    {% if pagination.pages > 1 %}
-    <nav class="blog-pagination admin-mt-md" aria-label="Сторінки">
-      {% if pagination.has_prev %}
-      <a class="btn-admin btn-admin--secondary btn-admin--sm" href="{{ url_for('admin.media_library', page=pagination.prev_num, **filter_args) }}">Новіші</a>
-      {% endif %}
-      <span class="admin-text-muted">Сторінка {{ pagination.page }} з {{ pagination.pages }}</span>
-      {% if pagination.has_next %}
-      <a class="btn-admin btn-admin--secondary btn-admin--sm" href="{{ url_for('admin.media_library', page=pagination.next_num, **filter_args) }}">Старіші</a>
-      {% endif %}
-    </nav>
-    {% endif %}
+    {{ pager('admin.media_library', pagination, filter_args) }}
 
     {% else %}
-    {% call empty_state(icon_name='perm_media', title='Медіафайлів немає') %}
-      <p class="admin-text-muted">За цим фільтром порожньо.</p>
+    {% call empty_state('admin.media_library', filter_args, state_args,
+                        narrow_args={'sort': False},
+                        icon_name='perm_media',
+                        title='Кошик порожній' if trash else 'Медіафайлів немає') %}
+      <p class="admin-text-muted">
+        {%- if trash -%}
+        Видалене з бібліотеки лежить тут 30 днів -- і зараз таких файлів немає.
+        {%- else -%}
+        Перетягніть зображення у поле завантаження вище, і воно з'явиться в реєстрі.
+        {%- endif -%}
+      </p>
     {% endcall %}
     {% endif %}
 
   </div>
 </div>
+{% endblock %}
 
-<script src="{{ url_for('static', filename='js/admin-media-library.js') }}?v={{ assets_version }}"></script>
+{% block extra_scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/admin-media-library.js') }}?v={{ assets_version }}" defer></script>
 {% endblock %}

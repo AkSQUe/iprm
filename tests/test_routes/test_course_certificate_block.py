@@ -8,6 +8,7 @@
 Ці тести стежать саме за цим: блок не має з'являтися, поки обіцянка не
 виконується.
 """
+from datetime import datetime, timedelta, timezone
 from itertools import count
 from uuid import uuid4
 
@@ -15,6 +16,7 @@ import pytest
 
 from app.extensions import db
 from app.models.course import Course
+from app.models.course_instance import CourseInstance
 from app.models.course_quiz import CourseQuiz, QuizQuestion
 from app.models.site_settings import SiteSettings
 
@@ -90,6 +92,33 @@ def test_block_hidden_when_bank_too_small(client, app):
 def test_block_hidden_without_bpr_event_number(client, app):
     course = _course(event_num='')
     _quiz(course)
+    assert MARKER not in _html(client, course)
+
+
+def test_block_visible_when_only_an_instance_carries_bpr_number(client, app):
+    """Номер реєстру належить даті, тож курс із порожнім полем, але з
+    пронумерованим проведенням, сертифікат таки видасть -- блок має це
+    відображати, інакше курсове поле доводилось би тримати заповненим
+    лише заради вітрини."""
+    course = _course(event_num='')
+    _quiz(course)
+    db.session.add(CourseInstance(
+        course_id=course.id, status='published', event_format='offline',
+        location='Київ', bpr_event_number='1031500',
+        start_date=datetime.now(timezone.utc) + timedelta(days=7),
+    ))
+    db.session.flush()
+    assert MARKER in _html(client, course)
+
+
+def test_block_hidden_when_neither_course_nor_instance_has_number(client, app):
+    course = _course(event_num='')
+    _quiz(course)
+    db.session.add(CourseInstance(
+        course_id=course.id, status='published', event_format='offline',
+        location='Київ', start_date=datetime.now(timezone.utc) + timedelta(days=7),
+    ))
+    db.session.flush()
     assert MARKER not in _html(client, course)
 
 

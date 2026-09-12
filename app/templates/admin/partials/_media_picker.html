@@ -8,6 +8,13 @@
       <h3 class="media-picker__title">Обрати з бібліотеки</h3>
       <button type="button" class="media-picker__close" data-picker-close aria-label="Закрити">&times;</button>
     </div>
+    {# Пошук той самий, що й у бібліотеці (/admin/media/list.json?q=): доти
+       потрібне зображення тут шукали прокруткою по 24 за раз. #}
+    <div class="media-picker__search">
+      <input type="search" id="media-picker-q" class="form-input"
+             placeholder="Пошук за назвою файлу або alt-текстом"
+             aria-label="Пошук у бібліотеці" autocomplete="off">
+    </div>
     <div class="media-picker__grid" id="media-picker-grid"></div>
     <p class="media-picker__empty" id="media-picker-empty" hidden>У бібліотеці немає медіафайлів.</p>
     <div class="media-picker__foot">

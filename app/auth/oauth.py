@@ -426,8 +426,10 @@ def _unlink_provider(provider):
         flash(_('%(provider)s не прив\'язано', provider=label), 'info')
         return redirect(url_for('auth.connections'))
 
-    total = AuthIdentity.query.filter_by(user_id=current_user.id).count()
-    if total <= 1:
+    # Саме способи ВХОДУ, а не всі рядки: маркер partner входу не дає, і
+    # порожня password-identity теж. Рахунок усіх підряд дозволяв зняти
+    # останній справжній спосіб і замкнути людину зовні.
+    if AuthIdentity.count_login_methods(current_user.id) <= 1:
         flash(
             _('Не можна видалити останній спосіб входу. Спочатку встановіть '
               'пароль або прив\'яжіть інший провайдер.'),

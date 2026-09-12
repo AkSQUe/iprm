@@ -211,6 +211,7 @@ login_required) і на сторінці замовлення (`order/<token>/re
 | POST | `/admin/registrations/<id>/attendance` | Підтвердження присутності |
 | POST | `/admin/registrations/<id>/certificate` | Видати сертифікат (+ email) |
 | POST | `/admin/registrations/<id>/certificate/resend` | Повторно надіслати сертифікат |
+| POST | `/admin/registrations/<id>/certificate/reissue` | Перевидати за поточними даними заходу (+ email) |
 | GET | `/admin/registrations/<id>/certificate/download` | Завантажити сертифікат (адмін) |
 | GET | `/admin/registrations` | Всі реєстрації (stub) |
 | GET | `/admin/registrations/<id>/transfer/options` | JSON для модалки перенесення: придатні заходи, тарифи, різниці, блокери |
@@ -231,6 +232,8 @@ login_required) і на сторінці замовлення (`order/<token>/re
 | GET | `/admin/registrations/<id>/quiz` | Розбір по учаснику: кожна спроба, кожна відповідь, правильна поруч з обраною |
 | POST | `/admin/registrations/<id>/quiz/unlock` | Додати спроби учаснику |
 | POST | `/admin/registrations/<id>/quiz/reset` | Обнулити тестування учасника |
+| POST | `/admin/instances/<id>/lecturer-certificate` | Сертифікат лектора: видати (`trainer_id`) або завантажити виданий (`cert_id`) |
+| POST | `/admin/instances/<id>/lecturer-certificate/reissue` | Перевидати сертифікат лектора (`cert_id`) за поточними даними |
 | GET | `/admin/certificates` | Сертифікати (stub) |
 | GET | `/admin/clients` | Клієнти (stub) |
 | GET | `/admin/reviews` | Відгуки (stub) |

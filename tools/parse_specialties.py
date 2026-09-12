@@ -3,7 +3,7 @@
 Запускається РУКАМИ і одноразово:
 
     ./venv/Scripts/pip.exe install pypdf
-    ./venv/Scripts/python.exe tools/parse_specialties.py dn_650_16042025_dod_3.pdf
+    ./venv/Scripts/python.exe tools/parse_specialties.py docs/dn_650_16042025_dod_3.pdf
 
 pypdf у requirements НЕ додається: у рантаймі PDF не читається, довідник
 живе в БД.

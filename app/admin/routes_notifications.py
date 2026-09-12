@@ -106,6 +106,11 @@ def notifications_settings():
             want_enabled = False
 
     settings.is_enabled = want_enabled
+    # Полінг відмов -- ті самі креди по IMAP (993/SSL). Доти прапорець
+    # існував лише в моделі: сервіс написано й підключено до планувальника,
+    # а ввімкнути його з панелі було нічим.
+    settings.bounce_polling_enabled = (
+        request.form.get('bounce_polling_enabled') == 'on')
     settings.reminder_days = request.form.get('reminder_days', '7,3,1').strip()
 
     try:

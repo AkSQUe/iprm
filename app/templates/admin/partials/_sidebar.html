@@ -278,7 +278,7 @@
       {# Сторінка резервних копій існувала з правом backup.*, але пункту в
          навігації не мала: дійти до неї можна було лише прямим URL. #}
       {% if can('backup.view') %}
-      <a href="{{ url_for('admin.backups') }}" class="admin-sidebar__link{% if ep in ('admin.backups', 'admin.backup_create', 'admin.backup_download', 'admin.backup_delete', 'admin.backup_restore', 'admin.backup_validate', 'admin.backup_cleanup') %} admin-sidebar__link--active{% endif %}">
+      <a href="{{ url_for('admin.backups') }}" class="admin-sidebar__link{% if ep in ('admin.backups', 'admin.backup_create', 'admin.backup_download', 'admin.backup_delete', 'admin.backup_validate', 'admin.backup_validate_all', 'admin.backup_cleanup') %} admin-sidebar__link--active{% endif %}">
         {{ icon('backup') }}
         <span class="admin-sidebar__text">Резервні копії</span>
       </a>

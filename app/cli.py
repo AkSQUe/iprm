@@ -872,6 +872,19 @@ def backup_validate_cmd(backup_id):
         raise SystemExit(1)
 
 
+@backup_group.command('validate-all')
+@with_appcontext
+def backup_validate_all_cmd():
+    """Перевірити цілісність усіх придатних копій."""
+    from app.services.backup_service import BackupService
+
+    result = BackupService.validate_all_backups()
+    click.echo(f'Придатних: {result["checked"]}')
+    if result['corrupted']:
+        click.echo(f'ПОШКОДЖЕНИХ: {result["corrupted"]}', err=True)
+        raise SystemExit(1)
+
+
 @backup_group.command('cleanup')
 @click.option('--dry-run', is_flag=True, help='Лише показати, що буде видалено.')
 @with_appcontext
@@ -990,3 +1003,77 @@ def meta_reemit_leads(since, limit, dry_run):
     if queued < len(leads):
         click.echo('Решта не поїхала: заявки без жодного контакту зіставити '
                    'нема за чим, і партнеру вони не потрібні.')
+
+
+@click.command('partner-relink')
+@click.argument('email')
+@click.option('--issuer', default='mm-medic', show_default=True,
+              help='Партнер, який завів акаунт.')
+@click.option('--dry-run', is_flag=True, help='Лише показати, що буде зроблено.')
+@with_appcontext
+def partner_relink(email, issuer, dry_run):
+    """Перевести НАЯВНИЙ акаунт на партнерські рейки.
+
+    Акаунти, заведені prefill-лінком до 12.09.2026, несуть випадковий
+    пароль token_urlsafe(32): увійти з ним не може ніхто, а кабінет на
+    спробу встановити пароль відповідає "Пароль уже встановлено". Команда
+    прибирає той пароль і ставить identity-маркер джерела -- після цього
+    працюють і "Забули пароль", і сторінка встановлення пароля, а форма
+    реєстрації називає партнера.
+
+    Точково за адресою, бо партнерські акаунти нічим не помічені в БД.
+    Листів не шле. Повторний запуск безпечний.
+    """
+    from app.extensions import db
+    from app.models.auth_identity import AuthIdentity
+    from app.models.user import User
+    from app.services.partner_auth import ALLOWED_ISSUERS
+
+    if issuer not in ALLOWED_ISSUERS:
+        # Значення йде в raw_claims, а звідти -- у текст на формі
+        # реєстрації. Сміття з командного рядка побачив би користувач.
+        raise click.ClickException(
+            f'Невідомий партнер {issuer!r}. Дозволені: '
+            + ', '.join(sorted(ALLOWED_ISSUERS)) + '.')
+
+    address = (email or '').strip().lower()
+    user = User.query.filter_by(email=address).first()
+    if user is None:
+        raise click.ClickException(f'Користувача {address} не знайдено.')
+
+    # Саме хеш, а не рядок identity: порожня password-identity (OAuth-юзер,
+    # який пароля ще не ставив) входу не дає й прибирати її нема потреби.
+    password_identity = AuthIdentity.query.filter(
+        AuthIdentity.user_id == user.id,
+        AuthIdentity.provider == AuthIdentity.PROVIDER_PASSWORD,
+        AuthIdentity.password_hash.isnot(None),
+    ).first()
+    marker = AuthIdentity.find_partner(user.id)
+
+    if password_identity is not None and user.last_login_at is not None:
+        # Людина вже входила -- пароль вона знає, і це не той випадок.
+        # Мовчки знести його означало б вибити з кабінету живого юзера.
+        raise click.ClickException(
+            f'{address} уже входив(ла) {user.last_login_at:%Y-%m-%d}: '
+            'пароль робочий, знімати його не можна.')
+
+    plan = []
+    if password_identity is not None:
+        plan.append('зняти непридатний пароль')
+    if marker is None:
+        plan.append(f'додати маркер partner ({issuer})')
+    if not plan:
+        click.echo(f'{address}: уже переведено, робити нічого.')
+        return
+
+    click.echo(f'{address}: ' + ', '.join(plan))
+    if dry_run:
+        click.echo('--dry-run: нічого не змінено.')
+        return
+
+    if password_identity is not None:
+        db.session.delete(password_identity)
+    if marker is None:
+        AuthIdentity.attach_partner(user, issuer)
+    db.session.commit()
+    click.echo('Готово. Вхід -- через "Забули пароль".')

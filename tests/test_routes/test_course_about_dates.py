@@ -277,3 +277,36 @@ def test_column_still_mentions_groups_that_are_already_full(client):
     about = _about_html(client, course)
     assert 'Київ' in about
     assert 'ще 1 групу вже набрано' in about
+
+
+def test_datecard_names_the_type_only_when_it_differs_from_the_course(client):
+    """Перевизначений вид заходу мусить бути видно публічно.
+
+    Доти сторінка казала неправду: hero-чип друкував вид КУРСУ, а картки
+    дат виду не називали зовсім -- дата, перевизначена на тренінг під
+    курсом-семінаром, публічно виглядала семінаром.
+    """
+    course = _course('-inst-type', event_type='seminar')
+    _instance(course, days=10)
+    other = _instance(course, days=20)
+    other.event_type = 'training'
+    db.session.commit()
+
+    about = _about_html(client, course)
+    dates = about[about.find('id="schedule"'):]
+
+    assert dates.count('iprm-schedule__tag--type') == 1
+    assert 'Тренінг' in dates
+
+
+def test_datecard_stays_silent_when_the_type_repeats_the_course(client):
+    """Вид курсу вже стоїть hero-чипом -- на картках його немає."""
+    course = _course('-same-type', event_type='seminar')
+    inst = _instance(course, days=10)
+    inst.event_type = 'seminar'
+    db.session.commit()
+
+    about = _about_html(client, course)
+    dates = about[about.find('id="schedule"'):]
+
+    assert 'iprm-schedule__tag--type' not in dates

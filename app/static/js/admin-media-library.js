@@ -13,6 +13,11 @@
     var csrfEl = document.querySelector('input[name="csrf_token"]');
     var csrf = csrfEl ? csrfEl.value : '';
 
+    // Три потоки сторінки (завантаження, збереження alt, лічильник вибраного)
+    // міняють екран без перезавантаження. Тост бачить око, aria-live -- вухо.
+    var statusEl = document.getElementById('media-status');
+    var announce = function (msg) { if (statusEl) statusEl.textContent = msg; };
+
     // ---- Завантаження ----
     var zone = document.getElementById('media-upload');
     var input = document.getElementById('media-upload-input');
@@ -24,6 +29,9 @@
         pending -= 1;
         if (pending <= 0) {
           zone.classList.remove('media-upload--busy');
+          announce(succeeded > 0
+            ? 'Завантажено файлів: ' + succeeded + '. Оновлюємо список.'
+            : 'Жоден файл не завантажено.');
           // Перезавантажуємо, якщо хоч один файл завантажився -> часткові
           // успіхи видно одразу. Якщо всі впали -- лишаємось, щоб показати toast.
           if (succeeded > 0) window.location.reload();
@@ -36,6 +44,7 @@
         if (file.size > 25 * 1024 * 1024) { notify('Максимальний розмір: 25 MB'); return; }
         pending += 1;
         zone.classList.add('media-upload--busy');
+        announce('Завантаження: ' + file.name);
         var fd = new FormData();
         fd.append('file', file);
         if (csrf) fd.append('csrf_token', csrf);
@@ -80,8 +89,16 @@
           if (csrf) fd.append('csrf_token', csrf);
           fetch('/admin/media/' + id + '/alt', { method: 'POST', body: fd })
             .then(function (r) { return r.ok ? r.json() : null; })
-            .then(function (d) { if (d && d.ok) { inp.classList.add('media-card__alt--saved'); setTimeout(function () { inp.classList.remove('media-card__alt--saved'); }, 800); } })
-            .catch(function () {});
+            .then(function (d) {
+              if (d && d.ok) {
+                inp.classList.add('media-card__alt--saved');
+                announce('Alt-текст збережено');
+                setTimeout(function () { inp.classList.remove('media-card__alt--saved'); }, 800);
+              } else {
+                announce('Alt-текст не збережено');
+              }
+            })
+            .catch(function () { announce('Alt-текст не збережено'); });
         }, 600);
       });
     });
@@ -107,7 +124,12 @@
         });
         if (selCount) selCount.textContent = String(n);
         bulkBtn.disabled = n === 0;
+        // Перший виклик -- синхронізація при завантаженні сторінки (нуль
+        // вибраних), озвучувати там нічого.
+        if (announced) announce('Вибрано файлів: ' + n);
+        announced = true;
       };
+      var announced = false;
       checks.forEach(function (cb) { cb.addEventListener('change', syncSelection); });
       if (selectAll) {
         selectAll.addEventListener('change', function () {

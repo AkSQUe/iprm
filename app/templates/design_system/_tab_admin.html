@@ -56,6 +56,22 @@
     </div>
     <p class="ds-hint">Вигляд задає атрибут data-state, а не клас-модифікатор: значення приходить із поля моделі, тож окремий стан не треба заводити в CSS двічі. Кольори -- семантичні токени (--iprm-success-*, --iprm-warning-*, --iprm-error-*), тому тёмну тему стани знають самі й ручного [data-theme="dark"] перекриття не мають. Тут демо статичне: у реєстрі селект несе ще data-inline-url, і саме цей атрибут вмикає надсилання зміни через admin-inline-edit.js.</p>
 
+    <h3 class="ds-section-heading">Форма в комірці реєстру</h3>
+    <div class="ds-demo">
+      <form class="admin-inline-form">
+        <select class="form-input form-input--sm" aria-label="Захід">
+          <option>Базовий курс плазмотерапії (PRP) &mdash; 30.09.2026</option>
+          <option>Не прив&#39;язано</option>
+        </select>
+        <input type="text" class="form-input form-input--sm" placeholder="Нотатки" aria-label="Нотатки">
+        {# type="button" -- вітрина не має нікуди слати; у бою тут submit. #}
+        <button type="button" class="btn-admin btn-admin--secondary btn-admin--sm btn-admin--icon">
+          {{ icon('check', label='Зберегти') }}
+        </button>
+      </form>
+    </div>
+    <p class="ds-hint">.admin-inline-form -- редагування прямо в рядку реєстру, коли зміну треба ЗБЕРЕГТИ явно (запити B2B, прив&#39;язка форм Meta до заходу). Відрізняється від .admin-inline-select тим, що це справжня форма з POST і працює без JS; інлайн-селект зберігає сам, через fetch. Селект тут бере ту саму мальовану стрілку, що й решта селектів адмінки, -- перелік контекстів у admin.css.</p>
+
     <h3 class="ds-section-heading">Аватар у списку</h3>
     <div class="ds-demo">
       <div class="ds-row">

@@ -45,3 +45,38 @@ def test_deactivated_course_type_still_renders(db_session):
     course, inst = _pair(course_type='course')
     assert course.event_type_label == 'Курс'
     assert inst.event_type_label == 'Курс'
+
+
+# --- distinct_event_type: вид, що вибивається з курсу -----------------------
+
+def test_distinct_type_is_silent_while_the_date_follows_the_course(db_session):
+    _course, inst = _pair(course_type='seminar')
+    assert inst.distinct_event_type is None
+
+
+def test_distinct_type_is_silent_when_the_override_repeats_the_course(db_session):
+    """Перевизначення тим самим кодом -- не відмінність."""
+    _course, inst = _pair(course_type='seminar', instance_type='seminar')
+    assert inst.distinct_event_type is None
+
+
+def test_distinct_type_speaks_when_the_date_differs(db_session):
+    _course, inst = _pair(course_type='seminar', instance_type='training')
+    assert inst.distinct_event_type == 'training'
+
+
+def test_distinct_type_speaks_when_the_course_has_no_type_of_its_own(db_session):
+    """Курс без виду + дата з видом -- теж відмінність, сказати про неї
+    більше ніде."""
+    _course, inst = _pair(course_type=None, instance_type='training')
+    assert inst.distinct_event_type == 'training'
+
+
+def test_distinct_type_label_names_the_type(db_session):
+    _course, inst = _pair(course_type='seminar', instance_type='training')
+    assert inst.distinct_event_type_label == 'Тренінг'
+
+
+def test_distinct_type_label_is_none_when_nothing_differs(db_session):
+    _course, inst = _pair(course_type='seminar')
+    assert inst.distinct_event_type_label is None

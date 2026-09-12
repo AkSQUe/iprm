@@ -19,13 +19,17 @@ jobs:
 
       - name: Deploy via rsync
         uses: burnett01/rsync-deployments@7.0.1
+        # docs/ -- 76 МБ вихідників (docx/pdf/xlsx), з яких зібрано .md. Жоден
+        # маршрут їх не читає: єдиний споживач -- CLI-команда `legal docx`, а її
+        # бланк (docs/legal/*.docx) у git і так не лежить, тому на сервері його
+        # ніколи й не було. Возити це на прод щодеплою -- дарма.
         # trainers/ -- protect-фільтр (а не exclude): репозиторні зображення
         # (фото, підписи) доставляються, але --delete НЕ зносить завантажені
         # через адмінку файли, яких немає в репозиторії. courses/, blog/ і
         # /certificates/ лишаються excluded: там лише серверні завантаження
         # та згенеровані PDF, репозиторного контенту немає.
         with:
-          switches: -avz --delete --exclude='.git' --exclude='keys/' --exclude='.env' --exclude='venv/' --exclude='iprm.sock' --exclude='app/static/images/courses/' --exclude='app/static/images/blog/' --filter='protect app/static/images/trainers/**' --exclude='/certificates/' --exclude='/media/' --exclude='/backups/'
+          switches: -avz --delete --exclude='.git' --exclude='keys/' --exclude='.env' --exclude='venv/' --exclude='iprm.sock' --exclude='app/static/images/courses/' --exclude='app/static/images/blog/' --filter='protect app/static/images/trainers/**' --exclude='/certificates/' --exclude='/media/' --exclude='/backups/' --exclude='/docs/'
           path: ./
           remote_path: /var/www/iprm/
           remote_host: ${{ secrets.VPS_HOST }}
@@ -41,8 +45,33 @@ jobs:
           script: |
             set -e
             cd /var/www/iprm
+            # Клієнт PostgreSQL -- лише утиліти (pg_dump/pg_restore/psql), які
+            # по мережі говорять із зовнішньою базою; сервера БД на цій машині
+            # немає і бути не мусить. Без пакета резервне копіювання не
+            # працює взагалі, і зовні це не виглядає поламаним -- так система
+            # простояла мертвою три місяці. Версія не нижча за сервер (16.11),
+            # інакше pg_dump відмовиться знімати копію з новішої бази.
+            # За перевіркою наявності: на налаштованій машині крок
+            # безкоштовний, свіжа лікує себе сама.
+            command -v pg_dump >/dev/null || { apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq postgresql-client-16; }
             source venv/bin/activate
             pip install -r requirements.lock --quiet
+            # Копія БД ПЕРЕД міграцією -- точка повернення на випадок, коли
+            # нова ревізія зробить із даними не те, що очікувалось. Після
+            # `flask db upgrade` вона була б марною: знімала б уже змінену
+            # схему, тобто саме той стан, від якого мала страхувати.
+            # Стоїть після pip install, бо без залежностей flask не підніметься.
+            #
+            # Збій копії ЗУПИНЯЄ деплой (set -e вище) -- свідомо: деплой без
+            # точки повернення і є той тихий недогляд, через який цей модуль
+            # простояв мертвим три місяці. Як обійти, коли копія справді
+            # блокує потрібний деплой, -- deploy/README.md.
+            #
+            # Версію підставляє Actions у текст скрипта. $GITHUB_SHA тут не
+            # працює: скрипт виконується НА СЕРВЕРІ, а це змінна раннера --
+            # на сервері вона порожня, і опис молча лишився б без версії.
+            SHA="${{ github.sha }}"
+            flask backup create --description "Перед деплоєм ${SHA:0:7}"
             pybabel compile -d app/translations
             flask db upgrade
             flask rbac sync
@@ -50,3 +79,27 @@ jobs:
             systemctl restart iprm
             sleep 3
             curl -sf --unix-socket /var/www/iprm/iprm.sock http://localhost/ > /dev/null || (systemctl status iprm --no-pager; exit 1)
+
+  # Тести йдуть ПІСЛЯ деплою і його не блокують: тимчасово, бо червоний набір
+  # не має тримати викочування. Червоний прогін тут -- сигнал розбиратися вже
+  # на проді, а не запобіжник. Повернути ворота -- прибрати `needs: deploy`
+  # тут і повернути `needs: test` у джобі deploy.
+  # Python 3.12 -- та сама версія, що на сервері (Ubuntu 24.04).
+  # WeasyPrint тут ставиться, але не імпортується: у коді всі його імпорти
+  # ліниві, а єдиний тест, якому він потрібен, сам себе пропускає без GTK.
+  test:
+    needs: deploy
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.lock -r requirements-dev.txt
+      - name: Run tests
+        run: pytest -q

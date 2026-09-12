@@ -91,7 +91,7 @@ COURSE_LABELS = {
     'subtitle': 'Підзаголовок',
     'short_description': 'Короткий опис',
     'description': 'Повний опис',
-    'event_type': 'Тип',
+    'event_type': 'Вид заходу',
     'base_price': 'Ціна (грн)',
     'cpd_points_online': 'Бали БПР онлайн',
     'cpd_points_offline': 'Бали БПР офлайн',

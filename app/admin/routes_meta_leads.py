@@ -552,6 +552,25 @@ _FORM_STATUS_BADGES = {
 }
 
 
+#: Стани, за яких форму ще можуть заповнити, -- і саме тому неприв'язана
+#: форма в такому стані є роботою, а не історією. Архів і видалене в Meta
+#: заявок більше не приносять, тож вимагати для них захід означало б
+#: показувати борг там, де його немає.
+LIVE_FORM_STATUSES = ('ACTIVE', 'PAUSED')
+
+# Підписи станів українською. Бейджі решти реєстрів підписані словами мови
+# сайту, і одне англійське КАПСОМ серед них читається як чужий елемент, а не
+# як стан. Сирий код Meta лишається в title -- він же ключ для розмови з
+# підтримкою Meta, і ховати його не можна.
+_FORM_STATUS_LABELS = {
+    'ACTIVE': 'Активна',
+    'PAUSED': 'Призупинена',
+    'ARCHIVED': 'В архіві',
+    'DELETED': 'Видалена',
+    'DRAFT': 'Чернетка',
+}
+
+
 def form_status_badge(status):
     """Модифікатор бейджа для стану форми Meta.
 
@@ -560,6 +579,12 @@ def form_status_badge(status):
     """
     return _FORM_STATUS_BADGES.get(
         str(status or '').strip().upper(), 'badge--pending')
+
+
+def form_status_label(status):
+    """Підпис стану українською; невідомий стан лишається як прийшов."""
+    code = str(status or '').strip().upper()
+    return _FORM_STATUS_LABELS.get(code, code)
 
 
 def _offer_rows():
@@ -638,6 +663,23 @@ def meta_lead_forms():
     forms = MetaLeadForm.query.order_by(
         MetaLeadForm.status.asc(), MetaLeadForm.name.asc()).all()
     base_choices = _base_offer_choices()
+
+    # Робота сторінки в одному числі: скільки ЖИВИХ форм ще без заходу.
+    # Рахується тут, а не в шаблоні, бо та сама множина потрібна двічі --
+    # карткою згори й позначкою в рядку, -- і два незалежні обчислення
+    # рано чи пізно розійшлися б.
+    needs_offer = {
+        f.id for f in forms
+        if not f.course_instance_id
+        and str(f.status or '').strip().upper() in LIVE_FORM_STATUSES
+    }
+    summary = {
+        'total': len(forms),
+        'active': sum(1 for f in forms
+                      if str(f.status or '').strip().upper() == 'ACTIVE'),
+        'linked': sum(1 for f in forms if f.course_instance_id),
+        'needs_offer': len(needs_offer),
+    }
     return render_template(
         'admin/meta_lead_forms.html',
         forms=forms,
@@ -645,7 +687,10 @@ def meta_lead_forms():
             f.id: _offer_choices_for(f.course_instance_id, base_choices)
             for f in forms
         },
+        needs_offer=needs_offer,
+        summary=summary,
         status_badge=form_status_badge,
+        status_label=form_status_label,
     )
 
 

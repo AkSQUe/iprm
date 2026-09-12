@@ -211,6 +211,45 @@ class User(TimestampMixin, UserMixin, db.Model):
         ))
         return user
 
+    @classmethod
+    def create_partner_linked(cls, email, issuer, first_name=None, last_name=None):
+        """Створити акаунт, заведений партнерським prefill-лінком.
+
+        БЕЗ password-identity: пароля людина не обирала, і вигаданий
+        випадковий лише замикав би її зовні (вхід не працює, а кабінет на
+        спробу поставити пароль відповідає "Пароль уже встановлено").
+        Замість нього -- маркер походження, який чіпляється ПІСЛЯ flush:
+        його provider_sub дорівнює str(user.id)."""
+        from app.models.auth_identity import AuthIdentity
+        from app.models.medical_profile import MedicalProfile
+
+        user = cls(
+            email=email,
+            first_name=first_name or '',
+            last_name=last_name or '',
+            email_confirmed=True,
+            is_active=True,
+        )
+        db.session.add(user)
+        db.session.flush()
+        db.session.add(MedicalProfile(
+            user_id=user.id,
+            source=MedicalProfile.SOURCE_PARTNER,
+        ))
+        AuthIdentity.attach_partner(user, issuer)
+        return user
+
+    @property
+    def partner_issuer(self):
+        """issuer партнера, який завів акаунт; None для звичайних акаунтів."""
+        from app.models.auth_identity import AuthIdentity
+        if not self.id:
+            return None
+        identity = AuthIdentity.find_partner(self.id)
+        if identity is None:
+            return None
+        return (identity.raw_claims or {}).get('issuer')
+
     def get_unsubscribe_token(self):
         """Повернути (за потреби -- згенерувати й зберегти) стабільний токен
         для посилань відписки. Робить flush, але не commit."""

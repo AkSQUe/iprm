@@ -15,7 +15,7 @@ from app.models.certificate import Certificate
 from app.models.medical_profile import MedicalProfile
 from app.models.mixins import utcnow
 from app.models.registration import EventRegistration
-from app.models.specializations import labels_for_codes
+from app.data.specializations import labels_for_codes
 from app.utils import normalize_name
 
 # Поля, які учасник заповнює сам. Джерело правди для того, що приймає save().
