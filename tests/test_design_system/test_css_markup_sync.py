@@ -1,4 +1,4 @@
-"""CSS і розмітка адмінки мусять збігатись в обидва боки.
+"""CSS і розмітка мусять збігатись в обидва боки.
 
 Два зустрічні скани. Кожен уже знаходив справжні вади, яких не видно ні
 оком, ні рештою тестів:
@@ -52,19 +52,43 @@ def _css_text():
     return '\n'.join(p.read_text(encoding='utf-8') for p in CSS_DIR.glob('*.css'))
 
 
-def _template_text():
-    """Шаблони адмінки й партіали каталогу дизайн-системи.
+# Шаблони, які НЕСУТЬ власний <style> і за визначенням не мають класів у
+# наших css-файлах. Список звірений із `grep -rl "<style" app/templates`:
+# пошта й PDF інакше не вміють (CLAUDE.md), а `_icon_font.html` -- це
+# @font-face, якому потрібна ?v={{ assets_version }}, тож він теж інлайн.
+# Розширюючи зону скану, розширюй ЦЕЙ список, а не викидай його.
+SELF_STYLED = (
+    'emails/',
+    'certificates/',
+    'invoices/',
+    'main/offer_pdf.html',
+    'partials/_icon_font.html',
+)
 
-    Сертифікати, листи й частина публічних сторінок несуть власні <style>
-    просто в шаблоні (PDF і пошта інакше не вміють), і їхні класи в наших
-    css-файлах не мають бути за визначенням.
+
+def _template_text():
+    """ВСІ шаблони проєкту, крім тих, що несуть власний <style>.
+
+    Спершу скан бачив лише `admin/` і `design_system/`. Через це двадцять
+    публічних сторінок роками носили класи без жодного правила, і жоден
+    тест цього не бачив: `sr-only` на заголовку `auth/connections.html`
+    (у ДС він зветься `.visually-hidden`) ПОКАЗУВАВ текст, призначений
+    лише для скрінрідера; `reg-success-banner__body` і `blog-post__body`
+    малювались голим `<div>`. Зелений тест означав "класи адмінки на
+    місці", а читався як "у проєкті все гаразд".
 
     `design_system/_tab_*.html` -- окремий верхньорівневий каталог (не під
     `admin/`), хоча інклюдиться лише з `admin/design_system.html` і показує
     розмітку `page-admin-design-system.css`. Без нього клас, ужитий тільки
     на вітрині каталогу, сканер мертвих правил бачить як осиротілий.
     """
-    return _read(TPL_DIR / 'admin', '*.html') + _read(TPL_DIR / 'design_system', '*.html')
+    parts = []
+    for path in sorted(TPL_DIR.rglob('*.html')):
+        rel = path.relative_to(TPL_DIR).as_posix()
+        if rel.startswith(SELF_STYLED) or rel in SELF_STYLED:
+            continue
+        parts.append(path.read_text(encoding='utf-8'))
+    return '\n'.join(parts)
 
 
 def _js_text():
@@ -95,6 +119,46 @@ def _classes_in_css():
     return out
 
 
+def _is_structural_element(cls, css):
+    """Чи є `cls` СТРУКТУРНИМ вузлом стилізованого блока (`block__element`).
+
+    Такий вузол правила не потребує: блок розкладає його своїм grid/flex, а
+    ім'я лишається документацією розмітки. `.reg-success-banner` -- це
+    `grid-template-columns: 56px 1fr`, і `.reg-success-banner__body` є рівно
+    другою коміркою; оголошувати їй щось окремо не треба.
+
+    Межа проведена НЕ на око. Коли скан розширили з адмінки на весь проєкт,
+    він дав 26 імен; `git log -S ".<клас>" -- app/static/css/` показав, що
+    жоден із двадцяти `__`-елементів правила не мав НІКОЛИ (одиничні збіги
+    -- це підрядок у сусіда: `.iprm-about__dates` всередині
+    `.iprm-about__dates-title`). Тобто це імена, а не втрачені стилі.
+
+    Блокам і модифікаторам винятку НЕМАЄ, і це головне в цій межі: кожен
+    справжній дефект, який сторож ловив, був саме ними. `.admin-badge`
+    (блок) друкував статус голим словом; `.btn-admin--ghost` (модифікатор)
+    малював дві кнопки текстом; `.form-readonly` (блок) -- п'ять значень у
+    картці запиту. Розширення зони додало до списку ще шість того ж роду:
+    `.sr-only` ПОКАЗУВАВ заголовок, призначений лише для скрінрідера (у
+    системі він зветься `.visually-hidden`), а `.oauth-btn--google`,
+    `.account-confirm-banner--certdata`, `.reg-certdata-reminder--email`,
+    `.apple-feature-card--icon-topright` і `--icon-bottomright` обіцяли
+    варіант, якого в CSS немає. Модифікатор без правила -- це завжди
+    обіцянка вигляду, якої ніхто не виконує, тож він лишається червоним.
+    """
+    if '--' in cls or '__' not in cls:
+        return False
+    block = cls.split('__')[0]
+    if block in css:
+        return True
+    # Простір імен блока може існувати в CSS лише через свої елементи -- це
+    # той самий випадок, що вже описаний вище рядком "блок BEM без власного
+    # правила". `.iprm-hero-trainer` правила не має: розкладку дає
+    # `.iprm-hero__content--trainer`, а `trainers.css` тримає під цим
+    # префіксом `__photo` і `__exp`. `__info` -- сусідня комірка того ж
+    # флексу, тож вимагати від неї оголошень нема за що.
+    return any(c.startswith(block + '__') for c in css)
+
+
 def test_every_class_in_markup_has_a_rule():
     """Клас у розмітці, для якого немає жодного правила, малюється дефолтом."""
     css = _classes_in_css()
@@ -112,6 +176,8 @@ def test_every_class_in_markup_has_a_rule():
             continue
         # клас, який десь будується з жинжа-виразу (admin-stat-card--{{ mod }})
         if re.search(re.escape(cls) + r'-*\s*\{\{', tpl):
+            continue
+        if _is_structural_element(cls, css):
             continue
         missing.append(cls)
     assert not missing, (
