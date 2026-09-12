@@ -1,5 +1,14 @@
-/* Довідник типів заходів -- лише сітка й ширини колонок.
-   Декор (кнопки, поля, бейджі, таблиця) береться з admin.css. */
+/* Довідник типів заходів (admin/event_types.html) -- лише розкладка: рядок
+   форми додавання, ширини колонок, відступи переліку курсів.
+
+   Декор бере компонентні класи admin.css -- .form-section,
+   .form-section__title, .admin-form__section-hint, .alert--warning,
+   .admin-stat-card, .admin-table (+ --wide), .admin-cell-details, .switch,
+   .badge, .form-input (+ --fallback), .admin-mono, .admin-num, .btn-admin.
+   ПЕРЕОГОЛОШУВАТИ їх тут не можна: правка компонента інакше сюди не дійде.
+   Правило `.event-types-add .form-input` саме таким переозначенням і було. */
+
+/* ========== РЯДОК ДОДАВАННЯ ========== */
 
 .event-types-add {
   display: flex;
@@ -8,36 +17,86 @@
   align-items: center;
 }
 
-.event-types-add .form-input {
+/* Чотири поля ділять рядок порівну. Ширина -- властивість РЯДКА, тож клас
+   сторінковий і стоїть на самих полях. */
+.event-types-add__field {
   flex: 1 1 160px;
   min-width: 0;
 }
 
-.event-types-table .event-types-col-code { width: 168px; }
-.event-types-table .event-types-col-sort { width: 88px; }
-.event-types-table .event-types-col-uses { width: 104px; text-align: center; }
-.event-types-table .event-types-col-status { width: 88px; text-align: center; }
+/* ========== РОЗКРІЙ ТАБЛИЦІ ========== */
+
+/* Ширини й нижня межа діють лише в табличному режимі: з 768px admin.css
+   рендерить рядки картками, і ширина колонки стала б шириною картки.
+   Той самий прийом, що в admin-meta-leads.css. */
+@media (min-width: 769px) {
+  /* Власної нижньої межі ширини тут НЕМАЄ, і це рішення, а не пропуск.
+     Дев'ять колонок (після того, як код переїхав під назву) на типовому
+     1440px дають полю ~126px -- рівно стільки, скільки треба під
+     «конференцію» разом із падінгом. Будь-який min-width означав би
+     горизонтальну прокрутку на кожному рядку заради кількох зайвих пікселів
+     у полі: пробували 1600 (поле 146px, прокрутка 333px) і 1360 (поле
+     104-125px, прокрутка 93px) -- обидва гірші за відсутність порогу. */
+}
+
+/* Службові колонки притиснуті до потрібного мінімуму: кожен зайвий піксель
+   тут забирається в полів тексту, заради яких сторінка й існує. */
+.event-types-table .event-types-col-sort { width: 76px; }
+/* Ширша за лічильник у сусідніх довідниках: під числом ховається перелік
+   назв курсів, і в 104px вони ламались по складах. */
+.event-types-table .event-types-col-uses { width: 148px; text-align: center; }
+.event-types-table .event-types-col-status { width: 76px; text-align: center; }
 .event-types-table .event-types-col-actions {
-  /* Три кнопки замість однієї -- тримаємо їх в один ряд без переносу. */
-  width: 148px;
+  /* Три кнопки-іконки в один ряд без переносу: 3x34px плюс проміжки. */
+  width: 132px;
   text-align: right;
   white-space: nowrap;
 }
 
-/* Розкривний перелік курсів у клітинці "Вжито": сам маркер і відступи
-   списку. Кольори й шрифт -- з admin.css. */
-.event-types-uses {
-  margin-top: 4px;
+/* Поле бере колонку цілком -- інакше воно лишається завширшки з типовий
+   `size=20` і в широкій колонці висить, а у вузькій обрізає текст. */
+.event-types-table .event-types-field {
+  width: 100%;
 }
 
-.event-types-uses__toggle {
-  cursor: pointer;
-  font-size: 12px;
-}
+/* ========== ПЕРЕЛІК КУРСІВ У КОМІРЦІ ========== */
 
+/* Сама розкривачка -- компонент (.admin-cell-details); тут лише відступи
+   списку в ній. */
 .event-types-uses__list {
   margin: 4px 0 0;
   padding-left: 16px;
   text-align: left;
   font-size: 12px;
+}
+
+/* ========== АДАПТИВ ========== */
+
+@media (max-width: 768px) {
+  /* Таблиця стає картками (admin.css), де комірка -- рядок
+     "Заголовок: значення": фіксовані ширини перетворились би на ширини
+     карток. */
+  .event-types-table .event-types-col-sort,
+  .event-types-table .event-types-col-uses,
+  .event-types-table .event-types-col-status,
+  .event-types-table .event-types-col-actions {
+    width: auto;
+    text-align: right;
+  }
+
+  /* Поля в картці беруть решту ширини після підпису комірки. Клас
+     сторінковий: `.event-types-table .form-input` переозначував би атом. */
+  .event-types-table .event-types-field {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+  }
+
+  /* Органи керування на телефоні беруть рядок цілком. */
+  .event-types-add__field,
+  .event-types-add__submit {
+    flex: 1 1 auto;
+    width: 100%;
+    max-width: none;
+  }
 }

@@ -48,7 +48,10 @@ def test_list_shows_active_and_legacy_rows(client, admin):
     assert 'Фахова (тематична) школа' in html
     # Саме за кодом у комірці: рядок «Курс» є в хлібних крихтах («Курси»)
     # незалежно від таблиці, тож перевірка за назвою нічого не стерегла б.
-    assert '<code>course</code>' in html, 'застарілий рядок теж мусить бути видимим'
+    # Код друкується другим поверхом під назвою (.admin-mono), а не власною
+    # колонкою: окрема колонка під нередаговане значення забирала 132px у
+    # полів, які тут і редагують.
+    assert 'admin-mono admin-text-muted">course<' in html,         'застарілий рядок теж мусить бути видимим'
 
 
 def test_save_updates_names_cases_and_flags(client, admin):

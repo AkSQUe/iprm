@@ -8,6 +8,8 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-event-types.css') }}?v={{ assets_version }}">
 {% endblock %}
 
+{% from 'admin/partials/_filter_bar.html' import stat_cards, empty_state %}
+
 {% block content %}
 <div class="admin-with-sidebar">
   {% include 'admin/partials/_sidebar.html' %}
@@ -31,60 +33,57 @@
 
     {% include 'partials/flash_messages.html' %}
 
-    <div class="admin-stat-cards admin-stat-cards--4">
-      <div class="admin-stat-card">
-        <span class="admin-stat-card__value">{{ active_count }}</span>
-        <span class="admin-stat-card__label">Активних типів</span>
-      </div>
-      <div class="admin-stat-card">
-        <span class="admin-stat-card__value">{{ rows | length - active_count }}</span>
-        <span class="admin-stat-card__label">Застарілих</span>
-      </div>
-      <div class="admin-stat-card{% if needs_cases_count %} admin-stat-card--warning{% endif %}">
-        <span class="admin-stat-card__value">{{ needs_cases_count }}</span>
-        <span class="admin-stat-card__label">Без відмінків</span>
-      </div>
-      <div class="admin-stat-card">
-        <span class="admin-stat-card__value">{{ rows | length }}</span>
-        <span class="admin-stat-card__label">Усього в довіднику</span>
-      </div>
-    </div>
+    {# --alert, не --warning: другий у цій системі СИНІЙ (бере токен бейджа
+       «Опубліковано») і читається як «очікує». Бурштинове «глянь сюди» --
+       це саме alert, а рядок без відмінків уже зараз псує сертифікат. #}
+    {{ stat_cards([
+         {'value': active_count, 'label': 'Активних типів'},
+         {'value': rows | length - active_count, 'label': 'Застарілих'},
+         {'value': needs_cases_count, 'label': 'Без відмінків',
+          'mod': 'alert' if needs_cases_count else ''},
+         {'value': rows | length, 'label': 'Усього в довіднику'},
+       ], cols=4) }}
 
     {% if needs_cases_count %}
-    <p class="admin-form__section-hint">
-      У типів без відмінків сертифікат надрукує називний замість знахідного
-      («успішно завершив(-ла) наукова конференція»). Помилку видно вже на
-      виданому документі, і правка довідника її звідти не прибирає.
-    </p>
+    <div class="alert alert--warning">
+      <strong class="alert__title">{{ icon('error') }} Сертифікат надрукує називний відмінок</strong>
+      У типів без відмінків у документі стоятиме «успішно завершив(-ла) наукова
+      конференція». Помилку видно вже на виданому сертифікаті, і правка довідника
+      її звідти не прибирає.
+    </div>
     {% endif %}
 
     <div class="form-section">
-      <h3 class="admin-form__section-title">Додати тип</h3>
+      <h2 class="form-section__title">Додати тип</h2>
       <p class="admin-form__section-hint">
         Код -- латиницею, він потрапляє в партнерське API та xlsx і надалі не змінюється.
         Обидва відмінки обов'язкові: з них друкується сертифікат.
       </p>
       <form method="POST" action="{{ url_for('admin.event_types_add') }}" class="event-types-add">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <input type="text" name="code" class="form-input" maxlength="30"
+        <input type="text" name="code" class="form-input event-types-add__field" maxlength="30"
                placeholder="workshop" aria-label="Код типу">
-        <input type="text" name="name" class="form-input" maxlength="120"
+        <input type="text" name="name" class="form-input event-types-add__field" maxlength="120"
                placeholder="Воркшоп" aria-label="Назва, називний відмінок">
-        <input type="text" name="accusative" class="form-input" maxlength="120"
+        <input type="text" name="accusative" class="form-input event-types-add__field" maxlength="120"
                placeholder="воркшоп" required aria-label="Знахідний відмінок">
-        <input type="text" name="genitive" class="form-input" maxlength="120"
+        <input type="text" name="genitive" class="form-input event-types-add__field" maxlength="120"
                placeholder="воркшопу" required aria-label="Родовий відмінок">
-        <button type="submit" class="btn-admin btn-admin--secondary">{{ icon('add') }} Додати</button>
+        <button type="submit" class="btn-admin btn-admin--secondary event-types-add__submit">{{ icon('add') }} Додати</button>
       </form>
     </div>
 
+    {% if rows %}
     <form method="POST" action="{{ url_for('admin.event_types_save') }}" class="admin-form">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="admin-table-wrap">
+        {# Нижню межу ширини тримає .event-types-table (page CSS), а не
+           спільний --wide: десять колонок, із них п'ять полів тексту, просять
+           більше за спільний поріг 1120px. Два пороги поруч означали б, що
+           ширину правлять у двох місцях, тож модифікатора тут немає. #}
         <table class="admin-table event-types-table">
           <thead>
             <tr>
-              <th class="event-types-col-code">Код</th>
               <th>Назва</th>
               <th>Знахідний</th>
               <th>Родовий</th>
@@ -98,52 +97,59 @@
           <tbody>
             {% for row in rows %}
             <tr>
-              <td class="event-types-col-code">
-                <code>{{ row.type.code }}</code>
-                {% if row.needs_cases %}
-                <span class="badge badge--pending badge--sm"
-                      title="Сертифікат надрукує називний відмінок замість знахідного">
-                  без відмінків
-                </span>
-                {% endif %}
-              </td>
+              {# Код не редагується, тож окрема колонка під нього -- це 132px,
+                 забрані в полів, заради яких сторінка й існує. Він іде другим
+                 поверхом під назвою, як у довіднику спеціальностей, і поруч
+                 із ним стоїть мітка рядка. #}
               <td>
-                <input type="text" class="form-input" maxlength="120"
+                <input type="text" class="form-input event-types-field" maxlength="120"
                        name="name__{{ row.type.id }}" value="{{ row.type.name }}"
                        aria-label="Назва типу {{ row.type.code }}">
+                <div class="admin-subline">
+                  <span class="admin-mono admin-text-muted">{{ row.type.code }}</span>
+                  {% if row.needs_cases %}
+                  <span class="badge badge--pending badge--sm"
+                        title="Сертифікат надрукує називний відмінок замість знахідного">
+                    без відмінків
+                  </span>
+                  {% endif %}
+                </div>
               </td>
               <td>
-                <input type="text" class="form-input" maxlength="120"
+                <input type="text" class="form-input event-types-field" maxlength="120"
                        name="accusative__{{ row.type.id }}"
                        value="{{ row.type.name_accusative or '' }}" placeholder="–"
                        aria-label="{{ row.type.name }} – знахідний відмінок">
               </td>
               <td>
-                <input type="text" class="form-input" maxlength="120"
+                <input type="text" class="form-input event-types-field" maxlength="120"
                        name="genitive__{{ row.type.id }}"
                        value="{{ row.type.name_genitive or '' }}" placeholder="–"
                        aria-label="{{ row.type.name }} – родовий відмінок">
               </td>
               {% for lang in languages %}
               <td>
-                <input type="text" class="form-input" maxlength="120"
+                {# --fallback лише тут: порожній переклад означає «показуємо
+                   українську». У відмінках порожнеча -- дірка, а не фолбек,
+                   і позначає її бейдж «без відмінків», а не пунктир. #}
+                <input type="text" class="form-input form-input--fallback event-types-field" maxlength="120"
                        name="tr__{{ lang }}__{{ row.type.id }}" value="{{ row.tr[lang] }}"
                        placeholder="–"
                        aria-label="{{ row.type.name }} – {{ 'російська' if lang == 'ru' else 'англійська' }}">
               </td>
               {% endfor %}
               <td class="event-types-col-sort">
-                <input type="number" class="form-input" name="sort__{{ row.type.id }}"
+                <input type="number" class="form-input event-types-field" name="sort__{{ row.type.id }}"
                        value="{{ row.type.sort_order }}"
                        aria-label="Порядок типу {{ row.type.name }}">
               </td>
               <td class="event-types-col-uses">
                 {% if row.uses %}
                   <a href="{{ url_for('admin.courses_list', event_type=row.type.code) }}"
-                     title="Показати курси цього типу">{{ row.uses }}</a>
+                     class="admin-num" title="Показати курси цього типу">{{ row.uses }}</a>
                   {% if row.course_titles %}
-                  <details class="event-types-uses">
-                    <summary class="event-types-uses__toggle">курси</summary>
+                  <details class="admin-cell-details">
+                    <summary>{{ icon('keyboard_arrow_down') }} курси</summary>
                     <ul class="event-types-uses__list">
                       {% for title in row.course_titles %}
                       <li>{{ title }}</li>
@@ -159,16 +165,23 @@
                 {% endif %}
               </td>
               <td class="event-types-col-status">
-                <input type="checkbox" name="active__{{ row.type.id }}"
-                       id="active__{{ row.type.id }}"
-                       {% if row.type.is_active %}checked{% endif %}>
-                <label for="active__{{ row.type.id }}" class="visually-hidden">
-                  Активний: {{ row.type.name }}
+                {# Той самий перемикач, що в довіднику спеціальностей: голий
+                   браузерний чекбокс був єдиним органом керування адмінки,
+                   намальованим системою, а не дизайн-системою. #}
+                <label class="switch">
+                  <input type="checkbox" class="switch__input" name="active__{{ row.type.id }}"
+                         {% if row.type.is_active %}checked{% endif %}
+                         aria-label="«{{ row.type.name }}» активний">
+                  <span class="switch__track"><span class="switch__knob"></span></span>
                 </label>
               </td>
               <td class="event-types-col-actions">
                 {# Форми дій живуть поза формою збереження (вкладені form
-                   невалідні); кнопки прив'язані до них атрибутом form. #}
+                   невалідні); кнопки прив'язані до них атрибутом form.
+                   Обгортка .admin-table__actions -- та сама, що в решти
+                   реєстрів: у картковому режимі комірка стає flex-рядом, і
+                   без неї три кнопки розповзались по всій ширині картки. #}
+                <div class="admin-table__actions">
                 <button type="submit" form="event-type-up-{{ row.type.id }}"
                         class="btn-admin btn-admin--secondary btn-admin--sm btn-admin--icon"
                         {% if loop.first %}disabled{% endif %}>
@@ -184,6 +197,7 @@
                         {% if row.uses %}disabled title="Тип вживається -- зніміть галку «Активний»"{% endif %}>
                   {{ icon('delete', label='Видалити') }}
                 </button>
+                </div>
               </td>
             </tr>
             {% endfor %}
@@ -191,6 +205,9 @@
         </table>
       </div>
       <div class="admin-form__actions">
+        <span class="admin-text-muted admin-form__actions-hint">
+          Зміни в полях не зберігаються самі -- натисніть «Зберегти».
+        </span>
         <button type="submit" class="btn-admin btn-admin--primary">Зберегти довідник</button>
       </div>
     </form>
@@ -211,6 +228,13 @@
       <input type="hidden" name="direction" value="down">
     </form>
     {% endfor %}
+    {% else %}
+    {# Фільтрів тут немає, тож гілка «нічого не знайдено» неможлива: порожньо
+       означає рівно порожньо. #}
+    {% call empty_state(icon_name='table_view', title='Довідник порожній') %}
+      <p>Додайте перший тип вище – він одразу з'явиться у виборі на картці курсу.</p>
+    {% endcall %}
+    {% endif %}
 
   </div>
 </div>
