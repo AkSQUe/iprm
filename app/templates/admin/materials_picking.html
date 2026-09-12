@@ -9,7 +9,14 @@
 {% endblock %}
 
 {% block content %}
-<div class="admin-layout admin-layout--wide picking-doc">
+{# Оболонка -- спільна для всієї адмінки. Доти сторінка будувала власну, і
+   лишалась єдиною з 90, де сайдбара немає: адмін, що прийшов сюди з
+   матеріалів заходу, втрачав навігацію й міг повернутись лише кнопкою
+   «назад». На папері сайдбар не з'являється -- його ховає спільне
+   `@media print` в admin.css. #}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout admin-layout--wide picking-doc">
 
   {# Один заголовок і на екран, і на папір. Доти їх було два: hero ховався у
      друці, а поруч стояв власний друкований заголовок із назвою заходу.
@@ -68,6 +75,7 @@
   </table>
   </div>
 
+  </div>
 </div>
 {% endblock %}
 
