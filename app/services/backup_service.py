@@ -37,6 +37,19 @@ class BackupValidationError(BackupError):
 
 class BackupService:
 
+    # Без цих утиліт бекапи неможливі в принципі. Копія, яку нічим не
+    # відновити, бекапом не є, тому pg_restore вимагається разом з pg_dump.
+    PG_REQUIRED_BINARIES = ('pg_dump', 'pg_restore')
+
+    @classmethod
+    def missing_pg_tools(cls):
+        """Перелік утиліт PostgreSQL, яких немає в PATH."""
+        return [name for name in cls.PG_REQUIRED_BINARIES if not shutil.which(name)]
+
+    @classmethod
+    def pg_tools_available(cls):
+        return not cls.missing_pg_tools()
+
     @staticmethod
     def _get_storage_path():
         path = current_app.config.get(
@@ -115,6 +128,15 @@ class BackupService:
         conn_info = cls._parse_db_url(cls._get_db_url())
         if conn_info is None:
             raise BackupError('Backup is only supported for PostgreSQL databases')
+
+        # Перевірка середовища ДО створення рядка: інакше перша ж невдача
+        # займає єдиний слот BACKUP_MAX_CONCURRENT назавжди.
+        missing = cls.missing_pg_tools()
+        if missing:
+            raise BackupError(
+                'Не знайдено утиліт PostgreSQL: ' + ', '.join(missing)
+                + '. Встановіть на сервері пакет postgresql-client.',
+            )
 
         in_progress = DatabaseBackup.query.filter_by(
             status=DatabaseBackup.STATUS_IN_PROGRESS,
@@ -207,7 +229,14 @@ class BackupService:
         if not backup:
             raise BackupError(f'Backup {backup_id} not found')
         if backup.status != DatabaseBackup.STATUS_COMPLETED:
-            raise BackupError(f'Backup is not in completed status')
+            raise BackupError('Backup is not in completed status')
+        if backup.backup_type == DatabaseBackup.TYPE_SCHEMA_ONLY:
+            # --clean знесе таблиці й відтворить їх порожніми: така спроба
+            # відновлення видаляє дані, а не повертає їх.
+            raise BackupError(
+                'Копія містить лише схему без даних -- відновлення з неї '
+                'знищило б наявні дані. Скористайтесь повною копією.',
+            )
         if not os.path.exists(backup.file_path):
             raise BackupError(f'Backup file not found: {backup.file_path}')
 

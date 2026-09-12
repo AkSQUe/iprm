@@ -14,6 +14,17 @@
     <p class="admin-page__subtitle">Створення, відновлення та управління резервними копіями PostgreSQL</p>
   </div>
 
+  {# Без утиліт PostgreSQL сторінка виглядала здоровою, а копії не робились
+     узагалі -- саме так система простояла мертвою три місяці. #}
+  {% if missing_pg_tools %}
+  <div class="alert alert--warning">
+    {{ icon('error') }}
+    <span class="alert__title">Резервне копіювання не працює</span>
+    На сервері немає {{ missing_pg_tools | join(', ') }} — створити копію неможливо.
+    Встановіть пакет postgresql-client відповідної версії (PostgreSQL 16).
+  </div>
+  {% endif %}
+
   {# Stats cards #}
   <div class="backup-stats">
     <div class="backup-stats__card">
@@ -99,13 +110,6 @@
           <td class="backup-table__desc" data-label="Опис">{{ backup.description or '-' }}</td>
           <td data-label="Дата">{{ backup.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
           <td class="backup-table__actions" data-label="Дії">
-            {% if backup.is_restorable %}
-            <form method="POST" action="{{ url_for('admin.backup_restore', backup_id=backup.id) }}" class="backup-action-form" data-confirm="Відновити базу даних з копії #{{ backup.id }}? Поточні дані буде перезаписано." data-confirm-ok="Відновити базу" data-confirm-cancel="Не відновлювати" data-confirm-danger
-                  data-single-submit data-submitting-label="Відновлюємо…">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button type="submit" class="backup-action-btn backup-action-btn--restore" title="Відновити">&#x21bb;</button>
-            </form>
-            {% endif %}
             {% if backup.status == 'completed' %}
             <a href="{{ url_for('admin.backup_download', backup_id=backup.id) }}" class="backup-action-btn backup-action-btn--download" title="Завантажити">&#x2193;</a>
             <a href="{{ url_for('admin.backup_validate', backup_id=backup.id) }}" class="backup-action-btn backup-action-btn--validate" title="Перевірити">&#x2713;</a>

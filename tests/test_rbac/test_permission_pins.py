@@ -7,7 +7,6 @@
 from tests.support.rbac import make_user_with_role
 
 PINS = {
-    'admin.backup_restore': ('backup.restore',),
     'admin.backup_download': ('backup.export',),
     'admin.liqpay_save_keys': ('integrations.keys',),
     'admin.recaptcha_save_keys': ('integrations.keys',),

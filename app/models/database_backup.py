@@ -43,6 +43,10 @@ class DatabaseBackup(TimestampMixin, db.Model):
             name='ck_database_backups_status',
         ),
         db.CheckConstraint('file_size_bytes >= 0', name='ck_database_backups_size_non_negative'),
+        # Статистика шукає останню успішну копію, очищення -- завершені
+        # старші за retention: обидва запити фільтрують за статусом і
+        # сортують за датою.
+        db.Index('ix_database_backups_status_created', 'status', 'created_at'),
     )
 
     created_by = db.relationship('User', foreign_keys=[created_by_id], lazy='joined')
@@ -54,26 +58,26 @@ class DatabaseBackup(TimestampMixin, db.Model):
     def is_restorable(self):
         return self.status == self.STATUS_COMPLETED and self.backup_type != self.TYPE_SCHEMA_ONLY
 
-    @property
-    def file_size_display(self):
-        if not self.file_size_bytes:
-            return '0 B'
-        for unit in ('B', 'KB', 'MB', 'GB'):
-            if self.file_size_bytes < 1024:
-                return f'{self.file_size_bytes:.1f} {unit}'
-            self.file_size_bytes /= 1024
-        return f'{self.file_size_bytes:.1f} TB'
-
-    @property
-    def db_size_display(self):
-        if not self.db_size_bytes:
-            return '-'
-        size = self.db_size_bytes
+    @staticmethod
+    def _humanize_size(size_bytes):
+        size = size_bytes
         for unit in ('B', 'KB', 'MB', 'GB'):
             if size < 1024:
                 return f'{size:.1f} {unit}'
             size /= 1024
         return f'{size:.1f} TB'
+
+    @property
+    def file_size_display(self):
+        if not self.file_size_bytes:
+            return '0 B'
+        return self._humanize_size(self.file_size_bytes)
+
+    @property
+    def db_size_display(self):
+        if not self.db_size_bytes:
+            return '-'
+        return self._humanize_size(self.db_size_bytes)
 
     @staticmethod
     def get_statistics():

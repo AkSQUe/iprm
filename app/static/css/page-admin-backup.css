@@ -245,15 +245,6 @@
   transition: background-color 0.15s, border-color 0.15s;
 }
 
-.backup-action-btn--restore {
-  color: var(--iprm-info);
-}
-
-.backup-action-btn--restore:hover {
-  background: var(--iprm-info-bg);
-  border-color: var(--iprm-info);
-}
-
 .backup-action-btn--download {
   color: var(--iprm-accent);
 }

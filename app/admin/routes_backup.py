@@ -31,6 +31,7 @@ def backups():
         backups=pagination.items,
         pagination=pagination,
         stats=stats,
+        missing_pg_tools=BackupService.missing_pg_tools(),
     )
 
 
@@ -67,24 +68,11 @@ def backup_create():
     return redirect(url_for('admin.backups'))
 
 
-@admin_bp.route('/backups/<int:backup_id>/restore', methods=['POST'])
-@permission_required('backup.restore')
-def backup_restore(backup_id):
-    from app.services.backup_service import BackupService, BackupError
-
-    force = request.form.get('force') == 'true'
-
-    try:
-        BackupService.restore_backup(backup_id, force=force, created_by_id=current_user.id)
-        audit_logger.warning(
-            'Admin %s restored backup #%d', current_user.email, backup_id,
-        )
-        flash('Базу даних успішно відновлено.', 'success')
-    except BackupError as exc:
-        flash(f'Помилка відновлення: {exc}', 'error')
-        audit_logger.exception('Admin %s restore failed for backup #%d', current_user.email, backup_id)
-
-    return redirect(url_for('admin.backups'))
+# Відновлення свідомо НЕ має веб-маршруту. pg_restore --clean проти робочої
+# бази, поки gunicorn тримає з'єднання, або падає на блокуваннях, або зносить
+# таблиці посеред роботи сайту, а відкотити це вже нічим. Операція рідка й
+# усвідомлена, тому живе лише в CLI: `flask backup restore <id>` при
+# зупиненому сервісі. Сервіс BackupService.restore_backup лишається на місці.
 
 
 @admin_bp.route('/backups/<int:backup_id>/validate')

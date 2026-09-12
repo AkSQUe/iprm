@@ -861,22 +861,40 @@ def automatic_database_backup():
             if not got:
                 logger.debug('auto_backup: another worker holds the lock, skipping')
                 return
-            from app.services.backup_service import BackupService, BackupError
             try:
-                backup = BackupService.create_backup(
-                    backup_type='full',
-                    description='Автоматична щоденна копія',
-                )
-                logger.info(
-                    'Auto backup created: %s (%s, %.1fs)',
-                    backup.filename, backup.file_size_display, backup.duration_seconds or 0,
-                )
-            except BackupError as exc:
-                logger.exception('Automatic backup failed: %s', exc)
-                _notify_backup_failure(str(exc))
+                _run_automatic_database_backup()
             except Exception as exc:
                 logger.exception('Automatic backup failed unexpectedly')
                 _notify_backup_failure(str(exc))
+
+
+def _run_automatic_database_backup():
+    from app.services.backup_service import BackupService, BackupError
+
+    # Відсутній postgresql-client -- це стан сервера, а не аварія коду:
+    # стектрейс тут нічого не додає, а тривогу адмінам підняти треба.
+    missing = BackupService.missing_pg_tools()
+    if missing:
+        message = (
+            'немає утиліт ' + ', '.join(missing)
+            + ' -- встановіть на сервері пакет postgresql-client'
+        )
+        logger.warning('Automatic backup skipped: %s', message)
+        _notify_backup_failure(message)
+        return
+
+    try:
+        backup = BackupService.create_backup(
+            backup_type='full',
+            description='Автоматична щоденна копія',
+        )
+        logger.info(
+            'Auto backup created: %s (%s, %.1fs)',
+            backup.filename, backup.file_size_display, backup.duration_seconds or 0,
+        )
+    except BackupError as exc:
+        logger.exception('Automatic backup failed: %s', exc)
+        _notify_backup_failure(str(exc))
 
 
 def backup_cleanup():
