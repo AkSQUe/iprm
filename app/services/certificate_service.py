@@ -13,6 +13,7 @@
 import logging
 import math
 import os
+from collections import namedtuple
 import random
 
 from flask import current_app, render_template
@@ -184,6 +185,11 @@ def frame_ring_svg(width=794, height=1123, width_mm=210.0,
     )
 
 
+_Snapshot = namedtuple('_Snapshot', (
+    'title event_date cpd lecturer signature specialties event_type place'
+))
+
+
 def _event_snapshot(registration):
     """Витягти незмінні дані заходу з реєстрації."""
     instance = registration.instance
@@ -207,7 +213,8 @@ def _event_snapshot(registration):
     )
     event_type = event_type_accusative_for(instance)
     place = (instance.location or '').strip() if instance and instance.location else None
-    return title, event_date, cpd, lecturer, signature, specialties_line, event_type, place
+    return _Snapshot(title, event_date, cpd, lecturer, signature,
+                     specialties_line, event_type, place)
 
 
 # Запасний підпис (коли у тренера немає власного) -- спільне зображення.
@@ -660,6 +667,93 @@ def issued_event_numbers(instance):
     return (len(rows), sorted(segments))
 
 
+def _bpr_number_inputs(instance):
+    """(номер провайдера, номер заходу) або ValueError з причиною.
+
+    Номер заходу -- саме цього подання (реєстр видає його на кожне
+    окремо), з відкатом на курсовий. Брати курсовий напряму означало б
+    ставити один номер реєстру на всі дати курсу.
+    """
+    from app.models.site_settings import SiteSettings
+
+    provider = (SiteSettings.get().bpr_provider_number or '').strip()
+    if not provider:
+        raise ValueError('Не задано реєстраційний номер провайдера БПР '
+                         '(Адмінка -> Налаштування сайту).')
+    event_num = instance.effective_bpr_event_number if instance else ''
+    if not event_num:
+        raise ValueError('Не задано реєстраційний номер заходу БПР '
+                         '(Адмінка -> Проведення, або Курс -> редагувати).')
+    return provider, event_num
+
+
+def _apply_snapshot(cert, registration, snapshot, issued_at, issued_by):
+    """Перенести знімок заходу в запис -- спільне для видачі й перевидачі."""
+    cert.user_id = registration.user_id
+    cert.recipient_name = registration.user.full_name
+    cert.event_title = snapshot.title
+    cert.event_date = snapshot.event_date
+    cert.cpd_points = snapshot.cpd
+    cert.lecturer_name = snapshot.lecturer
+    cert.lecturer_signature = snapshot.signature
+    cert.specialties = snapshot.specialties
+    cert.event_type_label = snapshot.event_type
+    cert.event_place = snapshot.place
+    cert.issued_at = issued_at
+    cert.issued_by_id = issued_by.id if issued_by else None
+    cert.revoked = False
+    cert.revoked_at = None
+
+
+def _renumbered(old_number, year, provider, event_num):
+    """Номер за поточними даними, але зі СТАРИМ порядковим сегментом.
+
+    Перевидача виправляє те, що виправив адмін (номер заходу, рік), і не
+    чіпає порядковий номер: інакше лічильник витрачався б на кожну правку,
+    а в нумерації лишались би дірки під уже недійсними номерами.
+    """
+    parts = (old_number or '').split('-')
+    if len(parts) != 4 or not parts[3].isdigit():
+        raise ValueError(
+            f'Номер сертифіката "{old_number}" має незвичний формат -- '
+            'перевидати автоматично не можна.'
+        )
+    return Certificate.format_number(year, provider, event_num, int(parts[3]))
+
+
+def _ensure_number_free(number, skip_certificate_id=None, skip_lecturer_id=None):
+    """Впасти, якщо номер уже за кимось іншим (обидві таблиці).
+
+    Мовчки брати наступний вільний тут не можна: у штатному потоці номери
+    видає лічильник і колізій немає, тож збіг означає ручну правку БД --
+    і адмін мусить побачити її, а не отримати ще один несподіваний номер.
+    """
+    from app.models.lecturer_certificate import LecturerCertificate
+
+    query = db.session.query(Certificate.id).filter(Certificate.number == number)
+    if skip_certificate_id is not None:
+        query = query.filter(Certificate.id != skip_certificate_id)
+    taken = query.first()
+    if taken is None:
+        query = db.session.query(LecturerCertificate.id).filter(
+            LecturerCertificate.number == number)
+        if skip_lecturer_id is not None:
+            query = query.filter(LecturerCertificate.id != skip_lecturer_id)
+        taken = query.first()
+    if taken is not None:
+        raise ValueError(f'Номер {number} уже зайнятий іншим сертифікатом.')
+
+
+def _discard_stale_pdf(path, keep):
+    """Прибрати файл під старим номером (сирота після перевидачі)."""
+    if not path or path == keep:
+        return
+    try:
+        os.remove(path)
+    except OSError:
+        logger.warning('Could not remove stale certificate PDF: %s', path)
+
+
 def issue_certificate(registration, issued_by=None):
     """Видати сертифікат для реєстрації (ідемпотентно).
 
@@ -670,25 +764,12 @@ def issue_certificate(registration, issued_by=None):
     if existing is not None and not existing.revoked:
         return existing
 
-    (title, event_date, cpd, lecturer, signature, specialties,
-     event_type, place) = _event_snapshot(registration)
+    snapshot = _event_snapshot(registration)
     issued_at = utcnow()
 
     # Сегменти номера БПР: рік проведення, номер провайдера, номер заходу.
-    from app.models.site_settings import SiteSettings
-    instance = registration.instance
-    provider = (SiteSettings.get().bpr_provider_number or '').strip()
-    # Номер заходу -- саме цього подання (реєстр видає його на кожне окремо),
-    # з відкатом на курсовий. Брати курсовий напряму означало б ставити один
-    # номер реєстру на всі дати курсу.
-    event_num = instance.effective_bpr_event_number if instance else ''
-    year = (event_date or issued_at).year
-    if not provider:
-        raise ValueError('Не задано реєстраційний номер провайдера БПР '
-                         '(Адмінка -> Налаштування сайту).')
-    if not event_num:
-        raise ValueError('Не задано реєстраційний номер заходу БПР '
-                         '(Адмінка -> Проведення, або Курс -> редагувати).')
+    provider, event_num = _bpr_number_inputs(registration.instance)
+    year = (snapshot.event_date or issued_at).year
 
     # Якщо є відкликаний сертифікат -- повторно використовуємо запис.
     cert = existing if existing is not None else Certificate(
@@ -711,20 +792,7 @@ def issue_certificate(registration, issued_by=None):
         # файлу, навіть коли захід і видача припали на різні роки.
         cert.pdf_path = f'{year}/{cert.number}.pdf'
 
-    cert.user_id = registration.user_id
-    cert.recipient_name = registration.user.full_name
-    cert.event_title = title
-    cert.event_date = event_date
-    cert.cpd_points = cpd
-    cert.lecturer_name = lecturer
-    cert.lecturer_signature = signature
-    cert.specialties = specialties
-    cert.event_type_label = event_type
-    cert.event_place = place
-    cert.issued_at = issued_at
-    cert.issued_by_id = issued_by.id if issued_by else None
-    cert.revoked = False
-    cert.revoked_at = None
+    _apply_snapshot(cert, registration, snapshot, issued_at, issued_by)
 
     if existing is None:
         db.session.add(cert)
@@ -739,6 +807,52 @@ def issue_certificate(registration, issued_by=None):
     return cert
 
 
+def reissue_certificate(registration, issued_by=None):
+    """Перевидати чинний сертифікат за ПОТОЧНИМИ даними заходу.
+
+    Реєстр БПР видає номер на кожне подання, і адмін нерідко вписує його в
+    проведення вже після того, як сертифікати пішли людям. `issue_certificate`
+    свідомо не переписує номер виданого (він уже названий людині), тож
+    виправлення доходить лише цим окремим явним шляхом.
+
+    Що змінюється: номер заходу й рік у номері, усі знімки даних, файл PDF.
+    Що НЕ змінюється: порядковий сегмент учасника (див. `_renumbered`).
+    """
+    cert = registration.certificate
+    if cert is None:
+        raise ValueError('Сертифікат не видано -- перевидавати нема чого.')
+    if cert.revoked:
+        raise ValueError('Сертифікат відкликано: його видають наново '
+                         '(«Видати сертифікат»), а не перевидають.')
+
+    snapshot = _event_snapshot(registration)
+    issued_at = utcnow()
+    provider, event_num = _bpr_number_inputs(registration.instance)
+    year = (snapshot.event_date or issued_at).year
+    number = _renumbered(cert.number, year, provider, event_num)
+
+    # Шлях запам'ятовуємо ДО зміни номера: pdf_path зібраний з номера, тож
+    # після присвоєння старий файл уже не знайти.
+    stale_path = certificate_abs_path(cert)
+    previous_number = cert.number
+    if number != cert.number:
+        _ensure_number_free(number, skip_certificate_id=cert.id)
+        cert.number = number
+        cert.pdf_path = f'{year}/{number}.pdf'
+
+    _apply_snapshot(cert, registration, snapshot, issued_at, issued_by)
+    db.session.flush()
+    _write_pdf(cert)
+    db.session.commit()
+    _discard_stale_pdf(stale_path, keep=certificate_abs_path(cert))
+    logger.info(
+        'Certificate %s reissued (was %s) for reg=%s by=%s',
+        cert.number, previous_number, registration.id,
+        issued_by.email if issued_by else 'system',
+    )
+    return cert
+
+
 # ---- Лекторський сертифікат ----
 def issue_lecturer_certificate(instance, issued_by=None):
     """Видати (або повернути наявний) сертифікат лектора для проведення.
@@ -747,7 +861,6 @@ def issue_lecturer_certificate(instance, issued_by=None):
     з курсу/проведення/тренера на момент видачі. Номер учасника у діапазоні
     1xxxxx (окремий лічильник). Тип заходу зберігаємо у родовому відмінку.
     """
-    from app.models.site_settings import SiteSettings
     from app.models.lecturer_certificate import (
         LECTURER_NUMBER_OFFSET, LecturerCertificate,
     )
@@ -756,45 +869,14 @@ def issue_lecturer_certificate(instance, issued_by=None):
     if existing is not None:
         return existing
 
-    course = instance.course
-    trainer = instance.effective_trainer
-    if trainer is None:
-        raise ValueError('У проведення не задано лектора (тренера).')
-    provider = (SiteSettings.get().bpr_provider_number or '').strip()
-    event_num = instance.effective_bpr_event_number
-    if not provider:
-        raise ValueError('Не задано реєстраційний номер провайдера БПР '
-                         '(Адмінка -> Налаштування сайту).')
-    if not event_num:
-        raise ValueError('Не задано реєстраційний номер заходу БПР '
-                         '(Адмінка -> Проведення, або Курс -> редагувати).')
-    points = course.bpr_lecturer_points if course else None
-    if points is None:
-        raise ValueError('Не задано бали БПР лектору '
-                         '(Адмінка -> Курс -> редагувати).')
+    trainer, points = _lecturer_inputs(instance)
+    provider, event_num = _bpr_number_inputs(instance)
 
     issued_at = utcnow()
-    event_date = instance.start_date
-    year = (event_date or issued_at).year
-    event_type = event_type_genitive_for(instance)
+    year = (instance.start_date or issued_at).year
 
-    lc = LecturerCertificate(
-        instance_id=instance.id,
-        trainer_id=trainer.id,
-        recipient_name=(trainer.full_name_dative or '').strip() or trainer.full_name,
-        event_title=instance.effective_title_for(DEFAULT_LANGUAGE) or 'Захід',
-        event_date=event_date,
-        cpd_points=points,
-        # DEFAULT_LANGUAGE -- та сама причина, що й у _event_snapshot вище:
-        # знімок не має залежати від локалі того, хто спричинив видачу.
-        specialties=specialties_service.line(
-            instance.effective_specialty_codes, lang=DEFAULT_LANGUAGE,
-        ),
-        event_type_label=event_type,
-        event_place=(instance.location or '').strip() or None,
-        issued_at=issued_at,
-        issued_by_id=issued_by.id if issued_by else None,
-    )
+    lc = LecturerCertificate(instance_id=instance.id)
+    _apply_lecturer_snapshot(lc, instance, trainer, points, issued_at, issued_by)
 
     lc.number = _next_free_number(
         year, provider, event_num,
@@ -816,6 +898,72 @@ def issue_lecturer_certificate(instance, issued_by=None):
     db.session.commit()
     logger.info('Lecturer certificate %s issued for instance=%s by=%s',
                 lc.number, instance.id, issued_by.email if issued_by else 'system')
+    return lc
+
+
+def _apply_lecturer_snapshot(lc, instance, trainer, points, issued_at, issued_by):
+    """Знімок проведення в лекторський запис -- видача і перевидача однаково."""
+    lc.trainer_id = trainer.id
+    lc.recipient_name = (trainer.full_name_dative or '').strip() or trainer.full_name
+    lc.event_title = instance.effective_title_for(DEFAULT_LANGUAGE) or 'Захід'
+    lc.event_date = instance.start_date
+    lc.cpd_points = points
+    # DEFAULT_LANGUAGE -- та сама причина, що й у _event_snapshot вище:
+    # знімок не має залежати від локалі того, хто спричинив видачу.
+    lc.specialties = specialties_service.line(
+        instance.effective_specialty_codes, lang=DEFAULT_LANGUAGE,
+    )
+    lc.event_type_label = event_type_genitive_for(instance)
+    lc.event_place = (instance.location or '').strip() or None
+    lc.issued_at = issued_at
+    lc.issued_by_id = issued_by.id if issued_by else None
+
+
+def _lecturer_inputs(instance):
+    """(тренер, бали) для лекторського серта -- або ValueError з причиною."""
+    trainer = instance.effective_trainer
+    if trainer is None:
+        raise ValueError('У проведення не задано лектора (тренера).')
+    course = instance.course
+    points = course.bpr_lecturer_points if course else None
+    if points is None:
+        raise ValueError('Не задано бали БПР лектору '
+                         '(Адмінка -> Курс -> редагувати).')
+    return trainer, points
+
+
+def reissue_lecturer_certificate(instance, issued_by=None):
+    """Перевидати сертифікат лектора за ПОТОЧНИМИ даними проведення.
+
+    Та сама потреба, що й у `reissue_certificate`: виправлений номер заходу
+    мусить дійти до вже виданого документа. Файлів тут прибирати не треба --
+    лекторський PDF не зберігається, `render_lecturer_pdf` збирає його з
+    запису на кожне завантаження.
+    """
+    from app.models.lecturer_certificate import LecturerCertificate
+
+    lc = LecturerCertificate.query.filter_by(instance_id=instance.id).first()
+    if lc is None:
+        raise ValueError('Сертифікат лектора не видано -- перевидавати нема чого.')
+
+    trainer, points = _lecturer_inputs(instance)
+    provider, event_num = _bpr_number_inputs(instance)
+    issued_at = utcnow()
+    year = (instance.start_date or issued_at).year
+    number = _renumbered(lc.number, year, provider, event_num)
+
+    previous_number = lc.number
+    if number != lc.number:
+        _ensure_number_free(number, skip_lecturer_id=lc.id)
+        lc.number = number
+
+    _apply_lecturer_snapshot(lc, instance, trainer, points, issued_at, issued_by)
+    db.session.commit()
+    logger.info(
+        'Lecturer certificate %s reissued (was %s) for instance=%s by=%s',
+        lc.number, previous_number, instance.id,
+        issued_by.email if issued_by else 'system',
+    )
     return lc
 
 
