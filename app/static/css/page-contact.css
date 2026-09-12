@@ -152,7 +152,6 @@
    лише полю повідомлення. Це не перевизначення компонента, а
    властивості, яких у нього немає. */
 .contact-page__form-wrap textarea.form-input {
-  resize: vertical;
   min-height: 120px;
 }
 

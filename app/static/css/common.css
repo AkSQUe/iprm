@@ -2084,6 +2084,22 @@ form[data-single-submit][data-submitting='true'] input[type='submit'] {
   font-size: 13px;
 }
 
+/* Багаторядкове поле тягнеться лише ВНИЗ -- одне оголошення на весь сайт.
+
+   Це властивість самого компонента, а не рішення сторінки: горизонтальне
+   розтягування textarea рве розкладку форми, і цього не хоче ніхто, ніде.
+   Проте `resize: vertical` стояв У П'ЯТИ файлах під п'ятьма скоупами
+   (.admin-form, .blog-comment-form, .iprm-lead-form, .contact-page__form-wrap
+   і власний .mt-textarea сторінки матеріалів) -- однакове значення, п'ять
+   місць, і кожна нова форма мусила згадати про нього вшосте.
+
+   Висота лишається посторінковою: min-height у тих скоупах -- це розкладка
+   конкретної форми (100px в адмінці, 120px у контактах, 84px у лід-формі),
+   і зводити її в одне число було б неправильно. */
+textarea.form-input {
+  resize: vertical;
+}
+
 .form-section .form-hint {
   font-size: 12px;
   color: var(--iprm-text-light);

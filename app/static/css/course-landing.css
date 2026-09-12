@@ -1372,7 +1372,6 @@
   height: auto;
   min-height: 84px;
   padding: 13px 14px;
-  resize: vertical;
 }
 
 /* select не успадковує appearance від .form-input -- знімаємо її явно,
