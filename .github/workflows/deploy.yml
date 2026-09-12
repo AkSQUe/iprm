@@ -52,6 +52,22 @@ jobs:
             command -v pg_dump >/dev/null || { apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq postgresql-client-16; }
             source venv/bin/activate
             pip install -r requirements.lock --quiet
+            # Копія БД ПЕРЕД міграцією -- точка повернення на випадок, коли
+            # нова ревізія зробить із даними не те, що очікувалось. Після
+            # `flask db upgrade` вона була б марною: знімала б уже змінену
+            # схему, тобто саме той стан, від якого мала страхувати.
+            # Стоїть після pip install, бо без залежностей flask не підніметься.
+            #
+            # Збій копії ЗУПИНЯЄ деплой (set -e вище) -- свідомо: деплой без
+            # точки повернення і є той тихий недогляд, через який цей модуль
+            # простояв мертвим три місяці. Як обійти, коли копія справді
+            # блокує потрібний деплой, -- deploy/README.md.
+            #
+            # Версію підставляє Actions у текст скрипта. $GITHUB_SHA тут не
+            # працює: скрипт виконується НА СЕРВЕРІ, а це змінна раннера --
+            # на сервері вона порожня, і опис молча лишився б без версії.
+            SHA="${{ github.sha }}"
+            flask backup create --description "Перед деплоєм ${SHA:0:7}"
             pybabel compile -d app/translations
             flask db upgrade
             flask rbac sync
