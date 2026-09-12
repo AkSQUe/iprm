@@ -6448,3 +6448,12 @@ msgstr "Choose a <span class=\"apple-gradient-text\">date</span>"
 #, python-format
 msgid "Ще %(count)s %(noun)s"
 msgstr "%(count)s more %(noun)s"
+
+msgid "Походження акаунта"
+msgstr "Account origin"
+
+msgid "Кабінет створено через %(partner)s"
+msgstr "Account created via %(partner)s"
+
+msgid "Партнерський"
+msgstr "Partner"

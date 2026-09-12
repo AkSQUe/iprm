@@ -228,6 +228,14 @@ class TestRegisterWithExistingEmail:
         yield
         limiter.enabled = True
 
+    @pytest.fixture(autouse=True)
+    def clean(self, app):
+        """Партнерські акаунти комітяться -- прибираємо (див.
+        tests/support/users.py)."""
+        from tests.support.users import wipe_users
+        yield
+        wipe_users('partner-reg-', 'partner-ru-')
+
     def _register(self, client, email):
         return client.post('/auth/register', data={
             'email': email, 'first_name': 'Іван', 'last_name': 'Петренко',
@@ -274,3 +282,82 @@ class TestRegisterWithExistingEmail:
             'consent_data': 'y',
         })
         assert 'уже зарегистрирован через MM Medic' in resp.data.decode()
+
+
+class TestPartnerUserGetsIn:
+    """Заради цього все й робилось: партнерський акаунт має добудовуватись.
+
+    Раніше він мав вигаданий пароль, тож вхід не працював, відновлення
+    людині ніхто не пропонував, а сторінка встановлення пароля в кабінеті
+    відмовляла з "Пароль уже встановлено". Тест проходить весь шлях, а не
+    перевіряє окремі ланки.
+    """
+
+    @pytest.fixture(autouse=True)
+    def no_rate_limit(self, app):
+        from app.extensions import limiter
+        limiter.enabled = False
+        yield
+        limiter.enabled = True
+
+    @pytest.fixture(autouse=True)
+    def clean(self, app):
+        from tests.support.users import wipe_users
+        yield
+        wipe_users('partner-e2e-')
+
+    @pytest.fixture
+    def partner_user(self, app):
+        from app.services.partner_auth import (
+            PrefillPayload, get_or_create_partner_user,
+        )
+        return get_or_create_partner_user(PrefillPayload(
+            email=f'partner-e2e-{_uid()}@test.com', first_name='Анатолій',
+            last_name='Луньов', phone=None, issuer='mm-medic',
+        ))
+
+    def test_starts_without_a_password(self, partner_user):
+        assert partner_user.has_password is False
+
+    def test_forgot_password_accepts_the_account(self, client, partner_user):
+        resp = client.post('/auth/forgot-password',
+                           data={'email': partner_user.email})
+        assert resp.status_code == 302
+
+    def test_reset_then_login(self, client, partner_user):
+        from app.services.token_service import generate_password_reset_token
+
+        token = generate_password_reset_token(partner_user.id)
+        resp = client.post(f'/auth/reset-password/{token}', data={
+            'password': 'brand-new-pass', 'password_confirm': 'brand-new-pass',
+        })
+        assert resp.status_code == 302, 'форма скидання не прийняла пароль'
+
+        resp = client.post('/auth/login', data={
+            'email': partner_user.email, 'password': 'brand-new-pass',
+        })
+        assert resp.status_code == 302
+        with client.session_transaction() as sess:
+            assert sess.get('_user_id') == str(partner_user.id)
+
+    def test_set_password_page_no_longer_refuses(self, client, partner_user):
+        """Сторінка кабінету, зроблена саме для таких акаунтів."""
+        _login(client, partner_user)
+        resp = client.get('/auth/account/set-password')
+        assert resp.status_code == 200
+
+    def test_connections_shows_where_the_account_came_from(self, client, partner_user):
+        _login(client, partner_user)
+        resp = client.get('/auth/account/connections')
+        assert 'MM Medic' in resp.data.decode()
+
+    def test_connections_silent_for_ordinary_account(self, client, user):
+        _login(client, user)
+        resp = client.get('/auth/account/connections')
+        assert 'Походження акаунта' not in resp.data.decode()
+
+    def test_connections_origin_is_translated(self, client, partner_user):
+        """Рядок кабінету має жити в каталогах, а не лише українською."""
+        _login(client, partner_user)
+        resp = client.get('/ru/auth/account/connections')
+        assert 'Происхождение аккаунта' in resp.data.decode()
