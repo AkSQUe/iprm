@@ -27,7 +27,13 @@ class AuthIdentity(TimestampMixin, db.Model):
     PROVIDER_PASSWORD = 'password'
     PROVIDER_GOOGLE = 'google'
     PROVIDER_APPLE = 'apple'
-    PROVIDERS = (PROVIDER_PASSWORD, PROVIDER_GOOGLE, PROVIDER_APPLE)
+    # Партнерський сайт (mm-medic) завів акаунт за prefill-токеном.
+    # Не спосіб входу, а маркер походження: password_hash порожній, тож
+    # людина або встановлює пароль, або входить через OAuth. Потрібен,
+    # щоб форма реєстрації могла назвати джерело акаунта.
+    PROVIDER_PARTNER = 'partner'
+    PROVIDERS = (PROVIDER_PASSWORD, PROVIDER_GOOGLE, PROVIDER_APPLE,
+                 PROVIDER_PARTNER)
 
     id = db.Column(BigIntPK, primary_key=True)
     user_id = db.Column(
@@ -59,7 +65,7 @@ class AuthIdentity(TimestampMixin, db.Model):
             'provider', 'email',
         ),
         db.CheckConstraint(
-            "provider IN ('password', 'google', 'apple')",
+            "provider IN ('password', 'google', 'apple', 'partner')",
             name='ck_auth_identities_provider',
         ),
     )
