@@ -22,18 +22,25 @@ from app.models.site_settings import SiteSettings
 def _make_instance(trainer_email='trainer@example.com', ended=False, slug_suffix='n'):
     trainer = Trainer(full_name='Іван Тренер', slug=f'trainer-{slug_suffix}', email=trainer_email)
     db.session.add(trainer)
-    course = Course(title='Плазмотерапія', slug=f'course-{slug_suffix}', trainer=trainer)
+    course = Course(title='Плазмотерапія', slug=f'course-{slug_suffix}')
     db.session.add(course)
     db.session.flush()
+    # Course.trainer -- read-only property (перший з trainers); список
+    # пишеться через сервіс звʼязку, а не присвоєнням конструктора.
+    from app.services import trainer_links
+    trainer_links.set_trainers(course, [trainer.id])
     now = datetime.now(timezone.utc)
     inst = CourseInstance(
-        course_id=course.id, trainer_id=trainer.id,
+        course_id=course.id,
         start_date=now - timedelta(days=2) if ended else now + timedelta(days=2),
         end_date=now - timedelta(days=1) if ended else now + timedelta(days=3),
         location='Київ',
     )
     db.session.add(inst)
     db.session.flush()
+    # Та сама read-only property, що й у Course вище -- проведення теж
+    # веде свій перелік тренерів через таблицю звʼязку, не колонку.
+    trainer_links.set_trainers(inst, [trainer.id])
     return inst
 
 

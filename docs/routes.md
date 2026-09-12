@@ -232,8 +232,8 @@ login_required) і на сторінці замовлення (`order/<token>/re
 | GET | `/admin/registrations/<id>/quiz` | Розбір по учаснику: кожна спроба, кожна відповідь, правильна поруч з обраною |
 | POST | `/admin/registrations/<id>/quiz/unlock` | Додати спроби учаснику |
 | POST | `/admin/registrations/<id>/quiz/reset` | Обнулити тестування учасника |
-| POST | `/admin/instances/<id>/lecturer-certificate` | Видати/завантажити сертифікат лектора (PDF) |
-| POST | `/admin/instances/<id>/lecturer-certificate/reissue` | Перевидати сертифікат лектора за поточними даними |
+| POST | `/admin/instances/<id>/lecturer-certificate` | Сертифікат лектора: видати (`trainer_id`) або завантажити виданий (`cert_id`) |
+| POST | `/admin/instances/<id>/lecturer-certificate/reissue` | Перевидати сертифікат лектора (`cert_id`) за поточними даними |
 | GET | `/admin/certificates` | Сертифікати (stub) |
 | GET | `/admin/clients` | Клієнти (stub) |
 | GET | `/admin/reviews` | Відгуки (stub) |

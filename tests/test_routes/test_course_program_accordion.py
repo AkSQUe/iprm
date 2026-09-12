@@ -16,6 +16,7 @@ from app.models.course import Course
 from app.models.online_course import OnlineCourse
 from app.models.program_block import ProgramBlock
 from app.models.trainer import Trainer
+from app.services import trainer_links
 
 
 HEADINGS = ['Основи', 'Критичні етапи', 'Клінічне застосування']
@@ -36,9 +37,10 @@ def _blocks(**owner):
 
 def _course(slug='program-accordion'):
     course = Course(slug=slug, title='Курс програми', is_active=True,
-                    description='<p>Опис</p>', trainer_id=_trainer(f'{slug}-t').id)
+                    description='<p>Опис</p>')
     db.session.add(course)
     db.session.flush()
+    trainer_links.set_trainers(course, [_trainer(f'{slug}-t').id])
     _blocks(course_id=course.id)
     db.session.commit()
     return course

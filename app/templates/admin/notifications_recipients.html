@@ -96,7 +96,7 @@
                    data-recipients-toggle
                    {% if rule.notify_event_trainer %}checked{% endif %}>
             <label for="rule__{{ event_type }}__notify_event_trainer">
-              Тренер заходу <span class="admin-text-muted">(береться з CourseInstance, якщо у тренера заповнено email)</span>
+              Тренери заходу <span class="admin-text-muted">(усі з CourseInstance.effective_trainers, у кого заповнено email)</span>
             </label>
           </div>
 

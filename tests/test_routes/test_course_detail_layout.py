@@ -36,12 +36,13 @@ def _make_course(suffix=''):
         short_description='Короткий опис',
         target_audience=['Лікарі'],
         base_price=6000,
-        trainer_id=trainer.id,
         faq=[{'question': 'Питання 1?', 'answer': 'Відповідь 1'},
              {'question': 'Питання 2?', 'answer': 'Відповідь 2'}],
     )
     db.session.add(course)
     db.session.flush()
+    from app.services import trainer_links
+    trainer_links.set_trainers(course, [trainer.id])
     db.session.add(ProgramBlock(course_id=course.id, heading='Теорія',
                                 items=['Пункт А', 'Пункт Б'], sort_order=0))
     db.session.commit()

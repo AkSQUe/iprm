@@ -16,7 +16,7 @@ from app.models.registration import EventRegistration
 from app.models.site_settings import SiteSettings
 from app.models.trainer import Trainer
 from app.models.user import User
-from app.services import certificate_service
+from app.services import certificate_service, trainer_links
 
 
 @pytest.fixture
@@ -142,9 +142,9 @@ def test_lecturer_number_uses_instance_override(app, provider, no_pdf):
     db.session.add(trainer)
     db.session.flush()
     instance = _instance(course, event_number='1031500')
-    instance.trainer_id = trainer.id
+    trainer_links.set_trainers(instance, [trainer.id])
     db.session.commit()
 
-    cert = certificate_service.issue_lecturer_certificate(instance)
+    cert = certificate_service.issue_lecturer_certificate(instance, trainer)
 
     assert _event_segment(cert.number) == '1031500'

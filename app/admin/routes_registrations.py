@@ -7,7 +7,7 @@ from flask import (
 )
 from flask_login import current_user
 from sqlalchemy import case, func
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 
 from app.admin import _listing, admin_bp
 from app.admin._helpers import try_commit
@@ -616,13 +616,8 @@ def _apply_registration_filters(query, filters):
         if course_id_filter:
             query = query.filter(CourseInstance.course_id == course_id_filter)
         if trainer_id_filter:
-            # Ефективний тренер: trainer заходу, інакше -- тренер курсу (fallback).
-            query = query.join(
-                Course, CourseInstance.course_id == Course.id,
-            ).filter(
-                func.coalesce(CourseInstance.trainer_id, Course.trainer_id)
-                == trainer_id_filter
-            )
+            from app.services.trainer_links import instance_trainer_clause
+            query = query.filter(instance_trainer_clause(trainer_id_filter))
         if scope != 'all':
             now = datetime.now(timezone.utc)
             if scope == 'upcoming':
@@ -832,9 +827,9 @@ def registrations_export():
             joinedload(EventRegistration.user),
             # Колонка «Тренер» -- ефективний тренер (заходу або курсу), тож
             # тягнемо обидві звʼязки одразу, інакше N+1 на кожен рядок.
-            joinedload(EventRegistration.instance).joinedload(CourseInstance.trainer),
+            joinedload(EventRegistration.instance).selectinload(CourseInstance.trainers),
             joinedload(EventRegistration.instance)
-            .joinedload(CourseInstance.course).joinedload(Course.trainer),
+            .joinedload(CourseInstance.course).selectinload(Course.trainers),
             joinedload(EventRegistration.certificate),
             joinedload(EventRegistration.promo_code),
         ),

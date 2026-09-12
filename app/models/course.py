@@ -7,13 +7,14 @@ from sqlalchemy import func
 
 from app.extensions import db
 from app.models.mixins import TimestampMixin, TranslatableMixin, BigIntPK
+from app.models.trainer_links import course_trainers
 
 
 class Course(TranslatableMixin, TimestampMixin, db.Model):
     __tablename__ = 'courses'
     __translatable__ = (
         'title', 'subtitle', 'description', 'short_description',
-        'target_audience', 'tags', 'speaker_info', 'agenda', 'faq',
+        'target_audience', 'tags', 'agenda', 'faq',
         'roi_hint', 'final_cta_text',
         'proof_stats', 'benefits', 'practice_note_title', 'practice_note_text',
         'gallery_intro',
@@ -39,7 +40,6 @@ class Course(TranslatableMixin, TimestampMixin, db.Model):
 
     target_audience = db.Column(db.JSON, default=list)
     tags = db.Column(db.JSON, default=list)
-    speaker_info = db.Column(db.Text)
     agenda = db.Column(db.Text)
     faq = db.Column(db.JSON, default=list)
 
@@ -83,12 +83,6 @@ class Course(TranslatableMixin, TimestampMixin, db.Model):
     # (entity_type='course', usage_type='gallery'), а не тут.
     gallery_intro = db.Column(db.String(500))
 
-    trainer_id = db.Column(
-        db.BigInteger,
-        db.ForeignKey('trainers.id', ondelete='SET NULL'),
-        nullable=True,
-        index=True,
-    )
     created_by = db.Column(
         db.BigInteger,
         db.ForeignKey('users.id', ondelete='SET NULL'),
@@ -122,8 +116,10 @@ class Course(TranslatableMixin, TimestampMixin, db.Model):
         ),
     )
 
-    trainer = db.relationship(
-        'Trainer', foreign_keys=[trainer_id], back_populates='courses',
+    trainers = db.relationship(
+        'Trainer', secondary=course_trainers,
+        order_by=course_trainers.c.position,
+        viewonly=True, lazy='select',
     )
     creator = db.relationship(
         'User', foreign_keys=[created_by], back_populates='created_courses',
@@ -153,6 +149,17 @@ class Course(TranslatableMixin, TimestampMixin, db.Model):
     )
     hero_media = db.relationship('MediaFile', foreign_keys=[hero_media_id])
     card_media = db.relationship('MediaFile', foreign_keys=[card_media_id])
+
+    @property
+    def trainer(self):
+        """Головний тренер -- перший у порядку.
+
+        Властивість, а не колонка: денормалізований «головний» другим
+        джерелом істини розходився б із переліком непомітно. Місць, де
+        потрібен рівно один (ПІБ на картці, підпис на сертифікаті),
+        більше, ніж місць, де потрібні всі.
+        """
+        return self.trainers[0] if self.trainers else None
 
     @property
     def hero_src(self):

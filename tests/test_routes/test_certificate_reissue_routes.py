@@ -149,46 +149,103 @@ class TestParticipant:
 class TestLecturer:
     @pytest.fixture
     def instance(self, registration):
+        from app.services import trainer_links
+
         trainer = Trainer(full_name='Тренер Тренерович',
                           full_name_dative='Тренеру Тренеровичу',
                           slug=f'trainer-{_uid()}')
         db.session.add(trainer)
         db.session.flush()
         instance = registration.instance
-        instance.trainer_id = trainer.id
+        trainer_links.set_trainers(instance, [trainer.id])
         db.session.commit()
-        return instance
+        return instance, trainer
 
-    def test_reissue_prints_the_corrected_number(self, admin_client, instance,
-                                                 no_pdf, no_email, monkeypatch):
+    @pytest.fixture
+    def no_render(self, monkeypatch):
         monkeypatch.setattr(certificate_service, 'render_lecturer_pdf',
                             lambda lc, font_config=None: b'%PDF fake')
-        cert = certificate_service.issue_lecturer_certificate(instance)
+
+    def test_reissue_prints_the_corrected_number(self, admin_client, instance,
+                                                 no_pdf, no_email, no_render):
+        inst, trainer = instance
+        cert = certificate_service.issue_lecturer_certificate(inst, trainer)
         assert _event_segment(cert.number) == '1028974'
-        instance.bpr_event_number = '1031500'
+        inst.bpr_event_number = '1031500'
         db.session.commit()
 
         response = admin_client.post(
-            f'/admin/instances/{instance.id}/lecturer-certificate/reissue')
+            f'/admin/instances/{inst.id}/lecturer-certificate/reissue',
+            data={'cert_id': cert.id})
 
         assert response.status_code == 200
         db.session.refresh(cert)
         assert _event_segment(cert.number) == '1031500'
 
+    def test_reissue_touches_only_the_addressed_trainer(self, admin_client,
+                                                        instance, no_pdf,
+                                                        no_email, no_render):
+        """Межа мультитренерності: сусідній сертифікат лишається як був."""
+        from app.services import trainer_links
+
+        inst, first = instance
+        second = Trainer(full_name='Другий Лектор',
+                         full_name_dative='Другому Лектору',
+                         slug=f'trainer-{_uid()}')
+        db.session.add(second)
+        db.session.flush()
+        trainer_links.set_trainers(inst, [first.id, second.id])
+        db.session.commit()
+        first_cert = certificate_service.issue_lecturer_certificate(inst, first)
+        second_cert = certificate_service.issue_lecturer_certificate(inst, second)
+        untouched = second_cert.number
+        inst.bpr_event_number = '1031500'
+        db.session.commit()
+
+        admin_client.post(
+            f'/admin/instances/{inst.id}/lecturer-certificate/reissue',
+            data={'cert_id': first_cert.id})
+
+        db.session.refresh(first_cert)
+        db.session.refresh(second_cert)
+        assert _event_segment(first_cert.number) == '1031500'
+        assert second_cert.number == untouched
+        assert second_cert.recipient_name == 'Другому Лектору'
+
     def test_reissue_without_certificate_is_refused(self, admin_client, instance,
                                                     no_pdf, no_email):
+        inst, _trainer = instance
         response = admin_client.post(
-            f'/admin/instances/{instance.id}/lecturer-certificate/reissue',
+            f'/admin/instances/{inst.id}/lecturer-certificate/reissue',
             follow_redirects=True)
 
-        assert 'не видано' in response.get_data(as_text=True)
+        assert 'Сертифікат не знайдено' in response.get_data(as_text=True)
+
+    def test_reissue_refuses_a_certificate_of_another_event(self, admin_client,
+                                                            instance, no_pdf,
+                                                            no_email, no_render):
+        """cert_id чужого заходу -- підміна у формі, а не робочий сценарій."""
+        inst, trainer = instance
+        cert = certificate_service.issue_lecturer_certificate(inst, trainer)
+        other = CourseInstance(
+            course_id=inst.course_id, status='completed', event_format='offline',
+            start_date=datetime.now(timezone.utc) - timedelta(days=3))
+        db.session.add(other)
+        db.session.commit()
+
+        response = admin_client.post(
+            f'/admin/instances/{other.id}/lecturer-certificate/reissue',
+            data={'cert_id': cert.id}, follow_redirects=True)
+
+        assert 'Сертифікат не знайдено' in response.get_data(as_text=True)
 
     def test_card_hides_the_button_until_there_is_something_to_reissue(
             self, admin_client, instance, no_pdf, no_email):
-        before = admin_client.get(f'/admin/instances/{instance.id}/edit')
+        inst, trainer = instance
+        before = admin_client.get(f'/admin/instances/{inst.id}/edit')
         assert 'lecturer-certificate/reissue' not in before.get_data(as_text=True)
 
-        certificate_service.issue_lecturer_certificate(instance)
-        after = admin_client.get(f'/admin/instances/{instance.id}/edit')
+        certificate_service.issue_lecturer_certificate(inst, trainer)
+        after = admin_client.get(f'/admin/instances/{inst.id}/edit')
 
         assert 'lecturer-certificate/reissue' in after.get_data(as_text=True)

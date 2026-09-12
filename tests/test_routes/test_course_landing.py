@@ -16,7 +16,7 @@ from app.models.online_course import OnlineCourse
 from app.models.program_block import ProgramBlock
 from app.models.review import Review
 from app.models.trainer import Trainer
-from app.services import course_service
+from app.services import course_service, trainer_links
 
 
 LANDING_MARKERS = {
@@ -72,11 +72,12 @@ def _course(slug, filled=True):
     trainer = _trainer(f'{slug}-trainer', rich=filled)
     course = Course(
         slug=slug, title='Курс лендингу', is_active=True,
-        description='<p>Опис</p>', trainer_id=trainer.id,
+        description='<p>Опис</p>',
         **(LANDING_CONTENT if filled else {}),
     )
     db.session.add(course)
     db.session.flush()
+    trainer_links.set_trainers(course, [trainer.id])
     if filled:
         db.session.add(ProgramBlock(course_id=course.id, heading='Теорія',
                                     items=['Пункт'], sort_order=0))

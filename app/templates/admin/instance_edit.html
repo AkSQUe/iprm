@@ -48,24 +48,6 @@
       <a href="{{ url_for('admin.instance_quiz_results', instance_id=instance.id) }}" class="btn-admin btn-admin--secondary">
         {{ icon('quiz') }} Тестування
       </a>
-      <form method="POST" action="{{ url_for('admin.instance_lecturer_certificate', instance_id=instance.id) }}">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button type="submit" class="btn-admin btn-admin--secondary">
-          {{ icon('workspace_premium') }} Сертифікат лектора
-        </button>
-      </form>
-      {% if lecturer_cert %}
-      {# Виданий серт номер уже не міняє -- після правки номера заходу його
-         треба перевидати явно. #}
-      <form method="POST" action="{{ url_for('admin.instance_lecturer_certificate_reissue', instance_id=instance.id) }}"
-            data-confirm="Перевидати сертифікат лектора за поточними даними? Номер може змінитись."
-            data-confirm-ok="Перевидати">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button type="submit" class="btn-admin btn-admin--secondary">
-          {{ icon('refresh') }} Перевидати сертифікат лектора
-        </button>
-      </form>
-      {% endif %}
       {% endif %}
       {# Лише коли тема задана: без неї проведення зветься назвою курсу, і
          перекладати тут нічого -- переклад назви живе в картці курсу. #}
@@ -154,22 +136,36 @@
     <div class="form-section">
       <h3 class="admin-form__section-title">Override default-значень курсу</h3>
       <p class="admin-form__section-hint">Залиште порожнім щоб використати default з налаштувань курсу.</p>
+      {# Підказка кожного поля називає САМЕ те значення, яке буде взято з
+         курсу, а не вигаданий зразок: порожнє поле тут -- це свідоме рішення
+         «як у курсу», і ухвалювати його наосліп менеджеру нема з чого. Курс
+         відомий не завжди (чисте /new, де його щойно обирають у цій самій
+         формі) -- тоді підказки просто немає. #}
+      {% set inherited_price = inherited.base_price if inherited else none %}
+      {% set inherited_online = inherited.cpd_points_online if inherited else none %}
+      {% set inherited_offline = inherited.cpd_points_offline if inherited else none %}
+      {% set inherited_lecturer = inherited.bpr_lecturer_points if inherited else none %}
+      {% set inherited_max = inherited.max_participants if inherited else none %}
       <div class="admin-form__grid">
 
         <div class="form-group">
           <label for="price">Ціна (UAH)</label>
-          {{ form.price(class="form-input", id="price", step="0.01") }}
+          {{ form.price(class="form-input", id="price", step="0.01",
+                        placeholder=(inherited_price | amount) if inherited_price is not none else "") }}
+          <small class="form-hint">{{ form.price.description }}</small>
         </div>
 
         <div class="form-group" data-cpd-format="online">
           <label for="cpd_points_online">Бали БПР онлайн</label>
-          {{ form.cpd_points_online(class="form-input", id="cpd_points_online", placeholder="7,5") }}
+          {{ form.cpd_points_online(class="form-input", id="cpd_points_online",
+                                    placeholder=(inherited_online | points_uk) if inherited_online is not none else "") }}
           <small class="form-hint">{{ form.cpd_points_online.description }}</small>
         </div>
 
         <div class="form-group" data-cpd-format="offline">
           <label for="cpd_points_offline">Бали БПР офлайн</label>
-          {{ form.cpd_points_offline(class="form-input", id="cpd_points_offline", placeholder="9") }}
+          {{ form.cpd_points_offline(class="form-input", id="cpd_points_offline",
+                                     placeholder=(inherited_offline | points_uk) if inherited_offline is not none else "") }}
           <small class="form-hint">{{ form.cpd_points_offline.description }}</small>
         </div>
 
@@ -205,13 +201,42 @@
         </div>
 
         <div class="form-group">
-          <label for="max_participants">Макс. учасників</label>
-          {{ form.max_participants(class="form-input", id="max_participants") }}
+          <label for="bpr_lecturer_points">Бали БПР лектору</label>
+          {{ form.bpr_lecturer_points(class="form-input", id="bpr_lecturer_points",
+                                      placeholder=(inherited_lecturer | points_uk) if inherited_lecturer is not none else "") }}
+          <small class="form-hint">{{ form.bpr_lecturer_points.description }}</small>
         </div>
 
         <div class="form-group">
-          <label for="trainer_id">Тренер</label>
-          {{ form.trainer_id(class="form-input", id="trainer_id") }}
+          <label for="max_participants">Макс. учасників</label>
+          {{ form.max_participants(class="form-input", id="max_participants",
+                                   placeholder=inherited_max if inherited_max is not none else "") }}
+          <small class="form-hint">{{ form.max_participants.description }}</small>
+        </div>
+
+        <div class="form-group admin-form__full">
+          <label for="trainer_ids">Тренери</label>
+          {{ form.trainer_ids(class="form-input", id="trainer_ids", size=8, **{'data-multiselect': '', 'data-multiselect-ordered': ''}) }}
+          <small class="form-hint">{{ form.trainer_ids.description }}</small>
+          {% if inherited and inherited.trainers %}
+          {# Явна альтернатива успадкуванню: коли склад цієї дати треба саме
+             ЗАФІКСУВАТИ (курс потім переграють, а видані сертифікати мають
+             лишитись зі своїми лекторами), його копіюють сюди одним рухом,
+             а не переобирають руками по одному. #}
+          <button type="button" class="btn-admin btn-admin--secondary btn-admin--sm admin-speakers__copy"
+                  data-speakers-copy="trainer_ids">
+            {{ icon('content_copy') }} Скопіювати тренерів з курсу
+          </button>
+          {% endif %}
+          {# url_for, а не рядок: шлях маршруту не має жити у двох місцях.
+             __ID__ підставляє JS, тож id у зразку -- завідомий 0. #}
+          <div class="admin-speakers" data-speakers-preview
+               data-speakers-source="trainer_ids"
+               data-speakers-url="{{ url_for('admin.trainer_card_json', trainer_id=0) | replace('/0/', '/__ID__/') }}"
+               data-speakers-inherited="{{ (inherited.trainers | map(attribute='id') | list if inherited else []) | tojson }}"
+               data-speakers-inherited-note="Власних тренерів немає -- захід веде склад курсу:"
+               data-speakers-empty="Тренерів немає ні у проведення, ні в курсу: сертифікати й розсилка «Тренер заходу» лишаться без лектора.">
+          </div>
         </div>
 
       </div>
@@ -226,6 +251,104 @@
   </form>
 
   {% if instance %}
+  <div class="form-section">
+    <h3 class="admin-form__section-title">Сертифікат лектора</h3>
+    {% if lecturers and not instance.trainers %}
+    {# Склад тут успадкований: у самої дати свого переліку немає. Сказати про
+       це треба саме тут -- сертифікат виписується на конкретну людину, і
+       зміна складу КУРСУ мовчки змінила б, кому саме. #}
+    <p class="admin-form__section-hint">Склад успадковано з курсу -- своїх тренерів у цієї дати немає.</p>
+    {% endif %}
+    {% if lecturers or orphan_certs %}
+    {# Кожен тренер заходу читає лекцію особисто -- окремий сертифікат на
+       кожного, а не один на перевагу першого. Видача кожного лишається
+       свідомою дією: кнопки «видати всім» немає навмисно. #}
+    <div class="admin-table-wrap">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Лектор</th>
+          <th>Сертифікат</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for trainer in lecturers %}
+        {% set cert = lecturer_certs.get(trainer.id) %}
+        <tr>
+          <td>{{ trainer.full_name }}</td>
+          <td>
+            <form method="POST" action="{{ url_for('admin.instance_lecturer_certificate', instance_id=instance.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="trainer_id" value="{{ trainer.id }}">
+              {% if cert %}
+              <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm" title="Завантажити PDF">
+                {{ icon('workspace_premium') }} {{ cert.number }}
+              </button>
+              {% else %}
+              <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">
+                {{ icon('workspace_premium') }} Видати
+              </button>
+              {% endif %}
+            </form>
+            {% if cert %}
+            {# Виданий сертифікат номера вже не міняє -- після правки номера
+               заходу його треба перевидати явно, поштучно. Адресуємо cert_id:
+               тренера перевидача бере з самого запису. #}
+            <form method="POST" action="{{ url_for('admin.instance_lecturer_certificate_reissue', instance_id=instance.id) }}"
+                  data-confirm="Перевидати сертифікат за поточними даними заходу? Номер може змінитись."
+                  data-confirm-ok="Перевидати">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="cert_id" value="{{ cert.id }}">
+              <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm" title="Перевидати за поточними даними">
+                {{ icon('refresh') }} Перевидати
+              </button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+        {% for cert in orphan_certs %}
+        {# Сертифікат уже виданий, а тренера зі складу прибрали (або переграли
+           склад курсу, від якого дата його успадковувала). Номер існує й
+           паперівка на руках -- рядок лишається, щоб документ можна було
+           перезавантажити. Кнопки «видати» тут немає: видача -- дія для
+           чинного складу. #}
+        <tr>
+          <td>
+            {{ cert.trainer.full_name if cert.trainer else cert.recipient_name }}
+            <span class="badge badge--draft">більше не в складі</span>
+          </td>
+          <td>
+            <form method="POST" action="{{ url_for('admin.instance_lecturer_certificate', instance_id=instance.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="cert_id" value="{{ cert.id }}">
+              <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm" title="Завантажити PDF">
+                {{ icon('workspace_premium') }} {{ cert.number }}
+              </button>
+            </form>
+            {# Виданий сертифікат номера вже не міняє -- після правки номера
+               заходу його треба перевидати явно, поштучно. Адресуємо cert_id:
+               тренера перевидача бере з самого запису. #}
+            <form method="POST" action="{{ url_for('admin.instance_lecturer_certificate_reissue', instance_id=instance.id) }}"
+                  data-confirm="Перевидати сертифікат за поточними даними заходу? Номер може змінитись."
+                  data-confirm-ok="Перевидати">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="cert_id" value="{{ cert.id }}">
+              <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm" title="Перевидати за поточними даними">
+                {{ icon('refresh') }} Перевидати
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% else %}
+    <p class="admin-speakers__empty">Лектора не задано -- додайте тренерів заходу вище.</p>
+    {% endif %}
+  </div>
+
   <form method="POST" action="{{ url_for('admin.instance_delete', instance_id=instance.id) }}" class="admin-form__danger-zone" data-confirm="Видалити проведення?" data-confirm-ok="Видалити проведення" data-confirm-danger>
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">Видалити проведення</button>
@@ -236,4 +359,5 @@
 <script src="{{ url_for('static', filename='js/admin-instance-points.js') }}?v={{ assets_version }}"></script>
 <script src="{{ url_for('static', filename='js/admin-multiselect.js') }}?v={{ assets_version }}" defer></script>
 <script src="{{ url_for('static', filename='js/admin-i18n-tabs.js') }}?v={{ assets_version }}"></script>
+<script src="{{ url_for('static', filename='js/admin-course-speakers.js') }}?v={{ assets_version }}" defer></script>
 {% endblock %}

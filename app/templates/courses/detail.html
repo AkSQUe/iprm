@@ -71,11 +71,18 @@
 {% set _course_cpd = _course_cpds | max if _course_cpds else none %}
 {% if _course_cpd %}{% set _discard = course_schema.update({'numberOfCredits': _course_cpd | float}) %}{% endif %}
 {# jobTitle -- лише коли в тренера справді заповнена посада: порожній
-   рядок у JSON-LD -- це заявлене й порожнє значення, а не відсутнє поле. #}
-{% if course.trainer %}
-  {% set _instructor = {'@type': 'Person', 'name': course.trainer.t('full_name')} %}
-  {% if course.trainer.t('role') %}{% set _discard = _instructor.update({'jobTitle': course.trainer.t('role')}) %}{% endif %}
-  {% set _discard = course_schema.update({'instructor': _instructor}) %}
+   рядок у JSON-LD -- це заявлене й порожнє значення, а не відсутнє поле.
+   instructor -- масив Person: schema.org дозволяє кілька інструкторів, і
+   один тренер віддається масивом з одного елемента, щоб не розгалужувати
+   шаблон на "один" / "кілька". #}
+{% if course.trainers %}
+  {% set _instructors = [] %}
+  {% for _trainer in course.trainers %}
+    {% set _instructor = {'@type': 'Person', 'name': _trainer.t('full_name')} %}
+    {% if _trainer.t('role') %}{% set _discard = _instructor.update({'jobTitle': _trainer.t('role')}) %}{% endif %}
+    {% set _discard = _instructors.append(_instructor) %}
+  {% endfor %}
+  {% set _discard = course_schema.update({'instructor': _instructors}) %}
 {% endif %}
 {% if upcoming_instances %}
   {% set _instances_schema = [] %}

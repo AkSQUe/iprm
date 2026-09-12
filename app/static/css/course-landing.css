@@ -954,6 +954,15 @@
 /* ========== TRAINER BLOCK ==========
    Перенесено з courses.css і доповнено тегами й цифрами. */
 
+/* Кілька спікерів на одній сторінці курсу: поведінка компонента, коли
+   екземплярів декілька, -- живе тут поруч з .iprm-trainer-block, а не в
+   page-*.css. При одному тренері партіал цю обгортку взагалі не малює. */
+.iprm-trainer-grid {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
 .iprm-trainer-block {
   max-width: 900px;
   margin: 0 auto;

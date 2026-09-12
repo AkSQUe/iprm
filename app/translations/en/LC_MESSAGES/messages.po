@@ -5197,6 +5197,9 @@ msgstr "Register for %(date)s"
 msgid "Ваш <span class=\"apple-gradient-text\">тренер</span>"
 msgstr "Your <span class=\"apple-gradient-text\">trainer</span>"
 
+msgid "Ваші <span class=\"apple-gradient-text\">тренери</span>"
+msgstr "Your <span class=\"apple-gradient-text\">trainers</span>"
+
 msgid "Умови отримання <span class=\"apple-gradient-text\">сертифікату</span>"
 msgstr ""
 "Requirements for receiving a <span class=\"apple-gradient-"

@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 from flask import render_template, redirect, url_for, flash, request, jsonify, current_app
 from flask_login import current_user
 from sqlalchemy import and_, func, or_
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 
 from app.admin import _listing, admin_bp
 from app.admin.routes_translations import apply_inline_translations
@@ -45,7 +45,12 @@ def _populate_choices(form, preselected_course_id=None, instance=None):
     if preselected_course_id and not form.course_id.data:
         form.course_id.data = preselected_course_id
 
-    populate_trainer_choices(form, empty_label='– Тренер курсу (default) –')
+    # linked_ids -- див. docstring populate_trainer_choices: без нього
+    # деактивований, але вже прив'язаний до проведення тренер випадає з
+    # choices і зникає з форми на першому ж збереженні.
+    populate_trainer_choices(
+        form, linked_ids=[t.id for t in instance.trainers] if instance else None,
+    )
 
     # Місто необов'язкове: адресу часто знають пізніше за дату, і розклад
     # показує «Місце уточнюється» замість того, щоб ховати захід.
@@ -71,7 +76,8 @@ def _populate_choices(form, preselected_course_id=None, instance=None):
     )
 
     form.difficulty_level.choices = (
-        [(0, _inherited_level_label(instance, preselected_course_id))]
+        [(0, _inherited_level_label(
+            _inherited_source(instance, preselected_course_id)))]
         + Course.DIFFICULTY_LEVELS
     )
 
@@ -126,17 +132,29 @@ def _known_course(instance, preselected_course_id=None):
     return course
 
 
-def _inherited_level_label(instance, preselected_course_id=None):
+def _inherited_source(instance, preselected_course_id=None):
+    """Курс, із якого проведення бере незаповнені поля блоку Override.
+
+    Порожнє поле там означає «як у курсу», тож форма мусить називати саме
+    те, що буде взято, -- і в правці наявної дати, і в створенні з картки
+    курсу (?course_id=). На чистому /new курс обирають у тій самій формі,
+    тож називати ще нічого, і тут чесно повертається None.
+    """
+    if instance is not None and instance.course is not None:
+        return instance.course
+    if preselected_course_id:
+        return db.session.get(Course, preselected_course_id)
+    return None
+
+
+def _inherited_level_label(course):
     """Підпис порожнього варіанта поля «Рівень складності».
 
     Голе «Як у курсу» приховує саме ту цифру, з якою адмін і збирається
     зіставити цю дату: щоб дізнатись, базовий курс чи поглиблений, довелось
     би відкрити його картку. Тому називаємо рівень у дужках скрізь, де курс
-    уже відомий -- і в правці наявної дати, і в створенні з картки курсу
-    (?course_id=). На чистому /new курс обирають у тій самій формі, тож
-    називати ще нічого.
+    уже відомий.
     """
-    course = _known_course(instance, preselected_course_id)
     if course is None or not course.difficulty_level:
         return _BARE_INHERITED
     return f'– Як у курсу ({course.difficulty_label}) –'
@@ -153,19 +171,6 @@ def _issued_bpr(instance):
 
     count, numbers = certificate_service.issued_event_numbers(instance)
     return {'count': count, 'numbers': numbers} if count else None
-
-
-def _lecturer_cert(instance):
-    """Виданий сертифікат лектора цієї дати -- або None.
-
-    Кнопка перевидачі має сенс лише коли є що перевидавати; без запису
-    адмін бачить звичайну видачу.
-    """
-    from app.models.lecturer_certificate import LecturerCertificate
-
-    if instance is None or instance.id is None:
-        return None
-    return LecturerCertificate.query.filter_by(instance_id=instance.id).first()
 
 
 _INSTANCES_PER_PAGE = 25
@@ -226,10 +231,7 @@ def _instances_query(filters):
     Пресети `quick` взаємовиключні й самі задають сортування: «найближчі»
     мають рахуватись від сьогодні вгору, архів -- навпаки.
     """
-    query = CourseInstance.query.options(
-        joinedload(CourseInstance.course),
-        joinedload(CourseInstance.trainer),
-    )
+    query = CourseInstance.query.options(joinedload(CourseInstance.course))
     if filters['q']:
         # Пошук за назвою курсу, темою й місцем: саме так менеджер шукає
         # захід, коли пам'ятає "щось про плазмоліфтинг у Львові". Тема тут
@@ -398,6 +400,17 @@ def instances_report_export():
 
     filters = _instance_filters()
     query, order, next3 = _instances_query(filters)
+    # Тренерів вантажимо САМЕ тут, а не в _instances_query: сторінка розкладу
+    # їх не показує (див. admin/instances.html), а звіт кличе
+    # effective_trainer на кожному рядку. effective_trainer читає ОБИДВА боки
+    # (свій перелік, інакше курсовий), тож без курсових тренерів ми лише
+    # пересунули б N+1 з CourseInstance.trainers на Course.trainers.
+    # joinedload на course -- той самий шлях, що вже задав _instances_query:
+    # дві різні стратегії на одну звʼязку сперечалися б між собою.
+    query = query.options(
+        joinedload(CourseInstance.course).selectinload(Course.trainers),
+        selectinload(CourseInstance.trainers),
+    )
     query = query.order_by(*order)
     if next3:
         # Гілка next3 завідомо не більша за три рядки: export_query рахує
@@ -439,6 +452,46 @@ def instances_report_export():
     )
 
 
+def _lecturer_certs_by_trainer(instance):
+    """Видані сертифікати лектора заходу, за trainer_id -- для рядків у шаблоні.
+
+    Один захід тепер може мати кілька лекторських сертифікатів (по одному на
+    тренера), тож замість одного запису шаблону потрібен словник.
+    """
+    from app.models.lecturer_certificate import LecturerCertificate
+    rows = LecturerCertificate.query.filter_by(instance_id=instance.id).all()
+    return {lc.trainer_id: lc for lc in rows}
+
+
+def _render_instance_form(form, instance, preselected_course_id=None):
+    """Єдиний вхід у шаблон форми проведення.
+
+    Виходів із маршруту редагування три -- GET, невалідна форма і відмова
+    гварда статусу, -- і контекст на них мусить бути той самий. Розійтись він
+    може рівно доти, доки збирається не в одному місці: саме так на шляху
+    помилки вже зникали з форми успадковані значення.
+    """
+    certs = _lecturer_certs_by_trainer(instance) if instance else {}
+    lecturers = instance.effective_trainers if instance else []
+    in_lineup = {t.id for t in lecturers}
+    return render_template(
+        'admin/instance_edit.html',
+        form=form,
+        instance=instance,
+        inherited=_inherited_source(instance, preselected_course_id),
+        # Застереження біля поля номера заходу: у щойно створеної дати
+        # сертифікатів немає за визначенням, але шаблон один на обидва режими.
+        issued_bpr=_issued_bpr(instance),
+        lecturers=lecturers,
+        lecturer_certs=certs,
+        # Сертифікат, виданий тренеру, якого зі складу вже прибрали (або який
+        # дістався заходу успадкуванням, а курс потім переграли). Рядка в
+        # переліку лекторів у нього немає, але сам документ існує, має номер
+        # і вже на руках у людини -- зникнути з адмінки він не може.
+        orphan_certs=[lc for tid, lc in certs.items() if tid not in in_lineup],
+    )
+
+
 @admin_bp.route('/instances/new', methods=['GET', 'POST'])
 @permission_required('instances.manage')
 def instance_create():
@@ -450,13 +503,15 @@ def instance_create():
         instance = CourseInstance()
         course_service.populate_instance_from_form(instance, form)
         db.session.add(instance)
-        # Після українського тексту, до коміту: одиниці перекладу рахуються
-        # з АКТУАЛЬНОЇ теми, тож тема і її переклад зберігаються одним
-        # сабмітом (див. apply_inline_translations).
+        from app.services import trainer_links
+        trainer_links.set_trainers(instance, form.trainer_ids.data)
         # Copy-on-create: дефолтна тарифна вилка курсу переїжджає у
         # проведення (лише шаблони, що пасують формату). flush -- щоб
         # instance отримав id для FK тарифів.
         db.session.flush()
+        # Після українського тексту, до коміту: одиниці перекладу рахуються
+        # з АКТУАЛЬНОЇ теми, тож тема і її переклад зберігаються одним
+        # сабмітом (див. apply_inline_translations).
         apply_inline_translations(instance)
         copied = course_service.copy_course_tariffs_to_instance(instance)
         if try_commit(log_context=f'instance_create course={form.course_id.data}'):
@@ -471,10 +526,7 @@ def instance_create():
                 flash('Проведення створено', 'success')
             return redirect(url_for('admin.instances_list'))
 
-    # issued_bpr -- лише для правки: у щойно створеної дати сертифікатів
-    # немає за визначенням, але шаблон один на обидва режими.
-    return render_template('admin/instance_edit.html', form=form, instance=None,
-                           issued_bpr=None, lecturer_cert=None)
+    return _render_instance_form(form, None, preselected)
 
 
 @admin_bp.route('/instances/<int:instance_id>/edit', methods=['GET', 'POST'])
@@ -488,6 +540,13 @@ def instance_edit(instance_id):
     form = CourseInstanceForm(obj=instance)
     _populate_choices(form, instance=instance)
 
+    if request.method == 'GET':
+        # Власний перелік проведення, НЕ effective_trainers: порожнє поле
+        # означає «успадкувати тренерів курсу», і префіл успадкованим
+        # списком непомітно перетворив би успадкування на явну копію
+        # при першому ж збереженні форми.
+        form.trainer_ids.data = [t.id for t in instance.trainers]
+
     if form.validate_on_submit():
         try:
             course_service.populate_instance_from_form(instance, form)
@@ -497,10 +556,9 @@ def instance_edit(instance_id):
             # називає дію («оберіть Скасовано»), тож друкуємо його як є.
             db.session.rollback()
             flash(str(exc), 'error')
-            return render_template('admin/instance_edit.html', form=form,
-                                   instance=instance,
-                                   issued_bpr=_issued_bpr(instance),
-                                   lecturer_cert=_lecturer_cert(instance))
+            return _render_instance_form(form, instance)
+        from app.services import trainer_links
+        trainer_links.set_trainers(instance, form.trainer_ids.data)
         apply_inline_translations(instance)
         if try_commit(log_context=f'instance_edit id={instance.id}'):
             audit_logger.info(
@@ -509,9 +567,7 @@ def instance_edit(instance_id):
             flash('Проведення оновлено', 'success')
             return redirect(url_for('admin.instances_list'))
 
-    return render_template('admin/instance_edit.html', form=form, instance=instance,
-                           issued_bpr=_issued_bpr(instance),
-                           lecturer_cert=_lecturer_cert(instance))
+    return _render_instance_form(form, instance)
 
 
 @admin_bp.route('/instances/<int:instance_id>/lecturer-certificate', methods=['POST'])
@@ -526,8 +582,40 @@ def instance_lecturer_certificate(instance_id):
     if not instance:
         flash('Проведення не знайдено', 'error')
         return redirect(url_for('admin.instances_list'))
+
+    # Завантаження вже виданого і видача нового -- дві різні дії, і склад
+    # заходу обмежує лише другу. Сертифікат із номером уже на руках у людини:
+    # те, що її потім прибрали зі складу, не робить документ недосяжним.
+    cert_id = request.form.get('cert_id', type=int)
+    if cert_id is not None:
+        from app.models.lecturer_certificate import LecturerCertificate
+        lc = LecturerCertificate.query.filter_by(
+            id=cert_id, instance_id=instance.id,
+        ).first()
+        if lc is None:
+            flash('Сертифікат не знайдено', 'error')
+            return redirect(url_for('admin.instance_edit', instance_id=instance_id))
+        try:
+            pdf = cs.render_lecturer_pdf(lc)
+        except Exception:
+            current_app.logger.exception('lecturer cert render failed')
+            flash('Не вдалося сформувати PDF сертифіката лектора', 'error')
+            return redirect(url_for('admin.instance_edit', instance_id=instance_id))
+        return send_file(io.BytesIO(pdf), mimetype='application/pdf',
+                         as_attachment=True, download_name=f'lecturer-{lc.number}.pdf')
+
+    trainer_id = request.form.get('trainer_id', type=int)
+    trainer = next(
+        (t for t in instance.effective_trainers if t.id == trainer_id), None
+    )
+    if trainer is None:
+        # Свого тренера серед тренерів заходу -- чужого id (підміна у формі)
+        # не приймаємо, так само як відсутність вибору.
+        flash('Оберіть лектора зі списку тренерів заходу', 'error')
+        return redirect(url_for('admin.instance_edit', instance_id=instance_id))
+
     try:
-        lc = cs.issue_lecturer_certificate(instance, issued_by=current_user)
+        lc = cs.issue_lecturer_certificate(instance, trainer, issued_by=current_user)
         pdf = cs.render_lecturer_pdf(lc)
     except ValueError as exc:
         flash(str(exc), 'error')
@@ -551,17 +639,34 @@ def instance_lecturer_certificate_reissue(instance_id):
 
     Потрібне після виправлення номера заходу в проведенні: видача номер
     уже виданого серта не переписує (див. certificate_service.reissue_*).
+
+    Адресуємо саме сертифікат (`cert_id`), а не тренера, і тренера беремо з
+    нього: у заходу їх кілька, а склад заходу з часом міняється -- виданий
+    документ мусить лишатись перевидаваним і після того, як людину зі
+    складу прибрали (та сама межа, що й у завантаженні вище).
     """
     import io
     from flask import send_file
+    from app.models.lecturer_certificate import LecturerCertificate
     from app.services import certificate_service as cs
 
     instance = db.session.get(CourseInstance, instance_id)
     if not instance:
         flash('Проведення не знайдено', 'error')
         return redirect(url_for('admin.instances_list'))
+
+    cert_id = request.form.get('cert_id', type=int)
+    lc = LecturerCertificate.query.filter_by(
+        id=cert_id, instance_id=instance.id,
+    ).first() if cert_id is not None else None
+    if lc is None:
+        flash('Сертифікат не знайдено', 'error')
+        return redirect(url_for('admin.instance_edit', instance_id=instance_id))
+
     try:
-        lc = cs.reissue_lecturer_certificate(instance, issued_by=current_user)
+        lc = cs.reissue_lecturer_certificate(
+            instance, lc.trainer, issued_by=current_user,
+        )
         pdf = cs.render_lecturer_pdf(lc)
     except ValueError as exc:
         flash(str(exc), 'error')
@@ -571,8 +676,8 @@ def instance_lecturer_certificate_reissue(instance_id):
         flash('Не вдалося перевидати сертифікат лектора', 'error')
         return redirect(url_for('admin.instance_edit', instance_id=instance_id))
 
-    audit_logger.info('Admin %s reissued lecturer cert %s instance=%s',
-                      current_user.email, lc.number, instance_id)
+    audit_logger.info('Admin %s reissued lecturer cert %s instance=%s trainer=%s',
+                      current_user.email, lc.number, instance_id, lc.trainer_id)
     return send_file(io.BytesIO(pdf), mimetype='application/pdf',
                      as_attachment=True, download_name=f'lecturer-{lc.number}.pdf')
 

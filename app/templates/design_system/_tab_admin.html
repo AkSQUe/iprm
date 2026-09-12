@@ -781,5 +781,82 @@
       </div>
     </div>
     <p class="ds-hint">.admin-audience-preview: нередагований перелік того, що форма виведе на сторінку сама (admin-audience-preview.js слухає change мультиселекта-джерела за data-audience-preview-source). Чіпи -- .iprm-tag дизайн-системи, тут лише розкладка; порожній стан -- .admin-audience-preview__empty із текстом із data-audience-preview-empty. Живий приклад -- поле «Додатковий опис цільової аудиторії» у формі заходу.</p>
+    <h3 class="ds-section-heading">Мультиселект з упорядкуванням</h3>
+    <div class="ds-demo">
+      <label for="ds-multiselect-ordered-demo-search" class="visually-hidden">Пошук тренера</label>
+      <div class="admin-multiselect">
+        <div class="admin-multiselect__control">
+          <span class="admin-multiselect__chip admin-multiselect__chip--primary" title="Головний: його підпис іде на сертифікат учасника">Петренко О. В.<span class="visually-hidden"> (головний, підпис на сертифікаті)</span>
+            <button type="button" class="admin-multiselect__chip-move" aria-label="Перемістити ліворуч: Петренко О. В.">&#9664;</button>
+            <button type="button" class="admin-multiselect__chip-move" aria-label="Перемістити праворуч: Петренко О. В.">&#9654;</button>
+            <button type="button" class="admin-multiselect__chip-remove" aria-label="Прибрати Петренко О. В.">&times;</button>
+          </span>
+          <span class="admin-multiselect__chip">Коваль І. М.
+            <button type="button" class="admin-multiselect__chip-move" aria-label="Перемістити ліворуч: Коваль І. М.">&#9664;</button>
+            <button type="button" class="admin-multiselect__chip-move" aria-label="Перемістити праворуч: Коваль І. М.">&#9654;</button>
+            <button type="button" class="admin-multiselect__chip-remove" aria-label="Прибрати Коваль І. М.">&times;</button>
+          </span>
+          <span class="admin-multiselect__chip">Сидоренко Т. П.
+            <button type="button" class="admin-multiselect__chip-move" aria-label="Перемістити ліворуч: Сидоренко Т. П.">&#9664;</button>
+            <button type="button" class="admin-multiselect__chip-move" aria-label="Перемістити праворуч: Сидоренко Т. П.">&#9654;</button>
+            <button type="button" class="admin-multiselect__chip-remove" aria-label="Прибрати Сидоренко Т. П.">&times;</button>
+          </span>
+          <input type="text" id="ds-multiselect-ordered-demo-search" class="admin-multiselect__search" placeholder="Пошук…" aria-label="Пошук тренера" role="combobox" aria-expanded="false" aria-autocomplete="list" aria-controls="ds-multiselect-ordered-demo-listbox">
+        </div>
+        <ul id="ds-multiselect-ordered-demo-listbox" class="admin-multiselect__list" role="listbox" hidden></ul>
+      </div>
+    </div>
+    <p class="ds-hint">Той самий .admin-multiselect, увімкнений із data-multiselect-ordered (як trainer_ids на формі курсу й проведення) -- на відміну від bpr_specialty_codes, де впорядкування сенсу не має й атрибута немає. Порядок чіпів -- це порядок &lt;option&gt; у прихованому select, а він і є порядок сабміту: кнопки ◀/▶ фізично переставляють &lt;option&gt;, окремого поля з індексами немає. Перший чіп -- головний лектор: його підпис іде на сертифікат учасника. Позначено не лише рамкою й жирністю (колір -- ненадійний канал сам по собі), а й текстом у .visually-hidden, тож скрінрідер це теж чує. Демо статичне: чіпи показано розгорнутими навмисно, як і в базовому варіанті вище.</p>
+
+    <h3 class="ds-section-heading">Картка спікера</h3>
+    <div class="ds-demo">
+      <div class="admin-speakers">
+        <div class="admin-speaker-card admin-speaker-card--primary">
+          <img class="admin-speaker-card__photo" alt="" loading="lazy">
+          <div class="admin-speaker-card__body">
+            <strong>Петренко О. В. -- головний</strong>
+            <span class="admin-speaker-card__role">Лікар-дерматовенеролог</span>
+            <p class="admin-speaker-card__bio">13 років практики в естетичній дерматології, автор методик плазмотерапії.</p>
+          </div>
+        </div>
+        <div class="admin-speaker-card">
+          <div class="admin-speaker-card__body">
+            <strong>Коваль І. М.</strong>
+            <span class="admin-speaker-card__role">Косметолог</span>
+            <p class="admin-speaker-card__warning">У картці немає біографії, немає фото. <a href="#">Доповнити картку</a></p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="ds-hint">.admin-speaker-card: те, що реально збереться на сторінці заходу з обраної картки тренера (admin-course-speakers.js, GET /admin/trainers/&lt;id&gt;/card.json). .admin-speaker-card--primary -- перший тренер у trainer_ids: головний лектор, як і в мультиселекті вище. .__photo -- показується лише коли є фото (тут без файлу -- плейсхолдер-коло компонента, як у Trainer block вище); немає фото -- немає &lt;img&gt; взагалі, а не порожня рамка. .__warning -- зʼявляється лише коли чогось бракує з трійки bio/role/photo (саме те, що рендерить публічний блок спікерів), називає бракуюче адресно й веде на редагування тренера в новій вкладці. Попередження ніколи не блокує збереження форми заходу.</p>
+
+    <h3 class="ds-section-heading">Картка спікера -- успадкований склад</h3>
+    <div class="ds-demo">
+      <div class="admin-speakers">
+        <p class="admin-speakers__note">Власних тренерів немає -- захід веде склад курсу:</p>
+        <div class="admin-speaker-card admin-speaker-card--primary admin-speaker-card--inherited">
+          <div class="admin-speaker-card__body">
+            <strong>Петренко О. В. -- головний</strong>
+            <span class="admin-speaker-card__role">Лікар-дерматовенеролог</span>
+          </div>
+        </div>
+        <div class="admin-speaker-card admin-speaker-card--inherited">
+          <div class="admin-speaker-card__body">
+            <strong>Коваль І. М.</strong>
+            <span class="admin-speaker-card__role">Косметолог</span>
+          </div>
+        </div>
+        <button type="button" class="btn-admin btn-admin--secondary btn-admin--sm admin-speakers__copy">Скопіювати тренерів з курсу</button>
+      </div>
+    </div>
+    <p class="ds-hint">.admin-speaker-card--inherited: у формі ПРОВЕДЕННЯ порожнє поле trainer_ids означає «успадкувати склад курсу», а не «без тренерів», тож прев'ю показує саме той склад, який дата отримає. Пунктир і приглушення кажуть, що правиться він у курсі, а не тут; --primary поверх нього лишається, бо перший успадкований і є головним лектором цієї дати. .admin-speakers__note -- підпис над таким складом (окремий від __empty: там треба щось робити, тут -- ні). Кнопка .admin-speakers__copy перетворює успадкування на власний зафіксований склад: вона ЗАМІЩАЄ вибір, а не додає до нього.</p>
+
+    <h3 class="ds-section-heading">Картка спікера -- тренерів немає взагалі</h3>
+    <div class="ds-demo">
+      <div class="admin-speakers">
+        <p class="admin-speakers__empty">Тренерів немає ні у проведення, ні в курсу: сертифікати й розсилка «Тренер заходу» лишаться без лектора.</p>
+      </div>
+    </div>
+    <p class="ds-hint">.admin-speakers__empty: стан, коли успадковувати теж нема від кого. Текст називає наслідок для документів і листів, а не для блоку спікерів: той блок живе на сторінці КУРСУ і збирається з course.trainers -- перелік проведення на нього не впливає взагалі.</p>
   </div>
 

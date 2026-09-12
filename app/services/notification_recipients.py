@@ -7,7 +7,7 @@
 Джерела (комбінуються згідно з прапорами у NotificationRule):
   - notify_admins -> усі активні користувачі з правом notifications.receive (super_admin включно)
   - notify_managers -> SiteSettings.event_manager_emails
-  - notify_event_trainer -> instance.effective_trainer.email
+  - notify_event_trainer -> email кожного з instance.effective_trainers
   - extra_emails завжди додаються (текстова конфігурація на правило)
 
 Fail-soft: будь-яка DB-помилка під час резолва ловиться, логиується,
@@ -68,10 +68,14 @@ def _resolve_sources(event_type, instance, new_status):
         breakdown['managers'] = list(managers)
 
     if rule.notify_event_trainer and instance is not None:
-        trainer = getattr(instance, 'effective_trainer', None)
-        trainer_email = getattr(trainer, 'email', None) if trainer else None
-        if trainer_email:
-            breakdown['trainer'].append(trainer_email)
+        # Захід тепер веде не один тренер, а впорядкований перелік
+        # (CourseInstance.effective_trainers -- своя, інакше курсова, повне
+        # перекриття). Усі бачать реєстрації, не лише перший; хто без email
+        # (nullable -- історичні записи) -- мовчки пропускається.
+        for trainer in getattr(instance, 'effective_trainers', None) or []:
+            trainer_email = getattr(trainer, 'email', None)
+            if trainer_email:
+                breakdown['trainer'].append(trainer_email)
 
     breakdown['extra'] = list(rule.extra_emails or [])
     return rule, None, breakdown

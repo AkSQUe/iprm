@@ -12,10 +12,10 @@ from app.models.user import User
 class TestJoinedLoadQueries:
     """Перевірка що joinedload/selectinload запити працюють коректно."""
 
-    def test_courses_with_joinedload_trainer(self, db_session, sample_course):
-        """joinedload(Course.trainer) повертає course з trainer без N+1."""
+    def test_courses_with_selectinload_trainers(self, db_session, sample_course):
+        """selectinload(Course.trainers) повертає course з тренерами без N+1."""
         courses = Course.query.options(
-            joinedload(Course.trainer),
+            selectinload(Course.trainers),
         ).filter(Course.is_active.is_(True)).all()
 
         assert len(courses) >= 1

@@ -51,14 +51,16 @@ def _cleanup_seeded_courses(app):
 
 def _fixture_course(slug, with_gallery=True, with_instance=True):
     """Порожній курс плазмогелю: тренер, проведення, фото без підписів."""
+    from app.services import trainer_links
+
     trainer = Trainer(slug=f'{slug}-trainer', full_name='Тренер Тест')
     db.session.add(trainer)
     db.session.flush()
 
-    course = Course(slug=slug, title='Плазмогель', is_active=True,
-                    trainer_id=trainer.id)
+    course = Course(slug=slug, title='Плазмогель', is_active=True)
     db.session.add(course)
     db.session.flush()
+    trainer_links.set_trainers(course, [trainer.id])
 
     if with_instance:
         db.session.add(CourseInstance(

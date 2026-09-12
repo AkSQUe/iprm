@@ -51,9 +51,10 @@ def test_course_trainer_links_to_trainer_edit(client, admin):
     trainer = Trainer(full_name=f'Тренер {_uid()}', slug=f'el-{_uid()}')
     db.session.add(trainer)
     db.session.flush()
-    course = Course(title=f'Курс {_uid()}', slug=f'el-{_uid()}',
-                     is_active=True, trainer_id=trainer.id)
+    course = Course(title=f'Курс {_uid()}', slug=f'el-{_uid()}', is_active=True)
     db.session.add(course)
+    from app.services import trainer_links
+    trainer_links.set_trainers(course, [trainer.id])
     db.session.commit()
     _login(client, admin)
     try:

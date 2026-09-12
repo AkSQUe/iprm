@@ -75,7 +75,16 @@ def serialize_trainer(trainer) -> dict | None:
     СВОЇХ курсів. За іменем таке звʼязування робити не можна -- тезки й
     зміна прізвища тихо перемкнули б людині видимість. ``id`` -- стабільний
     ключ звʼязку, ``email`` -- те, за чим зіставлення підбирається
-    автоматично при першому налаштуванні.
+    автоматично при першому налаштуванні; його читає лише разова команда
+    `flask iprm trainer-match` у ЖИВІЙ відповіді API, тож приберати як
+    "непотрібне" не можна -- це тихо осліпить зіставлення.
+
+    ``bio`` додано, бо партнерський блок спікера переходить на нього як на
+    єдине джерело (замість `speaker_info`, якого тут більше не буде) --
+    без цього поля той блок або застигає на старому ручному тексті, або
+    порожніє, і обидва варіанти проходять непомітно. Віддається сирим
+    значенням колонки (не через `.t()`) -- як і `role`: це базова мова
+    API, партнер перекладає в себе сам.
     """
     if not trainer:
         return None
@@ -86,6 +95,7 @@ def serialize_trainer(trainer) -> dict | None:
         'role': trainer.role,
         'email': trainer.email,
         'photo_url': _image_url(trainer.photo_src),
+        'bio': trainer.bio,
     }
 
 
@@ -245,9 +255,15 @@ def serialize_event_card(course, instance=None) -> dict:
         'is_registration_open': bool(instance.is_registration_open) if instance else False,
         'registration_url': _registration_url(instance),
         'detail_url': _detail_url(course),
-        'trainer': serialize_trainer(
-            instance.effective_trainer if instance else course.trainer
-        ),
+        # Масив, порядок position -- перший є головним лектором. Ключ
+        # `trainer` (однина) видалено без гілки сумісності: другий,
+        # паралельний формат назавжди означав би, що ніхто не знає, який
+        # із двох зараз актуальний. `effective_trainers` -- повне
+        # перекриття курсових тренерів проведенням, не злиття.
+        'trainers': [
+            serialize_trainer(t)
+            for t in (instance.effective_trainers if instance else course.trainers)
+        ],
         'instance_id': instance.id if instance else None,
         'has_upcoming': _has_upcoming(instance),
     }
@@ -268,7 +284,6 @@ def serialize_event_detail(course, instance=None) -> dict:
         # локалізує в себе, а не залежить від локалі виклику.
         'bpr_specialties': specialties.names(
             course.bpr_specialty_codes, lang=DEFAULT_LANGUAGE),
-        'speaker_info': course.speaker_info,
         'agenda': course.agenda,
         'faq': course.faq or [],
         'program_blocks': [

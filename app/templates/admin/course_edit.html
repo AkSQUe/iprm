@@ -166,9 +166,15 @@
           <small class="form-hint">Бали лектора заходу (можуть відрізнятись від балів учасника). Для сертифіката лектора. Приймається дробове значення (4,5).</small>
         </div>
 
-        <div class="form-group">
-          <label for="trainer_id">Тренер (default)</label>
-          {{ form.trainer_id(class="form-input", id="trainer_id") }}
+        <div class="form-group admin-form__full">
+          <label for="trainer_ids">Тренери</label>
+          {{ form.trainer_ids(class="form-input", id="trainer_ids", size=8, **{'data-multiselect': '', 'data-multiselect-ordered': ''}) }}
+          <small class="form-hint">{{ form.trainer_ids.description }}</small>
+          <div class="admin-speakers" data-speakers-preview
+               data-speakers-source="trainer_ids"
+               data-speakers-url="/admin/trainers/__ID__/card.json"
+               data-speakers-empty="Тренерів не обрано -- блок спікерів на сторінці заходу не зʼявиться.">
+          </div>
         </div>
 
       </div>
@@ -257,11 +263,6 @@
           {{ form.tags_text(class="form-input", id="tags_text", rows="3") }}
           <div class="form-hint">Кожен рядок стане тегом</div>
           {{ i18n.json_panes(course, 'tags') }}
-        </div>
-        <div class="form-group admin-form__full">
-          <label for="speaker_info">Інформація про спікера</label>
-          {{ form.speaker_info(class="form-input", id="speaker_info", rows="4") }}
-          {{ i18n.panes(tr, 'speaker_info', widget='textarea', rows=4, obj=course) }}
         </div>
         <div class="form-group admin-form__full">
           <label for="agenda">Програма (загальний опис)</label>
@@ -448,4 +449,5 @@
 <script src="{{ url_for('static', filename='js/admin-course-gallery.js') }}?v={{ assets_version }}"></script>
 <script src="{{ url_for('static', filename='js/admin-multiselect.js') }}?v={{ assets_version }}" defer></script>
 <script src="{{ url_for('static', filename='js/admin-audience-preview.js') }}?v={{ assets_version }}" defer></script>
+<script src="{{ url_for('static', filename='js/admin-course-speakers.js') }}?v={{ assets_version }}" defer></script>
 {% endblock %}

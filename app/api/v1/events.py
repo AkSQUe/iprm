@@ -277,8 +277,10 @@ def list_events():
     query = (
         Course.query
         .options(
-            joinedload(Course.trainer),
-            selectinload(Course.instances).joinedload(CourseInstance.trainer),
+            selectinload(Course.trainers),
+            # effective_trainer у serialize_event_card читає ОБИДВА боки --
+            # без селекту курсових тренерів тут ми лише пересунули б N+1.
+            selectinload(Course.instances).selectinload(CourseInstance.trainers),
         )
         .filter(Course.is_active.is_(True))
         .filter(Course.instances.any(and_(*matching_instance)))
@@ -351,8 +353,8 @@ def _list_instances(statuses, page, per_page, date_from, date_to, sort):
         CourseInstance.query
         .join(Course, CourseInstance.course_id == Course.id)
         .options(
-            joinedload(CourseInstance.course).joinedload(Course.trainer),
-            joinedload(CourseInstance.trainer),
+            joinedload(CourseInstance.course).selectinload(Course.trainers),
+            selectinload(CourseInstance.trainers),
         )
         .filter(CourseInstance.status.in_(statuses)),
         date_from, date_to,
@@ -382,8 +384,8 @@ def get_event(slug):
     course = (
         Course.query
         .options(
-            joinedload(Course.trainer),
-            selectinload(Course.instances).joinedload(CourseInstance.trainer),
+            selectinload(Course.trainers),
+            selectinload(Course.instances).selectinload(CourseInstance.trainers),
             selectinload(Course.program_blocks),
         )
         .filter_by(slug=slug)

@@ -13,7 +13,7 @@ from wtforms.validators import (
 from app.utils import (
     normalize_name, normalize_phone, UA_PHONE_RE, CYRILLIC_NAME_RE,
 )
-from app.admin.fields import PointsField
+from app.admin.fields import PointsField, TrainerSelectField
 from app.models.course import Course
 from app.models.course_instance import CourseInstance
 from app.models.course_request import CourseRequest
@@ -500,10 +500,6 @@ class CourseForm(FlaskForm):
         validators=[Optional()],
         description='Один тег на рядок',
     )
-    speaker_info = TextAreaField(
-        'Інформація про спікера',
-        validators=[Optional()],
-    )
     agenda = TextAreaField(
         'Програма (загальний опис)',
         validators=[Optional()],
@@ -584,10 +580,12 @@ class CourseForm(FlaskForm):
         validators=[Optional(), NumberRange(min=0)],
         description='Бали, що нараховуються лектору заходу (відрізняються від балів учасника).',
     )
-    trainer_id = SelectField(
-        'Тренер (default)',
+    trainer_ids = TrainerSelectField(
+        'Тренери',
         coerce=int,
         validators=[Optional()],
+        description='Порядок має значення: перший -- головний лектор, '
+                    'його підпис іде на сертифікат учасника.',
     )
     is_active = BooleanField('Активний у каталозі', default=True)
     is_featured = BooleanField('Рекомендований')
@@ -768,6 +766,12 @@ class CourseInstanceForm(FlaskForm):
         validators=[Optional(), NumberRange(min=0)],
         description='Залиште порожнім щоб взяти з курсу',
     )
+    bpr_lecturer_points = PointsField(
+        'Бали БПР лектору',
+        validators=[Optional(), NumberRange(min=0)],
+        description='Нараховуються лектору, а не учаснику, і від формату '
+                    'участі не залежать. Залиште порожнім щоб взяти з курсу.',
+    )
     max_participants = IntegerField(
         'Макс. учасників',
         validators=[Optional(), NumberRange(min=1)],
@@ -789,11 +793,13 @@ class CourseInstanceForm(FlaskForm):
         'Посилання на онлайн',
         validators=[Optional(), Length(max=500), _optional_url()],
     )
-    trainer_id = SelectField(
-        'Тренер',
+    trainer_ids = TrainerSelectField(
+        'Тренери',
         coerce=int,
         validators=[Optional()],
-        description='Залиште порожнім щоб взяти default-тренера курсу',
+        description='Порядок має значення: перший -- головний лектор, '
+                    'його підпис іде на сертифікат учасника. Залиште порожнім, '
+                    'щоб узяти тренерів курсу.',
     )
     bpr_specialty_codes = SelectMultipleField(
         'Спеціальності (для сертифіката)',

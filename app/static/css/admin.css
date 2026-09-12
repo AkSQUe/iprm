@@ -457,6 +457,14 @@
   margin-top: 4px;
 }
 
+/* Посилання під переліком помилок: та сама копія файлу, але з помилками,
+   проставленими проти своїх рядків. Окремий елемент, а не пункт списку --
+   це дія, а не ще одна помилка. */
+.admin-form__errors-download {
+  margin: 10px 0 0;
+  font-size: 13px;
+}
+
 
 /* ========== XLSX IMPORT/EXPORT ========== */
 
@@ -3944,6 +3952,20 @@ th.access-perm__label {
   border: 0; background: none; cursor: pointer; padding: 0;
   color: var(--iprm-text-secondary); line-height: 1;
 }
+/* Кнопки переставлення -- лише коли поле має data-multiselect-ordered
+   (admin-multiselect.js домальовує їх умовно). Поле спеціальностей
+   лишається без них -- і без цього класу в його розмітці теж. */
+.admin-multiselect__chip-move {
+  border: 0; background: none; cursor: pointer; padding: 0 2px;
+  color: var(--iprm-text-secondary); font-size: 11px; line-height: 1;
+}
+.admin-multiselect__chip-move:hover { color: var(--iprm-text); }
+/* Перший чіп впорядкованого поля -- головний лектор (сертифікат учасника).
+   Колір рамки -- лише підсилення: сенс несе й title на самому чіпі (JS),
+   і ds-hint у каталозі, тож інформація не тримається на кольорі самотою. */
+.admin-multiselect__chip--primary {
+  border: 1px solid var(--iprm-accent); font-weight: 600;
+}
 .admin-multiselect__search {
   flex: 1 1 120px; min-width: 120px; border: 0; outline: none;
   background: none; color: var(--iprm-text); font: inherit; padding: 4px;
@@ -3963,3 +3985,50 @@ th.access-perm__label {
 .admin-multiselect__option:hover,
 .admin-multiselect__option.is-active { background: var(--iprm-surface-inset); }
 .admin-multiselect__empty { padding: 8px 12px; color: var(--iprm-text-secondary); }
+
+/* Прев'ю блоку спікерів (admin-course-speakers.js) -- картки того, що
+   реально збереться на сторінці заходу з обраних тренерів, у порядку чіпів
+   trainer_ids. Токени звірено з common.css: --iprm-border, --iprm-accent,
+   --iprm-radius-md/sm/pill, --iprm-surface-inset, --iprm-text,
+   --iprm-text-secondary, --iprm-warning-bg/text/border -- вигаданих
+   значень тут немає. */
+.admin-speakers { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+.admin-speakers__empty { margin: 0; color: var(--iprm-text-secondary); font-size: 13px; }
+/* Підпис над УСПАДКОВАНИМ складом. Окремо від __empty: там нічого немає й
+   треба щось робити, тут усе гаразд і робити нічого не треба. */
+.admin-speakers__note { margin: 0; color: var(--iprm-text-secondary); font-size: 13px; }
+.admin-speakers__copy { align-self: flex-start; margin-top: 8px; }
+.admin-speaker-card {
+  display: flex; gap: 12px; padding: 12px;
+  border: 1px solid var(--iprm-border); border-radius: var(--iprm-radius-md);
+  background: var(--iprm-surface-inset);
+}
+/* Перший чіп трен-селекту -- головний лектор (підпис на сертифікаті
+   учасника), як і в .admin-multiselect__chip--primary поруч. */
+.admin-speaker-card--primary { border-color: var(--iprm-accent); }
+/* Успадкований склад: картка приглушена, бо правиться не в цій формі, а в
+   курсі. Пунктир, а не лише прозорість -- відмінність мусить лишатись
+   помітною й тоді, коли поруч немає власної картки для порівняння. */
+.admin-speaker-card--inherited {
+  border-style: dashed; opacity: 0.75; background: transparent;
+}
+.admin-speaker-card__photo {
+  flex: 0 0 auto; width: 56px; height: 56px;
+  border-radius: var(--iprm-radius-pill); object-fit: cover;
+  background: var(--iprm-border-strong);
+}
+.admin-speaker-card__body { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.admin-speaker-card__role { color: var(--iprm-text-secondary); font-size: 13px; }
+.admin-speaker-card__bio {
+  margin: 0; color: var(--iprm-text); font-size: 13px; line-height: 1.5;
+}
+/* Попередження про недописану картку -- ніколи не блокує збереження форми,
+   лише адресно називає, чого бракує, і веде на редагування тренера. */
+.admin-speaker-card__warning {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px;
+  margin: 0; padding: 6px 10px;
+  border: 1px solid var(--iprm-warning-border); border-radius: var(--iprm-radius-sm);
+  background: var(--iprm-warning-bg); color: var(--iprm-warning-text);
+  font-size: 12px;
+}
+.admin-speaker-card__warning a { color: inherit; font-weight: 600; }

@@ -74,10 +74,35 @@
     return { wrap: wrap, control: control, search: search, list: list };
   }
 
-  // Вибір змінився: перемалювати компонент і сказати про це сторінці.
-  // Нативний <select> сам шле change, коли його чіпає користувач; тут вибір
-  // міняє скрипт, тож подію треба відтворити -- інакше слухачі (наприклад,
-  // прев'ю цільової аудиторії) про зміну не дізнаються.
+  // Поміняти місцями обраний <option> із сусіднім ОБРАНИМ у бік step.
+  // Невибрані пункти пропускаємо: між двома чіпами їх у списку не видно,
+  // і зупинка на них виглядала б як кнопка, що нічого не робить.
+  function swapSelected(select, option, step) {
+    var chosen = Array.prototype.filter.call(select.options, function (o) {
+      return o.selected;
+    });
+    var at = chosen.indexOf(option);
+    var target = chosen[at + step];
+    if (!target) { return; }
+    // Тільки в межах спільного батька: insertBefore на рівні <select>
+    // ВИТЯГ би <option> із його <optgroup> -- групування розсипалось би
+    // тихо, без жодної помилки. Сусід із іншої групи лишається на місці.
+    if (option.parentNode !== target.parentNode) { return; }
+    var parent = option.parentNode;
+    if (step < 0) {
+      parent.insertBefore(option, target);
+    } else {
+      parent.insertBefore(target, option);
+    }
+  }
+
+  // Вибір або його порядок змінився: перемалювати компонент і сказати про це
+  // сторінці. Нативний <select> шле change лише тоді, коли його чіпає
+  // користувач; тут і вибір, і перестановку робить скрипт, а перестановка
+  // <option> навіть не торкається .selected -- тож подію треба відтворити.
+  // Інакше слухачі (прев'ю цільової аудиторії, прев'ю спікерів) про зміну не
+  // дізнаються, а порядок -- це саме те, що піде на сервер при сабміті. Той
+  // самий прийом, що й у admin-course-gallery.js/admin-instance-points.js.
   function sync(select, ui) {
     renderChips(select, ui);
     renderList(select, ui);
@@ -89,12 +114,58 @@
       ui.control.querySelectorAll('.admin-multiselect__chip')
     ).forEach(function (chip) { chip.remove(); });
 
+    var ordered = select.hasAttribute('data-multiselect-ordered');
+    var isFirst = true;
+
     Array.prototype.filter.call(select.options, function (option) {
       return option.selected;
     }).forEach(function (option) {
       var chip = document.createElement('span');
       chip.className = 'admin-multiselect__chip';
       chip.textContent = option.textContent.trim();
+
+      // Перший обраний у впорядкованому полі -- головний лектор: його
+      // підпис іде на сертифікат учасника. Рамка й жирність -- візуальний
+      // маркер, title -- підказка для миші, але жодне з двох не гарантовано
+      // дістається скрінрідера (title читають не всі, не завжди й не
+      // одразу). Тому сенс дублюємо текстом: .visually-hidden не бачить
+      // ніхто зряче, але його читає кожен скрінрідер разом з іменем чіпа.
+      if (ordered && isFirst) {
+        chip.classList.add('admin-multiselect__chip--primary');
+        chip.title = 'Головний: його підпис іде на сертифікат учасника';
+        var badge = document.createElement('span');
+        badge.className = 'visually-hidden';
+        badge.textContent = ' (головний, підпис на сертифікаті)';
+        chip.appendChild(badge);
+      }
+      isFirst = false;
+
+      // Порядок обраних <option> у DOM = порядок сабміту (браузер сам
+      // гарантує це для select multiple), тож кнопки нижче рухають САМ
+      // <option>, а не якийсь окремий стан -- окремого поля з індексами
+      // немає й не буде.
+      if (ordered) {
+        // Назва змінної навмисно НЕ "move" -- у файлі вже є функція
+        // move(ui, delta) для клавіатурної навігації списком; однойменна
+        // локальна var усередині forEach її б не зламала (різні області
+        // видимості), але читалась би як та сама сутність.
+        [['◀', -1, 'Перемістити ліворуч'],
+         ['▶', 1, 'Перемістити праворуч']].forEach(function (spec) {
+          var moveBtn = document.createElement('button');
+          moveBtn.type = 'button';
+          moveBtn.className = 'admin-multiselect__chip-move';
+          moveBtn.textContent = spec[0];
+          moveBtn.setAttribute(
+            'aria-label', spec[2] + ': ' + option.textContent.trim()
+          );
+          moveBtn.addEventListener('click', function () {
+            swapSelected(select, option, spec[1]);
+            sync(select, ui);
+          });
+          chip.appendChild(moveBtn);
+        });
+      }
+
       var remove = document.createElement('button');
       remove.type = 'button';
       remove.className = 'admin-multiselect__chip-remove';
@@ -122,7 +193,12 @@
         ? Array.prototype.slice.call(node.children)
         : [node];
       var matching = options.filter(function (option) {
-        return !option.selected && normalize(option.textContent).indexOf(needle) !== -1;
+        // data-inactive -- деактивований тренер, який лишився у choices лише
+        // заради вже наявного зв'язку (див. populate_trainer_choices). Чіп
+        // його показує, випадний список -- ні: новим вибором він бути не може.
+        return !option.selected
+          && !option.hasAttribute('data-inactive')
+          && normalize(option.textContent).indexOf(needle) !== -1;
       });
       if (!matching.length) { return; }
       if (node.tagName === 'OPTGROUP') {
@@ -147,6 +223,16 @@
         item.setAttribute('aria-selected', 'false');
         item.addEventListener('mousedown', function (event) {
           event.preventDefault();
+          // У впорядкованому полі порядок <option> -- це порядок лекторів,
+          // а щойно обраний <option> лишається на своєму (алфавітному)
+          // місці. Тому обраний другим міг мовчки стати першим чіпом, тобто
+          // головним лектором. Переносимо в кінець: порядок кліків і є той
+          // порядок, який людина мала на увазі. Опції всередині <optgroup>
+          // не рухаємо -- це вивело б їх із групи.
+          if (select.hasAttribute('data-multiselect-ordered')
+              && option.parentNode === select) {
+            select.appendChild(option);
+          }
           option.selected = true;
           ui.search.value = '';
           sync(select, ui);
@@ -232,6 +318,15 @@
     });
     document.addEventListener('click', function (event) {
       if (!ui.wrap.contains(event.target)) { open(ui, false); }
+    });
+
+    // Вхід для чужих скриптів, що міняють вибір напряму (кнопка «Скопіювати
+    // тренерів з курсу»). Слухати 'change' тут не можна: його ж шле sync(),
+    // і вийшла б нескінченна рекурсія. Своя подія такої петлі не має, тож і
+    // change звідси не шлемо -- це справа того, хто вибір змінив.
+    select.addEventListener('admin-multiselect:refresh', function () {
+      renderChips(select, ui);
+      renderList(select, ui);
     });
   }
 

@@ -280,8 +280,10 @@ def calendar_json():
     query = (
         CourseInstance.query
         .options(
-            joinedload(CourseInstance.course),
-            joinedload(CourseInstance.trainer),
+            # effective_trainer у _serialize_event читає ОБИДВА боки --
+            # без селекту курсових тренерів тут ми лише пересунули б N+1.
+            joinedload(CourseInstance.course).selectinload(Course.trainers),
+            selectinload(CourseInstance.trainers),
         )
         .join(Course, Course.id == CourseInstance.course_id)
         .filter(
@@ -315,8 +317,8 @@ def course_by_slug(slug):
         )
 
     course = Course.query.options(
-        joinedload(Course.trainer),
-        selectinload(Course.instances).joinedload(CourseInstance.trainer),
+        selectinload(Course.trainers),
+        selectinload(Course.instances).selectinload(CourseInstance.trainers),
         selectinload(Course.instances).selectinload(CourseInstance.tariffs),
         selectinload(Course.program_blocks),
     ).filter_by(slug=slug, is_active=True).first()

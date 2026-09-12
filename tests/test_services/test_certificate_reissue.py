@@ -288,23 +288,31 @@ def test_reissue_number_stays_unique_in_db(app, provider, fake_pdf, cert_folder)
 
 # ---- Лекторський ----
 def _lecturer_instance(event_number='1028974'):
+    """Проведення з одним тренером у складі -- і сам тренер.
+
+    Захід може мати кількох лекторів, тож видача й перевидача адресують
+    конкретного: тести повертають пару, щоб не вгадувати «головного».
+    """
+    from app.services import trainer_links
+
     course = _course(event_number)
     instance = _instance(course, event_number=None)
-    instance.trainer_id = _trainer().id
+    trainer = _trainer()
+    trainer_links.set_trainers(instance, [trainer.id])
     db.session.commit()
-    return instance
+    return instance, trainer
 
 
 def test_lecturer_reissue_picks_up_corrected_number(app, provider, fake_pdf,
                                                     cert_folder):
-    instance = _lecturer_instance('1028974')
-    cert = certificate_service.issue_lecturer_certificate(instance)
+    instance, trainer = _lecturer_instance('1028974')
+    cert = certificate_service.issue_lecturer_certificate(instance, trainer)
     assert _event_segment(cert.number) == '1028974'
 
     instance.bpr_event_number = '1031500'
     db.session.commit()
 
-    cert = certificate_service.reissue_lecturer_certificate(instance)
+    cert = certificate_service.reissue_lecturer_certificate(instance, trainer)
 
     assert _event_segment(cert.number) == '1031500'
 
@@ -312,26 +320,26 @@ def test_lecturer_reissue_picks_up_corrected_number(app, provider, fake_pdf,
 def test_lecturer_reissue_keeps_lecturer_number_range(app, provider, fake_pdf,
                                                       cert_folder):
     """Лекторський діапазон 1xxxxx зберігається разом із порядковим сегментом."""
-    instance = _lecturer_instance('1028974')
-    issued = certificate_service.issue_lecturer_certificate(instance).number
+    instance, trainer = _lecturer_instance('1028974')
+    issued = certificate_service.issue_lecturer_certificate(instance, trainer).number
     instance.bpr_event_number = '1031500'
     db.session.commit()
 
-    cert = certificate_service.reissue_lecturer_certificate(instance)
+    cert = certificate_service.reissue_lecturer_certificate(instance, trainer)
 
     assert _participant_segment(cert.number) == _participant_segment(issued)
     assert _participant_segment(cert.number).startswith('1')
 
 
 def test_lecturer_reissue_refreshes_snapshots(app, provider, fake_pdf, cert_folder):
-    instance = _lecturer_instance('1028974')
-    certificate_service.issue_lecturer_certificate(instance)
+    instance, trainer = _lecturer_instance('1028974')
+    certificate_service.issue_lecturer_certificate(instance, trainer)
 
     instance.location = 'Харків'
     instance.course.bpr_lecturer_points = 16
     db.session.commit()
 
-    cert = certificate_service.reissue_lecturer_certificate(instance)
+    cert = certificate_service.reissue_lecturer_certificate(instance, trainer)
 
     assert cert.event_place == 'Харків'
     assert int(cert.cpd_points) == 16
@@ -339,7 +347,7 @@ def test_lecturer_reissue_refreshes_snapshots(app, provider, fake_pdf, cert_fold
 
 def test_lecturer_reissue_requires_an_issued_certificate(app, provider, fake_pdf,
                                                          cert_folder):
-    instance = _lecturer_instance('1028974')
+    instance, trainer = _lecturer_instance('1028974')
 
     with pytest.raises(ValueError, match='не видано'):
-        certificate_service.reissue_lecturer_certificate(instance)
+        certificate_service.reissue_lecturer_certificate(instance, trainer)

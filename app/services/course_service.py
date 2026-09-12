@@ -362,7 +362,6 @@ def populate_course_from_form(course, form):
     course.card_media_id = _opt_media_id(form.card_media_id.data)
     course.target_audience = lines_to_list(form.target_audience_text.data)
     course.tags = lines_to_list(form.tags_text.data)
-    course.speaker_info = _clean_text(form.speaker_info.data)
     course.agenda = _clean_text(form.agenda.data)
     course.faq = faq_text_to_list(form.faq_text.data)
     course.final_cta_text = _clean_text(form.final_cta_text.data)
@@ -380,7 +379,9 @@ def populate_course_from_form(course, form):
     course.bpr_event_number = _clean_text(form.bpr_event_number.data)
     course.bpr_specialty_codes = clean_codes(form.bpr_specialty_codes.data)
     course.bpr_lecturer_points = form.bpr_lecturer_points.data
-    course.trainer_id = form.trainer_id.data or None
+    # Перелік тренерів пишеться окремо, через trainer_links.set_trainers у
+    # маршруті: курсу-новачку тут ще бракує id, якого потребує таблиця
+    # звʼязку, а Course.trainer -- read-only property без сеттера.
     course.is_active = form.is_active.data
     course.is_featured = form.is_featured.data
     course.is_pinned = form.is_pinned.data
@@ -460,13 +461,15 @@ def populate_instance_from_form(instance, form):
     instance.price = form.price.data
     instance.cpd_points_online = form.cpd_points_online.data
     instance.cpd_points_offline = form.cpd_points_offline.data
+    instance.bpr_lecturer_points = form.bpr_lecturer_points.data
     instance.max_participants = form.max_participants.data
     instance.location = _clean_text(form.location.data)
     # 0 -- це «Місце уточнюється» з пікера; у БД воно має лягти як NULL, а не
     # як неіснуючий id міста.
     instance.city_id = form.city_id.data or None
     instance.online_link = _clean_text(form.online_link.data)
-    instance.trainer_id = form.trainer_id.data or None
+    # Перелік тренерів пишеться окремо, через trainer_links.set_trainers у
+    # маршруті: порожній вибір там і означає «успадкувати від курсу».
     # Порожній вибір -- це "як у курсу", тож у БД лягає NULL, а не [].
     instance.bpr_specialty_codes = clean_codes(form.bpr_specialty_codes.data) or None
     # 0 -- це «Як у курсу» з пікера; NULL, а не 0, бо шкала починається з 1,
@@ -592,7 +595,6 @@ def clone_course(source, created_by_id):
         card_media_id=source.card_media_id,
         target_audience=list(source.target_audience or []),
         tags=list(source.tags or []),
-        speaker_info=source.speaker_info,
         agenda=source.agenda,
         faq=[dict(item) for item in (source.faq or [])],
         final_cta_text=source.final_cta_text,
@@ -602,7 +604,6 @@ def clone_course(source, created_by_id):
         cpd_points_online=source.cpd_points_online,
         cpd_points_offline=source.cpd_points_offline,
         max_participants=source.max_participants,
-        trainer_id=source.trainer_id,
         is_active=False,
         is_featured=False,
         created_by=created_by_id,
@@ -627,6 +628,9 @@ def clone_course(source, created_by_id):
         ))
 
     db.session.add(clone)
+    db.session.flush()  # копії потрібен id, перш ніж вішати звʼязки
+    from app.services import trainer_links
+    trainer_links.set_trainers(clone, [t.id for t in source.trainers])
     return clone
 
 

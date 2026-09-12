@@ -3,7 +3,7 @@ import logging
 
 from flask import render_template, redirect, url_for, flash, request
 from flask_login import current_user
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import selectinload
 
 from app.admin import _listing, admin_bp
 from app.admin._helpers import (
@@ -59,14 +59,15 @@ def courses_list():
 
     # Той самий порядок, що в публічному каталозі, -- адмін бачить реальну
     # послідовність карток (закріплені -> sort_order -> назва).
-    query = Course.query.options(joinedload(Course.trainer))
+    query = Course.query.options(selectinload(Course.trainers))
     query = _listing.apply_search(query, filters['q'], [
         Course.title, Course.slug, Course.subtitle,
     ])
     if filters['state']:
         query = query.filter(Course.is_active.is_(filters['state'] == 'active'))
     if filters['trainer_id']:
-        query = query.filter(Course.trainer_id == filters['trainer_id'])
+        from app.services.trainer_links import course_trainer_clause
+        query = query.filter(course_trainer_clause(filters['trainer_id']))
     if filters['event_type']:
         query = query.filter(Course.event_type == filters['event_type'])
     courses = query.order_by(
@@ -110,6 +111,8 @@ def course_create():
         course = Course(slug=slug, created_by=current_user.id)
         course_service.populate_course_from_form(course, form)
         db.session.add(course)
+        from app.services import trainer_links
+        trainer_links.set_trainers(course, form.trainer_ids.data)
         apply_inline_translations(course)
         db.session.flush()
         blocks_data = course_service.extract_program_blocks_from_form(request.form)
@@ -142,13 +145,19 @@ def course_edit(course_id):
         return redirect(url_for('admin.courses_list'))
 
     form = CourseForm(obj=course)
-    populate_trainer_choices(form)
+    # linked_ids -- інакше деактивований, але вже прив'язаний тренер не
+    # отримає <option> у choices, form.trainer_ids.data нижче не відмалює
+    # його вибраним, сабміт його не надішле -- і set_trainers() тихо
+    # прибере тренера з курсу при наступному ж збереженні (докладніше --
+    # у docstring populate_trainer_choices).
+    populate_trainer_choices(form, linked_ids=[t.id for t in course.trainers])
     form.bpr_specialty_codes.choices = specialties.choices(
         current=(course.bpr_specialty_codes if course else None),
     )
     populate_event_type_choices(form, current=course.event_type)
 
     if request.method == 'GET':
+        form.trainer_ids.data = [t.id for t in course.trainers]
         form.target_audience_text.data = course_service.list_to_lines(course.target_audience)
         form.tags_text.data = course_service.list_to_lines(course.tags)
         form.faq_text.data = course_service.faq_list_to_text(course.faq)
@@ -166,6 +175,8 @@ def course_edit(course_id):
 
         course.slug = slug
         course_service.populate_course_from_form(course, form)
+        from app.services import trainer_links
+        trainer_links.set_trainers(course, form.trainer_ids.data)
         apply_inline_translations(course)
         blocks_data = course_service.extract_program_blocks_from_form(request.form)
         course_service.save_program_blocks_for_course(course, blocks_data)

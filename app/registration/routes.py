@@ -11,6 +11,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload, selectinload
 
 from app.extensions import db, limiter
+from app.models.course import Course
 from app.models.course_instance import CourseInstance
 from app.models.mixins import utcnow
 from app.models.registration import EventRegistration
@@ -248,8 +249,10 @@ def register_instance(instance_id):
     # оплачені реєстрації видно менеджеру для ручної звірки.
 
     instance = db.session.query(CourseInstance).options(
-        joinedload(CourseInstance.course),
-        joinedload(CourseInstance.trainer),
+        # effective_trainer нижче (EventAdapter) читає ОБИДВА боки --
+        # без селекту курсових тренерів тут ми лише пересунули б N+1.
+        joinedload(CourseInstance.course).selectinload(Course.trainers),
+        selectinload(CourseInstance.trainers),
         selectinload(CourseInstance.tariffs),
     ).filter_by(id=instance_id).first()
     if not instance or not instance.course or not instance.course.is_active:

@@ -854,23 +854,34 @@ def reissue_certificate(registration, issued_by=None):
 
 
 # ---- Лекторський сертифікат ----
-def issue_lecturer_certificate(instance, issued_by=None):
-    """Видати (або повернути наявний) сертифікат лектора для проведення.
+def issue_lecturer_certificate(instance, trainer, issued_by=None):
+    """Видати (або повернути наявний) сертифікат лектора для пари
+    «проведення + тренер».
 
-    Один запис на instance (повторна видача -> той самий номер). Дані -- знімки
-    з курсу/проведення/тренера на момент видачі. Номер учасника у діапазоні
-    1xxxxx (окремий лічильник). Тип заходу зберігаємо у родовому відмінку.
+    Захід може мати кількох тренерів (`effective_trainers`), і кожен читає
+    лекцію особисто -- ідемпотентність тому на парі (instance_id, trainer_id),
+    а не на самому проведенні: повторна видача ТОМУ Ж тренеру повертає той
+    самий номер, а видача ІНШОМУ тренеру того самого заходу створює власний
+    запис. Номер лектора у діапазоні 1xxxxx (окремий лічильник). Тип заходу
+    зберігаємо у родовому відмінку.
     """
     from app.models.lecturer_certificate import (
         LECTURER_NUMBER_OFFSET, LecturerCertificate,
     )
 
-    existing = LecturerCertificate.query.filter_by(instance_id=instance.id).first()
+    # ДО запиту, а не після: інакше `trainer.id` нижче впаде AttributeError-ом
+    # на порожньому тренері замість зрозумілого ValueError.
+    if trainer is None:
+        raise ValueError('Не задано лектора для сертифіката.')
+
+    existing = LecturerCertificate.query.filter_by(
+        instance_id=instance.id, trainer_id=trainer.id,
+    ).first()
     if existing is not None:
         return existing
 
-    trainer, points = _lecturer_inputs(instance)
     provider, event_num = _bpr_number_inputs(instance)
+    points = _lecturer_points(instance)
 
     issued_at = utcnow()
     year = (instance.start_date or issued_at).year
@@ -886,11 +897,14 @@ def issue_lecturer_certificate(instance, issued_by=None):
     try:
         db.session.flush()
     except IntegrityError:
-        # instance_id-unique міг спрацювати, якщо паралельно вже створили --
-        # це не помилка, повертаємо той запис. Перебору номерів тут більше
-        # немає: вільний номер уже підібрано до запису (див. _next_free_number).
+        # unique-пара (instance_id, trainer_id) могла спрацювати, якщо
+        # паралельно вже видали цьому самому тренеру -- це не помилка,
+        # повертаємо той запис. Перебору номерів тут більше немає: вільний
+        # номер уже підібрано до запису (див. _next_free_number).
         db.session.rollback()
-        dup = LecturerCertificate.query.filter_by(instance_id=instance.id).first()
+        dup = LecturerCertificate.query.filter_by(
+            instance_id=instance.id, trainer_id=trainer.id,
+        ).first()
         if dup is not None:
             return dup
         raise
@@ -919,34 +933,45 @@ def _apply_lecturer_snapshot(lc, instance, trainer, points, issued_at, issued_by
     lc.issued_by_id = issued_by.id if issued_by else None
 
 
-def _lecturer_inputs(instance):
-    """(тренер, бали) для лекторського серта -- або ValueError з причиною."""
-    trainer = instance.effective_trainer
-    if trainer is None:
-        raise ValueError('У проведення не задано лектора (тренера).')
-    course = instance.course
-    points = course.bpr_lecturer_points if course else None
+def _lecturer_points(instance):
+    """Бали БПР лектору -- або ValueError з причиною.
+
+    Норма проведення, інакше курсова: дата може дати лектору іншу кількість,
+    ніж курс узагалі (див. `effective_lecturer_points`). Тренера цей хелпер
+    не шукає -- заходів з кількома тренерами він не розрізнив би, тому
+    видача й перевидача отримують тренера параметром.
+    """
+    points = instance.effective_lecturer_points
     if points is None:
-        raise ValueError('Не задано бали БПР лектору '
-                         '(Адмінка -> Курс -> редагувати).')
-    return trainer, points
+        raise ValueError('Не задано бали БПР лектору (Адмінка -> Курс або '
+                         'конкретне проведення -> редагувати).')
+    return points
 
 
-def reissue_lecturer_certificate(instance, issued_by=None):
-    """Перевидати сертифікат лектора за ПОТОЧНИМИ даними проведення.
+def reissue_lecturer_certificate(instance, trainer, issued_by=None):
+    """Перевидати сертифікат лектора пари «проведення + тренер».
 
     Та сама потреба, що й у `reissue_certificate`: виправлений номер заходу
     мусить дійти до вже виданого документа. Файлів тут прибирати не треба --
     лекторський PDF не зберігається, `render_lecturer_pdf` збирає його з
     запису на кожне завантаження.
+
+    Тренер приходить параметром, як і у видачі: у заходу їх може бути
+    кілька, кожен зі своїм сертифікатом, і «перший-ліпший запис заходу» тут
+    означав би перевидати чужий документ під іменем головного тренера.
     """
     from app.models.lecturer_certificate import LecturerCertificate
 
-    lc = LecturerCertificate.query.filter_by(instance_id=instance.id).first()
+    if trainer is None:
+        raise ValueError('Не задано лектора для сертифіката.')
+
+    lc = LecturerCertificate.query.filter_by(
+        instance_id=instance.id, trainer_id=trainer.id,
+    ).first()
     if lc is None:
         raise ValueError('Сертифікат лектора не видано -- перевидавати нема чого.')
 
-    trainer, points = _lecturer_inputs(instance)
+    points = _lecturer_points(instance)
     provider, event_num = _bpr_number_inputs(instance)
     issued_at = utcnow()
     year = (instance.start_date or issued_at).year
@@ -960,8 +985,8 @@ def reissue_lecturer_certificate(instance, issued_by=None):
     _apply_lecturer_snapshot(lc, instance, trainer, points, issued_at, issued_by)
     db.session.commit()
     logger.info(
-        'Lecturer certificate %s reissued (was %s) for instance=%s by=%s',
-        lc.number, previous_number, instance.id,
+        'Lecturer certificate %s reissued (was %s) for instance=%s trainer=%s by=%s',
+        lc.number, previous_number, instance.id, trainer.id,
         issued_by.email if issued_by else 'system',
     )
     return lc
