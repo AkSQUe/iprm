@@ -84,6 +84,27 @@
   margin-bottom: 24px;
 }
 
+/* Перелік усередині розкривачки: сама розкривачка -- компонент
+   (.admin-cell-details), а відступи списку в ній кожна сторінка тримає
+   свої, тож у вітрині вони теж свої. */
+.ds-plain-list {
+  margin: 4px 0 0;
+  padding-left: 16px;
+  font-size: 12px;
+}
+
+/* Шапка секції у вітрині: заголовок ліворуч, дія праворуч -- рівно та
+   розкладка, заради якої існує .form-section__title--flush. Справжні
+   сторінки тримають її у себе (у кожної свої відступи), тож тут це layout
+   каталогу, а не компонент. */
+.ds-section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
 .ds-col {
   display: flex;
   flex-direction: column;

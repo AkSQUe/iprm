@@ -329,8 +329,14 @@
    бейджа «Опубліковано») і читається як «очікує»; бурштинове «глянь сюди»
    -- це `alert`.
 
+   `total` -- знаменник покриття: значення друкується як "5/7", де друге
+   число тонше й тьмяніше (.admin-stat-card__total). Саме число, а не рядок
+   "5/7" у `value`: інакше однакова за змістом картка виглядала б по-різному
+   від того, хто як її склав.
+
      {{ stat_cards([
           {'value': stats.total, 'label': 'Усього'},
+          {'value': stats.translated, 'total': stats.total, 'label': 'Російська'},
           {'value': stats.failed, 'label': 'Помилки', 'mod': 'danger'},
           {'value': stats.new, 'label': 'Нові', 'mod': 'alert',
            'href': url_for('admin.leads', status='new'), 'active': filters.status == 'new'},
@@ -342,12 +348,12 @@
    ~ (' is-active' if card.get('active') else '') %}
 {%- if card.get('href') %}
 <a class="{{ cls }}" href="{{ card.href }}"{% if card.get('active') %} aria-current="true"{% endif %}>
-  <span class="admin-stat-card__value">{{ card.value }}</span>
+  <span class="admin-stat-card__value">{{ card.value }}{% if card.get('total') is not none %}<span class="admin-stat-card__total">/{{ card.total }}</span>{% endif %}</span>
   <span class="admin-stat-card__label">{{ card.label }}</span>
 </a>
 {%- else %}
 <div class="{{ cls }}">
-  <span class="admin-stat-card__value">{{ card.value }}</span>
+  <span class="admin-stat-card__value">{{ card.value }}{% if card.get('total') is not none %}<span class="admin-stat-card__total">/{{ card.total }}</span>{% endif %}</span>
   <span class="admin-stat-card__label">{{ card.label }}</span>
 </div>
 {%- endif %}

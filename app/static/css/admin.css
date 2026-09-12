@@ -390,6 +390,23 @@
   cursor: pointer;
 }
 
+/* Поле, порожнеча якого НЕ дірка, а свідомий фолбек: порожній переклад
+   означає "показуємо оригінал". Пунктир робить незаповнені рядки видимими
+   просто з погляду на таблицю -- без JS і без окремої колонки-індикатора.
+
+   Колір -- --iprm-border-strong: типовий --iprm-border майже прозорий, і
+   пунктир на ньому не читався б. Це варіант атома, а не правило сторінки:
+   таких таблиць у проєкті дві (локації, спеціальності), і виглядати вони
+   мусять однаково. */
+/* `:not(:focus)` -- щоб під фокусом нічого не переозначувати: базове
+   `.form-input:focus` (common.css) і так малює акцентну межу, а окреме
+   правило фокуса тут довелось би повторювати той самий колір, аби перебити
+   пунктир. Умова в селекторі дешевша за копію значення. */
+.form-input--fallback:placeholder-shown:not(:focus) {
+  border-style: dashed;
+  border-color: var(--iprm-border-strong);
+}
+
 /* ========== FORM ERRORS SUMMARY ========== */
 
 .admin-form__errors {
@@ -956,6 +973,20 @@ a.admin-stat-card:focus-visible {
     flex-basis: 100%;
   }
 
+  /* Те саме й для розкривачки в комірці: у картковому режимі комірка --
+     flex-ряд, і "Деталі" з блоком помилки ставали сусідом бейджа, коли той
+     виявлявся достатньо коротким. Тобто той самий рядок реєстру виглядав
+     по-різному залежно від довжини назви стану. */
+  .admin-table td .admin-cell-details {
+    flex-basis: 100%;
+  }
+
+  /* Стеля ширини блоку помилки в картці зайва: картка й так вужча за 360px,
+     а фіксоване значення лишало праворуч порожню смугу. */
+  .admin-table td .admin-error-details pre {
+    max-width: none;
+  }
+
     .admin-table td:last-child {
     border-bottom: 0;
   }
@@ -1481,6 +1512,12 @@ a.admin-stat-card:focus-visible {
   white-space: nowrap;
   display: inline-flex;
   align-items: center;
+  /* На кнопці по контенту ця властивість не робить нічого -- вона потрібна
+     рівно тоді, коли кнопку РОЗТЯГНУЛИ (смуга дій, телефонний стовпчик):
+     без неї значок і напис ліпляться до лівого краю. Кожне таке місце
+     дописувало justify-content саме собі, і два з них -- у файлах сторінок,
+     тобто переозначували атом. Місце властивості -- тут. */
+  justify-content: center;
   gap: 6px;
   padding: 10px 24px;
   border-radius: var(--iprm-radius-pill);
@@ -1916,6 +1953,30 @@ a.admin-stat-card:focus-visible {
 
 /* ========== FORM ACTIONS ========== */
 
+/* Заголовок секції, у шапці якої стоїть ще й дія. Лінія під заголовком
+   у такій шапці проходила б лише під лівою колонкою -- під текстом, але не
+   під кнопкою поруч, -- і читалась як обрізаний розділювач. Варіант атома,
+   а не власний заголовок сторінки: типографіка лишається спільною, зникає
+   рівно розділювач. */
+/* Лише перше з двох написань заголовка: варіант оголошується під тим
+   іменем, яким його справді викликають. Другий селектор
+   (`.admin-form__section-title--flush`) лишався б правилом без розмітки --
+   рівно те, що ловить сторож tests/test_design_system. Знадобиться -- його
+   допише той, кому знадобиться. */
+.admin-with-sidebar .form-section__title--flush {
+  padding-bottom: 0;
+  margin-bottom: 0;
+  border-bottom: 0;
+}
+
+/* Підказка одразу під заголовком притягується до нього на 12px -- але це
+   поправка на розділювач (padding-bottom + margin-bottom звичайного
+   заголовка). У --flush обох відступів немає, і той самий мінус клав
+   підказку ПОВЕРХ заголовка. */
+.admin-with-sidebar .form-section__title--flush + .admin-form__section-hint {
+  margin-top: 6px;
+}
+
 /* ========== FORM ACTIONS (sticky bottom) ========== */
 .admin-form__actions {
   display: flex;
@@ -1949,6 +2010,14 @@ a.admin-stat-card:focus-visible {
 .admin-form__actions > .btn-admin--danger,
 .admin-form__actions > form:has(.btn-admin--danger) {
   order: -1;
+  margin-right: auto;
+}
+
+/* Підказка ліворуч у смузі дій ("зміни не зберігаються самі"). Смуга
+   вирівнює вміст праворуч, тож підказці потрібен лише зсув -- ні власного
+   кольору, ні позиції: колір дає .admin-text-muted. Довідники локацій і
+   спеціальностей тримали це правило кожен у себе під власним іменем. */
+.admin-form__actions-hint {
   margin-right: auto;
 }
 
@@ -2208,6 +2277,16 @@ a.admin-stat-card:focus-visible {
   font-weight: 800;
   letter-spacing: -0.02em;
   color: var(--iprm-text);
+}
+
+/* Знаменник картки покриття ("5/7"): скільки з усього. Тонший і тьмяніший
+   за чисельник -- читається передусім те, скільки вже зроблено, а загал
+   лишається масштабом. Жив у page-admin-cities.css, хоч оформлював нутро
+   спільної картки: правка картки до нього не доходила. */
+.admin-stat-card__total {
+  font-size: 0.6em;
+  font-weight: 600;
+  color: var(--iprm-text-light);
 }
 
 .admin-stat-card__label {
@@ -2545,6 +2624,49 @@ a.admin-stat-card:focus-visible {
 
 
 
+/* ========== ПОЯСНЮВАЛЬНИЙ БАНЕР ==========
+   Не `.alert`: той повідомляє про СТАН ("умову не виконано", "збережено"),
+   а цей пояснює МЕХАНІЗМ сторінки -- що саме тут лежить, звідки береться і
+   чому не видаляється. Стан минає, пояснення стоїть завжди, тому й тон
+   спокійний: поверхня картки, лівий кант кольору навігації, а не
+   попереджувальна заливка.
+
+   Компонентом став після того, як дві черги (партнерські вебхуки й події
+   Meta) завели його кожна у своєму page CSS під власним іменем -- копії
+   збіглися до пікселя, тобто правка в одній не доїжджала до другої. */
+.admin-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  /* Не --iprm-card-bg: у тёмній темі він дорівнює поверхні під банером,
+     і банер зник би, лишивши сам кант. */
+  background: var(--iprm-white);
+  border: 1px solid var(--iprm-border);
+  border-left: 3px solid var(--iprm-nav-active);
+  border-radius: var(--iprm-radius);
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--iprm-text-secondary);
+}
+
+.admin-note__icon {
+  flex-shrink: 0;
+  /* Іконка вирівнюється по першому рядку тексту, а не по центру банера:
+     у три рядки вона інакше зависає посеред абзацу. */
+  margin-top: 1px;
+  font-size: 22px;
+  color: var(--iprm-nav-active);
+}
+
+@media (max-width: 768px) {
+  .admin-note {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+
 /* ========== QUEUE ALERT ========== */
 /* Було в admin.css і admin-notifications.css під однаковими селекторами;
    зведено сюди. Стара версія тут ставила лише border-color без
@@ -2553,16 +2675,22 @@ a.admin-stat-card:focus-visible {
    admin-notifications.css (border-left). Той самий файл давав title
    правильний --iprm-error-text (контраст на білому 4.5+; --iprm-error
    дає 3.76 -- див. коментар біля .form-error в common.css). */
-.admin-queue-alert {
+/* Селектор подвоєний НЕ для краси: клас вішають на `.form-section`, а та
+   в адмінці описана як `.admin-with-sidebar .form-section` -- вага 0,2,0
+   проти 0,1,0 в одинарного класу. Тобто кант і падінг тут не діяли взагалі:
+   ні на черзі сповіщень, ні у формі повернення -- обидві сторінки просили
+   позначку й отримували звичайну картку. `.form-section.admin-queue-alert`
+   важить ті самі 0,2,0 і стоїть нижче, тож нарешті виграє. */
+.form-section.admin-queue-alert {
   margin-bottom: 24px;
   padding-left: 20px;
 }
 
-.admin-queue-alert--error {
+.form-section.admin-queue-alert--error {
   border-left: 4px solid var(--iprm-error);
 }
 
-.admin-queue-alert--warning {
+.form-section.admin-queue-alert--warning {
   border-left: 4px solid var(--iprm-warning-text);
 }
 
@@ -3160,6 +3288,82 @@ a.admin-stat-card:focus-visible {
   align-items: center;
   gap: 8px;
   white-space: nowrap;
+}
+
+/* ========== РОЗКРИВАЧКА В КОМІРЦІ РЕЄСТРУ ==========
+   Рядок показує сам факт (стан, число), а подробиця ховається під
+   розкривачку: повний traceback чи перелік курсів у комірці розганяє висоту
+   рядка на пів екрана, і решта реєстру перестає читатись.
+
+   Дві речі, які тут не випадкові:
+   * рідний маркер <details> прибрано -- у комірці він або стоїть поруч із
+     піктограмою і читається як друга дія, або висить один посеред тексту;
+     замість нього значок у розмітці;
+   * текст вирівняний ліворуч ЯВНО -- конвенція реєстрів центрує комірки, і
+     багаторядкова подробиця виходила по центру, рядок за рядком. */
+.admin-cell-details {
+  margin-top: 6px;
+  font-size: 0.8125rem;
+  text-align: left;
+}
+
+.admin-cell-details > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  list-style: none;
+}
+
+.admin-cell-details > summary::-webkit-details-marker,
+.admin-cell-details > summary::marker {
+  display: none;
+}
+
+.admin-cell-details > summary .material-symbols-rounded {
+  font-size: 18px;
+}
+
+/* Спеціалізація для збою: та сама розкривачка, але тоном помилки.
+   Поверхня -- --iprm-error-bg, а не нейтральна: на --iprm-card-bg у тёмній
+   темі блок зникав (той токен там дорівнює поверхні рядка), а в світлій
+   читався як зразок коду, а не як збій. */
+.admin-error-details > summary {
+  color: var(--iprm-error-text);
+}
+
+.admin-error-details pre {
+  margin: 8px 0 2px;
+  padding: 10px 12px;
+  /* Стеля ширини -- щоб один довгий збій не роздував свою колонку на всю
+     таблицю; стеля висоти -- щоб десяток кадрів стека не виштовхував
+     наступні рядки черги за екран. */
+  max-width: 360px;
+  max-height: 320px;
+  overflow: auto;
+  background: var(--iprm-error-bg);
+  color: var(--iprm-error-text);
+  border-radius: var(--iprm-radius-sm);
+  font-family: var(--iprm-font-mono);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ========== ЛІЧИЛЬНИК СПРОБ ==========
+   "2 / 5" у черзі. Цифри табличні: у стовпчику різна ширина знаків
+   перетворює рівний список на драбинку. Вичерпаний ліміт -- це вже не
+   лічильник, а стан: далі черга сама не спробує, потрібна рука. */
+.admin-attempts {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.admin-attempts--max {
+  color: var(--iprm-error-text);
+  font-weight: 700;
 }
 
 /* .form-input усередині комірки порядку мусить лишатись вузьким: ні одна
