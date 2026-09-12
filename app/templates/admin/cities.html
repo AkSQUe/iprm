@@ -96,7 +96,7 @@
       <p class="admin-form__section-hint">
         Пишіть рівно так, як у полі «Локація» проведення – звірка йде за повним рядком.
       </p>
-      <form method="POST" action="{{ url_for('admin.cities_add') }}" class="cities-add">
+      <form method="POST" action="{{ url_for('admin.cities_add') }}" class="admin-control-row">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="text" name="name" class="form-input cities-add__name" maxlength="255"
                placeholder="Харків" aria-label="Назва локації українською">

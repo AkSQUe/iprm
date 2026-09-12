@@ -59,7 +59,7 @@
         Код -- латиницею, він потрапляє в партнерське API та xlsx і надалі не змінюється.
         Обидва відмінки обов'язкові: з них друкується сертифікат.
       </p>
-      <form method="POST" action="{{ url_for('admin.event_types_add') }}" class="event-types-add">
+      <form method="POST" action="{{ url_for('admin.event_types_add') }}" class="admin-control-row">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="text" name="code" class="form-input event-types-add__field" maxlength="30"
                placeholder="workshop" aria-label="Код типу">

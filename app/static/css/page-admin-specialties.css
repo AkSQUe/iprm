@@ -7,19 +7,16 @@
 
 /* ========== ДОДАВАННЯ ВРУЧНУ ========== */
 
-.specialties-add {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.specialties-add__name {
+/* Сам рядок -- `.admin-control-row` із дизайн-системи; тут лишились частки
+   полів у ньому. Скоуп `.admin-control-row` обов'язковий: базове
+   `.admin-control-row .form-input` важить (0,2,0) і без нього перебивало б
+   голий сторінковий клас (0,1,0). */
+.admin-control-row .specialties-add__name {
   flex: 1 1 240px;
   max-width: 360px;
 }
 
-.specialties-add__section {
+.admin-control-row .specialties-add__section {
   flex: 0 1 220px;
 }
 
@@ -95,8 +92,8 @@
     min-width: 0;
   }
 
-  .specialties-add__name,
-  .specialties-add__section {
+  .admin-control-row .specialties-add__name,
+  .admin-control-row .specialties-add__section {
     flex: 1 1 auto;
     max-width: none;
   }

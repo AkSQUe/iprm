@@ -10,16 +10,11 @@
 
 /* ========== РЯДОК ДОДАВАННЯ ========== */
 
-.event-types-add {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-}
-
-/* Чотири поля ділять рядок порівну. Ширина -- властивість РЯДКА, тож клас
-   сторінковий і стоїть на самих полях. */
-.event-types-add__field {
+/* Сам рядок -- `.admin-control-row` із дизайн-системи; тут лишилось те, як
+   чотири поля ділять його між собою. Скоуп `.admin-control-row`
+   обов'язковий: базове `.admin-control-row .form-input` важить (0,2,0) і без
+   нього перебивало б голий сторінковий клас (0,1,0). */
+.admin-control-row .event-types-add__field {
   flex: 1 1 160px;
   min-width: 0;
 }
@@ -92,8 +87,15 @@
     min-width: 0;
   }
 
-  /* Органи керування на телефоні беруть рядок цілком. */
-  .event-types-add__field,
+  /* Органи керування на телефоні беруть рядок цілком. Поле скоуплене з тієї
+     ж причини, що й у десктопному правилі; кнопці скоуп не потрібен --
+     правила `.admin-control-row .btn-admin` в системі немає. */
+  .admin-control-row .event-types-add__field {
+    flex: 1 1 auto;
+    width: 100%;
+    max-width: none;
+  }
+
   .event-types-add__submit {
     flex: 1 1 auto;
     width: 100%;
