@@ -1,30 +1,18 @@
-/* Public read-only trainer materials view */
+/* page-materials-trainer.css -- розкладка сторінки матеріалів заходу
+   (публічний перегляд за токеном для тренера).
 
-.mt-wrap {
-  max-width: 780px;
-  margin: 40px auto;
-  padding: 0 16px;
-}
+   Тільки розкладка. Оболонка сторінки, порожній стан, банер підтвердження,
+   поле вводу й кнопка -- компоненти дизайн-системи (common.css, auth.css,
+   apple-pages.css). Доти сторінка не вживала з системи НІЧОГО: власними
+   були картка, заголовок, підпис, таблиця, порожній стан, плашка статусу,
+   підпис поля, textarea й кнопка -- дев'ять елементів, кожен із яких у
+   системі вже був.
 
-.mt-card {
-  background: var(--iprm-white);
-  border: 1px solid var(--iprm-border);
-  border-radius: 16px;
-  padding: 28px;
-  box-shadow: var(--iprm-shadow-xs);
-}
-
-.mt-title {
-  margin: 0 0 6px;
-  font-size: 1.6rem;
-  color: var(--iprm-text);
-}
-
-.mt-meta {
-  margin: 0 0 22px;
-  color: var(--iprm-text-light);
-  font-size: 0.95rem;
-}
+   Причина, чому таблиця лишилась тут: це ЄДИНА таблиця даних на публічній
+   частині сайту (решта -- в адмінці під .admin-table або в листах і PDF із
+   власним <style>). Один споживач -- посторінковий файл за межею проєкту;
+   підняти її в компонент означало б завести компонент без другого
+   користувача. */
 
 .mt-table {
   width: 100%;
@@ -49,70 +37,43 @@
 
 .mt-num { text-align: right; }
 .mt-sku { color: var(--iprm-text-light); font-size: 0.9rem; }
-.mt-empty { color: var(--iprm-text-light); }
 
+/* Блок підтвердження відокремлений від переліку рискою. */
 .mt-confirm {
   margin-top: 24px;
   padding-top: 20px;
   border-top: 1px solid var(--iprm-divider);
 }
 
-.mt-confirm-status {
-  margin: 0 0 14px;
-  padding: 10px 14px;
-  border-radius: 10px;
-  background: var(--iprm-success-bg);
-  color: var(--iprm-success);
-  font-weight: 600;
-  font-size: 0.9rem;
-}
-
 .mt-confirm-form {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  align-items: flex-start;
 }
 
-.mt-label {
-  display: block;
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: var(--iprm-text);
-}
+/* Висоти поля тут НЕМАЄ навмисно: TrainerConfirmForm віддає textarea з
+   rows="4" (app/main/forms.py), і min-height під нею був би мертвим
+   правилом. `resize: vertical` теж не повторюється -- він оголошений один
+   раз на textarea.form-input у common.css.
 
-.mt-textarea {
+   Ширина потрібна: .mt-confirm-form -- флекс-колонка з align-items:
+   flex-start (щоб кнопка не розтягувалась), і без цього поле стислось би
+   до ширини підпису. */
+.mt-confirm-form .form-group {
   width: 100%;
-  resize: vertical;
-  padding: 10px 12px;
-  border: 1px solid var(--iprm-border-strong);
-  border-radius: var(--iprm-radius-sm);
-  font-family: var(--iprm-font);
-  font-size: 0.95rem;
-  color: var(--iprm-text);
 }
-
-.mt-textarea:focus {
-  outline: 2px solid var(--iprm-accent);
-  outline-offset: 1px;
-}
-
-.mt-confirm-btn {
-  align-self: flex-start;
-  padding: 10px 24px;
-  border: none;
-  border-radius: var(--iprm-radius-pill);
-  background: var(--iprm-btn-bg);
-  color: var(--iprm-on-accent);
-  font-weight: 600;
-  font-size: 0.95rem;
-  cursor: pointer;
-  transition: background var(--iprm-transition);
-}
-
-.mt-confirm-btn:hover { background: var(--iprm-btn-bg-hover); }
 
 @media (max-width: 560px) {
-  .mt-card { padding: 18px; }
-  .mt-table th, .mt-table td { padding: 8px 6px; font-size: 0.9rem; }
-  .mt-confirm-btn { align-self: stretch; }
+  .mt-table th,
+  .mt-table td {
+    padding: 8px 6px;
+    font-size: 0.9rem;
+  }
+
+  /* Кнопка на вузькому екрані на всю ширину: align-items: flex-start вище
+     інакше лишив би її вузькою посеред порожнього рядка. */
+  .mt-confirm-form {
+    align-items: stretch;
+  }
 }

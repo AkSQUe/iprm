@@ -4,14 +4,17 @@
 {% block meta_description %}{{ _('Перелік витратних матеріалів, підготовлених для заходу.') }}{% endblock %}
 
 {% block extra_css %}
+{# auth.css несе .form-group і підпис поля -- публічний патерн форми, той
+   самий, що на /contact і на реєстрації. Без нього label лишився б голим. #}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/page-materials-trainer.css') }}?v={{ assets_version }}">
 {% endblock %}
 
 {% block content %}
-<section class="mt-wrap">
-  <div class="mt-card">
-    <h1 class="mt-title">{{ _('Витратні матеріали заходу') }}</h1>
-    <p class="mt-meta">
+<div class="apple-page iprm-content-page">
+  <div class="iprm-content-page__inner">
+    <h1 class="iprm-content-page__title">{{ _('Витратні матеріали заходу') }}</h1>
+    <p class="iprm-content-page__subtitle">
       <strong>{{ instance.effective_title or _('Захід') }}</strong>
       {% if instance.start_date %} · {{ instance.start_date.strftime('%d.%m.%Y') }}{% endif %}
       {% if instance.location %} · {{ instance.location | localize_location }}{% endif %}
@@ -39,12 +42,12 @@
       </tbody>
     </table>
     {% else %}
-    <p class="mt-empty">{{ _('Для цього заходу ще немає позицій.') }}</p>
+    <p class="iprm-empty-state">{{ _('Для цього заходу ще немає позицій.') }}</p>
     {% endif %}
 
     <div class="mt-confirm">
       {% if reservation.trainer_confirmed_at %}
-      <p class="mt-confirm-status">
+      <p class="alert alert--success">
         {{ _('Підтверджено') }}
         {{ reservation.trainer_confirmed_at.strftime('%d.%m.%Y %H:%M') }}
       </p>
@@ -52,14 +55,16 @@
       <form class="mt-confirm-form" method="post"
             action="{{ url_for('main.trainer_materials_confirm', token=token) }}">
         {{ form.hidden_tag() }}
-        <label for="comment" class="mt-label">{{ _('Коментар') }}</label>
-        {{ form.comment(class_='mt-textarea', id='comment') }}
-        <button type="submit" class="mt-confirm-btn">
+        <div class="form-group">
+          <label for="comment">{{ _('Коментар') }}</label>
+          {{ form.comment(class_='form-input', id='comment') }}
+        </div>
+        <button type="submit" class="apple-btn apple-btn--primary">
           {{ _('Підтверджую') if not reservation.trainer_confirmed_at
              else _('Оновити') }}
         </button>
       </form>
     </div>
   </div>
-</section>
+</div>
 {% endblock %}
