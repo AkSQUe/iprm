@@ -136,24 +136,13 @@
   flex-wrap: wrap;
 }
 
-.settings-select {
+/* Поле вибору -- компонент .form-input (common.css); тут лише його місце в
+   рядку поруч із кнопкою "Зберегти". Власний .settings-select тут БУВ і
+   переписував саме поле: свої падінги, свій шрифт, своя межа 2px і свій
+   фокус -- тобто правка поля в дизайн-системі до цієї сторінки не доходила. */
+.settings-lang-form .form-input {
   flex: 1;
   min-width: 180px;
-  padding: 12px 16px;
-  font-family: inherit;
-  font-size: 0.9375rem;
-  color: var(--iprm-text);
-  background: var(--iprm-card-bg);
-  border: 2px solid transparent;
-  border-radius: var(--iprm-radius-sm);
-  cursor: pointer;
-  transition: border-color 0.2s var(--iprm-transition);
-}
-
-.settings-select:hover,
-.settings-select:focus {
-  border-color: var(--iprm-border);
-  outline: none;
 }
 
 .settings-back {

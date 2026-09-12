@@ -76,7 +76,7 @@
           <form method="post" action="{{ url_for('auth.settings') }}" class="settings-lang-form">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             {% set email_lang = current_user.preferred_language or 'uk' %}
-            <select name="email_language" class="settings-select" aria-label="{{ _('Мова листів') }}">
+            <select name="email_language" class="form-input" aria-label="{{ _('Мова листів') }}">
               <option value="uk" {% if email_lang == 'uk' %}selected{% endif %}>{{ _('Українська') }}</option>
               <option value="ru" {% if email_lang == 'ru' %}selected{% endif %}>{{ _('Російська') }}</option>
               <option value="en" {% if email_lang == 'en' %}selected{% endif %}>{{ _('Англійська') }}</option>
