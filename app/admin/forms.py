@@ -21,7 +21,7 @@ from app.models.medical_profile import MedicalProfile
 from app.models.meta_lead import MetaLead
 from app.models.promo_code import PromoCode
 from app.models.registration import EventRegistration
-from app.models.specializations import SPECIALIZATIONS
+from app.data.specializations import SPECIALIZATIONS
 from app.rbac import registry as _rbac_registry
 
 

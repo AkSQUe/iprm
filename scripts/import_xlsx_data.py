@@ -56,7 +56,7 @@ FILE_REGS = ROOT / '3. Зареєстровані на захід.md'
 
 SKIP_SESSIONS = {'S001', 'S002'}
 
-# Спеціалізація (професія у файлі) -> code з app/models/specializations.py.
+# Спеціалізація (професія у файлі) -> code з app/data/specializations.py.
 SPEC_TO_CODE = {
     'Косметолог': 'cosmetology',
     'Ортопед-травматолог': 'orthopedics_traumatology',

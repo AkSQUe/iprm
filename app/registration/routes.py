@@ -158,7 +158,7 @@ def _base_price(instance, tariff):
 def _spec_labels(codes):
     """Локально імпортуємо щоб не тягнути specializations при cold-import
     routes.py під test-collection."""
-    from app.models.specializations import labels_for_codes
+    from app.data.specializations import labels_for_codes
     return labels_for_codes(codes)
 
 

@@ -16,7 +16,7 @@ from wtforms import DateField, SelectField, SelectMultipleField, StringField
 from wtforms.validators import DataRequired, Length, ValidationError
 
 from app.models.medical_profile import MedicalProfile
-from app.models.specializations import localized_specializations
+from app.data.specializations import localized_specializations
 
 
 class MedicalProfileFieldsMixin:

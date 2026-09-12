@@ -20,7 +20,7 @@ from app.extensions import db
 from app.models.course_instance import CourseInstance
 from app.models.medical_profile import MedicalProfile
 from app.models.registration import EventRegistration
-from app.models.specializations import labels_for_codes
+from app.data.specializations import labels_for_codes
 from app.models.user import User
 from app.services import registration_service
 

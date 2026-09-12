@@ -49,7 +49,7 @@ from app.models.medical_profile import MedicalProfile
 from app.models.media_file import MediaFile
 from app.models.program_block import ProgramBlock
 from app.models.registration import EventRegistration
-from app.models.specializations import SPECIALIZATIONS
+from app.data.specializations import SPECIALIZATIONS
 from app.models.trainer import Trainer
 from app.models.user import User
 from app.utils import ensure_utc
