@@ -349,3 +349,84 @@ class TestRedirectFlowCollisionPage:
         resp = client.get('/auth/oauth/collision')
         assert resp.status_code == 302
         assert '/auth/login' in resp.headers['Location']
+
+
+class TestUnlinkKeepsAWayIn:
+    """Від'єднання провайдера не має лишати акаунт без жодного входу.
+
+    Лічильник рахував УСІ identity підряд, а серед них є такі, що входу не
+    дають: маркер partner (походження акаунта) і порожня password-identity
+    без хеша. Обидві надували лічильник, і остання СПРАВЖНЯ identity
+    знімалась без заперечень.
+    """
+
+    @pytest.fixture(autouse=True)
+    def clean(self, app):
+        """Акаунти тут комітяться -- прибираємо (tests/support/users.py)."""
+        from tests.support.users import wipe_users
+        yield
+        wipe_users('oauth-', domain='@gmail.com')
+
+    def _login(self, client, user):
+        with client.session_transaction() as sess:
+            sess['_user_id'] = str(user.id)
+
+    def _google(self, user):
+        ident = AuthIdentity(
+            user_id=user.id, provider=AuthIdentity.PROVIDER_GOOGLE,
+            provider_sub='g-%s' % uuid4().hex[:10], email=user.email,
+            email_verified=True,
+        )
+        db.session.add(ident)
+        db.session.commit()
+        return ident
+
+    def _providers(self, user):
+        return sorted(
+            i.provider for i in
+            AuthIdentity.query.filter_by(user_id=user.id).all()
+        )
+
+    def test_partner_marker_does_not_count_as_a_way_in(self, client, app):
+        from app.services.partner_auth import (
+            PrefillPayload, get_or_create_partner_user,
+        )
+        user = get_or_create_partner_user(PrefillPayload(
+            email=_email(), first_name='A', last_name='B',
+            phone=None, issuer='mm-medic',
+        ))
+        self._google(user)
+        self._login(client, user)
+
+        client.post('/auth/google/unlink')
+
+        assert self._providers(user) == ['google', 'partner'], (
+            'Google знято -- увійти нічим: лишився сам лише маркер походження')
+
+    def test_empty_password_identity_does_not_count(self, client, app):
+        """Identity без хеша входу не дає -- так само вважає й /connections."""
+        user = User(email=_email())
+        db.session.add(user)
+        db.session.flush()
+        db.session.add(AuthIdentity(
+            user_id=user.id, provider=AuthIdentity.PROVIDER_PASSWORD,
+            provider_sub=str(user.id), email=user.email,
+        ))
+        db.session.commit()
+        self._google(user)
+        self._login(client, user)
+
+        client.post('/auth/google/unlink')
+
+        assert 'google' in self._providers(user)
+
+    def test_real_password_still_allows_unlink(self, client, app):
+        """Регресія в інший бік: із робочим паролем від'єднання дозволене."""
+        user = User.create_with_password(_email(), 'password123')
+        db.session.commit()
+        self._google(user)
+        self._login(client, user)
+
+        client.post('/auth/google/unlink')
+
+        assert self._providers(user) == ['password']
