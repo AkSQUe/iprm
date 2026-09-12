@@ -44,6 +44,16 @@ class Review(TranslatableMixin, TimestampMixin, SoftDeleteMixin, db.Model):
     __table_args__ = (
         db.CheckConstraint('rating >= 1 AND rating <= 5', name='ck_reviews_rating'),
         db.Index('ix_reviews_published_sort', 'is_published', 'sort_order'),
+        # Сторінка курсу й сторінка онлайн-курсу роблять по два запити з
+        # рівно цією парою (список відгуків + COUNT/AVG для AggregateRating).
+        # Парою, а не голим FK: відбір за самим course_id віддав би й
+        # неопубліковані, тобто більшу частину рядків на курсі з чернетками.
+        # Провідна колонка тут же покриває FK для ON DELETE SET NULL.
+        db.Index('ix_reviews_course_published', 'course_id', 'is_published'),
+        db.Index(
+            'ix_reviews_online_course_published',
+            'online_course_id', 'is_published',
+        ),
     )
 
     @classmethod

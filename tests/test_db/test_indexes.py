@@ -105,3 +105,39 @@ class TestIndexedOrderBy:
         ).all()
         assert len(results) >= 1
         assert all(r.status == 'sent' and r.trigger == 'registration' for r in results)
+
+    def test_reviews_filter_by_course_and_published(self, db_session, sample_course):
+        """Відбір відгуків по composite index (course_id, is_published).
+
+        Саме цю пару беруть обидва запити сторінки курсу -- список карток і
+        окремий COUNT/AVG для AggregateRating.
+        """
+        from app.models.review import Review
+
+        shown = Review(
+            author_name='Опублікований', text='t', rating=5,
+            is_published=True, course_id=sample_course.id,
+        )
+        draft = Review(
+            author_name='Чернетка', text='t', rating=4,
+            is_published=False, course_id=sample_course.id,
+        )
+        db_session.add_all([shown, draft])
+        db_session.flush()
+
+        results = Review.alive().filter_by(
+            course_id=sample_course.id, is_published=True,
+        ).all()
+        assert [r.author_name for r in results] == ['Опублікований']
+
+    def test_reviews_composite_indexes_declared(self):
+        """Обидва FK відгуків ведуть складений індекс -- інакше публічна
+        сторінка курсу сканує таблицю відгуків цілком, а ON DELETE SET NULL
+        не має чим скористатись при видаленні курсу."""
+        from app.models.review import Review
+
+        by_first_column = {
+            tuple(c.name for c in ix.columns) for ix in Review.__table__.indexes
+        }
+        assert ('course_id', 'is_published') in by_first_column
+        assert ('online_course_id', 'is_published') in by_first_column
