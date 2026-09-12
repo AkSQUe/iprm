@@ -139,3 +139,58 @@ class TestGetOrCreatePartnerUser:
         get_or_create_partner_user(payload)
         db.session.refresh(u)
         assert u.email_confirmed is True
+
+
+class TestPartnerUserProvisioning:
+    """Партнерський акаунт не вигадує пароля і несе маркер джерела.
+
+    Доти get_or_create_partner_user ставив secrets.token_urlsafe(32): акаунт
+    виглядав як такий, що має пароль, хоча його не знав ніхто. Наслідок --
+    людина не могла ні увійти, ні встановити пароль у кабінеті (сторінка
+    відшивала з "Пароль уже встановлено"), а форма реєстрації казала лише
+    невиразне "неможливо використати цей email".
+    """
+
+    def _payload(self, email=None, issuer='mm-medic'):
+        from app.services.partner_auth import PrefillPayload
+        return PrefillPayload(
+            email=email or f'partner-{uuid4().hex[:6]}@example.com',
+            first_name='Анатолій', last_name='Луньов',
+            phone='+380670000000', issuer=issuer,
+        )
+
+    def test_new_partner_user_has_no_password(self, app):
+        user = get_or_create_partner_user(self._payload())
+        assert user.has_password is False
+
+    def test_new_partner_user_is_marked_with_issuer(self, app):
+        from app.models.auth_identity import AuthIdentity
+        user = get_or_create_partner_user(self._payload())
+        ident = AuthIdentity.query.filter_by(
+            user_id=user.id, provider=AuthIdentity.PROVIDER_PARTNER,
+        ).first()
+        assert ident is not None
+        assert ident.raw_claims['issuer'] == 'mm-medic'
+
+    def test_repeat_prefill_does_not_duplicate_marker(self, app):
+        from app.models.auth_identity import AuthIdentity
+        payload = self._payload()
+        user = get_or_create_partner_user(payload)
+        get_or_create_partner_user(payload)
+        assert AuthIdentity.query.filter_by(
+            user_id=user.id, provider=AuthIdentity.PROVIDER_PARTNER,
+        ).count() == 1
+
+    def test_two_partner_users_coexist(self, app):
+        """UNIQUE(provider, provider_sub) не має падати на другому партнері."""
+        first = get_or_create_partner_user(self._payload())
+        second = get_or_create_partner_user(self._payload())
+        assert first.id != second.id
+
+    def test_existing_password_account_keeps_its_password(self, app):
+        """Реальний акаунт із паролем партнерський лінк не роззброює."""
+        email = f'has-pw-{uuid4().hex[:6]}@example.com'
+        user = User.create_with_password(email=email, password='realpassword')
+        db.session.commit()
+        get_or_create_partner_user(self._payload(email=email))
+        assert user.has_password is True

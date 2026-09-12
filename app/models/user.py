@@ -180,11 +180,16 @@ class User(TimestampMixin, UserMixin, db.Model):
 
     @classmethod
     def create_with_oauth(cls, provider, sub, email, email_verified=False,
-                          first_name=None, last_name=None, raw_claims=None):
-        """Створити User через OAuth-провайдера (Phase 3+). Створює
+                          first_name=None, last_name=None, raw_claims=None,
+                          profile_source=None):
+        """Створити User через зовнішнього провайдера (Phase 3+). Створює
         User + AuthIdentity(provider=<...>) + порожній MedicalProfile.
         Password-identity НЕ створюється -- юзер логіниться лише через
-        OAuth (або встановить пароль пізніше через "Забули пароль")."""
+        OAuth (або встановить пароль пізніше через "Забули пароль").
+
+        Сюди ж заходить партнерський лінк (provider='partner'): механіка
+        та сама -- акаунт без пароля, який людина добудує сама.
+        profile_source -- джерело MedicalProfile, якщо воно не 'self'."""
         from app.models.auth_identity import AuthIdentity
         from app.models.medical_profile import MedicalProfile
 
@@ -207,7 +212,7 @@ class User(TimestampMixin, UserMixin, db.Model):
         ))
         db.session.add(MedicalProfile(
             user_id=user.id,
-            source=MedicalProfile.SOURCE_SELF,
+            source=profile_source or MedicalProfile.SOURCE_SELF,
         ))
         return user
 
