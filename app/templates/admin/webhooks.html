@@ -28,8 +28,8 @@
 
   {% include 'partials/flash_messages.html' %}
 
-  <div class="wh-info">
-    {{ icon('bolt', cls='wh-info__icon') }}
+  <div class="admin-note">
+    {{ icon('bolt', cls='admin-note__icon') }}
     <div>
       POST на <code class="admin-code">partner_webhook_url</code> формується при створенні, оновленні
       чи видаленні курсу. Чергу обробляє планувальник щохвилини з експоненційним
@@ -47,7 +47,7 @@
     {'key': 'sent',     'label': 'Sent',     'value': counts.get('sent', 0),     'mod': 'success'},
     {'key': 'failed',   'label': 'Failed',   'value': counts.get('failed', 0),   'mod': 'danger'}
   ] %}
-  <div class="admin-stat-cards wh-stats">
+  <div class="admin-stat-cards">
     {% for c in cards %}
     {{ stat_card({'value': c.value, 'label': c.label, 'mod': c.mod,
                   'href': url_for('admin.webhooks_list', status=c.key, **filter_args) if c.key else url_for('admin.webhooks_list', **filter_args),
@@ -86,44 +86,48 @@
     <tbody>
       {% for d in deliveries %}
       <tr>
-        <td class="wh-nowrap">
+        <td class="admin-nowrap">
           {{ d.created_at.strftime('%d.%m.%Y %H:%M:%S') if d.created_at else '–' }}
-          {% if d.event_uuid %}<span class="wh-uuid" title="event_uuid">{{ d.event_uuid[:12] }}</span>{% endif %}
+          {% if d.event_uuid %}<span class="admin-subline admin-mono admin-text-muted" title="event_uuid">{{ d.event_uuid[:12] }}</span>{% endif %}
         </td>
         <td>
           {# Доставки не мають id курсу -- лише slug, тож ведемо в реєстр курсів,
              звужений пошуком по ньому (Course.slug -- єдиний точний вхід). #}
           <div class="wh-target" title="{{ d.target_url }}">
             {% if d.course_slug %}
-            <a href="{{ url_for('admin.courses_list', q=d.course_slug) }}" class="wh-slug">{{ d.course_slug }}</a>
-            {% else %}
-            <span class="wh-slug">{{ d.course_slug }}</span>
+            <a href="{{ url_for('admin.courses_list', q=d.course_slug) }}" class="admin-mono">{{ d.course_slug }}</a>
             {% endif %}
-            <span class="wh-action wh-action--{{ d.action }}">{{ d.action }}</span>
+            {# Партнерська подія курсу не має -- ні slug, ні дії. Порожню
+               таблетку в такому рядку не малюємо: вона читалась як стан,
+               якого насправді немає. #}
+            {% if d.action %}
+            <span class="badge badge--mono badge--{{ d.action_badge }}">{{ d.action }}</span>
+            {% endif %}
+            {% if not d.course_slug and not d.action %}–{% endif %}
           </div>
         </td>
         <td>
           <span class="badge badge--{{ d.status_badge }}">{{ d.status }}</span>
           {% if d.last_error %}
-          <details class="wh-error">
+          <details class="admin-cell-details admin-error-details">
             <summary>{{ icon('error') }}Деталі</summary>
             <pre>{{ d.last_error }}</pre>
           </details>
           {% endif %}
         </td>
         <td>
-          <span class="wh-attempts{{ ' wh-attempts--max' if d.attempts >= max_attempts }}">
+          <span class="admin-attempts{{ ' admin-attempts--max' if d.attempts >= max_attempts }}">
             {{ d.attempts }} / {{ max_attempts }}
           </span>
         </td>
-        <td class="wh-http">{{ d.last_http_status or '–' }}</td>
-        <td class="wh-nowrap">
+        <td class="admin-num">{{ d.last_http_status or '–' }}</td>
+        <td class="admin-nowrap">
           {% if d.status == 'sent' and d.sent_at %}
-            <span class="wh-muted">відправлено</span><br>{{ d.sent_at.strftime('%d.%m %H:%M') }}
+            <span class="admin-text-muted">відправлено</span><br>{{ d.sent_at.strftime('%d.%m %H:%M') }}
           {% elif d.next_retry_at %}
-            <span class="wh-muted">ретрай</span><br>{{ d.next_retry_at.strftime('%d.%m %H:%M') }}
+            <span class="admin-text-muted">ретрай</span><br>{{ d.next_retry_at.strftime('%d.%m %H:%M') }}
           {% else %}
-            <span class="wh-muted">–</span>
+            <span class="admin-text-muted">–</span>
           {% endif %}
         </td>
         <td>

@@ -5,7 +5,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-meta-leads.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-meta-events.css') }}?v={{ assets_version }}">
 {% endblock %}
 
 {% from 'admin/partials/_filter_bar.html' import filter_bar, pager, stat_cards, empty_state  %}
@@ -32,8 +32,8 @@
 
   {% include 'partials/flash_messages.html' %}
 
-  <div class="ml-info">
-    {{ icon('info', cls='ml-info__icon') }}
+  <div class="admin-note">
+    {{ icon('info', cls='admin-note__icon') }}
     <div>
       Вебхук Meta приносить лише ідентифікатор ліда, тож рядок тут означає
       «сходи в Graph API і забери заявку». Події <strong>не видаляються</strong>:
@@ -48,8 +48,7 @@
                 {'value': counts.get('pending', 0) + counts.get('processing', 0), 'label': 'Очікують обробки', 'mod': 'accent'},
                 {'value': counts.get('retrying', 0), 'label': 'Повторюються', 'mod': 'alert'},
                 {'value': counts.get('done', 0), 'label': 'Оброблено', 'mod': 'success'},
-                {'value': counts.get('failed', 0), 'label': 'Помилок', 'mod': 'danger'}],
-               cls='ml-stats') }}
+                {'value': counts.get('failed', 0), 'label': 'Помилок', 'mod': 'danger'}]) }}
 
   {{ filter_bar(
        endpoint='admin.meta_lead_events',
@@ -64,36 +63,36 @@
 
   {% if events %}
   <div class="admin-table-wrap">
-  <table class="admin-table">
+  <table class="admin-table admin-table--wide">
     <thead>
       <tr>
-        <th>Отримано</th>
-        <th>leadgen_id</th>
-        <th>Джерело</th>
-        <th>Статус</th>
-        <th>Спроб</th>
-        <th>Наступна спроба</th>
-        <th>Заявка</th>
-        <th>Дії</th>
+        <th class="mle-col--received">Отримано</th>
+        <th class="mle-col--id">leadgen_id</th>
+        <th class="mle-col--source">Джерело</th>
+        <th class="mle-col--status">Статус</th>
+        <th class="mle-col--attempts">Спроб</th>
+        <th class="mle-col--retry">Наступна спроба</th>
+        <th class="mle-col--lead">Заявка</th>
+        <th class="mle-col--actions">Дії</th>
       </tr>
     </thead>
     <tbody>
       {% for event in events %}
       <tr>
         <td class="admin-nowrap">{{ event.received_at | kyiv('%d.%m.%Y %H:%M:%S') or '–' }}</td>
-        <td><code class="admin-code">{{ event.leadgen_id }}</code></td>
+        <td class="admin-nowrap"><code class="admin-code">{{ event.leadgen_id }}</code></td>
         {# `source` -- поле моделі, а не лейбл: фільтр реєстру приймає код. #}
         <td><a href="{{ url_for('admin.meta_lead_events', source=event.source) }}">{{ source_labels.get(event.source, event.source) }}</a></td>
         <td>
           <a href="{{ url_for('admin.meta_lead_events', status=event.status) }}"><span class="badge badge--{{ event.status_badge }}">{{ event.status_label }}</span></a>
           {% if event.last_error %}
-          <details class="ml-error">
+          <details class="admin-cell-details admin-error-details">
             <summary>{{ icon('error') }} Деталі</summary>
             <pre>{{ event.last_error }}</pre>
           </details>
           {% endif %}
         </td>
-        <td>{{ event.attempts }} / {{ max_attempts }}</td>
+        <td><span class="admin-attempts{{ ' admin-attempts--max' if event.attempts >= max_attempts }}">{{ event.attempts }} / {{ max_attempts }}</span></td>
         <td class="admin-nowrap">{{ event.next_retry_at | kyiv('%d.%m %H:%M') or '–' }}</td>
         <td>
           {% if event.lead_id %}
@@ -106,9 +105,11 @@
           <div class="admin-table__actions">
             {% if event.status in ('failed', 'retrying', 'processing') %}
             <form method="POST" action="{{ url_for('admin.meta_lead_event_retry', event_id=event.id) }}"
+                  class="admin-inline"
                   data-confirm="Повернути подію в чергу?" data-confirm-ok="Повторити">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm btn-admin--icon">{{ icon('refresh', label='Повторити') }}</button>
+              <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm btn-admin--icon"
+                      title="Повторити">{{ icon('refresh', label='Повторити') }}</button>
             </form>
             {% else %}
             <span class="admin-text-muted">–</span>

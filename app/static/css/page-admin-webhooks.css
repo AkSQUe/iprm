@@ -1,167 +1,26 @@
 /* page-admin-webhooks.css -- Сторінка черги партнерських webhook-ів.
    Завантажується після admin.css.
-   Покриває те, чого немає в спільних стилях: інфо-банер, stat-картки як
-   фільтри статусу, бейджі статусів sent/failed/retrying, чипи дій та
-   розгортуваний рядок помилки. */
 
-/* ===== Інфо-банер про механізм доставки ===== */
+   Тут лишилась сама РОЗКЛАДКА однієї комірки. Усе, що було декором,
+   переїхало в дизайн-систему й показане на /admin/design-system:
 
-.wh-info {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  padding: 16px 20px;
-  margin-bottom: 24px;
-  background: var(--iprm-white);
-  border: 1px solid var(--iprm-border);
-  border-left: 3px solid var(--iprm-nav-active);
-  border-radius: var(--iprm-radius);
-  font-size: 0.875rem;
-  line-height: 1.55;
-  color: var(--iprm-text-secondary);
-}
+   * інфо-банер, деталі збою й лічильник спроб -- `.admin-note`,
+     `.admin-error-details`, `.admin-attempts` (черга подій Meta тримала
+     їхні копії у своєму файлі, збіжні до пікселя);
+   * чип дії -- `.badge--mono` плюс наявні варіанти кольору; це була власна
+     копія `.badge` з моношрифтом, і пари токенів у ній збігались із
+     `--active` / `--format` / `--cancelled` точно;
+   * slug та event_uuid -- `.admin-mono` (+ `.admin-subline`,
+     `.admin-text-muted` для другого поверху комірки);
+   * лічильники, нерозривні комірки й приглушений підпис -- `.admin-num`,
+     `.admin-nowrap`, `.admin-text-muted`, які в системі вже були. */
 
-.wh-info__icon {
-  flex-shrink: 0;
-  margin-top: 1px;
-  font-size: 22px;
-  color: var(--iprm-nav-active);
-}
-
-.wh-info code {
-  font-family: var(--iprm-font-mono);
-  font-size: 0.8125em;
-  padding: 1px 6px;
-  background: var(--iprm-card-bg);
-  border-radius: 6px;
-  color: var(--iprm-text);
-}
-
-/* ===== Stat-картки як фільтри за статусом ===== */
-
-.wh-stats {
-  margin-bottom: 24px;
-}
-
-/* .wh-stat-card звідси прибрано: це була власна копія клікабельної
-   картки-зрізу -- підйом на ховері, свій фокусний контур, своя активна
-   рамка. У системі така картка вже є (`a.admin-stat-card` і
-   `.admin-stat-card.is-active`), і решта реєстрів користується нею. Через
-   копію зріз вебхуків поводився не так, як зріз резервувань чи лідів. */
-
-/* ===== Бейджі статусів, яких немає в common.css ===== */
-
-
-/* ===== Чип дії (created / updated / deleted) ===== */
-
-.wh-action {
-  display: inline-block;
-  padding: 2px 10px;
-  font-family: var(--iprm-font-mono);
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  border-radius: var(--iprm-radius-pill);
-  background: var(--iprm-card-bg);
-  color: var(--iprm-text-secondary);
-}
-
-.wh-action--created { background: var(--iprm-badge-active-bg); color: var(--iprm-badge-active-text); }
-.wh-action--updated { background: var(--iprm-accent-light); color: var(--iprm-nav-active); }
-.wh-action--deleted { background: var(--iprm-error-bg); color: var(--iprm-error-text); }
-
-/* ===== Дрібні елементи таблиці ===== */
-
-.wh-slug {
-  font-family: var(--iprm-font-mono);
-  font-size: 0.8125rem;
-  color: var(--iprm-text);
-}
-
-.wh-uuid {
-  display: block;
-  margin-top: 3px;
-  font-family: var(--iprm-font-mono);
-  font-size: 0.6875rem;
-  /* UUID -- текст, який реально читають і копіюють, а --iprm-border-neutral
-     означає рівень ліній: на білому це 1.51, у тёмній темі 1.86. */
-  color: var(--iprm-text-light);
-}
-
-.wh-attempts {
-  font-variant-numeric: tabular-nums;
-}
-
-.wh-attempts--max {
-  color: var(--iprm-error-text);
-  font-weight: 700;
-}
-
-.wh-http {
-  font-variant-numeric: tabular-nums;
-}
-
-.wh-muted {
-  color: var(--iprm-text-light);
-}
-
-.wh-nowrap {
-  white-space: nowrap;
-}
-
-/* Колонка "Курс / Дія": slug та чип у стовпчик */
+/* Комірка "Курс / Дія": slug та таблетка дії стають одне під одним.
+   Саме розкладка, а не декор: у рядок вони не стають, бо slug буває довшим
+   за половину колонки, і таблетку виносило за її межу. */
 .wh-target {
   display: flex;
   flex-direction: column;
   gap: 6px;
   align-items: flex-start;
 }
-
-/* ===== Розгортувані деталі помилки (в комірці статусу) ===== */
-
-.wh-error {
-  margin-top: 6px;
-  font-size: 0.8125rem;
-}
-
-.wh-error summary {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  color: var(--iprm-error-text);
-  font-weight: 500;
-  list-style: none;
-}
-
-.wh-error summary::-webkit-details-marker {
-  display: none;
-}
-
-.wh-error summary .material-symbols-rounded {
-  font-size: 18px;
-}
-
-.wh-error pre {
-  margin: 8px 0 2px;
-  padding: 10px 12px;
-  max-width: 360px;
-  background: var(--iprm-error-bg);
-  color: var(--iprm-error-text);
-  border-radius: var(--iprm-radius-sm);
-  white-space: pre-wrap;
-  word-break: break-word;
-  font-family: var(--iprm-font-mono);
-  font-size: 0.75rem;
-  line-height: 1.5;
-}
-
-/* ===== Адаптив ===== */
-
-@media (max-width: 768px) {
-  .wh-info {
-    flex-direction: column;
-    gap: 10px;
-  }
-}
-

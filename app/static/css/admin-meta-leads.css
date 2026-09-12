@@ -153,43 +153,22 @@
   font-size: 0.875rem;
 }
 
-/* ===== Сира черга ===== */
+/* ===== Сирий payload на картці заявки ===== */
 
-.ml-info {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  padding: 16px 20px;
-  margin-bottom: 24px;
-  background: var(--iprm-white);
-  border: 1px solid var(--iprm-border);
-  border-left: 3px solid var(--iprm-nav-active);
-  border-radius: var(--iprm-radius);
-  font-size: 0.875rem;
-  line-height: 1.55;
-  color: var(--iprm-text-secondary);
-}
+/* .ml-info й .ml-error звідси прибрано: банер механізму й розкривачка збою
+   були копіями того, що те саме мала сторінка черги вебхуків. Тепер це
+   компоненти admin.css -- .admin-note й .admin-error-details -- і показані
+   вони на /admin/design-system.
 
-.ml-info__icon {
-  flex-shrink: 0;
-  margin-top: 1px;
-  font-size: 22px;
-  color: var(--iprm-nav-active);
-}
-
-.ml-error summary {
-  cursor: pointer;
-  font-size: 0.75rem;
-  color: var(--iprm-error-text);
-}
-
-.ml-error pre,
+   Разом із .ml-error поїхало й тло --iprm-card-bg: у тёмній темі цей токен
+   дорівнює поверхні картки, тож блок ставав невидимим прямокутником.
+   Вкладена поверхня -- це --iprm-surface-inset. */
 .ml-raw {
   max-height: 320px;
   overflow: auto;
   padding: 10px 12px;
   margin: 6px 0 0;
-  background: var(--iprm-card-bg);
+  background: var(--iprm-surface-inset);
   border-radius: var(--iprm-radius-sm);
   font-family: var(--iprm-font-mono);
   font-size: 0.75rem;
