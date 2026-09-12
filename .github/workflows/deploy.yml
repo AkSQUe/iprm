@@ -6,7 +6,28 @@ on:
       - main
 
 jobs:
+  # Ворота перед деплоєм: у main вливають напряму, без PR, тож це єдине місце,
+  # де набір тестів узагалі встигає спрацювати до того, як код опиниться на
+  # проді. Python 3.12 -- та сама версія, що на сервері (Ubuntu 24.04).
+  # WeasyPrint тут ставиться, але не імпортується: у коді всі його імпорти
+  # ліниві, а єдиний тест, якому він потрібен, сам себе пропускає без GTK.
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.lock -r requirements-dev.txt
+      - name: Run tests
+        run: pytest -q
+
   deploy:
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -19,13 +40,17 @@ jobs:
 
       - name: Deploy via rsync
         uses: burnett01/rsync-deployments@7.0.1
+        # docs/ -- 76 МБ вихідників (docx/pdf/xlsx), з яких зібрано .md. Жоден
+        # маршрут їх не читає: єдиний споживач -- CLI-команда `legal docx`, а її
+        # бланк (docs/legal/*.docx) у git і так не лежить, тому на сервері його
+        # ніколи й не було. Возити це на прод щодеплою -- дарма.
         # trainers/ -- protect-фільтр (а не exclude): репозиторні зображення
         # (фото, підписи) доставляються, але --delete НЕ зносить завантажені
         # через адмінку файли, яких немає в репозиторії. courses/, blog/ і
         # /certificates/ лишаються excluded: там лише серверні завантаження
         # та згенеровані PDF, репозиторного контенту немає.
         with:
-          switches: -avz --delete --exclude='.git' --exclude='keys/' --exclude='.env' --exclude='venv/' --exclude='iprm.sock' --exclude='app/static/images/courses/' --exclude='app/static/images/blog/' --filter='protect app/static/images/trainers/**' --exclude='/certificates/' --exclude='/media/' --exclude='/backups/'
+          switches: -avz --delete --exclude='.git' --exclude='keys/' --exclude='.env' --exclude='venv/' --exclude='iprm.sock' --exclude='app/static/images/courses/' --exclude='app/static/images/blog/' --filter='protect app/static/images/trainers/**' --exclude='/certificates/' --exclude='/media/' --exclude='/backups/' --exclude='/docs/'
           path: ./
           remote_path: /var/www/iprm/
           remote_host: ${{ secrets.VPS_HOST }}
