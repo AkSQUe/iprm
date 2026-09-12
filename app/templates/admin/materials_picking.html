@@ -5,33 +5,40 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-materials.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-materials-picking.css') }}?v={{ assets_version }}">
 {% endblock %}
 
 {% block content %}
-<div class="admin-layout admin-layout--wide materials-print">
+<div class="admin-layout admin-layout--wide picking-doc">
 
-  <div class="admin-hero materials-print__hide">
+  {# Один заголовок і на екран, і на папір. Доти їх було два: hero ховався у
+     друці, а поруч стояв власний друкований заголовок із назвою заходу.
+     На екрані це давало два заголовки підряд, а на папері зникав тип
+     документа -- роздруківка починалась назвою заходу й не казала, що вона
+     взагалі таке. #}
+  <div class="admin-hero">
     <div>
-      <div class="admin-breadcrumb">
+      <div class="admin-breadcrumb picking-noprint">
         <a href="{{ url_for('admin.instance_materials', instance_id=instance.id) }}" class="admin-breadcrumb__link">Матеріали заходу</a>
         <span class="admin-breadcrumb__sep">/</span>
         <span class="admin-breadcrumb__current">Пікінг-лист</span>
       </div>
       <h1 class="admin-hero__title">Пікінг-лист матеріалів</h1>
+      <p class="admin-hero__subtitle">
+        {{ instance.effective_title or 'Захід' }}
+        {%- if instance.start_date %} &middot; {{ instance.start_date.strftime('%d.%m.%Y') }}{% endif %}
+        {%- if instance.location %} &middot; {{ instance.location }}{% endif %}
+      </p>
+      {# Статус -- таблеткою, як на решті сторінок домену (реєстр матеріалів,
+         зведення резервувань). Доти тут стояв голий текст, хоч модель уже
+         віддавала `status_badge`. #}
+      <p class="picking-doc__status">
+        <span class="badge badge--{{ reservation.status_badge }}">{{ reservation.status_label }}</span>
+      </p>
     </div>
-    <div class="admin-hero__actions">
+    <div class="admin-hero__actions picking-noprint">
       <button type="button" class="btn-admin btn-admin--primary" data-print>Друк</button>
     </div>
-  </div>
-
-  <div class="materials-print__head">
-    <h2>{{ instance.effective_title or 'Захід' }}</h2>
-    <p>
-      {% if instance.start_date %}Дата: {{ instance.start_date.strftime('%d.%m.%Y') }}{% endif %}
-      {% if instance.location %} · {{ instance.location }}{% endif %}
-      · Статус: {{ reservation.status_label }}
-    </p>
   </div>
 
   <div class="admin-table-wrap">
@@ -39,7 +46,9 @@
     <thead>
       <tr>
         <th>Артикул</th>
-        <th class="materials-name">Назва</th>
+        {# Класу вирівнювання тут не треба: `.admin-table th:nth-child(2)`
+           вже тримає другу колонку ліворуч. #}
+        <th>Назва</th>
         <th>Зарезервовано</th>
         <th>Фактично</th>
       </tr>
@@ -48,12 +57,12 @@
       {% for it in reservation.items %}
       <tr>
         <td><code class="admin-code">{{ it.sku }}</code></td>
-        <td class="materials-name">{{ it.name or '—' }}</td>
-        <td>{{ it.quantity_reserved }}</td>
-        <td>{{ it.quantity_actual if it.quantity_actual is not none else '—' }}</td>
+        <td>{{ it.name or '—' }}</td>
+        <td class="admin-num">{{ it.quantity_reserved }}</td>
+        <td class="admin-num">{{ it.quantity_actual if it.quantity_actual is not none else '—' }}</td>
       </tr>
       {% else %}
-      <tr><td colspan="4">Немає позицій</td></tr>
+      <tr><td colspan="4" class="admin-text-muted">Немає позицій</td></tr>
       {% endfor %}
     </tbody>
   </table>

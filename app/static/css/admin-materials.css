@@ -102,13 +102,10 @@
 .materials-returns [data-returns].is-returning { color: var(--iprm-success); font-weight: 600; }
 #materialsReturns { color: var(--iprm-success); }
 
-.materials-print__head { margin: 8px 0 16px; }
-.materials-print__head h2 { margin: 0 0 4px; }
-
-@media print {
-  .materials-print__hide { display: none !important; }
-  .materials-print { margin: 0; }
-}
+/* `.materials-print*` звідси прибрано. Файл компонентний -- його підключають
+   чотири сторінки домену, -- а ці класи мали рівно одного споживача, пікінг-
+   лист. Вони переїхали в page-admin-materials-picking.css під префіксом
+   `picking-`. */
 
 .materials-thumb {
   width: 44px;
