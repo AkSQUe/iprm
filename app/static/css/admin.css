@@ -338,24 +338,6 @@
 }
 
 /* Admin-specific form overrides */
-/* Стрілка селекта на осі --iprm-text-light (#857c93). Літерал, а не токен: CSS-змінні
-   всередині url() не розгортаються. Було #666 -- 5.27 у світлій темі, але 2.95 у
-   тёмній, тобто стрілка зникала. Це правило перекриває однойменне нижче в
-   цьому файлі, тож колір тримаємо в них однаковим -- щоб від того, яке з
-   двох спрацювало, нічого не залежало.
-   :not([multiple]) -- стрілка одиночного select тут доречна, а мультиселект
-   (select[multiple], нативний фолбек .admin-multiselect) -- це прокручуваний
-   список, а не спадне меню; та сама стрілка поверх нього малювала фальшивий
-   шеврон посеред опцій і зайве праве поле. */
-.admin-form select.form-input:not([multiple]) {
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23857c93' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 14px center;
-  padding-right: 36px;
-  cursor: pointer;
-}
-
 .admin-form textarea.form-input {
   min-height: 100px;
   line-height: 1.6;
@@ -1934,20 +1916,6 @@ a.admin-stat-card:focus-visible {
    селект в адмінці -- форма прямо в комірці реєстру (запити B2B, форми
    Meta), -- і саме він лишався поза списком: селект малювався з рідною
    стрілкою браузера, тобто виглядав інакше за всі решта селектів сайту. */
-.admin-with-sidebar .admin-form select.form-input:not([multiple]),
-.admin-with-sidebar .admin-inline-form select.form-input:not([multiple]),
-.admin-with-sidebar .admin-control-row select.form-input:not([multiple]),
-.admin-with-sidebar .admin-filters__form select.form-input:not([multiple]) {
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23857c93' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  padding-right: 36px;
-  cursor: pointer;
-}
-
 /* Поле, яке ЧЕКАЄ на введення: обов'язкове й досі порожнє. Не помилка
    (.is-invalid) -- людина ще нічого не зробила неправильно, -- і не фокус:
    підсвітка безумовна й показує, скільки ще лишилось заповнити. Клас

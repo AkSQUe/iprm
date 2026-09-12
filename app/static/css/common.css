@@ -2100,6 +2100,45 @@ textarea.form-input {
   resize: vertical;
 }
 
+/* Список вибору -- теж одне оголошення на весь сайт.
+
+   Нативну стрілку доводиться знімати (вона ламає межу поля), а отже треба
+   намалювати свою -- і саме цю пару "appearance: none плюс стрілка" кожна
+   форма домовлялась мати окремо. Наслідком були не копії, а РОЗБІЖНІ
+   реалізації: .admin-form малювала трикутник на 14px, .admin-with-sidebar --
+   шеврон на 12px, .iprm-b2b__form -- той самий шеврон, але сірий іншої
+   родини (#86868b), а .iprm-lead-form знімала стрілку Й НЕ ДАВАЛА ЗАМІНИ,
+   тож поле "Месенджер" на кожному лендінгу курсу стояло без жодної ознаки,
+   що воно розкривається.
+
+   #857c93 -- вісь --iprm-text-light, усталений колір стрілки проєкту (той
+   самий, що в .badge-select). Літерал, а не токен: CSS-змінні всередині
+   url() не розгортаються. Було #666 -- 5.27 у світлій темі, але 2.95 у
+   тёмній, тобто стрілка там зникала; це вже лікували раз, в адмінці.
+
+   :not([multiple]) обов'язковий: мультиселект (select[multiple], нативний
+   фолбек .admin-multiselect) -- це прокручуваний список, а не спадне меню,
+   і та сама стрілка малювала поверх нього фальшивий шеврон посеред опцій
+   плюс зайве праве поле. */
+select.form-input:not([multiple]) {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23857c93' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+  cursor: pointer;
+}
+
+/* Firefox: прибрати пунктирну рамку в фокусі на select. Стояло окремо в
+   courses.css під скоупом форми B2B -- поведінка браузера, а не рішення
+   тієї форми. */
+select.form-input:-moz-focusring {
+  color: transparent;
+  text-shadow: 0 0 0 var(--iprm-text);
+}
+
 .form-section .form-hint {
   font-size: 12px;
   color: var(--iprm-text-light);

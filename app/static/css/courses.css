@@ -1594,24 +1594,6 @@ button.iprm-tag:focus-visible {
    `.form-input:focus` (common.css). Скоуп не додавав нічого:
    базове правило діє на кожен .form-input. */
 
-/* Select: прибрати native-стрілку, намалювати власний шеврон. */
-.iprm-b2b__form select.form-input {
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  padding-right: 36px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2386868b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  cursor: pointer;
-}
-
-/* Firefox: прибрати пунктирну рамку в фокусі на select */
-.iprm-b2b__form select.form-input:-moz-focusring {
-  color: transparent;
-  text-shadow: 0 0 0 var(--iprm-text);
-}
-
 .iprm-b2b__form .apple-btn {
   width: 100%;
   margin-top: 8px;

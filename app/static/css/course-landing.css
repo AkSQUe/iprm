@@ -1374,13 +1374,6 @@
   padding: 13px 14px;
 }
 
-/* select не успадковує appearance від .form-input -- знімаємо її явно,
-   інакше нативна стрілка ламає межу 1.5px. */
-.iprm-lead-form select.form-input {
-  -webkit-appearance: none;
-  appearance: none;
-}
-
 /* ========== FAQ ==========
    Перенесено з courses.css. Розмітка референсу: тонкі роздільники
    замість карток, "+" повертається на 45deg замість підміни символу
