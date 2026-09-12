@@ -10,6 +10,8 @@ from app.rbac import permission_required, service as rbac_service
 from app.rbac.service import NO_ROLE_FILTER, AccessError
 from app.extensions import db
 from app.services import xlsx_reports
+from app.services.partner_auth import issuer_label
+from app.models.auth_identity import AuthIdentity
 from app.models.medical_profile import MedicalProfile
 from app.models.rbac import Role
 from app.models.registration import EventRegistration
@@ -102,6 +104,26 @@ def _users_with_counts(rows):
     return users
 
 
+def _mark_partner_origin(users):
+    """Проставити `_cached_partner_issuer` пакетом, одним запитом.
+
+    `User.partner_issuer` б'є в auth_identities на КОЖНОГО користувача --
+    у списку це перетворило б запити сторінки на "плюс довжина сторінки"
+    (той самий слід, що вже описаний для has_password у meta-заявках).
+    """
+    ids = [u.id for u in users]
+    issuers = {}
+    if ids:
+        rows = AuthIdentity.query.filter(
+            AuthIdentity.user_id.in_(ids),
+            AuthIdentity.provider == AuthIdentity.PROVIDER_PARTNER,
+        ).all()
+        issuers = {r.user_id: (r.raw_claims or {}).get('issuer') for r in rows}
+    for user in users:
+        user._cached_partner_issuer = issuers.get(user.id)
+    return users
+
+
 @admin_bp.route('/users')
 @permission_required('users.view')
 def users():
@@ -116,7 +138,10 @@ def users():
     return render_template(
         'admin/users.html',
         per_page_options=_listing.PER_PAGE_OPTIONS,
-        users=_users_with_counts(pagination.items),
+        users=_mark_partner_origin(_users_with_counts(pagination.items)),
+        partner_total=AuthIdentity.query.filter_by(
+            provider=AuthIdentity.PROVIDER_PARTNER).count(),
+        issuer_label=issuer_label,
         pagination=pagination,
         total_found=pagination.total,
         filters=filters,
