@@ -450,6 +450,12 @@ def create_app(config_name=None):
             path = request.path or ''
             if path.startswith('/admin') or path.startswith('/static'):
                 return {'upcoming_events': []}
+            # Той самий кеш на request, що й у `inject_certdata_reminder`:
+            # процесор відпрацьовує на кожному вкладеному рендері, а блок
+            # на сторінці один.
+            cached = getattr(request, '_upcoming_events', Ellipsis)
+            if cached is not Ellipsis:
+                return {'upcoming_events': cached}
             from datetime import datetime, timezone
             from app.models.course_instance import CourseInstance
             now = datetime.now(timezone.utc)
@@ -477,6 +483,7 @@ def create_app(config_name=None):
                     'when': inst.start_date.strftime('%d.%m.%Y, %H:%M'),
                     'place': place,
                 })
+            request._upcoming_events = events
             return {'upcoming_events': events}
         except Exception:
             return {'upcoming_events': []}
@@ -516,10 +523,17 @@ def create_app(config_name=None):
                 return flags
             from app.extensions import db
             from app.models.registration import EventRegistration
-            has_reg = db.session.query(EventRegistration.id).filter(
-                EventRegistration.user_id == current_user.id,
-                EventRegistration.status != 'cancelled',
-            ).first() is not None
+            # Кеш на request (ідіома `inject_undo_offer`), бо процесор
+            # відпрацьовує на КОЖНОМУ `render_template`, а сторінка рендерить
+            # і вкладені партіали -- без кешу той самий SELECT повторювався б
+            # стільки разів, скільки на сторінці вкладених рендерів.
+            has_reg = getattr(request, '_certdata_has_reg', Ellipsis)
+            if has_reg is Ellipsis:
+                has_reg = db.session.query(EventRegistration.id).filter(
+                    EventRegistration.user_id == current_user.id,
+                    EventRegistration.status != 'cancelled',
+                ).first() is not None
+                request._certdata_has_reg = has_reg
             flags['certdata_incomplete'] = has_reg
             flags['show_certdata_reminder'] = has_reg and (
                 request.blueprint not in _CERTDATA_POPUP_MUTED
