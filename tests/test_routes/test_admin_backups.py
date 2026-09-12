@@ -331,3 +331,32 @@ def test_create_is_refused_without_postgres_tools(
     assert response.status_code == 200
     assert 'postgresql-client' in response.get_data(as_text=True)
     assert BackupService.pg_tools_available() is False
+
+
+class TestActionsFollowPermissions:
+    """Кнопку, яку сервер однаково відмовить, показувати не можна.
+
+    Сторінку відкриває `backup.view`, а кожна дія на ній вимагає окремого,
+    вищого права. Доти розмітка показувала всі дії всім, хто зайшов: людина
+    без `backup.delete` бачила кошик, тиснула його й отримувала 403 -- тобто
+    сторінка обіцяла те, чого не могла зробити.
+    """
+
+    def test_role_without_delete_sees_no_delete_action(
+        self, client, tools_present, roomy_disk, completed_backup,
+    ):
+        """Роль `admin` має все, крім видалення копій (rbac/registry.py)."""
+        from tests.support.rbac import make_user_with_role, switch_user
+
+        switch_user(client, make_user_with_role('admin'))
+        html = client.get('/admin/backups').get_data(as_text=True)
+
+        assert f'/admin/backups/{completed_backup.id}/download' in html
+        assert f'/admin/backups/{completed_backup.id}/delete' not in html
+
+    def test_super_admin_still_sees_delete(
+        self, admin_client, tools_present, roomy_disk, completed_backup,
+    ):
+        html = admin_client.get('/admin/backups').get_data(as_text=True)
+
+        assert f'/admin/backups/{completed_backup.id}/delete' in html

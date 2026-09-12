@@ -176,6 +176,23 @@
     </div>
     <p class="ds-hint">.admin-code: код усередині речення, тло --iprm-surface-inset. Блоковий .admin-code-block розриває абзац і для цього не годиться</p>
 
+    <h3 class="ds-section-heading">Машинний ідентифікатор</h3>
+    <div class="ds-demo">
+      <table class="admin-table">
+        <thead><tr><th>Подія</th><th>Курс</th><th>Право</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="admin-nowrap">12.09.2026 16:09:47
+              <span class="admin-subline admin-mono admin-text-muted">a3f9c1e40b72</span>
+            </td>
+            <td><a href="#" class="admin-mono">bazovyi-kurs-plazmoterapii</a></td>
+            <td><span class="admin-mono">webhooks.manage</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="ds-hint">.admin-mono -- slug, uuid, код права, ім&#39;я ролі: те, що читають і копіюють посимвольно, а не як слово. Кегль 0.9em -- та сама поправка, що в .admin-code: моно при рівному розмірі важить більше за сусідній текст. Кольору клас НЕ задає, тож у комірці посилання лишається посиланням, а другий поверх під значенням гасить .admin-text-muted. Відрізняється від .admin-code тим, що не має плашки: ідентифікатор у реєстрі стоїть сам, а не всередині речення.</p>
+
     <h3 class="ds-section-heading">Todo List</h3>
     <div class="ds-demo">
       <div class="form-section">
@@ -490,6 +507,12 @@
                 <input type="checkbox" checked> Активний у каталозі
               </label>
             </div>
+            <div class="form-group">
+              <label for="ds-await">Ціна зі знижкою</label>
+              <input type="number" id="ds-await" class="form-input field-await"
+                     placeholder="Введіть суму">
+              <div class="form-hint">.field-await -- поле, на введення якого форма чекає просто зараз.</div>
+            </div>
           </div>
         </div>
         <div class="admin-control-row">
@@ -506,6 +529,7 @@
       </form>
     </div>
     <p class="ds-hint">.admin-control-row -- ряд керування (селект + кнопка), НЕ фільтр: фільтри збирає макрос і в них свій клас .admin-filters__form. .admin-field-readonly на .form-input -- значення, яке не редагують, але яке має виглядати полем, а не голим текстом.</p>
+    <p class="ds-hint">.field-await ставиться скриптом на поле, дію з яким форма щойно попросила (напр. увімкнули знижку -- сума ще порожня): рамка кольору акценту плюс пульсація, щоб око знайшло поле без пошуку по формі. Знімається, щойно значення введено. Під prefers-reduced-motion пульсація вимикається, а рамка лишається -- інакше стан зник би зовсім. Жив у page-admin-participants.css, тобто page-файл задавав декор спільному .form-input -- єдине таке місце в адмінці.</p>
 
     <h3 class="ds-section-heading">Шапка секції з дією</h3>
     <div class="ds-demo">
@@ -543,6 +567,20 @@
     </div>
     <p class="ds-hint">.form-input--fallback -- поле, порожнеча якого не дірка, а свідомий фолбек: порожній переклад означає &laquo;показуємо оригінал&raquo;. Пунктир (--iprm-border-strong) робить незаповнені рядки видимими просто з погляду на таблицю. Під фокусом поле звичайне -- правило не чіпає :focus взагалі.</p>
 
+    <h3 class="ds-section-heading">Поле, що чекає на введення</h3>
+    <div class="ds-demo">
+      {# .field-await діє лише всередині .admin-form -- як і в бою. #}
+      <form class="admin-form">
+        <div class="ds-row">
+          <input type="text" class="form-input field-await" placeholder="Прізвище"
+                 aria-label="Обов'язкове поле, ще не заповнене">
+          <input type="text" class="form-input" value="Гриценко"
+                 aria-label="Заповнене поле">
+        </div>
+      </form>
+    </div>
+    <p class="ds-hint">.field-await -- обов'язкове поле, яке ще порожнє. Не помилка: людина поки нічого не зробила неправильно, тому й акцент, а не червоне. Клас ставить і знімає скрипт сторінки, а стан помилки має пріоритет і знімає його сам. Пульсація вимикається під prefers-reduced-motion, рамка лишається -- інакше стан зник би зовсім.</p>
+
     <h3 class="ds-section-heading">Зона перетягування</h3>
     <div class="ds-demo">
       <div class="admin-dropzone">
@@ -575,6 +613,8 @@
           <tr><td class="admin-cell-title">admin-text-muted</td><td>приглушений текст (--iprm-text-light)</td></tr>
           <tr><td class="admin-cell-title">admin-text-left</td><td>ліве вирівнювання в комірці</td></tr>
           <tr><td class="admin-cell-title">admin-nowrap</td><td>комірка без переносу (дати, лічильники)</td></tr>
+          <tr><td class="admin-cell-title">admin-num</td><td>табличні цифри: стовпчик лічильників читається як стовпчик</td></tr>
+          <tr><td class="admin-cell-title">admin-mono</td><td>машинний ідентифікатор: slug, uuid, код права, ім&#39;я ролі</td></tr>
           <tr><td class="admin-cell-title">admin-truncate</td><td>один рядок із трикрапкою; потребує визначеної ширини комірки</td></tr>
           <tr><td class="admin-cell-title">admin-clamp-2</td><td>два рядки з трикрапкою</td></tr>
           <tr><td class="admin-cell-title">admin-flex-center</td><td>ряд елементів по центру з проміжком 12px</td></tr>

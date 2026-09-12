@@ -1,4 +1,5 @@
 {% extends "admin/base_admin.html" %}
+{% from 'admin/partials/_filter_bar.html' import pager, stat_cards, empty_state %}
 
 {% block title %}Резервні копії | ІПРМ{% endblock %}
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
@@ -25,6 +26,47 @@
         <h1 class="admin-hero__title">Резервні копії бази даних</h1>
         <p class="admin-hero__subtitle">Копія робиться щодня о 03:00 автоматично. Відновлення -- лише через CLI.</p>
       </div>
+      {# Обслуговування сховища -- дії НАД списком, тому в шапці, а не серед
+         рядків. Очищення стоїть під «...» за тим самим правилом, що й
+         видалення в реєстрах: воно незворотне й не має бути за один промах
+         від сусідньої кнопки. #}
+      {% if can('backup.manage') %}
+      <div class="admin-hero__actions">
+        <form method="POST" action="{{ url_for('admin.backup_validate_all') }}"
+              data-single-submit data-submitting-label="Перевіряємо копії…">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn-admin btn-admin--secondary"
+                  title="Звірити контрольні суми всіх придатних копій">
+            {{ icon('verified') }} Перевірити всі копії
+          </button>
+        </form>
+        <details class="admin-actions-menu">
+          <summary class="btn-admin btn-admin--secondary btn-admin--icon" title="Ще дії" aria-label="Ще дії">
+            {{ icon('more_vert') }}
+          </summary>
+          <div class="admin-actions-menu__items">
+            <form method="POST" action="{{ url_for('admin.backup_cleanup') }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" name="dry_run" value="true" class="admin-actions-menu__item">
+                {{ icon('search') }} Перевірити очищення
+              </button>
+            </form>
+            {# Підтвердження тут не формальність: кнопка знищує копії назавжди,
+               а сусідня з нею лише рахує -- промах між ними коштував би саме
+               тих файлів, заради яких сторінка й існує. #}
+            <form method="POST" action="{{ url_for('admin.backup_cleanup') }}"
+                  data-confirm="Знищити копії, старші за термін зберігання? Файли зникнуть назавжди."
+                  data-confirm-ok="Очистити сховище" data-confirm-danger>
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="admin-actions-menu__item admin-actions-menu__item--danger">
+                {{ icon('delete') }} Очистити старі копії
+              </button>
+            </form>
+            <span class="admin-actions-menu__note">Перевірка лише рахує.</span>
+          </div>
+        </details>
+      </div>
+      {% endif %}
     </div>
 
     {% include 'partials/flash_messages.html' %}
@@ -33,8 +75,7 @@
      узагалі -- саме так система простояла мертвою три місяці. #}
   {% if missing_pg_tools %}
   <div class="alert alert--warning">
-    {{ icon('error') }}
-    <span class="alert__title">Резервне копіювання не працює</span>
+    <strong class="alert__title">{{ icon('error') }} Резервне копіювання не працює</strong>
     На сервері немає {{ missing_pg_tools | join(', ') }} — створити копію неможливо.
     Встановіть пакет postgresql-client відповідної версії (PostgreSQL 16).
   </div>
@@ -44,13 +85,12 @@
      системи -- те, через що вона вже простояла три місяці даремно. #}
   {% if stats.is_stale %}
   <div class="alert alert--warning">
-    {{ icon('error') }}
     {% if not stats.last_backup %}
-    <span class="alert__title">Копій бази немає</span>
+    <strong class="alert__title">{{ icon('error') }} Копій бази немає</strong>
     Жодної успішної копії ще не створено. Автоматична копія робиться щодня
-    о 03:00; зробити зараз -- кнопкою нижче.
+    о 03:00{% if can('backup.manage') %}; зробити зараз -- кнопкою нижче{% endif %}.
     {% else %}
-    <span class="alert__title">Остання копія застаріла</span>
+    <strong class="alert__title">{{ icon('error') }} Остання копія застаріла</strong>
     Найсвіжішій копії вже {{ stats.last_backup_age_hours | round | int }} год, а межа --
     {{ stats.max_age_hours }} год. Перевірте, чи виконується щоденна копія о 03:00.
     {% endif %}
@@ -59,70 +99,45 @@
 
   {% if stats.disk_low %}
   <div class="alert alert--warning">
-    {{ icon('error') }}
-    <span class="alert__title">Мало місця на диску</span>
+    <strong class="alert__title">{{ icon('error') }} Мало місця на диску</strong>
     Вільно лише {{ stats.disk_free_display }} ({{ stats.disk_free_percent }}%).
     Заповнений диск зупиняє не лише копіювання, а весь сайт: приберіть старі
     копії або збільште диск.
   </div>
   {% endif %}
 
-  {# Stats cards #}
-  <div class="backup-stats">
-    <div class="backup-stats__card">
-      <div class="backup-stats__value">{{ stats.completed }}</div>
-      <div class="backup-stats__label">Успішних копій</div>
-    </div>
-    <div class="backup-stats__card">
-      <div class="backup-stats__value">{{ stats.total_size_display }}</div>
-      <div class="backup-stats__label">Загальний розмір</div>
-    </div>
-    <div class="backup-stats__card">
-      <div class="backup-stats__value">{{ stats.last_backup.created_at.strftime('%d.%m.%Y %H:%M') if stats.last_backup else 'Немає' }}</div>
-      <div class="backup-stats__label">Остання копія</div>
-    </div>
-    <div class="backup-stats__card">
-      <div class="backup-stats__value">{{ stats.disk_free_display }}</div>
-      <div class="backup-stats__label">Вільне місце</div>
-    </div>
-  </div>
+  {# Стан сховища. Кольором позначені РІВНО ті дві картки, що вміють бути
+     поганими: вік останньої копії й вільне місце. Решта -- нейтральні числа;
+     доти всі чотири були акцентними, і найважливіша не відрізнялась від
+     довідкової. #}
+  {{ stat_cards([
+       {'value': stats.completed, 'label': 'Успішних копій'},
+       {'value': stats.total_size_display, 'label': 'Загальний розмір'},
+       {'value': stats.last_backup.created_at.strftime('%d.%m.%Y %H:%M') if stats.last_backup else 'Немає',
+        'label': 'Остання копія', 'mod': 'alert' if stats.is_stale else none},
+       {'value': stats.disk_free_display, 'label': 'Вільне місце',
+        'mod': 'danger' if stats.disk_low else none},
+     ], cols=4) }}
 
-  {# Actions #}
-  <div class="backup-actions">
-    <form method="POST" action="{{ url_for('admin.backup_create') }}" class="backup-actions__form"
-          data-single-submit data-submitting-label="Створюємо копію…">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <div class="backup-actions__row">
-        <select name="backup_type" class="form-input backup-actions__select">
-          <option value="full">Повна копія</option>
-          <option value="schema_only">Тільки схема</option>
-          <option value="data_only">Тільки дані</option>
-        </select>
-        {# maxlength -- щоб браузер зупинив задовгий опис до сервера. Сервіс
-           його все одно підрізає, але межа мусить стояти на обох рівнях. #}
-        <input type="text" name="description" maxlength="500" class="form-input backup-actions__desc" placeholder="Опис (необов'язково)">
-        <button type="submit" class="apple-btn apple-btn--primary">Створити копію</button>
-      </div>
-    </form>
+  {% if can('backup.manage') %}
+  <form method="POST" action="{{ url_for('admin.backup_create') }}" class="admin-control-row"
+        data-single-submit data-submitting-label="Створюємо копію…">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <select name="backup_type" class="form-input" aria-label="Тип копії">
+      <option value="full">Повна копія</option>
+      <option value="schema_only">Тільки схема</option>
+      <option value="data_only">Тільки дані</option>
+    </select>
+    {# maxlength -- щоб браузер зупинив задовгий опис до сервера. Сервіс
+       його все одно підрізає, але межа мусить стояти на обох рівнях. #}
+    <input type="text" name="description" maxlength="500" class="form-input page-backups__desc-field" placeholder="Опис (необов'язково)" aria-label="Опис копії">
+    <button type="submit" class="btn-admin btn-admin--primary">{{ icon('backup') }} Створити копію</button>
+  </form>
+  {% endif %}
 
-    <div class="backup-actions__cleanup">
-      <form method="POST" action="{{ url_for('admin.backup_validate_all') }}"
-            data-single-submit data-submitting-label="Перевіряємо копії…">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button type="submit" class="apple-btn apple-btn--outline apple-btn--sm"
-                title="Звірити контрольні суми всіх придатних копій">Перевірити всі копії</button>
-      </form>
-      <form method="POST" action="{{ url_for('admin.backup_cleanup') }}">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button type="submit" name="dry_run" value="true" class="apple-btn apple-btn--outline apple-btn--sm">Перевірити очищення</button>
-        <button type="submit" class="apple-btn apple-btn--outline apple-btn--sm">Очистити старі копії</button>
-      </form>
-    </div>
-  </div>
-
-  {# Backup list #}
-  <div class="backup-table-wrap">
-    <table class="backup-table">
+  {% if backups %}
+  <div class="admin-table-wrap">
+    <table class="admin-table">
       <thead>
         <tr>
           <th>ID</th>
@@ -137,77 +152,95 @@
       </thead>
       <tbody>
         {% for backup in backups %}
-        <tr class="backup-table__row backup-table__row--{{ backup.status }}">
-          <td class="backup-table__id" data-label="ID">#{{ backup.id }}</td>
-          <td data-label="Тип">
-            <span class="backup-type backup-type--{{ backup.backup_type }}">
-              {% if backup.backup_type == 'full' %}Повна
-              {% elif backup.backup_type == 'schema_only' %}Схема
-              {% elif backup.backup_type == 'data_only' %}Дані
-              {% elif backup.backup_type == 'pre_restore' %}Pre-restore
-              {% endif %}
-            </span>
-          </td>
-          <td data-label="Статус">
-            <span class="backup-status backup-status--{{ backup.status }}">
-              {% if backup.status == 'completed' %}Готово
-              {% elif backup.status == 'in_progress' %}В процесі
-              {% elif backup.status == 'failed' %}Помилка
-              {% elif backup.status == 'corrupted' %}Пошкоджено
-              {% endif %}
-            </span>
-          </td>
-          <td data-label="Розмір">{{ backup.file_size_display }}</td>
-          <td data-label="Тривалість">{% if backup.duration_seconds %}{{ '%.1f' | format(backup.duration_seconds) }}с{% else %}-{% endif %}</td>
-          <td class="backup-table__desc" data-label="Опис">{{ backup.description or '-' }}</td>
-          <td data-label="Дата">{{ backup.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
-          <td class="backup-table__actions" data-label="Дії">
-            {% if backup.status == 'completed' %}
-            <a href="{{ url_for('admin.backup_download', backup_id=backup.id) }}" class="backup-action-btn backup-action-btn--download" title="Завантажити">&#x2193;</a>
-            {# Формою, а не посиланням: перевірка міняє статус копії. #}
-            <form method="POST" action="{{ url_for('admin.backup_validate', backup_id=backup.id) }}" class="backup-action-form"
-                  data-single-submit data-submitting-label="Перевіряємо…">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button type="submit" class="backup-action-btn backup-action-btn--validate" title="Перевірити цілісність">&#x2713;</button>
-            </form>
+        <tr>
+          <td><strong>#{{ backup.id }}</strong></td>
+          {# Тип -- словом, без плашки. Кольорова вісь у цій таблиці одна,
+             і вона належить СТАТУСУ: друга родина плашок поруч змагалась би
+             з нею за увагу саме там, де рядок читають на «добре чи погано». #}
+          <td>
+            {% if backup.backup_type == 'full' %}Повна
+            {% elif backup.backup_type == 'schema_only' %}Схема
+            {% elif backup.backup_type == 'data_only' %}Дані
+            {% elif backup.backup_type == 'pre_restore' %}Перед відновленням
             {% endif %}
-            <form method="POST" action="{{ url_for('admin.backup_delete', backup_id=backup.id) }}" class="backup-action-form" data-confirm="Видалити резервну копію #{{ backup.id }}?" data-confirm-ok="Видалити копію" data-confirm-danger>
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button type="submit" class="backup-action-btn backup-action-btn--delete" title="Видалити">&#x2715;</button>
-            </form>
+          </td>
+          <td>
+            {% if backup.status == 'completed' %}<span class="badge badge--success">Готово</span>
+            {% elif backup.status == 'in_progress' %}<span class="badge badge--info">В процесі</span>
+            {% elif backup.status == 'failed' %}<span class="badge badge--danger">Помилка</span>
+            {% elif backup.status == 'corrupted' %}<span class="badge badge--warning">Пошкоджено</span>
+            {% endif %}
+          </td>
+          <td class="admin-num admin-nowrap">{{ backup.file_size_display }}</td>
+          <td class="admin-num admin-nowrap">{% if backup.duration_seconds %}{{ '%.1f' | format(backup.duration_seconds) }}с{% else %}<span class="admin-text-muted">&mdash;</span>{% endif %}</td>
+          <td>
+            {% if backup.description %}
+            <span class="admin-clamp-2" title="{{ backup.description }}">{{ backup.description }}</span>
+            {% else %}<span class="admin-text-muted">&mdash;</span>{% endif %}
+          </td>
+          <td class="admin-nowrap">
+            {{ backup.created_at.strftime('%d.%m.%Y') }}
+            <span class="admin-subline admin-text-muted">{{ backup.created_at.strftime('%H:%M') }}</span>
+          </td>
+          <td>
+            <div class="admin-table__actions">
+              {% if backup.status == 'completed' and can('backup.export') %}
+              <a href="{{ url_for('admin.backup_download', backup_id=backup.id) }}"
+                 class="btn-admin btn-admin--secondary btn-admin--sm btn-admin--icon"
+                 aria-label="Завантажити" title="Завантажити">{{ icon('download') }}</a>
+              {% endif %}
+              {% if backup.status == 'completed' and can('backup.manage') %}
+              {# Формою, а не посиланням: перевірка міняє статус копії. #}
+              <form method="POST" action="{{ url_for('admin.backup_validate', backup_id=backup.id) }}"
+                    data-single-submit data-submitting-label="Перевіряємо…">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm btn-admin--icon"
+                        aria-label="Перевірити цілісність" title="Перевірити цілісність">{{ icon('verified') }}</button>
+              </form>
+              {% endif %}
+              {% if can('backup.delete') %}
+              <details class="admin-actions-menu">
+                <summary class="btn-admin btn-admin--secondary btn-admin--sm btn-admin--icon" title="Ще дії" aria-label="Ще дії">
+                  {{ icon('more_vert') }}
+                </summary>
+                <div class="admin-actions-menu__items">
+                  <form method="POST" action="{{ url_for('admin.backup_delete', backup_id=backup.id) }}"
+                        data-confirm="Видалити резервну копію #{{ backup.id }}?"
+                        data-confirm-ok="Видалити копію" data-confirm-danger>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="admin-actions-menu__item admin-actions-menu__item--danger">
+                      {{ icon('delete') }} Видалити
+                    </button>
+                  </form>
+                </div>
+              </details>
+              {% endif %}
+            </div>
           </td>
         </tr>
         {% if backup.error_message %}
-        <tr class="backup-table__error">
+        {# Причина невдачі -- відкритим текстом, без «розгорнути». Сторінку
+           відкривають саме з питанням «чому не спрацювало», і ховати
+           відповідь за клік означає ховати те, заради чого прийшли. #}
+        <tr class="page-backups__note">
           <td colspan="8">
-            <details>
-              <summary>Помилка</summary>
-              <pre>{{ backup.error_message }}</pre>
-            </details>
+            <span class="admin-subline admin-text-muted page-backups__note-label">Помилка копіювання #{{ backup.id }}</span>
+            <pre class="admin-code-block">{{ backup.error_message }}</pre>
           </td>
         </tr>
         {% endif %}
-        {% else %}
-        <tr>
-          <td colspan="8" class="backup-table__empty">Резервних копій ще немає. Створіть першу копію вище.</td>
-        </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
-
-  {# Pagination #}
-  {% if pagination.pages > 1 %}
-  <div class="backup-pagination">
-    {% if pagination.has_prev %}
-    <a href="{{ url_for('admin.backups', page=pagination.prev_num) }}" class="backup-pagination__link">&laquo; Назад</a>
-    {% endif %}
-    <span class="backup-pagination__info">Сторінка {{ pagination.page }} з {{ pagination.pages }}</span>
-    {% if pagination.has_next %}
-    <a href="{{ url_for('admin.backups', page=pagination.next_num) }}" class="backup-pagination__link">Далі &raquo;</a>
-    {% endif %}
-  </div>
+  {% else %}
+  {% call empty_state(icon_name='backup', title='Резервних копій ще немає') %}
+    <p>Автоматична копія робиться щодня о 03:00.{% if can('backup.manage') %}
+       Щоб не чекати, створіть першу копію формою вище.{% endif %}</p>
+  {% endcall %}
   {% endif %}
+
+  {{ pager('admin.backups', pagination) }}
   </div>
 </div>
 {% endblock %}

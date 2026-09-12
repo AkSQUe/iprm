@@ -24,6 +24,16 @@
   min-height: calc(100vh - 120px);
 }
 
+/* Навігація на папері -- смуга піктограм уздовж лівого краю аркуша, по якій
+   нікуди не клацнути. Правило спільне, а не посторінкове: друкованих
+   документів в адмінці більшатиме (пікінг-лист уже є), і кожен новий
+   інакше згадував би про це сам -- або не згадував. */
+@media print {
+  .admin-sidebar {
+    display: none;
+  }
+}
+
 .admin-sidebar__nav {
   position: sticky;
   top: 80px;
@@ -181,6 +191,16 @@
 /* Коли фільтр-форма вкладена у .admin-stats-bar (вже має margin-bottom),
    не подвоюємо відступ. */
 .admin-stats-bar .admin-control-row {
+  margin-bottom: 0;
+}
+
+/* Та сама причина, що й вище, для другого господаря ряду: форма додавання
+   запису стоїть ОСТАННЬОЮ в картці-секції ("Додати локацію вручну",
+   "Додати спеціальність", "Додати тип"), а під нею вже лежить падінг самої
+   картки. Без цього рядка три довідники або несли б зайвий просвіт унизу
+   картки, або -- як було доти -- писали власну копію ряду з нульовим
+   відступом і кожен зі своїм проміжком. */
+.form-section > .admin-control-row:last-child {
   margin-bottom: 0;
 }
 
@@ -1073,6 +1093,11 @@ a.admin-stat-card:focus-visible {
 /* Цифри однакової ширини: у колонці лічильників «2 / 3» під «10 / 12» інакше
    стоять урозбіг, і стовпчик чисел перестає читатись як стовпчик. */
 .admin-num { font-variant-numeric: tabular-nums; }
+/* Машинний ідентифікатор (slug, uuid, код права, ім'я ролі) -- моно, щоб
+   його читали й копіювали посимвольно, а не як слово. 0.9em -- та сама
+   поправка, що в `.admin-code`: моно при рівному кеглі виглядає більшим за
+   сусідній текст і починає важити більше, ніж важить насправді. */
+.admin-mono { font-family: var(--iprm-font-mono); font-size: 0.9em; }
 .admin-input-narrow { max-width: 360px; }
 .admin-clickable { cursor: pointer; }
 .admin-inline { display: inline; }
@@ -1831,7 +1856,7 @@ a.admin-stat-card:focus-visible {
    тёмній темі, тобто читався лише на здогад. --iprm-text-light дає 6.02 / 6.59. */
 .admin-with-sidebar .form-section .form-input::placeholder,
 .admin-form .form-input::placeholder,
-.backup-actions__form .form-input::placeholder {
+.admin-control-row .form-input::placeholder {
   color: var(--iprm-text-light);
 }
 
@@ -1905,8 +1930,7 @@ a.admin-stat-card:focus-visible {
 .admin-with-sidebar .admin-form select.form-input:not([multiple]),
 .admin-with-sidebar .admin-inline-form select.form-input:not([multiple]),
 .admin-with-sidebar .admin-control-row select.form-input:not([multiple]),
-.admin-with-sidebar .admin-filters__form select.form-input:not([multiple]),
-.admin-with-sidebar .backup-actions__form select.form-input:not([multiple]) {
+.admin-with-sidebar .admin-filters__form select.form-input:not([multiple]) {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
@@ -1917,12 +1941,41 @@ a.admin-stat-card:focus-visible {
   cursor: pointer;
 }
 
+/* Поле, яке ЧЕКАЄ на введення: обов'язкове й досі порожнє. Не помилка
+   (.is-invalid) -- людина ще нічого не зробила неправильно, -- і не фокус:
+   підсвітка безумовна й показує, скільки ще лишилось заповнити. Клас
+   ставить і знімає скрипт сторінки; стан помилки має пріоритет і знімає
+   його сам.
+
+   Жив у page-admin-participants.css, тобто page-файл задавав ДЕКОР
+   спільному `.form-input` -- єдине таке місце в адмінці. Правка вигляду
+   поля в дизайн-системі до цього стану не доходила, а наступна форма з
+   тією ж потребою написала б його заново під власним іменем. */
+@keyframes iprm-await-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--iprm-accent-light); }
+  50%      { box-shadow: 0 0 0 4px var(--iprm-accent-light); }
+}
+
+.admin-form .form-input.field-await,
+.admin-form select.form-input.field-await {
+  border-color: var(--iprm-accent);
+  animation: iprm-await-pulse 1.8s ease-in-out infinite;
+}
+
+/* Рух вимикаємо, індикатор лишаємо: без рамки стан зник би зовсім. */
+@media (prefers-reduced-motion: reduce) {
+  .admin-form .form-input.field-await,
+  .admin-form select.form-input.field-await {
+    animation: none;
+    box-shadow: 0 0 0 3px var(--iprm-accent-light);
+  }
+}
+
 /* Firefox: прибрати пунктирну рамку в фокусі на select */
 .admin-form select.form-input:-moz-focusring,
 .admin-inline-form select.form-input:-moz-focusring,
 .admin-control-row select.form-input:-moz-focusring,
-.admin-filters__form select.form-input:-moz-focusring,
-.backup-actions__form select.form-input:-moz-focusring {
+.admin-filters__form select.form-input:-moz-focusring {
   color: transparent;
   text-shadow: 0 0 0 var(--iprm-text);
 }

@@ -97,6 +97,34 @@ class WebhookDelivery(TimestampMixin, db.Model):
         ),
     )
 
+    # Дія над курсом -- МАШИННЕ значення з корисного навантаження
+    # (`created`/`updated`/`deleted`), а не наш підпис, тож у реєстрі вона
+    # стоїть таблеткою `.badge--mono`. Пари кольорів беруться з наявних
+    # варіантів: створення -- зелений `active`, оновлення -- бузковий
+    # `format` (мітка, не дія), видалення -- червоний `cancelled`.
+    ACTION_BADGES = {
+        'created': 'active',
+        'updated': 'format',
+        'deleted': 'cancelled',
+    }
+
+    @property
+    def status_badge(self):
+        """Модифікатор `.badge--*` під поточний стан (див. STATUS_BADGES).
+
+        Без цієї властивості шаблон писав `badge--{{ d.status_badge }}` по
+        неіснуючому атрибуту: Jinja віддає порожньо, і в розмітку йшло
+        `class="badge badge--"` -- таблетка без жодного тла. Усі чотири
+        стани черги виглядали однаково безбарвно, хоч STATUS_BADGES уже
+        лежав у моделі й саме для цього й заводився.
+        """
+        return self.STATUS_BADGES.get(self.status, 'pending')
+
+    @property
+    def action_badge(self):
+        """Модифікатор `.badge--*` під дію над курсом (див. ACTION_BADGES)."""
+        return self.ACTION_BADGES.get(self.action, 'draft')
+
     @property
     def is_partner_event(self):
         """Чи це партнерська подія (а не каталожне «перечитай курс»)."""

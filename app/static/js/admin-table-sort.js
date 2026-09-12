@@ -37,19 +37,42 @@
     return false;
   }
 
+  /* Рядок, у якому комірок МЕНШЕ, ніж колонок, -- це не запис, а продовження
+     запису над ним: примітка на всю ширину через colspan (причина невдачі
+     копіювання, пояснення до рядка). Сортування мусить нести його разом із
+     своїм рядком -- інакше примітка лишається там, де стояла, і опиняється
+     під чужим записом, тобто сторінка починає приписувати чужу помилку
+     сусідній копії. Ознака та сама, якою колспан-рядки визначає
+     admin-table-cards.js, -- кількість комірок. */
+  function groupRows(tbody, columns) {
+    var groups = [];
+    for (var i = 0; i < tbody.rows.length; i++) {
+      var row = tbody.rows[i];
+      if (groups.length && row.cells.length < columns) {
+        groups[groups.length - 1].extra.push(row);
+      } else {
+        groups.push({ row: row, extra: [] });
+      }
+    }
+    return groups;
+  }
+
   function sortBy(table, tbody, idx, th, dir) {
-    var rows = Array.prototype.slice.call(tbody.rows);
+    var columns = table.tHead.rows[0].cells.length;
     // Стабільне сортування: зберігаємо початковий індекс як tie-breaker.
-    var decorated = rows.map(function (row, i) {
-      var cell = row.cells[idx];
-      return { row: row, key: extract(cell ? cell.textContent : ''), i: i };
+    var decorated = groupRows(tbody, columns).map(function (group, i) {
+      var cell = group.row.cells[idx];
+      return { group: group, key: extract(cell ? cell.textContent : ''), i: i };
     });
     decorated.sort(function (x, y) {
       var c = compare(x.key, y.key);
       return (dir === 'desc' ? -c : c) || (x.i - y.i);
     });
     var frag = document.createDocumentFragment();
-    decorated.forEach(function (item) { frag.appendChild(item.row); });
+    decorated.forEach(function (item) {
+      frag.appendChild(item.group.row);
+      item.group.extra.forEach(function (row) { frag.appendChild(row); });
+    });
     tbody.appendChild(frag);
 
     // Індикатори на заголовках.
@@ -63,8 +86,10 @@
   function initTable(table) {
     if (!table.tHead || !table.tHead.rows.length || !table.tBodies.length) return;
     var tbody = table.tBodies[0];
-    if (tbody.rows.length < 2) return; // нема чого сортувати
     var headers = table.tHead.rows[0].cells;
+    // Рахуємо ЗАПИСИ, а не рядки: таблиця з одного запису й примітки під ним
+    // дала б два рядки, і заголовки отримували б стрілку сортування даремно.
+    if (groupRows(tbody, headers.length).length < 2) return;
 
     Array.prototype.forEach.call(headers, function (th, idx) {
       if (th.hasAttribute('data-no-sort')) return;

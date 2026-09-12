@@ -1,400 +1,60 @@
 /* page-admin-backup.css -- розкладка сторінки резервних копій.
 
-   Оболонку (відступи, заголовок, підзаголовок) сторінка НЕ оголошує: вона
-   бере спільні admin-hero / admin-layout, як решта адмінки. Доти тут жили
-   власні .admin-page / __header / __subtitle -- той самий компонент,
-   написаний заново, і саме через нього сторінка лишалась без сайдбара. */
+   Тут лишається РІВНО те, що властиве цій сторінці й нічому більше: частка
+   ряду керування під поле опису й рядок-примітка з причиною невдачі під
+   рядком копії. Усе інше -- оболонка, картки стану, реєстр, плашки, кнопки,
+   порожній стан, пагінація, картковий режим таблиці на мобільному -- взяте
+   з дизайн-системи (admin.css / common.css).
 
-/* Stats cards */
-.backup-stats {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 32px;
+   Доти файл важив 400 рядків і був повним двійником адмінки: власні
+   .backup-stats замість .admin-stat-cards, власна .backup-table замість
+   .admin-table (і з нею власний картковий режим на мобільному, дослівно
+   переписаний з admin.css), власні плашки типу й статусу замість .badge,
+   власні кнопки-дії замість .btn-admin, власна пагінація замість
+   .admin-pagination. Правка будь-якого з цих компонентів у дизайн-системі
+   до сторінки не доходила -- зокрема тому шапка таблиці тут стояла на
+   --iprm-card-bg, а в тёмній темі цей токен ДОРІВНЮЄ поверхні картки, і
+   заголовки колонок зливалися з даними. */
+
+/* Опис -- найдовше поле ряду, тип копії -- найкоротше. Базове
+   `.admin-control-row .form-input` дає обом однакове зростання, і селект на
+   три слова розтягувався нарівні з полем вільного тексту. */
+.page-backups__desc-field {
+  flex-grow: 3;
 }
 
-.backup-stats__card {
-  background: var(--iprm-white);
-  border-radius: var(--iprm-radius-md);
-  padding: 20px;
-  text-align: center;
-  border: 1px solid var(--iprm-border);
+/* Причина невдачі стоїть ОКРЕМИМ рядком під своєю копією, а не в комірці:
+   стектрейс pg_dump не влазить у жодну колонку. Верхня межа знята, щоб
+   примітка читалась як продовження свого рядка, а не як наступний запис.
+   На мобільному вона стає власною карткою -- тому в підписі стоїть номер
+   копії, а не саме «Помилка». */
+.page-backups__note td {
+  border-top: 0;
+  padding-top: 0;
 }
 
-.backup-stats__value {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--iprm-accent);
-  letter-spacing: -0.02em;
-  margin-bottom: 4px;
+/* Підпис над блоком коду. Блоковість дає .admin-subline (другий поверх у
+   комірці -- рівно її призначення), тут лишається сам просвіт: інакше
+   підпис лягає впритул до рамки блоку коду. Переозначати самі
+   .admin-subline / .admin-text-muted не можна -- це атоми дизайн-системи,
+   і правка до них із page-файлу не дійшла б до решти сторінок. */
+.page-backups__note-label {
+  margin-bottom: 6px;
 }
 
-.backup-stats__label {
-  font-size: 0.8125rem;
-  color: var(--iprm-text-light);
-}
+/* Картковий режим: спільне правило робить КОЖНУ комірку flex-рядком
+   «підпис -- значення» і притискає вміст перших колонок праворуч. Примітці
+   не потрібне ні перше (підпису в неї немає, а блок коду мусить іти ПІД
+   заголовком, а не поруч), ні друге: стектрейс, вирівняний праворуч,
+   читати неможливо.
 
-/* Actions */
-.backup-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 16px;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-}
-
-.backup-actions__form {
-  flex: 1;
-}
-
-.backup-actions__row {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.backup-actions__select {
-  min-width: 150px;
-}
-
-.backup-actions__desc {
-  flex: 1;
-  min-width: 200px;
-}
-
-/* Тут стоять дві окремі форми -- пакетна перевірка і очищення, -- бо це два
-   різні POST. Проміжок однаковий і між формами, і між кнопками всередині
-   очищення, щоб ряд читався як один набір дій. */
-.backup-actions__cleanup {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.backup-actions__cleanup form {
-  display: flex;
-  gap: 8px;
-}
-
-/* Table */
-.backup-table-wrap {
-  background: var(--iprm-white);
-  border-radius: var(--iprm-radius-md);
-  overflow: hidden;
-  border: 1px solid var(--iprm-border);
-}
-
-.backup-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.875rem;
-}
-
-.backup-table th {
-  background: var(--iprm-card-bg);
-  padding: 12px 16px;
-  text-align: left;
-  font-weight: 600;
-  color: var(--iprm-text-secondary);
-  font-size: 0.8125rem;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  border-bottom: 1px solid var(--iprm-border);
-}
-
-.backup-table td {
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--iprm-border);
-  color: var(--iprm-text-secondary);
-  vertical-align: middle;
-}
-
-.backup-table__row:last-child td {
-  border-bottom: none;
-}
-
-.backup-table__id {
-  font-weight: 600;
-  color: var(--iprm-text-light);
-}
-
-.backup-table__desc {
-  max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.backup-table__empty {
-  text-align: center;
-  padding: 48px 16px;
-  color: var(--iprm-text-light);
-}
-
-.backup-table__error td {
-  padding: 8px 16px;
-  background: var(--iprm-error-bg);
-}
-
-.backup-table__error pre {
-  margin: 8px 0 0;
-  font-size: 0.8125rem;
-  color: var(--iprm-error-text);
-  white-space: pre-wrap;
-  word-break: break-all;
-}
-
-.backup-table__error summary {
-  cursor: pointer;
-  font-weight: 600;
-  color: var(--iprm-error);
-}
-
-/* Type badges */
-.backup-type {
-  display: inline-block;
-  padding: 3px 10px;
-  border-radius: 980px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-}
-
-.backup-type--full {
-  background: var(--iprm-accent-light);
-  color: var(--iprm-accent);
-}
-
-.backup-type--schema_only {
-  background: var(--iprm-info-bg);
-  color: var(--iprm-info);
-}
-
-.backup-type--data_only {
-  background: var(--iprm-warning-bg);
-  color: var(--iprm-warning-text);
-}
-
-.backup-type--pre_restore {
-  background: var(--iprm-neutral-bg);
-  color: var(--iprm-neutral-text);
-}
-
-/* Status badges */
-.backup-status {
-  display: inline-block;
-  padding: 3px 10px;
-  border-radius: 980px;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.backup-status--completed {
-  background: var(--iprm-success-bg);
-  color: var(--iprm-success);
-}
-
-.backup-status--in_progress {
-  background: var(--iprm-info-bg);
-  color: var(--iprm-info);
-}
-
-.backup-status--failed {
-  background: var(--iprm-error-bg);
-  color: var(--iprm-error);
-}
-
-.backup-status--corrupted {
-  background: var(--iprm-warning-bg);
-  color: var(--iprm-warning-text);
-}
-
-/* Action buttons */
-.backup-table__actions {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.backup-action-form {
-  display: inline;
-}
-
-.backup-action-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  border: 1px solid var(--iprm-border);
-  background: var(--iprm-white);
-  cursor: pointer;
-  font-size: 1rem;
-  text-decoration: none;
-  transition: background-color 0.15s, border-color 0.15s;
-}
-
-.backup-action-btn--download {
-  color: var(--iprm-accent);
-}
-
-.backup-action-btn--download:hover {
-  background: var(--iprm-accent-light);
-  border-color: var(--iprm-accent);
-}
-
-.backup-action-btn--validate {
-  color: var(--iprm-success);
-}
-
-.backup-action-btn--validate:hover {
-  background: var(--iprm-success-bg);
-  border-color: var(--iprm-success);
-}
-
-.backup-action-btn--delete {
-  color: var(--iprm-error);
-}
-
-.backup-action-btn--delete:hover {
-  background: var(--iprm-error-bg);
-  border-color: var(--iprm-error);
-}
-
-/* Pagination */
-.backup-pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 16px;
-  padding: 24px 0;
-}
-
-.backup-pagination__link {
-  padding: 8px 16px;
-  border-radius: 8px;
-  background: var(--iprm-white);
-  border: 1px solid var(--iprm-border);
-  color: var(--iprm-accent);
-  text-decoration: none;
-  font-size: 0.875rem;
-  font-weight: 500;
-  transition: background-color 0.15s;
-}
-
-.backup-pagination__link:hover {
-  background: var(--iprm-accent-light);
-}
-
-.backup-pagination__info {
-  font-size: 0.875rem;
-  color: var(--iprm-text-light);
-}
-
-/* Responsive */
-@media (max-width: 1024px) {
-  .backup-stats {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
+   Утиліта .admin-text-left тут не рятує: `.admin-table td:first-child`
+   важить (0,2,1) -- `:first-child` рахується як клас, -- а
+   `.admin-table .admin-text-left` лише (0,2,0). Потрібна рівна вага й
+   пізніше підключення, що й дає цей селектор із page-CSS. */
 @media (max-width: 768px) {
-  .backup-stats {
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-
-  .backup-actions {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .backup-actions__row {
-    flex-direction: column;
-  }
-
-  .backup-actions__select,
-  .backup-actions__desc {
-    min-width: auto;
-    width: 100%;
-  }
-
-  /* Таблиця -> картки на мобільних (мітки з data-label у td). */
-  .backup-table-wrap {
-    border: 0;
-    background: transparent;
-    border-radius: 0;
-    overflow: visible;
-  }
-
-  .backup-table {
-    min-width: 0;
-  }
-
-  .backup-table thead {
-    display: none;
-  }
-
-  .backup-table tbody tr {
+  .admin-table .page-backups__note td {
     display: block;
-  }
-
-  .backup-table__row {
-    background: var(--iprm-white);
-    border: 1px solid var(--iprm-border);
-    border-radius: var(--iprm-radius-md);
-    padding: 4px 14px;
-    margin-bottom: 12px;
-  }
-
-  .backup-table__row td {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 14px;
-    text-align: right;
-    padding: 9px 0;
-    border-bottom: 1px solid var(--iprm-border);
-  }
-
-  .backup-table__row td:last-child {
-    border-bottom: 0;
-  }
-
-  .backup-table__row td::before {
-    content: attr(data-label);
-    flex: 0 0 auto;
-    font-size: 0.8125rem;
-    font-weight: 600;
-    color: var(--iprm-text-light);
     text-align: left;
-  }
-
-  .backup-table__desc {
-    max-width: none;
-    overflow: visible;
-    white-space: normal;
-  }
-
-  .backup-table__error td,
-  .backup-table__empty {
-    display: block;
-    border-bottom: 0;
-  }
-}
-
-@media (max-width: 480px) {
-  .backup-stats {
-    grid-template-columns: 1fr;
-  }
-
-  .backup-stats__card {
-    padding: 16px;
-  }
-
-  .backup-stats__value {
-    font-size: 1.25rem;
   }
 }

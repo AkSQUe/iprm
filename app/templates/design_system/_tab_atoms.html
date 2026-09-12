@@ -188,9 +188,20 @@
         <span class="badge badge--success">Success</span>
         <span class="badge badge--danger">Danger</span>
         <span class="badge badge--warning">Warning</span>
+        <span class="badge badge--info">Info</span>
       </div>
     </div>
-    <p class="ds-hint">.badge--success / .badge--danger / .badge--warning – aliases для сповіщень та статусів</p>
+    <p class="ds-hint">.badge--success / .badge--danger / .badge--warning / .badge--info – aliases для сповіщень та статусів. .badge--info -- «триває, ще нічого не вирішено» (пара --iprm-info-bg / --iprm-info, та сама, що в .alert--info); не плутати з синім .badge--published, який означає стан життєвого циклу матеріалу.</p>
+
+    <h3 class="ds-section-heading">Бейдж машинного значення</h3>
+    <div class="ds-demo">
+      <div class="ds-row">
+        <span class="badge badge--mono badge--active">created</span>
+        <span class="badge badge--mono badge--format">updated</span>
+        <span class="badge badge--mono badge--cancelled">deleted</span>
+      </div>
+    </div>
+    <p class="ds-hint">.badge--mono -- таблетка, чий текст прийшов із корисного навантаження, а не з нашого словника (дія доставки у черзі вебхуків). Моно тримає її в родині ідентифікаторів поруч із .admin-mono і не дає сплутати зі СТАНОМ: у реєстрі сусідня колонка -- бейдж статусу тієї самої форми, і без цієї різниці два різні факти читались би як один. Кольори модифікатор не чіпає: їх задає звичайний варіант, тож нової пари токенів тут не заводиться.</p>
   </div>
 
   <!-- ===== ALERTS ===== -->
