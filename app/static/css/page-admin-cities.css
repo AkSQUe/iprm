@@ -1,73 +1,34 @@
-/* Адмінка довідника локацій (admin/cities.html).
+/* Адмінка довідника локацій (admin/cities.html) -- лише layout: сітка шапки
+   панелі, рядок ручного додавання, ширини колонок таблиці, стрічка чіпів.
 
-   Сторінка складається з трьох різних за жанром блоків -- «чого бракує»
-   (швидке додавання одним кліком), «додати вручну» (одне поле) і власне
-   таблиця-глосарій із полями перекладу. Раніше вони позичали класи чужих
-   сторінок (.tr-children з редактора перекладів, .referral-share__row із
-   реферальної), чиї стилі сюди навіть не підключались -- звідси й голий
-   вигляд. Тут -- власні класи на токенах дизайн-системи.
+   Уся декоративна частина бере компонентні класи admin.css -- .form-section,
+   .form-section__title (+ --flush), .admin-form__section-hint,
+   .admin-queue-alert--warning, .admin-form__actions (+ __actions-hint),
+   .admin-stat-card (+ __total), .form-input--fallback, .admin-table, .badge,
+   .btn-admin. ПЕРЕОГОЛОШУВАТИ їх тут не можна: правка компонента інакше
+   сюди не дійде. Так само було до цього проходу: файл тримав власну липку
+   смугу збереження, власну типографіку заголовків панелей і два правила
+   поверх .btn-admin та .form-input.
 
-   Кольори -- лише через змінні, тож тёмна тема (data-theme="dark")
-   підхоплюється без окремих правил. */
+   Виняток один і свідомий -- .cities-chip: таблетка дизайн-системи
+   (.admin-pill) документована як НЕ кнопка ("зріз нічого не робить, він
+   показує, де ти"), а тут кожна таблетка додає локацію в довідник одним
+   кліком. Кольори й радіус вона все одно бере з токенів.
 
-/* ========== СТАТИСТИКА ========== */
+   Кольори -- лише через змінні, тож тёмна тема підхоплюється без окремих
+   правил. */
 
-/* Знаменник у картці покриття ("3/12"): тонший і тьмяніший за чисельник --
-   читається передусім кількість перекладених рядків. */
-.cities-stat__total {
-  font-size: 0.6em;
-  font-weight: 600;
-  color: var(--iprm-text-light);
-}
+/* ========== ПАНЕЛЬ «ЧОГО БРАКУЄ» ========== */
 
-/* Бурштинова картка переїхала в дизайн-систему як .admin-stat-card--alert
-   (admin.css): той самий вигляд був тут і в admin-quiz.css. */
-/* ========== ПАНЕЛІ (картки-секції) ========== */
-
-.cities-panel__head {
+/* Заголовок із підказкою ліворуч, дія праворуч. Сама дія -- .btn-admin,
+   тон панелі -- .admin-queue-alert--warning; тут лише те, як вони стоять. */
+.cities-missing__head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
   margin-bottom: 20px;
-}
-
-/* Типографіка як у .admin-form__section-title, але без нижньої лінії:
-   у панелі з кнопкою праворуч розділювач під заголовком різав би блок
-   навпіл посеред рядка. */
-.cities-panel__title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 1.125rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--iprm-text);
-}
-
-.cities-panel__hint {
-  margin-top: 6px;
-  max-width: 68ch;
-  font-size: 0.8125rem;
-  line-height: 1.5;
-  color: var(--iprm-text-light);
-}
-
-.cities-panel > .cities-panel__hint {
-  margin-bottom: 20px;
-}
-
-.cities-panel__icon {
-  font-size: 20px;
-  color: var(--iprm-warning);
-}
-
-/* Блок «у розкладі є, у довіднику немає» -- єдиний на сторінці, що вимагає
-   дії, тож обводка попереджувального тону. Тло лишаємо як у решти карток:
-   суцільна заливка на всю ширину била б по очах на кожному заході. */
-.cities-panel--missing {
-  border-color: var(--iprm-warning-border);
 }
 
 /* ========== ЧІПИ ЛОКАЦІЙ, ЯКИХ БРАКУЄ ========== */
@@ -121,7 +82,9 @@
   color: var(--iprm-accent);
 }
 
-/* Скільки проведень стоїть за локацією -- підказка, що додавати першим. */
+/* Скільки проведень стоїть за локацією -- підказка, що додавати першим.
+   Не `.badge--draft`: бейдж стоїть на власному тлі чіпа (--iprm-card-bg), а
+   тло бейджа-чернетки майже те саме, і число зникало б. */
 .cities-chip__count {
   min-width: 24px;
   padding: 2px 8px;
@@ -142,9 +105,10 @@
   flex-wrap: wrap;
 }
 
-/* flex і max-width база не задає: поле ділить рядок із кнопкою «Додати»,
-   і це властивість РЯДКА, а не поля вводу. */
-.cities-add .form-input {
+/* Ширину поля задає РЯДОК, а не поле: воно ділить його з кнопкою «Додати».
+   Тому клас сторінковий і висить на самому полі -- правило
+   `.cities-add .form-input` переозначувало б атом. */
+.cities-add__name {
   flex: 1 1 240px;
   max-width: 360px;
 }
@@ -179,49 +143,6 @@
   width: 100%;
 }
 
-/* Порожнє поле = перекладу немає (показуємо українську). Пунктирна рамка
-   робить дірку в покритті помітною просто при погляді на таблицю --
-   без JS і без окремої колонки-індикатора. Колір беремо помітніший за
-   типовий --iprm-border (він майже прозорий, пунктир на ньому не читався б).
-   Саме для цього є --iprm-border-strong -- посилена межа на новій осі; сірий
-   --iprm-border-neutral дає ту саму помітність, але лишається поза віссю. */
-.cities-table .cities-input:placeholder-shown {
-  border-style: dashed;
-  border-color: var(--iprm-border-strong);
-}
-
-.cities-table .cities-input:focus {
-  border-style: solid;
-  border-color: var(--iprm-accent);
-}
-
-/* ========== ЛИПКА ПАНЕЛЬ ЗБЕРЕЖЕННЯ ========== */
-
-/* Таблиця редагується згори вниз, і без липкої панелі після правки
-   двадцятого рядка довелось би скролити в кінець по «Зберегти». */
-.cities-savebar {
-  position: sticky;
-  bottom: 16px;
-  z-index: 5;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-  padding: 14px 20px;
-  border: 1px solid var(--iprm-border);
-  border-radius: var(--iprm-radius-md);
-  background: var(--iprm-surface-menu);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-  backdrop-filter: saturate(180%) blur(20px);
-  box-shadow: var(--iprm-shadow-sm);
-}
-
-.cities-savebar__hint {
-  font-size: 0.8125rem;
-  color: var(--iprm-text-light);
-}
-
 /* ========== АДАПТИВ ========== */
 
 @media (max-width: 768px) {
@@ -240,34 +161,27 @@
     min-width: 0;
   }
 
-  .cities-panel__head {
+  /* Шапка стає стовпчиком: у рядку заголовок і дія на 390px не вміщаються,
+     а кнопка, розтягнута всередині своєї форми, все одно лишалась би
+     завширшки з форму -- та сидить у рядку за контентом. Стовпчик зі
+     stretch розтягує спершу форму, і аж тоді кнопці є що заповнити. */
+  .cities-missing__head {
+    flex-direction: column;
+    align-items: stretch;
     gap: 12px;
   }
 
-  .cities-panel__head .btn-admin {
+  /* Органи керування на телефоні беруть рядок цілком. Ширина -- властивість
+     РЯДКА, тож клас сторінковий і стоїть на самому елементі; центрування
+     вмісту кнопки задає базовий .btn-admin. */
+  .cities-missing__submit,
+  .cities-add__submit {
     width: 100%;
-    justify-content: center;
   }
 
-  .cities-add .form-input {
+  .cities-add__name {
+    flex: 1 1 auto;
     max-width: none;
-  }
-
-  .cities-add .btn-admin {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .cities-savebar {
-    bottom: 0;
-    flex-direction: column;
-    align-items: stretch;
-    text-align: center;
-    border-radius: var(--iprm-radius-md) var(--iprm-radius-md) 0 0;
-  }
-
-  .cities-savebar .btn-admin {
-    justify-content: center;
   }
 }
 
