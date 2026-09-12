@@ -75,8 +75,27 @@ def _populate_choices(form, preselected_course_id=None, instance=None):
         + Course.DIFFICULTY_LEVELS
     )
 
+    form.bpr_event_number.render_kw = {
+        'placeholder': _inherited_event_number_hint(instance, preselected_course_id),
+    }
+
 
 _BARE_INHERITED = '– Як у курсу –'
+
+# Підказка порожнього поля номера, коли курс іще не відомий (чисте /new).
+_BARE_EVENT_NUMBER_HINT = '7 цифр'
+
+
+def _inherited_event_number_hint(instance, preselected_course_id=None):
+    """Плейсхолдер поля «Реєстраційний номер заходу БПР».
+
+    Порожнє поле означає «візьметься номер курсу», і саме його адмін і має
+    побачити: сертифікат піде під ним, а перевіряти це в картці курсу --
+    зайвий перехід. Та сама логіка, що в підписів виду заходу й рівня.
+    """
+    course = _known_course(instance, preselected_course_id)
+    number = (course.bpr_event_number or '').strip() if course else ''
+    return f'{number} (з курсу)' if number else _BARE_EVENT_NUMBER_HINT
 
 
 def _inherited_type_label(instance, preselected_course_id=None):
@@ -121,6 +140,19 @@ def _inherited_level_label(instance, preselected_course_id=None):
     if course is None or not course.difficulty_level:
         return _BARE_INHERITED
     return f'– Як у курсу ({course.difficulty_label}) –'
+
+
+def _issued_bpr(instance):
+    """(к-сть, номери заходу) вже виданих сертифікатів цієї дати -- або None.
+
+    Потрібне рівно для застереження біля поля номера: якщо сертифікати вже
+    пішли під іншим номером, адмін мусить це побачити ДО правки, бо видані
+    номери не переписуються.
+    """
+    from app.services import certificate_service
+
+    count, numbers = certificate_service.issued_event_numbers(instance)
+    return {'count': count, 'numbers': numbers} if count else None
 
 
 _INSTANCES_PER_PAGE = 25
@@ -426,7 +458,10 @@ def instance_create():
                 flash('Проведення створено', 'success')
             return redirect(url_for('admin.instances_list'))
 
-    return render_template('admin/instance_edit.html', form=form, instance=None)
+    # issued_bpr -- лише для правки: у щойно створеної дати сертифікатів
+    # немає за визначенням, але шаблон один на обидва режими.
+    return render_template('admin/instance_edit.html', form=form, instance=None,
+                           issued_bpr=None)
 
 
 @admin_bp.route('/instances/<int:instance_id>/edit', methods=['GET', 'POST'])
@@ -450,7 +485,8 @@ def instance_edit(instance_id):
             db.session.rollback()
             flash(str(exc), 'error')
             return render_template('admin/instance_edit.html', form=form,
-                                   instance=instance)
+                                   instance=instance,
+                                   issued_bpr=_issued_bpr(instance))
         apply_inline_translations(instance)
         if try_commit(log_context=f'instance_edit id={instance.id}'):
             audit_logger.info(
@@ -459,7 +495,8 @@ def instance_edit(instance_id):
             flash('Проведення оновлено', 'success')
             return redirect(url_for('admin.instances_list'))
 
-    return render_template('admin/instance_edit.html', form=form, instance=instance)
+    return render_template('admin/instance_edit.html', form=form, instance=instance,
+                           issued_bpr=_issued_bpr(instance))
 
 
 @admin_bp.route('/instances/<int:instance_id>/lecturer-certificate', methods=['POST'])

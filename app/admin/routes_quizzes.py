@@ -152,7 +152,10 @@ def quizzes_list():
             'quiz': quiz,
             'overrides': overrides,
             # Без цих даних тест не відкриється, тож показуємо причину поруч.
-            'bpr_missing': not (course.bpr_event_number or '').strip()
+            # Номер заходу шукаємо і в проведеннях: він належить поданню в
+            # реєстр, тож курс із порожнім полем, але з пронумерованими
+            # датами, сертифікати видає справно (instances уже selectinload).
+            'bpr_missing': not quiz_service.has_bpr_event_number(course)
                            or not (course.cpd_points_online or course.cpd_points_offline),
         })
 

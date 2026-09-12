@@ -617,6 +617,49 @@ def _next_free_number(year, provider, event, kind='participant', offset=0):
     raise RuntimeError('Не вдалося згенерувати унікальний номер сертифіката')
 
 
+def issued_event_numbers(instance):
+    """(скільки сертифікатів уже видано за цей захід, які номери заходу в них).
+
+    Сегмент читаємо з САМОГО номера сертифіката, а не з поточного поля: номер
+    уже пішов у реєстр і на руки людині, і видача під новим номером його не
+    переписує (`issue_certificate` зберігає номер навіть при повторній видачі
+    відкликаного). Саме цю розбіжність адмін і має побачити ДО того, як
+    вписати даті власний номер -- інакше в межах одного заходу тихо
+    заведеться два номери реєстру.
+
+    Рахуємо і відкликані: їхні номери теж зайняті й теж уже названі людині.
+    """
+    from app.models.lecturer_certificate import LecturerCertificate
+    from app.models.registration import EventRegistration
+
+    if instance is None or instance.id is None:
+        return (0, [])
+
+    rows = [
+        number for (number,) in
+        db.session.query(Certificate.number)
+        .join(EventRegistration, Certificate.registration_id == EventRegistration.id)
+        .filter(EventRegistration.instance_id == instance.id)
+        .all()
+    ]
+    rows += [
+        number for (number,) in
+        db.session.query(LecturerCertificate.number)
+        .filter(LecturerCertificate.instance_id == instance.id)
+        .all()
+    ]
+
+    # Формат номера -- РРРР-ПППП-ЗЗЗЗЗЗЗ-УУУУУУ (Certificate.format_number).
+    # Рядок неочікуваної форми пропускаємо, а не падаємо: підказка в адмінці
+    # не варта того, щоб через неї не відкривалась картка проведення.
+    segments = set()
+    for number in rows:
+        parts = (number or '').split('-')
+        if len(parts) == 4:
+            segments.add(parts[2].lstrip('0') or '0')
+    return (len(rows), sorted(segments))
+
+
 def issue_certificate(registration, issued_by=None):
     """Видати сертифікат для реєстрації (ідемпотентно).
 
@@ -634,16 +677,18 @@ def issue_certificate(registration, issued_by=None):
     # Сегменти номера БПР: рік проведення, номер провайдера, номер заходу.
     from app.models.site_settings import SiteSettings
     instance = registration.instance
-    course = instance.course if instance else None
     provider = (SiteSettings.get().bpr_provider_number or '').strip()
-    event_num = (course.bpr_event_number or '').strip() if course and course.bpr_event_number else ''
+    # Номер заходу -- саме цього подання (реєстр видає його на кожне окремо),
+    # з відкатом на курсовий. Брати курсовий напряму означало б ставити один
+    # номер реєстру на всі дати курсу.
+    event_num = instance.effective_bpr_event_number if instance else ''
     year = (event_date or issued_at).year
     if not provider:
         raise ValueError('Не задано реєстраційний номер провайдера БПР '
                          '(Адмінка -> Налаштування сайту).')
     if not event_num:
         raise ValueError('Не задано реєстраційний номер заходу БПР '
-                         '(Адмінка -> Курс -> редагувати).')
+                         '(Адмінка -> Проведення, або Курс -> редагувати).')
 
     # Якщо є відкликаний сертифікат -- повторно використовуємо запис.
     cert = existing if existing is not None else Certificate(
@@ -716,13 +761,13 @@ def issue_lecturer_certificate(instance, issued_by=None):
     if trainer is None:
         raise ValueError('У проведення не задано лектора (тренера).')
     provider = (SiteSettings.get().bpr_provider_number or '').strip()
-    event_num = (course.bpr_event_number or '').strip() if course and course.bpr_event_number else ''
+    event_num = instance.effective_bpr_event_number
     if not provider:
         raise ValueError('Не задано реєстраційний номер провайдера БПР '
                          '(Адмінка -> Налаштування сайту).')
     if not event_num:
         raise ValueError('Не задано реєстраційний номер заходу БПР '
-                         '(Адмінка -> Курс -> редагувати).')
+                         '(Адмінка -> Проведення, або Курс -> редагувати).')
     points = course.bpr_lecturer_points if course else None
     if points is None:
         raise ValueError('Не задано бали БПР лектору '

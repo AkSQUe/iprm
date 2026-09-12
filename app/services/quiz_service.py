@@ -192,8 +192,11 @@ def public_quiz_for_course(course):
     виконує -- саме через це партіал `_event_certificate.html` і прожив без
     діла, обіцяючи тестування, якого не існувало.
 
-    Перевизначення на проведеннях тут свідомо не враховуємо: сторінка курсу
-    описує курс загалом, і різні набори на різних датах на ній не описати.
+    Перевизначення балів і наборів питань на проведеннях тут свідомо не
+    враховуємо: сторінка курсу описує курс загалом, і різні набори на різних
+    датах на ній не описати. Номер заходу БПР -- виняток, і не з примхи: він
+    належить конкретному поданню в реєстр, тож курс цілком може мати порожнє
+    поле, тоді як кожна його дата свій номер має (див. has_bpr_event_number).
     """
     from app.models.site_settings import SiteSettings
 
@@ -204,11 +207,30 @@ def public_quiz_for_course(course):
         return None
     if not (SiteSettings.get().bpr_provider_number or '').strip():
         return None
-    if not (course.bpr_event_number or '').strip() or not (
+    if not has_bpr_event_number(course) or not (
         course.cpd_points_online or course.cpd_points_offline
     ):
         return None
     return quiz
+
+
+def has_bpr_event_number(course):
+    """Чи знайдеться номер заходу БПР для цього курсу -- у ньому самому або
+    бодай в одному проведенні.
+
+    Питання курсових екранів (публічний блок «Умови отримання сертифікату» й
+    реєстр тестів), які не показують окрему дату. Вужча перевірка -- лише
+    курсового поля -- ховала б блок у курсу, який сертифікати видає справно,
+    і змушувала б тримати курсове поле заповненим заради самої вітрини.
+
+    `course.instances` очікується вже завантаженим (обидва виклики роблять
+    selectinload), інакше це рядок на курс.
+    """
+    if course is None:
+        return False
+    if (course.bpr_event_number or '').strip():
+        return True
+    return any((i.bpr_event_number or '').strip() for i in course.instances)
 
 
 def _bpr_is_configured(instance, context=None, registration=None):
@@ -230,7 +252,10 @@ def _bpr_is_configured(instance, context=None, registration=None):
     )
     if not provider_ok:
         return False
-    if not (course.bpr_event_number or '').strip():
+    # Саме номер цієї дати (з відкатом на курсовий) -- бо його ж візьме
+    # issue_certificate. Питати тут курс, а там проведення означало б пускати
+    # в тест за наявності курсового номера й падати на видачі.
+    if not instance.effective_bpr_event_number:
         return False
     # Бали друкуються на сертифікаті; без них документ виходить порожнім.
     # Перевіряємо саме формат цієї людини: на гібриді із заповненим лише

@@ -62,6 +62,13 @@ class CourseInstance(TranslatableMixin, TimestampMixin, db.Model):
     # Перевизначення спеціальностей проведення. NULL/порожньо -- беремо курс.
     bpr_specialty_codes = db.Column(db.JSON)
 
+    # Реєстраційний номер заходу БПР саме цього подання. Порожньо -- беремо
+    # курсовий (див. effective_bpr_event_number). Номер видає реєстр на КОЖНЕ
+    # подання окремо, тож курсовий -- це відкат для дат, яким номер ще не
+    # виписали, а не спільне значення: інакше сертифікати різних дат ішли б
+    # під одним номером реєстру.
+    bpr_event_number = db.Column(db.String(20))
+
     # Перевизначення рівня складності (шкала Course.DIFFICULTY_LEVELS, 1..3).
     # NULL -- беремо рівень курсу (див. effective_difficulty_level). Потрібне,
     # коли дати одного курсу мають різну підготовку: та сама програма раз іде
@@ -298,6 +305,23 @@ class CourseInstance(TranslatableMixin, TimestampMixin, db.Model):
             return list(self.bpr_specialty_codes)
         course = self.course
         return list(course.bpr_specialty_codes or []) if course else []
+
+    @property
+    def effective_bpr_event_number(self):
+        """Номер заходу БПР: власний, а якщо порожній -- курсовий.
+
+        Повертає вже обрізаний рядок ('' замість None, коли номера немає
+        ніде): усі споживачі однаково питають "чи є чим заповнити сегмент
+        номера сертифіката", і робити цей `.strip()` у кожному з чотирьох
+        місць означало б чотири нагоди його забути.
+        """
+        own = (self.bpr_event_number or '').strip()
+        if own:
+            return own
+        if self.course is None:
+            self._warn_orphan('bpr_event_number')
+            return ''
+        return (self.course.bpr_event_number or '').strip()
 
     @property
     def effective_difficulty_level(self):

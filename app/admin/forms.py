@@ -800,6 +800,14 @@ class CourseInstanceForm(FlaskForm):
         validators=[Optional()],
         description='Залиште порожнім щоб взяти з курсу',
     )
+    # placeholder виставляється в _populate_choices: порожнє поле мусить
+    # називати номер, який реально піде в сертифікат.
+    bpr_event_number = StringField(
+        'Реєстраційний номер заходу БПР',
+        validators=[Optional(), Length(max=20)],
+        description='Номер цього подання в реєстрі. Порожньо -- береться '
+                    'номер курсу.',
+    )
     # choices доповнюються в _populate_choices: підпис порожнього варіанта
     # називає успадкований рівень («– Як у курсу (Рівень 2 — просунутий) –»).
     difficulty_level = SelectField(

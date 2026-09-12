@@ -163,6 +163,18 @@ def test_registry_flags_missing_bpr_data(client, admin):
     assert 'немає даних БПР' in html
 
 
+def test_registry_does_not_flag_course_whose_date_carries_the_number(client, admin):
+    """Номер живе на даті -- курс із порожнім полем сертифікати видасть,
+    тож плашка «немає даних БПР» тут була б наклепом."""
+    course = _course(event_num='')
+    inst = _instance(course)
+    inst.bpr_event_number = '1031500'
+    db.session.flush()
+    _login(client, admin)
+    html = client.get('/admin/quizzes').get_data(as_text=True)
+    assert 'немає даних БПР' not in html
+
+
 def test_registry_search(client, admin):
     wanted = _course()
     other = _course()
