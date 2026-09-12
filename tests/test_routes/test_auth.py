@@ -210,3 +210,67 @@ class TestConnectionsDiscoverable:
         resp = client.get('/auth/account/connections')
         assert resp.status_code == 200
         assert user.email.encode() in resp.data
+
+
+class TestRegisterWithExistingEmail:
+    """Форма реєстрації мусить пояснити глухий кут, а не просто відмовити.
+
+    Партнерський акаунт (заведений із mm-medic за prefill-токеном) людина
+    не заводила сама і пароля не знає: без назви джерела повідомлення
+    "неможливо використати цей email" читається як помилка сайту.
+    """
+
+    @pytest.fixture(autouse=True)
+    def no_rate_limit(self, app):
+        """3 реєстрації на годину -- ліміт спільний на всю тестову сесію."""
+        from app.extensions import limiter
+        limiter.enabled = False
+        yield
+        limiter.enabled = True
+
+    def _register(self, client, email):
+        return client.post('/auth/register', data={
+            'email': email, 'first_name': 'Іван', 'last_name': 'Петренко',
+            'password': 'password123', 'password_confirm': 'password123',
+            'consent_data': 'y',
+        })
+
+    def _partner_user(self, email):
+        from app.services.partner_auth import PrefillPayload, get_or_create_partner_user
+        return get_or_create_partner_user(PrefillPayload(
+            email=email, first_name='Анатолій', last_name='Луньов',
+            phone=None, issuer='mm-medic',
+        ))
+
+    def test_partner_account_is_named_and_offered_reset(self, client):
+        email = f'partner-reg-{_uid()}@test.com'
+        self._partner_user(email)
+        resp = self._register(client, email)
+        body = resp.data.decode()
+        assert resp.status_code == 200
+        assert 'MM Medic' in body
+        assert '/auth/forgot-password' in body
+
+    def test_ordinary_account_keeps_neutral_message(self, client, user):
+        """Звичайному акаунту джерела не вигадуємо і існування не стверджуємо."""
+        resp = self._register(client, user.email)
+        body = resp.data.decode()
+        assert resp.status_code == 200
+        assert 'MM Medic' not in body
+        assert 'Неможливо використати цей email' in body
+
+    def test_partner_message_is_translated(self, client):
+        """msgid у каталозі мусить збігатися з тим, що будує форма.
+
+        Рядок зібраний із переносами й екранованими лапками, тож
+        розбіжність в один символ лишила б російськомовного користувача з
+        українським текстом -- і мовчки.
+        """
+        email = f'partner-ru-{_uid()}@test.com'
+        self._partner_user(email)
+        resp = client.post('/ru/auth/register', data={
+            'email': email, 'first_name': 'Иван', 'last_name': 'Петренко',
+            'password': 'password123', 'password_confirm': 'password123',
+            'consent_data': 'y',
+        })
+        assert 'уже зарегистрирован через MM Medic' in resp.data.decode()

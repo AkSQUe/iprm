@@ -1181,6 +1181,15 @@ msgstr "Confirm your email | IPRM"
 msgid "Відновлення паролю | ІПРМ"
 msgstr "Password reset | IPRM"
 
+msgid ""
+"Цей email уже зареєстровано через %(partner)s. Пароль для кабінету ІПРМ "
+"ще не встановлено -- задайте його через <a href=\"%(url)s\">відновлення "
+"паролю</a>."
+msgstr ""
+"This email is already registered via %(partner)s. A password for your "
+"IPRM account has not been set yet -- set it via <a href=\"%(url)s\">password "
+"recovery</a>."
+
 #, python-format
 msgid "Ви в списку учасників: %(title)s"
 msgstr "You're on the list: %(title)s"

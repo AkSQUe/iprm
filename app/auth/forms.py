@@ -3,8 +3,22 @@ from flask_babel import lazy_gettext as _l
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField
 from wtforms.validators import DataRequired, Email, Length, EqualTo, ValidationError
+from flask import url_for
+from markupsafe import Markup, escape
 from app.forms_medical import MedicalProfileFieldsMixin, UserNameFieldsMixin
 from app.models.user import User
+from app.services.partner_auth import issuer_label
+
+
+def _partner_issuer(user):
+    """issuer партнера, якщо акаунт заведено партнерським лінком, інакше None."""
+    from app.models.auth_identity import AuthIdentity
+    identity = AuthIdentity.query.filter_by(
+        user_id=user.id, provider=AuthIdentity.PROVIDER_PARTNER,
+    ).first()
+    if identity is None:
+        return None
+    return (identity.raw_claims or {}).get('issuer')
 
 
 class CertificateDataForm(UserNameFieldsMixin, MedicalProfileFieldsMixin, FlaskForm):
@@ -104,15 +118,32 @@ class RegistrationForm(FlaskForm):
     )
 
     def validate_email(self, field):
+        user = User.query.filter_by(email=field.data.lower().strip()).first()
+        if user is None:
+            return
+
+        # Партнерський акаунт людина не заводила сама: його створив
+        # prefill-лінк з сайту партнера, і пароля вона не знає. Нейтральний
+        # текст нижче читався б тут як помилка сайту, тому називаємо джерело
+        # і ведемо на відновлення паролю -- єдиний шлях, що спрацює.
+        issuer = _partner_issuer(user)
+        if issuer is not None and not user.has_password:
+            raise ValidationError(Markup(_(
+                'Цей email уже зареєстровано через %(partner)s. Пароль для '
+                'кабінету ІПРМ ще не встановлено -- задайте його через '
+                '<a href="%(url)s">відновлення паролю</a>.',
+                partner=escape(issuer_label(issuer)),
+                url=escape(url_for('auth.forgot_password')),
+            )))
+
         # Підказуємо дію, не підтверджуючи існування акаунта прямо:
         # частина адрес -- імпортовані учасники без пароля, для яких
         # правильний шлях саме "Забули пароль" або вхід через Google.
-        if User.query.filter_by(email=field.data.lower().strip()).first():
-            raise ValidationError(_(
-                'Неможливо використати цей email. Якщо обліковий запис уже '
-                'існує – увійдіть, відновіть пароль або скористайтесь '
-                'входом через Google.'
-            ))
+        raise ValidationError(_(
+            'Неможливо використати цей email. Якщо обліковий запис уже '
+            'існує – увійдіть, відновіть пароль або скористайтесь '
+            'входом через Google.'
+        ))
 
 
 class ForgotPasswordForm(FlaskForm):
