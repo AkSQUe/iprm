@@ -98,7 +98,9 @@
           <option value="schema_only">Тільки схема</option>
           <option value="data_only">Тільки дані</option>
         </select>
-        <input type="text" name="description" class="form-input backup-actions__desc" placeholder="Опис (необов'язково)">
+        {# maxlength -- щоб браузер зупинив задовгий опис до сервера. Сервіс
+           його все одно підрізає, але межа мусить стояти на обох рівнях. #}
+        <input type="text" name="description" maxlength="500" class="form-input backup-actions__desc" placeholder="Опис (необов'язково)">
         <button type="submit" class="apple-btn apple-btn--primary">Створити копію</button>
       </div>
     </form>

@@ -14,6 +14,7 @@
 import hashlib
 import logging
 import os
+import re
 import shutil
 import subprocess
 import time
@@ -153,14 +154,57 @@ class BackupService:
         return f'backup_{backup_type}_{timestamp}_{uuid4().hex[:6]}.dump'
 
     @staticmethod
-    def _get_pg_dump_version():
+    def _column_limit(column_name):
+        """Ширина текстової колонки -- з моделі, а не числом у коді.
+
+        Інакше межа розходиться зі схемою, і підрізання починає брехати.
+        """
+        from app.models.database_backup import DatabaseBackup
+
+        return DatabaseBackup.__table__.c[column_name].type.length
+
+    @classmethod
+    def _clamp(cls, value, column_name):
+        """Підрізати зовнішній рядок до ширини його колонки.
+
+        Конвенція проєкту: клампити на межі (пор. `str(exc)[:2000]` нижче і
+        `_listing.text_arg()` для пошукового рядка). Без цього будь-який
+        довший за очікування рядок ззовні валить INSERT, а виглядає це як
+        стектрейс посеред операції.
+        """
+        if value is None:
+            return None
+        limit = cls._column_limit(column_name)
+        return value[:limit] if limit else value
+
+    @classmethod
+    def _get_pg_dump_version(cls):
+        """Номер версії pg_dump -- без решти банера.
+
+        `pg_dump --version` на Ubuntu 24.04 віддає
+        'pg_dump (PostgreSQL) 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)' -- 58
+        символів при колонці String(50). Перша ж справжня копія на проді
+        впала саме на цьому INSERT і зупинила деплой (12.09.2026); дефект
+        лежав тут із 12.06.2026 і не стріляв лише тому, що копій на тому
+        сервері ніколи не робилось.
+
+        Зберігаємо номер: його звіряють із версією сервера БД, коли
+        вирішують, чи цією копією взагалі можна скористатись. Назва
+        дистрибутива й номер збірки -- шум, через який рядок і не влазив.
+        """
         try:
             result = subprocess.run(
                 ['pg_dump', '--version'], capture_output=True, text=True, timeout=10,
             )
-            return result.stdout.strip().split('\n')[0]
         except Exception:
             return None
+
+        raw = (result.stdout or '').strip().split('\n')[0].strip()
+        if not raw:
+            return None
+        match = re.search(r'\d+(?:\.\d+)*', raw)
+        # Навіть на несподіваному виводі колонка не має переповнитись.
+        return cls._clamp(match.group(0) if match else raw, 'pg_dump_version')
 
     @classmethod
     def create_backup(cls, backup_type='full', description='', created_by_id=None):
@@ -204,7 +248,7 @@ class BackupService:
             backup_type=backup_type,
             status=DatabaseBackup.STATUS_IN_PROGRESS,
             compression='gzip',
-            description=description,
+            description=cls._clamp(description, 'description'),
             pg_dump_version=cls._get_pg_dump_version(),
             created_by_id=created_by_id,
         )

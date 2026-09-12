@@ -227,6 +227,19 @@ class TestValidateIsAWriteOperation:
         assert view._rbac_permissions == ('backup.manage',)
 
 
+def test_description_field_has_a_length_limit(
+    admin_client, tools_present, roomy_disk,
+):
+    """Межа стоїть на обох рівнях: браузер і сервіс.
+
+    Колонка -- String(500), і опис приходить ззовні. Поле без maxlength
+    означало б, що задовгий опис валить INSERT стектрейсом.
+    """
+    html = admin_client.get('/admin/backups').get_data(as_text=True)
+
+    assert 'name="description" maxlength="500"' in html
+
+
 class TestBatchValidation:
 
     def test_page_offers_checking_every_copy(
