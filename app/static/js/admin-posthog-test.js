@@ -21,8 +21,6 @@
   var apiHost = cur.getAttribute('data-ph-api-host') || '/ngx-e';
   var key = cur.getAttribute('data-ph-key') || '';
   var secondaryKey = cur.getAttribute('data-ph-secondary-key') || '';
-  // Ім'я екземпляра додаткового проєкту -- те саме, що в posthog.js.
-  var SECONDARY_NAME = 'secondary';
 
   function setCell(id, text, ok) {
     var el = document.getElementById(id);
@@ -105,17 +103,21 @@
       source: 'admin_test_page',
       sent_at: new Date().toISOString(),
     };
-    var secondary = window.posthog[SECONDARY_NAME];
+    var instances = (window.iprmPosthogInstances || []).map(function (name) {
+      return window.posthog[name];
+    }).filter(function (instance) {
+      return instance && typeof instance.capture === 'function';
+    });
     try {
       window.posthog.capture('IPRMTestEvent', props);
-      if (secondaryKey) {
-        if (!secondary || typeof secondary.capture !== 'function') {
-          say('В основний проєкт подію надіслано, але екземпляр додаткового '
-            + 'проєкту не ініціалізувався.');
-          return;
-        }
-        secondary.capture('IPRMTestEvent', props);
+      if (secondaryKey && !instances.length) {
+        say('В основний проєкт подію надіслано, але екземпляр додаткового '
+          + 'проєкту не ініціалізувався.');
+        return;
       }
+      instances.forEach(function (instance) {
+        instance.capture('IPRMTestEvent', props);
+      });
     } catch (e) {
       say('Не вдалося надіслати подію: ' + (e && e.message ? e.message : e));
       return;

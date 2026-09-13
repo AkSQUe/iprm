@@ -1,9 +1,14 @@
-from flask import flash, redirect, render_template, request, url_for, current_app
+from flask import flash, redirect, render_template, request, session, url_for, current_app
 
 from app.admin import admin_bp
 from app.rbac import permission_required
 from app.admin._helpers import save_integration_settings, tristate_checkbox
 from app.models.site_settings import SiteSettings
+from app.services.posthog import posthog_settings_error
+
+# Відхилена форма кладе введене сюди, а сторінка забирає його при наступному
+# показі. Без цього після помилки обидва ключі доводилось вводити заново.
+FORM_DRAFT_SESSION_KEY = 'posthog_form_draft'
 
 
 @admin_bp.route('/posthog')
@@ -33,76 +38,68 @@ def posthog():
         'key_source': 'db' if settings.posthog_project_api_key else ('env' if env_key else 'none'),
         'secondary_key': settings.posthog_secondary_api_key or '',
         'effective_secondary_key': settings.effective_posthog_secondary_api_key,
-        # Галка форми показує збережене значення, а рядок стану -- діюче:
-        # реплей у додатковий проєкт гасне разом з основним рубильником.
-        'secondary_recording_saved': bool(settings.posthog_secondary_session_recording),
         'secondary_recording': settings.effective_posthog_secondary_session_recording,
         'api_host': current_app.config.get('POSTHOG_API_HOST', '/ngx-e'),
         'ui_host': current_app.config.get('POSTHOG_UI_HOST', 'https://eu.posthog.com'),
     }
-    return render_template('admin/posthog.html', cfg=cfg)
+    # Значення полів форми: чернетка відхиленого збереження або збережений
+    # стан. Реплей у додатковий проєкт -- збережена галка, а не діюча: діюча
+    # гасне разом з основним рубильником, і показ її в чекбоксі мовчки
+    # скидав би вибір при наступному збереженні.
+    form = session.pop(FORM_DRAFT_SESSION_KEY, None) or {
+        'api_key': cfg['db_key'],
+        'secondary_key': cfg['secondary_key'],
+        'enabled': cfg['enabled'],
+        'recording': cfg['recording'],
+        'exclude_admin': cfg['exclude_admin'],
+        'secondary_recording': bool(settings.posthog_secondary_session_recording),
+    }
+    return render_template('admin/posthog.html', cfg=cfg, form=form)
 
 
 @admin_bp.route('/posthog/save', methods=['POST'])
 @permission_required('integrations.keys')
 def posthog_save():
-    api_key = request.form.get('posthog_project_api_key', '').strip()
-    enabled = tristate_checkbox('posthog_enabled')
-    recording = tristate_checkbox('posthog_session_recording')
-    exclude_admin = tristate_checkbox('posthog_exclude_admin')
-    secondary_key = request.form.get('posthog_secondary_api_key', '').strip()
-    secondary_recording = 'posthog_secondary_session_recording' in request.form
+    form = {
+        'api_key': request.form.get('posthog_project_api_key', '').strip(),
+        'secondary_key': request.form.get('posthog_secondary_api_key', '').strip(),
+        'enabled': tristate_checkbox('posthog_enabled'),
+        'recording': tristate_checkbox('posthog_session_recording'),
+        'exclude_admin': tristate_checkbox('posthog_exclude_admin'),
+        'secondary_recording': tristate_checkbox('posthog_secondary_session_recording'),
+    }
 
-    if not (SiteSettings.is_valid_posthog_key(api_key)
-            and SiteSettings.is_valid_posthog_key(secondary_key)):
-        flash('Project API Key починається з "phc_". Ключ, що починається з '
-              '"phx_", -- це Personal API Key: він дає доступ до читання '
-              'даних проєкту, і в HTML йому не місце.', 'error')
-        return redirect(url_for('admin.posthog'))
-
-    # Увімкнути без ключа неможливо: інакше вийшла б збережена пустушка --
-    # бейдж "Активно" при нулі зібраних даних.
-    env_key = current_app.config.get('POSTHOG_PROJECT_API_KEY', '') or ''
-    if enabled and not api_key and not env_key:
-        flash('Щоб увімкнути PostHog, спершу вкажіть Project API Key.', 'error')
-        return redirect(url_for('admin.posthog'))
-
-    # Той самий ключ двічі -- кожна подія рахувалась би в проєкті вдвічі.
-    # Порівнюємо з ключем, який реально діятиме, включно з env.
-    if secondary_key and secondary_key == (api_key or env_key):
-        flash('Додатковий ключ збігається з основним. Вкажіть ключ іншого '
-              'проєкту або залиште поле порожнім.', 'error')
-        return redirect(url_for('admin.posthog'))
-
-    if secondary_recording and not secondary_key:
-        flash('Запис сесій у додатковий проєкт потребує його ключа.', 'error')
-        return redirect(url_for('admin.posthog'))
-
-    # Запис сесій без самої аналітики не має сенсу -- SDK просто не
-    # ініціалізується. Мовчки лишити галку увімкненою означало б показувати
-    # в адмінці стан, якого насправді немає.
-    if recording and not enabled:
-        flash('Запис сесій працює лише разом з увімкненим PostHog.', 'error')
+    error = posthog_settings_error(
+        api_key=form['api_key'],
+        secondary_key=form['secondary_key'],
+        enabled=form['enabled'],
+        recording=form['recording'],
+        secondary_recording=form['secondary_recording'],
+        env_key=current_app.config.get('POSTHOG_PROJECT_API_KEY', '') or '',
+    )
+    if error:
+        session[FORM_DRAFT_SESSION_KEY] = form
+        flash(error, 'error')
         return redirect(url_for('admin.posthog'))
 
     save_integration_settings(
         provider='posthog',
         settings=SiteSettings.get(),
         updates={
-            'posthog_project_api_key': api_key,
-            'posthog_enabled': enabled,
-            'posthog_session_recording': recording,
-            'posthog_exclude_admin': exclude_admin,
-            'posthog_secondary_api_key': secondary_key,
-            'posthog_secondary_session_recording': secondary_recording,
+            'posthog_project_api_key': form['api_key'],
+            'posthog_enabled': form['enabled'],
+            'posthog_session_recording': form['recording'],
+            'posthog_exclude_admin': form['exclude_admin'],
+            'posthog_secondary_api_key': form['secondary_key'],
+            'posthog_secondary_session_recording': form['secondary_recording'],
         },
         audit_summary={
-            'api_key_set': bool(api_key),
-            'enabled': enabled,
-            'session_recording': recording,
-            'exclude_admin': exclude_admin,
-            'secondary_api_key_set': bool(secondary_key),
-            'secondary_session_recording': secondary_recording,
+            'api_key_set': bool(form['api_key']),
+            'enabled': form['enabled'],
+            'session_recording': form['recording'],
+            'exclude_admin': form['exclude_admin'],
+            'secondary_api_key_set': bool(form['secondary_key']),
+            'secondary_session_recording': form['secondary_recording'],
         },
         success_msg='PostHog збережено',
     )

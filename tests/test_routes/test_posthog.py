@@ -32,6 +32,32 @@ def _login(client, user):
         s['_user_id'] = str(user.id)
 
 
+@pytest.fixture(autouse=True)
+def _isolate_posthog(app):
+    """Повернути PostHog у вихідний стан після кожного тесту.
+
+    Тестова БД і app.config спільні на всю pytest-сесію, а маршрути
+    збереження роблять commit. Без цього увімкнений тут PostHog переживав
+    файл, і сторінки в чужих тестах рендерили data-ph-email залогіненого
+    користувача -- test_user_roles падав на "email не має бути в HTML" лише
+    в повному прогоні.
+    """
+    config_snapshot = {k: v for k, v in app.config.items() if k.startswith('POSTHOG_')}
+    yield
+    db.session.rollback()
+    s = SiteSettings.get()
+    s.posthog_project_api_key = ''
+    s.posthog_enabled = None
+    s.posthog_session_recording = None
+    s.posthog_exclude_admin = None
+    s.posthog_secondary_api_key = ''
+    s.posthog_secondary_session_recording = False
+    db.session.commit()
+    for k in [k for k in app.config if k.startswith('POSTHOG_')]:
+        del app.config[k]
+    app.config.update(config_snapshot)
+
+
 @pytest.fixture
 def admin(app):
     u = User.create_with_password(
@@ -242,6 +268,125 @@ class TestSecondaryProject:
         _login(client, admin)
         html = client.get('/admin/posthog/test').get_data(as_text=True)
         assert 'ph-check-array-secondary' in html
+
+
+class TestSettingsRules:
+    """Правила збереження живуть у сервісі, щоб форма й імпорт .env не
+    розійшлись: імпорт спершу обходив їх повністю."""
+
+    def test_personal_key_rejected(self, app):
+        from app.services.posthog import posthog_keys_error
+        assert posthog_keys_error('phx_' + 'a' * 30, '')
+
+    def test_secondary_personal_key_named_in_error(self, app):
+        from app.services.posthog import posthog_keys_error
+        assert 'Додатковий' in posthog_keys_error(KEY, 'phx_' + 'a' * 30)
+
+    def test_duplicate_of_env_key_rejected(self, app):
+        from app.services.posthog import posthog_keys_error
+        assert posthog_keys_error('', KEY, env_key=KEY)
+
+    def test_valid_pair_passes(self, app):
+        from app.services.posthog import posthog_settings_error
+        assert posthog_settings_error(
+            api_key=KEY, secondary_key=OTHER_KEY, enabled=True,
+            recording=True, secondary_recording=True) is None
+
+
+class TestImportValidation:
+    """Імпорт .env не має пропускати в HTML Personal API Key."""
+
+    def test_preview_shows_error_and_hides_apply(self, client, admin, posthog_on):
+        _login(client, admin)
+        html = client.post('/admin/integrations/import-preview', data={
+            'env_text': 'POSTHOG_PROJECT_API_KEY=phx_' + 'a' * 30,
+        }).get_data(as_text=True)
+        assert 'Personal API Key' in html
+        assert 'integrations/import-apply' not in html
+
+    def test_apply_refuses_personal_key(self, client, admin, posthog_on):
+        _login(client, admin)
+        client.post('/admin/integrations/import-apply', data={
+            'env_text': 'POSTHOG_SECONDARY_API_KEY=phx_' + 'a' * 30,
+        })
+        assert SiteSettings.get().posthog_secondary_api_key == ''
+
+    def test_apply_refuses_duplicate_across_db_and_file(self, client, admin, posthog_on):
+        """Основний ключ у БД, додатковий -- у файлі: дубль видно лише зі
+        стану ПІСЛЯ імпорту."""
+        _login(client, admin)
+        client.post('/admin/integrations/import-apply', data={
+            'env_text': f'POSTHOG_SECONDARY_API_KEY={KEY}',
+        })
+        assert SiteSettings.get().posthog_secondary_api_key == ''
+
+    def test_valid_import_applies(self, client, admin, posthog_on):
+        _login(client, admin)
+        client.post('/admin/integrations/import-apply', data={
+            'env_text': f'POSTHOG_SECONDARY_API_KEY={OTHER_KEY}',
+        })
+        assert SiteSettings.get().posthog_secondary_api_key == OTHER_KEY
+
+
+class TestFormDraft:
+    def test_rejected_input_survives_redirect(self, client, admin, posthog_on):
+        _login(client, admin)
+        bad = 'phx_' + 'c' * 30
+        client.post('/admin/posthog/save', data={
+            'posthog_project_api_key': KEY,
+            'posthog_enabled': 'on',
+            'posthog_secondary_api_key': bad,
+        })
+        html = client.get('/admin/posthog').get_data(as_text=True)
+        assert f'value="{bad}"' in html
+        # Чернетка одноразова: наступний показ -- знову збережений стан.
+        html = client.get('/admin/posthog').get_data(as_text=True)
+        assert f'value="{bad}"' not in html
+
+
+class TestHealthCheck:
+    def test_absolute_api_host_is_degraded(self, app, posthog_on, monkeypatch):
+        """Абсолютний хост CSP блокує -- зелений статус тут означав би нуль
+        даних під зеленою галкою."""
+        from app.services.integration_health import HealthStatus, _check_posthog
+        # monkeypatch, а не пряме присвоєння: конфіг застосунку спільний між
+        # тестами, і абсолютний хост ламав би розмітку в наступних.
+        monkeypatch.setitem(app.config, 'POSTHOG_API_HOST', 'https://eu.i.posthog.com')
+        assert _check_posthog(posthog_on)['status'] == HealthStatus.DEGRADED
+
+    def test_card_says_disabled_for_env_key(self, app, client, admin, posthog_env_only):
+        posthog_env_only.posthog_enabled = False
+        db.session.flush()
+        _login(client, admin)
+        html = client.get('/admin/integrations').get_data(as_text=True)
+        # Рівно до кінця картки: далі йде Meta Pixel зі своїм бейджем.
+        card = html.split('>PostHog</h4>', 1)[1].split('</a>', 1)[0]
+        assert 'Вимкнено' in card
+        assert 'Не налаштовано' not in card
+
+
+class TestClientScript:
+    """Поведінку SDK тут не виконати, тож стережемо саму наявність захисту
+    в скрипті -- його зникнення повертає дефект тихо."""
+
+    def _js(self, name):
+        from pathlib import Path
+        root = Path(__file__).resolve().parents[2] / 'app' / 'static' / 'js'
+        return (root / name).read_text(encoding='utf-8')
+
+    def test_identity_reset_after_logout(self):
+        js = self._js('posthog.js')
+        assert "get_property('$user_state')" in js
+        assert 'instance.reset()' in js
+        assert js.index('instance.reset()') < js.index('instance.register('), (
+            'reset стирає супервластивості, тож має йти ДО register'
+        )
+
+    def test_instance_names_come_from_one_place(self):
+        for name in ('analytics-events.js', 'admin-posthog-test.js'):
+            js = self._js(name)
+            assert 'iprmPosthogInstances' in js
+            assert "'secondary'" not in js
 
 
 class TestScriptInjection:

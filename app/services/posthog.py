@@ -30,6 +30,52 @@ ADMIN_BLUEPRINTS = frozenset({'admin'})
 FORCED_ENDPOINTS = frozenset({'admin.posthog_test'})
 
 
+def posthog_keys_error(api_key, secondary_key, env_key=''):
+    """Помилка в самих ключах або None.
+
+    Спільне для форми в адмінці та імпорту .env: імпорт спершу обходив ці
+    правила, і Personal API Key ('phx_...'), що дає читання даних проєкту,
+    потрапив би в HTML кожної сторінки. Правила про прапорці сюди свідомо не
+    входять -- експорт з прода несе прапорці, успадковані з env, і такий
+    файл має імпортуватись.
+    """
+    from app.models.site_settings import SiteSettings
+
+    if not SiteSettings.is_valid_posthog_key(api_key):
+        return ('Project API Key починається з "phc_". Ключ, що починається '
+                'з "phx_", -- це Personal API Key: він дає доступ до читання '
+                'даних проєкту, і в HTML йому не місце.')
+    if not SiteSettings.is_valid_posthog_key(secondary_key):
+        return ('Додатковий Project API Key теж має починатися з "phc_". '
+                'Personal API Key ("phx_") в HTML не місце.')
+    # Той самий ключ двічі -- кожна подія рахувалась би в проєкті вдвічі.
+    # Порівнюємо з ключем, який реально діятиме, включно з env.
+    if secondary_key and secondary_key == (api_key or env_key):
+        return ('Додатковий ключ збігається з основним. Вкажіть ключ іншого '
+                'проєкту або залиште поле порожнім.')
+    return None
+
+
+def posthog_settings_error(*, api_key, secondary_key, enabled, recording,
+                           secondary_recording, env_key=''):
+    """Помилка у формі налаштувань PostHog або None."""
+    error = posthog_keys_error(api_key, secondary_key, env_key)
+    if error:
+        return error
+    # Увімкнути без ключа неможливо: інакше вийшла б збережена пустушка --
+    # бейдж "Активно" при нулі зібраних даних.
+    if enabled and not (api_key or env_key):
+        return 'Щоб увімкнути PostHog, спершу вкажіть Project API Key.'
+    # Запис сесій без самої аналітики не має сенсу -- SDK просто не
+    # ініціалізується. Мовчки лишити галку увімкненою означало б показувати
+    # в адмінці стан, якого насправді немає.
+    if recording and not enabled:
+        return 'Запис сесій працює лише разом з увімкненим PostHog.'
+    if secondary_recording and not secondary_key:
+        return 'Запис сесій у додатковий проєкт потребує його ключа.'
+    return None
+
+
 def _normalize_api_host(value):
     """Прибрати кінцевий слеш, щоб не збирати '//static/array.js'.
 

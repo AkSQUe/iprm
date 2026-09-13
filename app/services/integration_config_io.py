@@ -166,6 +166,30 @@ def compute_diff(parsed, settings):
     return diff
 
 
+def validation_errors(parsed, settings):
+    """Помилки, через які імпорт не можна застосувати. Порожній список -- ок.
+
+    Стан рахується так, як він стане ПІСЛЯ імпорту: ключ, якого немає в
+    тексті, лишається поточним. Інакше дубль основного й додаткового ключа,
+    розкиданий між БД і файлом, проходив би непоміченим.
+    """
+    from flask import current_app
+    from app.services.posthog import posthog_keys_error
+
+    def resulting(env_key, attr):
+        current = _normalized_get(settings, attr, '')
+        if env_key not in parsed:
+            return current
+        return _parse_value(parsed[env_key], current)
+
+    error = posthog_keys_error(
+        resulting('POSTHOG_PROJECT_API_KEY', 'posthog_project_api_key'),
+        resulting('POSTHOG_SECONDARY_API_KEY', 'posthog_secondary_api_key'),
+        current_app.config.get('POSTHOG_PROJECT_API_KEY', '') or '',
+    )
+    return [error] if error else []
+
+
 def apply_parsed(parsed, settings):
     """Записати parsed значення у settings (не комітимо -- caller).
     Повертає кількість змін."""

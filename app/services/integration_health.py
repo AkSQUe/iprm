@@ -272,9 +272,18 @@ def _check_posthog(settings):
 
     base_url = (getattr(g, 'health_base_url', None) or '').rstrip('/')
     api_host = (current_app.config.get('POSTHOG_API_HOST', '/ngx-e') or '').rstrip('/')
-    if not base_url or not api_host.startswith('/'):
-        # Немає зовнішньої адреси (CLI, тести) або проксі вимкнено на
-        # користь прямого хосту -- перевіряти шлях нічим.
+    if not api_host.startswith('/'):
+        # Абсолютний хост CSP не дозволяє (там лише 'self' і ui_host), тож
+        # SDK і події блокуються в браузері мовчки. Колись це повертало OK з
+        # позначкою "проксі не перевірявся" -- зелений статус при нулі даних.
+        return {
+            'status': HealthStatus.DEGRADED,
+            'error': (f'POSTHOG_API_HOST={api_host!r}: підтримується лише '
+                      f'відносний шлях власного проксі (напр. /ngx-e). '
+                      f'Абсолютний хост блокує CSP, і дані не збираються.'),
+        }
+    if not base_url:
+        # Немає зовнішньої адреси (CLI, тести) -- перевіряти шлях нічим.
         return {
             'status': HealthStatus.OK,
             'detail': f'Ключ {eff[:12]}... (проксі не перевірявся)',

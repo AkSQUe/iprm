@@ -111,7 +111,7 @@
     <label for="posthog_project_api_key">Project API Key</label>
     <input type="text" name="posthog_project_api_key" id="posthog_project_api_key"
            class="form-input" pattern="^phc_[A-Za-z0-9_-]{20,60}$"
-           value="{{ cfg.db_key }}"
+           value="{{ form.api_key }}"
            placeholder="phc_..." autocomplete="off" spellcheck="false">
     <p class="form-hint">
       PostHog → Settings → Project → Project API Key. Починається з
@@ -124,7 +124,7 @@
   <div class="form-group admin-form__full">
     <div class="form-checkbox">
       <input type="checkbox" name="posthog_enabled" id="posthog_enabled"
-             {% if cfg.enabled %}checked{% endif %}>
+             {% if form.enabled %}checked{% endif %}>
       <label for="posthog_enabled">Увімкнути аналітику</label>
     </div>
     <p class="form-hint">
@@ -136,7 +136,7 @@
   <div class="form-group admin-form__full">
     <div class="form-checkbox">
       <input type="checkbox" name="posthog_session_recording" id="posthog_session_recording"
-             {% if cfg.recording %}checked{% endif %}>
+             {% if form.recording %}checked{% endif %}>
       <label for="posthog_session_recording">Записувати сесії</label>
     </div>
     <p class="form-hint">
@@ -153,7 +153,7 @@
   <div class="form-group admin-form__full">
     <div class="form-checkbox">
       <input type="checkbox" name="posthog_exclude_admin" id="posthog_exclude_admin"
-             {% if cfg.exclude_admin %}checked{% endif %}>
+             {% if form.exclude_admin %}checked{% endif %}>
       <label for="posthog_exclude_admin">Не збирати дані в адмінці</label>
     </div>
     <p class="form-hint">
@@ -168,7 +168,7 @@
     <label for="posthog_secondary_api_key">Додатковий Project API Key</label>
     <input type="text" name="posthog_secondary_api_key" id="posthog_secondary_api_key"
            class="form-input" pattern="^phc_[A-Za-z0-9_-]{20,60}$"
-           value="{{ cfg.secondary_key }}"
+           value="{{ form.secondary_key }}"
            placeholder="phc_..." autocomplete="off" spellcheck="false">
     <p class="form-hint">
       Ключ іншого проєкту PostHog, куди паралельно йдуть ті самі події:
@@ -184,7 +184,7 @@
     <div class="form-checkbox">
       <input type="checkbox" name="posthog_secondary_session_recording"
              id="posthog_secondary_session_recording"
-             {% if cfg.secondary_recording_saved %}checked{% endif %}>
+             {% if form.secondary_recording %}checked{% endif %}>
       <label for="posthog_secondary_session_recording">Записувати сесії і в додатковий проєкт</label>
     </div>
     <p class="form-hint">

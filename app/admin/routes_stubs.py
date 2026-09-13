@@ -1,5 +1,5 @@
 import logging
-from flask import render_template, redirect, url_for, flash, request, abort
+from flask import render_template, redirect, url_for, flash, request, abort, current_app
 from flask_login import current_user
 from app.admin import admin_bp
 from app.rbac import permission_required
@@ -70,7 +70,8 @@ def integrations_export():
 def integrations_import_preview():
     """Parse uploaded .env-text, показати diff без apply."""
     from app.models.site_settings import SiteSettings
-    from app.services.integration_config_io import parse_env_text, compute_diff
+    from app.services.integration_config_io import (
+        parse_env_text, compute_diff, validation_errors)
 
     text = request.form.get('env_text', '')
     if not text.strip():
@@ -84,11 +85,15 @@ def integrations_import_preview():
 
     settings = SiteSettings.get()
     diff = compute_diff(parsed, settings)
+    errors = validation_errors(parsed, settings)
+    for error in errors:
+        flash(error, 'error')
     return render_template(
         'admin/integration_import_preview.html',
         diff=diff,
         env_text=text,
         changes_count=sum(1 for d in diff if d['changed']),
+        has_errors=bool(errors),
     )
 
 
@@ -97,7 +102,8 @@ def integrations_import_preview():
 def integrations_import_apply():
     """Apply parsed env values to SiteSettings + commit."""
     from app.models.site_settings import SiteSettings
-    from app.services.integration_config_io import parse_env_text, apply_parsed
+    from app.services.integration_config_io import (
+        parse_env_text, apply_parsed, validation_errors)
 
     text = request.form.get('env_text', '')
     if not text.strip():
@@ -110,6 +116,13 @@ def integrations_import_apply():
         return redirect(url_for('admin.integrations_io'))
 
     settings = SiteSettings.get()
+    # Повторна перевірка тут обов'язкова: preview лише показує помилку, а
+    # POST на apply можна надіслати й в обхід нього.
+    errors = validation_errors(parsed, settings)
+    if errors:
+        for error in errors:
+            flash(error, 'error')
+        return redirect(url_for('admin.integrations_io'))
     try:
         n_changes = apply_parsed(parsed, settings)
         db.session.commit()
@@ -240,7 +253,11 @@ def integrations():
         }
 
         ph_key, ph_err = _safe(lambda: settings.effective_posthog_api_key, '')
-        ph_db_key, ph_db_err = _safe(lambda: settings.posthog_project_api_key, '')
+        # Ключ з будь-якого джерела: на проді він приходить з env, і картка
+        # при знятому рубильнику казала "Не налаштовано" замість "Вимкнено".
+        ph_db_key, ph_db_err = _safe(
+            lambda: settings.posthog_project_api_key
+            or current_app.config.get('POSTHOG_PROJECT_API_KEY', ''), '')
         ph_rec, ph_rec_err = _safe(
             lambda: settings.effective_posthog_session_recording, False)
         ph_secondary, ph_secondary_err = _safe(

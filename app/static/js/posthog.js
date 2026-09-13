@@ -32,7 +32,8 @@
 
   var LOADER_MAX_DELAY_MS = 3000;
 
-  // Ім'я екземпляра додаткового проєкту -- те саме, що в analytics-events.js.
+  // Ім'я екземпляра додаткового проєкту; споживачі читають його з
+  // window.iprmPosthogInstances.
   var SECONDARY_NAME = 'secondary';
 
   /* Методи, які стаб уміє чергувати. Список -- з офіційного snippet'а
@@ -142,6 +143,17 @@
      Кожен екземпляр має власну persistence (кука з токеном у назві), тож
      register та identify робляться для кожного окремо. */
   function onLoaded(instance) {
+    /* Скидання ідентифікації -- ДО register, бо reset стирає й
+       супервластивості. Вихід з акаунта відбувається на сервері, і SDK про
+       нього не знає: без цього на спільному комп'ютері (ресепшн, ноутбук у
+       клініці) наступний анонімний відвідувач писав би події в профіль
+       попереднього користувача разом з його email. Той самий захист -- коли
+       в браузері змінився акаунт без проміжної анонімної сторінки. */
+    if (instance.get_property('$user_state') === 'identified'
+        && (!userId || instance.get_distinct_id() !== userId)) {
+      instance.reset();
+    }
+
     instance.register({ iprm_section: section });
 
     if (userId) {
@@ -182,8 +194,16 @@
   }
 
   window.posthog.init(key, buildConfig(recording));
+
+  /* Імена додаткових екземплярів публікуються окремою змінною, а не
+     властивістю window.posthog: коли приїде array.js, він замінить стаб
+     справжнім об'єктом, і власні поля стаба зникнуть. Споживачі
+     (analytics-events.js, сторінка перевірки) беруть імена звідси й не
+     тримають власну копію рядка. */
+  window.iprmPosthogInstances = [];
   if (secondaryKey && secondaryKey !== key) {
     window.posthog.init(secondaryKey, buildConfig(secondaryRecording), SECONDARY_NAME);
+    window.iprmPosthogInstances.push(SECONDARY_NAME);
   }
 
   // ---- відкладена вставка array.js ----
