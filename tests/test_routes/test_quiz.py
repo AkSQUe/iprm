@@ -1048,6 +1048,21 @@ def test_refund_mid_attempt_blocks_answers(client, app):
     assert db.session.get(QuizAttempt, attempt.id).chosen_position(question_id) is None
 
 
+def test_start_race_redirects_instead_of_500(client, app, monkeypatch):
+    """Стан змінився між сторінкою умов і стартом -- не 500, а пояснення."""
+    reg, _ = _setup()
+    db.session.commit()
+    _login(client, reg.user)
+
+    def refuse(_registration):
+        raise ValueError('Тест недоступний: attempts_exhausted')
+
+    monkeypatch.setattr(quiz_service, 'start_attempt', refuse)
+    resp = client.post(f'/quiz/{reg.id}/start', follow_redirects=True)
+    assert resp.status_code == 200
+    assert any('недоступне' in m for m in _flashes(resp))
+
+
 def test_failed_result_explains_expired_deadline(client, app, no_pdf):
     """Було: після провалу з минулим терміном -- лише бал і «Назад до кабінету»."""
     reg, quiz = _setup()

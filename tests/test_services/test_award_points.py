@@ -14,7 +14,7 @@ from app.services import quiz_service
 
 @pytest.fixture(autouse=True)
 def bpr_ready(app):
-    # Гейт `_bpr_is_configured` дивиться й на номер провайдера БПР -- без
+    # Гейт `bpr_is_configured` дивиться й на номер провайдера БПР -- без
     # нього він поверне False ще ДО перевірки балів, і тест перевірив би не
     # те, що заявлено.
     settings = SiteSettings.get()
@@ -68,7 +68,7 @@ def test_gate_blocks_online_participant_when_only_offline_filled(app):
     reg = _hybrid_registration('online')
     reg.instance.cpd_points_online = None
     db.session.commit()
-    assert quiz_service._bpr_is_configured(
+    assert quiz_service.bpr_is_configured(
         reg.instance, registration=reg,
     ) is False
 
@@ -77,6 +77,6 @@ def test_gate_allows_offline_participant_when_only_offline_filled(app):
     reg = _hybrid_registration('offline')
     reg.instance.cpd_points_online = None
     db.session.commit()
-    assert quiz_service._bpr_is_configured(
+    assert quiz_service.bpr_is_configured(
         reg.instance, registration=reg,
     ) is True

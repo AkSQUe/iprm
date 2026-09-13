@@ -438,6 +438,24 @@ def test_results_offer_issue_for_passed_without_certificate(client, admin):
     assert f'/admin/registrations/{reg.id}/certificate"' in html
 
 
+def test_revoked_certificate_counts_as_missing(client, admin, no_pdf):
+    course = _course()
+    inst = _instance(course)
+    reg = _registration(inst)
+    reg.quiz_passed_at = datetime.now(timezone.utc)
+    db.session.flush()
+    cert = certificate_service.issue_certificate(reg)
+    cert.revoked = True
+    db.session.flush()
+    _login(client, admin)
+
+    html = client.get(
+        f'/admin/instances/{inst.id}/quiz-results?state=no_certificate'
+    ).get_data(as_text=True)
+    assert reg.user.email in html
+    assert f'/admin/registrations/{reg.id}/certificate"' in html
+
+
 def test_instance_override_is_separate_quiz(client, admin):
     course = _course()
     inst = _instance(course)

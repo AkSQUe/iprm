@@ -120,12 +120,16 @@ def start(reg_id):
 @limiter.limit('30 per hour')
 def begin(reg_id):
     reg = _own_registration(reg_id)
-    state = quiz_service.eligibility(reg)
-    if not state.is_actionable:
+    try:
+        # Допуск перевіряє сам сервіс (і віддає незавершену спробу, якщо є).
+        # Окрема перевірка тут рахувала допуск удруге і все одно не закривала
+        # гонку між нею й стартом: стан, що змінився посередині, давав 500.
+        attempt = quiz_service.start_attempt(reg)
+    except ValueError:
+        # Без rollback: відмова не пише нічого (сервіс падає до запису, а гілка
+        # гонки відкочується сама), тож відкат лише знищив би чужі зміни сесії.
         flash(_('Тестування зараз недоступне.'), 'error')
         return redirect(url_for('quiz.start', reg_id=reg.id))
-
-    attempt = quiz_service.start_attempt(reg)
     if not _commit(f'start_attempt reg={reg.id}'):
         return redirect(url_for('quiz.start', reg_id=reg.id))
     return redirect(url_for('quiz.question', attempt_id=attempt.id))
@@ -249,8 +253,8 @@ def submit(attempt_id):
     try:
         quiz_service.submit_attempt(attempt)
     except quiz_service.AttemptBlocked:
-        # Стан реєстрації змінився між перевіркою вище і завершенням.
-        db.session.rollback()
+        # Стан реєстрації змінився між перевіркою вище і завершенням. Сервіс
+        # відмовляє ДО оцінювання, тож відкочувати нічого.
         flash(_('Тестування зараз недоступне.'), 'error')
         return redirect(url_for('quiz.start', reg_id=attempt.registration_id))
     except Exception:

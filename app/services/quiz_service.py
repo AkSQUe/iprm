@@ -258,7 +258,7 @@ def has_bpr_event_number(course):
     return any((i.bpr_event_number or '').strip() for i in course.instances)
 
 
-def _bpr_is_configured(instance, context=None, registration=None):
+def bpr_is_configured(instance, context=None, registration=None):
     """Чи вистачає даних, щоб видати сертифікат за цей захід.
 
     Перевіряємо ДО того, як пустити людину в тест. Інакше вона склала б його і
@@ -410,7 +410,7 @@ def eligibility(registration, context=None):
     if not quiz.is_ready:
         return Eligibility(QUIZ_NOT_READY, quiz=quiz)
 
-    if not _bpr_is_configured(instance, context, registration):
+    if not bpr_is_configured(instance, context, registration):
         return Eligibility(BPR_NOT_CONFIGURED, quiz=quiz)
 
     profile = registration.user.medical_profile if registration.user else None
@@ -509,7 +509,7 @@ def start_attempt(registration):
     db.session.add(attempt)
     try:
         db.session.flush()
-    except IntegrityError:
+    except IntegrityError as exc:
         # Подвійне натискання «Почати тест» (на мобільному -- звична річ): два
         # запити не бачать чужої незакоміченої спроби і беруть один
         # attempt_number. Unique-констрейнт це ловить, але 500 замість тесту
@@ -522,7 +522,10 @@ def start_attempt(registration):
                 registration.id, existing.id,
             )
             return existing
-        raise
+        # Переможець гонки ще не закомітив свою спробу. ValueError, а не
+        # IntegrityError: маршрут поверне людину на умови, звідки повторний
+        # клік уже знайде ту спробу.
+        raise ValueError('Спробу вже стартує паралельний запит') from exc
 
     logger.info(
         'Quiz attempt %d started: reg=%s quiz=%s questions=%d',

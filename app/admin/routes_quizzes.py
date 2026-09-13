@@ -21,6 +21,7 @@ from app.rbac import permission_required
 from app.admin.forms import CourseQuizForm
 from app.admin.routes_translations import apply_inline_translations
 from app.extensions import db
+from app.models.certificate import Certificate
 from app.models.course import Course
 from app.models.course_instance import CourseInstance
 from app.models.course_quiz import CourseQuiz
@@ -79,7 +80,7 @@ def _render_editor(quiz, course, instance, form):
         instance=instance,
         form=form,
         validation_errors=errors,
-        bpr_ready=quiz_service._bpr_is_configured(instance) if instance else None,
+        bpr_ready=quiz_service.bpr_is_configured(instance) if instance else None,
     )
 
 
@@ -314,7 +315,10 @@ def instance_quiz_results(instance_id):
     elif filters['state'] == 'not_passed':
         query = query.filter(EventRegistration.quiz_passed_at.is_(None))
     elif filters['state'] == 'no_certificate':
-        query = query.filter(~EventRegistration.certificate.has())
+        # Відкликаний сертифікат -- теж «без сертифіката»: документа на руках
+        # немає, і саме цим рядкам потрібна кнопка «Видати».
+        query = query.filter(~EventRegistration.certificate.has(
+            Certificate.revoked.is_(False)))
     if filters['payment'] == 'paid':
         query = query.filter(EventRegistration.payment_status == 'paid')
     elif filters['payment'] == 'unpaid':
@@ -352,12 +356,14 @@ def instance_quiz_results(instance_id):
     # Раніше total_count брався з `pagination.total`, що збігалося з розміром
     # групи лише тому, що фільтрів на цій сторінці не було; тепер вони є, тож
     # рахуємо його з `base` окремо, як і решту двох.
-    from app.models.certificate import Certificate
     total_count = base.count()
     passed_count = base.filter(
         EventRegistration.quiz_passed_at.isnot(None)).count()
+    # Лише чинні: відкликаний сертифікат у «видано» завищував показник
+    # готовності групи.
     issued_count = base.join(
-        Certificate, Certificate.registration_id == EventRegistration.id).count()
+        Certificate, Certificate.registration_id == EventRegistration.id,
+    ).filter(Certificate.revoked.is_(False)).count()
 
     filter_args = _listing.filter_args(filters)
     return render_template(
