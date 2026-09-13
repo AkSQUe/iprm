@@ -772,6 +772,46 @@ def _email_certificate(certificate):
         return False
 
 
+def _notify_issue_failed(registration, exc):
+    """Лист адмінам: тест складено, а сертифікат автоматично не видався.
+
+    Учасникові сторінка привітання обіцяє надіслати документ «найближчим
+    часом», а збій досі лишався лише в лозі сервера -- тобто обіцянку не було
+    кому виконати. Best-effort: провал сповіщення нічого не відкочує.
+
+    `registration=None` у виклику свідомо: з registration_id рядок журналу з
+    тригером 'certificate' виглядав би для `certificate_email_sent` як лист із
+    сертифікатом УЧАСНИКУ, і сторінка привітання сказала б «копію надіслано».
+    """
+    from app.models.site_settings import SiteSettings
+    from app.services.email_service import EmailService
+
+    reason = (str(exc) if isinstance(exc, ValueError)
+              else 'Технічний збій під час видачі -- подробиці в лозі сервера.')
+    base = (SiteSettings.get().website_url or '').rstrip('/')
+    tail = (f'/admin/instances/{registration.instance_id}/quiz-results'
+            '?state=no_certificate')
+    user = registration.user
+    try:
+        EmailService.notify_admins_with_template(
+            event_type='certificate',
+            subject='Сертифікат не видано автоматично: '
+                    f'{(user.full_name if user else "") or registration.id}',
+            template_name='admin_certificate_failed',
+            context={
+                'registration': registration,
+                'instance': registration.instance,
+                'reason': reason,
+                'admin_url': f'{base}{tail}' if base else tail,
+            },
+        )
+    except Exception:
+        db.session.rollback()
+        logger.exception(
+            'Failed to notify admins about auto-issue failure: reg=%s',
+            registration.id)
+
+
 def certificate_email_sent(registration):
     """Чи справді пішов лист із сертифікатом по цій реєстрації.
 
@@ -821,13 +861,14 @@ def award_and_issue(registration):
 
     try:
         certificate = certificate_service.issue_certificate(registration)
-    except Exception:
+    except Exception as exc:
         # Сесія після збою на рівні БД лишається зламаною -- відкочуємо, щоб
         # наступний запит не наткнувся на неї. Результат тесту, присутність і
         # бали вже закомічені й від цього не страждають.
         db.session.rollback()
         logger.exception(
             'Auto-issue failed after passed quiz: reg=%s', registration.id)
+        _notify_issue_failed(registration, exc)
         return None
 
     _email_certificate(certificate)
@@ -884,6 +925,10 @@ def extract_questions_from_form(form_data):
                 'id': question_id,
                 'text': text,
                 'answers': answers,
+                # Прапорець «виведено з банку», а не «активне»: форма без цього
+                # поля (стара вкладка, скрипти) лишає питання в банку, а не
+                # вимикає весь банк.
+                'is_active': not form_data.get(f'question_{idx}_inactive'),
             })
         idx += 1
     return questions
@@ -900,10 +945,12 @@ def save_questions_for_quiz(quiz, questions_data):
 
     for idx, data in enumerate(questions_data):
         question = by_id.get(data.get('id'))
+        is_active = data.get('is_active', True)
         if question is not None:
             question.text = data['text']
             question.answers = data['answers']
             question.sort_order = idx
+            question.is_active = is_active
             seen_ids.add(question.id)
         else:
             db.session.add(QuizQuestion(
@@ -911,6 +958,7 @@ def save_questions_for_quiz(quiz, questions_data):
                 text=data['text'],
                 answers=data['answers'],
                 sort_order=idx,
+                is_active=is_active,
             ))
 
     # Видаляємо через колекцію, а не db.session.delete: cascade delete-orphan
@@ -919,6 +967,65 @@ def save_questions_for_quiz(quiz, questions_data):
     # і валідація готовності тесту рахувала б їх.
     for old_id in set(by_id) - seen_ids:
         quiz.questions.remove(by_id[old_id])
+
+
+def used_question_ids(quiz):
+    """id питань, що вже потрапляли у спроби цього тесту (будь-які, і незавершені).
+
+    Такі питання білдер не дає видалити без попередження: видалення зараховує
+    питання у незавершених спробах і прибирає його з розбору завершених.
+    """
+    if quiz is None or quiz.id is None:
+        return set()
+    used = set()
+    for (ids,) in db.session.query(QuizAttempt.question_ids).filter(
+            QuizAttempt.quiz_id == quiz.id):
+        used.update(ids or [])
+    return used
+
+
+def editor_questions(quiz, form_data=None):
+    """Питання для білдера: з БД або з відхиленої форми.
+
+    Два дефекти редактора закриваються тут:
+      * відхилена форма (напр. поріг більший за кількість питань) малювала банк
+        із БД, тож усе, що адмін набрав у цьому збереженні, зникало;
+      * нормалізатор моделі відкидає порожні варіанти, а шаблон малював лише
+        наявні -- питання, збережене з трьома варіантами, не мало поля для
+        четвертого, і виправити його можна було лише видаливши.
+
+    Тому варіантів завжди рівно ANSWERS_PER_QUESTION (порожні доповнюються), а
+    `model` -- збережене питання для мовних вкладок (у нового його немає).
+    """
+    models = {q.id: q for q in quiz.questions}
+    if form_data is None:
+        source = [
+            {'id': q.id, 'text': q.text, 'answers': q.answers or [],
+             'is_active': q.is_active}
+            for q in quiz.questions
+        ]
+    else:
+        source = extract_questions_from_form(form_data)
+
+    used = used_question_ids(quiz)
+    blank = {'text': '', 'is_correct': False}
+    items = []
+    for data in source:
+        answers = [
+            {'text': a.get('text') or '', 'is_correct': bool(a.get('is_correct'))}
+            for a in (data.get('answers') or [])
+        ][:ANSWERS_PER_QUESTION]
+        answers += [dict(blank) for _ in range(ANSWERS_PER_QUESTION - len(answers))]
+        model = models.get(data.get('id'))
+        items.append({
+            'id': model.id if model is not None else None,
+            'text': data.get('text') or '',
+            'answers': answers,
+            'is_active': data.get('is_active', True),
+            'model': model,
+            'used': model is not None and model.id in used,
+        })
+    return items
 
 
 def validation_errors(quiz):

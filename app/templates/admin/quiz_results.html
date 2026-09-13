@@ -131,15 +131,31 @@
               {% endif %}
             </td>
             <td>
-              {% if row.reg.certificate %}
+              {% set cert = row.reg.certificate %}
+              {% if cert %}
               <a href="{{ url_for('admin.registration_certificate_download', reg_id=row.reg.id) }}">
-                {{ row.reg.certificate.number }}
+                {{ cert.number }}
               </a>
-              {% if row.reg.certificate.revoked %}
+              {% if cert.revoked %}
               <span class="badge badge--danger">відкликано</span>
               {% endif %}
+              {% elif row.reg.quiz_passed_at %}
+              {# Склав, а документа немає: автовидача впала (дані БПР, PDF).
+                 Учаснику обіцяно надіслати його -- тож рядок мусить кидатись в
+                 око і мати дію просто тут, без переходу в картку реєстрації. #}
+              <span class="badge badge--danger">не видано</span>
               {% else %}
               <span class="admin-text-muted">–</span>
+              {% endif %}
+              {% if row.reg.quiz_passed_at and (not cert or cert.revoked) and can('certificates.manage') %}
+              <form method="POST"
+                    action="{{ url_for('admin.registration_certificate_issue', reg_id=row.reg.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="next" value="{{ request.full_path }}">
+                <button type="submit" class="btn-admin btn-admin--sm btn-admin--primary">
+                  Видати
+                </button>
+              </form>
               {% endif %}
             </td>
             <td>

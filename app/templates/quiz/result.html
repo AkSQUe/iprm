@@ -62,6 +62,25 @@
     <a href="{{ url_for('auth.certificate_data') }}" class="apple-btn apple-btn--primary">
       {{ _('Заповнити анкету') }}
     </a>
+    {# Решта гілок -- ті самі пояснення, що на сторінці умов. Без них після
+       провалу людина бачила лише бал і «Назад до кабінету», не знаючи, що
+       термін уже минув чи тест тимчасово закрито. Тексти й відступи в trans
+       збігаються з quiz/start.html дослівно: каталог збирається без trimmed,
+       тож інший відступ дав би новий msgid без перекладу. #}
+    {% elif state.status == statuses.DEADLINE_PASSED %}
+    <p>
+      {% trans until=deadline_label %}
+      Термін складання завершився {{ until }}.
+      {% endtrans %}
+      {{ _('Якщо ви не встигли з поважної причини — напишіть організаторам.') }}
+    </p>
+    <a href="{{ url_for('main.contact') }}" class="apple-btn apple-btn--primary">{{ _('Написати нам') }}</a>
+    {% elif state.status == statuses.QUIZ_NOT_READY or state.status == statuses.BPR_NOT_CONFIGURED %}
+    <p>{{ _('Тест ще готується. Ми повідомимо, коли його можна буде пройти.') }}</p>
+    {% elif state.status == statuses.CANCELLED %}
+    <p>{{ _('Реєстрацію скасовано.') }}</p>
+    {% elif state.status == statuses.NOT_PAID %}
+    <p>{{ _('Тестування відкривається після оплати участі.') }}</p>
     {% endif %}
     {% endif %}
 

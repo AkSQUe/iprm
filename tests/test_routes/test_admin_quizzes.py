@@ -341,6 +341,103 @@ def test_question_translations_are_saved(client, admin):
 
 # ---- перевизначення на проведенні ------------------------------------------
 
+def test_rejected_form_keeps_typed_questions(client, admin):
+    """Було: відхилена форма малювала банк із БД, і набране зникало."""
+    course = _course()
+    _login(client, admin)
+    data = _builder_payload(10, per_attempt=10, passing=11)
+    data['question_6_text'] = 'Набране, але не збережене питання?'
+    html = client.post(f'/admin/courses/{course.id}/quiz',
+                       data=data).get_data(as_text=True)
+
+    assert 'Набране, але не збережене питання?' in html
+    assert 'name="question_9_text"' in html
+    assert 'питання нижче відновлено' in html
+
+
+def test_editor_always_renders_four_answer_slots(client, admin):
+    """Питання з трьома збереженими варіантами мусить мати поле для четвертого."""
+    course = _course()
+    quiz = CourseQuiz(course_id=course.id)
+    db.session.add(quiz)
+    db.session.flush()
+    db.session.add(QuizQuestion(quiz_id=quiz.id, text='Неповне?', answers=[
+        {'text': 'А', 'is_correct': True},
+        {'text': 'Б', 'is_correct': False},
+        {'text': 'В', 'is_correct': False},
+    ]))
+    db.session.flush()
+    _login(client, admin)
+
+    html = client.get(f'/admin/courses/{course.id}/quiz').get_data(as_text=True)
+    assert 'name="question_0_answer_3_text"' in html
+
+
+def test_question_can_be_retired_from_bank(client, admin):
+    course = _course()
+    _login(client, admin)
+    client.post(f'/admin/courses/{course.id}/quiz', data=_builder_payload(10))
+    quiz = CourseQuiz.query.filter_by(course_id=course.id).one()
+
+    data = _builder_payload(10)
+    for i, question in enumerate(quiz.questions):
+        data[f'question_{i}_id'] = str(question.id)
+    data['question_0_inactive'] = '1'
+    client.post(f'/admin/courses/{course.id}/quiz', data=data)
+
+    db.session.expire_all()
+    quiz = db.session.get(CourseQuiz, quiz.id)
+    assert len(quiz.questions) == 10
+    assert quiz.bank_size == 9
+    assert quiz.questions[0].is_active is False
+
+    html = client.get(f'/admin/courses/{course.id}/quiz').get_data(as_text=True)
+    assert 'admin-quiz-question--inactive' in html
+
+
+def test_used_question_asks_before_removal(client, admin):
+    course = _course()
+    inst = _instance(course)
+    reg = _registration(inst)
+    _login(client, admin)
+    client.post(f'/admin/courses/{course.id}/quiz', data=_builder_payload(10))
+
+    html = client.get(f'/admin/courses/{course.id}/quiz').get_data(as_text=True)
+    assert 'Видалити питання' not in html
+
+    quiz_service.start_attempt(reg)
+    db.session.flush()
+    html = client.get(f'/admin/courses/{course.id}/quiz').get_data(as_text=True)
+    assert 'data-confirm-ok="Видалити питання"' in html
+
+
+def test_quiz_delete_goes_through_confirmation(client, admin):
+    """Було: data-confirm на formaction-кнопці не спрацьовував зовсім."""
+    course = _course()
+    _login(client, admin)
+    client.post(f'/admin/courses/{course.id}/quiz', data=_builder_payload(10))
+
+    html = client.get(f'/admin/courses/{course.id}/quiz').get_data(as_text=True)
+    assert 'id="quiz-delete-form"' in html
+    assert 'form="quiz-delete-form"' in html
+    assert 'data-confirm-ok="Видалити тест"' in html
+    assert 'formaction=' not in html
+
+
+def test_results_offer_issue_for_passed_without_certificate(client, admin):
+    course = _course()
+    inst = _instance(course)
+    reg = _registration(inst)
+    reg.quiz_passed_at = datetime.now(timezone.utc)
+    db.session.flush()
+    _login(client, admin)
+
+    html = client.get(
+        f'/admin/instances/{inst.id}/quiz-results').get_data(as_text=True)
+    assert 'не видано' in html
+    assert f'/admin/registrations/{reg.id}/certificate"' in html
+
+
 def test_instance_override_is_separate_quiz(client, admin):
     course = _course()
     inst = _instance(course)

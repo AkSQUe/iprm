@@ -1048,6 +1048,23 @@ def test_refund_mid_attempt_blocks_answers(client, app):
     assert db.session.get(QuizAttempt, attempt.id).chosen_position(question_id) is None
 
 
+def test_failed_result_explains_expired_deadline(client, app, no_pdf):
+    """Було: після провалу з минулим терміном -- лише бал і «Назад до кабінету»."""
+    reg, quiz = _setup()
+    attempt = _start(client, reg)
+    _answer_all(client, attempt, correct_count=0)
+    client.post(f'/quiz/attempt/{attempt.id}/submit')
+
+    reg.instance.end_date = datetime.now(timezone.utc) - timedelta(days=5)
+    quiz.deadline_days_after_end = 0
+    db.session.commit()
+
+    html = client.get(f'/quiz/attempt/{attempt.id}/result').get_data(as_text=True)
+    assert 'Тест не складено' in html
+    assert 'Термін складання завершився' in html
+    assert 'Спробувати ще раз' not in html
+
+
 def test_refund_mid_attempt_hides_questions(client, app):
     reg, _ = _setup()
     attempt = _start(client, reg)

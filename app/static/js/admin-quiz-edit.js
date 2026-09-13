@@ -16,14 +16,28 @@
   if (!container || !addBtn) return;
 
   var ANSWERS = 4;
+  var INACTIVE_CLASS = 'admin-quiz-question--inactive';
   var counter = document.querySelector('[data-quiz-bank-count]');
 
   function questions() {
     return container.querySelectorAll('.admin-quiz-question');
   }
 
+  function isInactive(item) {
+    var flag = item.querySelector('[data-role="inactive"]');
+    return !!(flag && flag.checked);
+  }
+
+  // Лічильник рахує лише питання в банку: виведені у спроби не йдуть, тож
+  // порівнювати з «питань на спробу» треба саме їх.
   function updateCount() {
-    if (counter) counter.textContent = questions().length;
+    if (!counter) return;
+    var items = questions();
+    var active = 0;
+    for (var i = 0; i < items.length; i++) {
+      if (!isInactive(items[i])) active++;
+    }
+    counter.textContent = active;
   }
 
   function reindex() {
@@ -37,6 +51,9 @@
 
       var textInput = item.querySelector('[data-role="text"]');
       if (textInput) textInput.name = 'question_' + i + '_text';
+
+      var inactive = item.querySelector('[data-role="inactive"]');
+      if (inactive) inactive.name = 'question_' + i + '_inactive';
 
       // Радіо: спільний name у межах питання, унікальний між питаннями.
       var radios = item.querySelectorAll('[data-role="correct"]');
@@ -58,11 +75,23 @@
   function bindRemove(item) {
     var btn = item.querySelector('.admin-quiz-question__remove');
     if (!btn) return;
-    btn.onclick = function () {
+    btn.addEventListener('click', function (e) {
+      // Питання, що вже були у спробах, мають data-confirm. confirm-action.js
+      // ловить клік раніше (capture), скасовує його і повторює лише після
+      // підтвердження -- тож скасований клік тут просто пропускаємо.
+      if (e.defaultPrevented) return;
       item.parentNode.removeChild(item);
       reindex();
-    };
+    });
   }
+
+  container.addEventListener('change', function (e) {
+    var flag = e.target.closest('[data-role="inactive"]');
+    if (!flag) return;
+    var item = flag.closest('.admin-quiz-question');
+    if (item) item.classList.toggle(INACTIVE_CLASS, flag.checked);
+    updateCount();
+  });
 
   function answersMarkup(idx) {
     var html = '<div class="admin-quiz-answers">';
@@ -90,8 +119,15 @@
       '<input type="hidden" data-role="id" name="question_' + idx + '_id" value="">' +
       '<div class="admin-quiz-question__head">' +
         '<span class="admin-quiz-question__number">' + (idx + 1) + '</span>' +
-        '<button type="button" class="btn-admin btn-admin--danger btn-admin--sm ' +
-          'admin-quiz-question__remove">X</button>' +
+        '<div class="admin-quiz-question__tools">' +
+          '<label class="form-checkbox">' +
+            '<input type="checkbox" data-role="inactive" value="1" ' +
+              'name="question_' + idx + '_inactive">' +
+            '<span>Виведено з банку</span>' +
+          '</label>' +
+          '<button type="button" class="btn-admin btn-admin--danger btn-admin--sm ' +
+            'admin-quiz-question__remove">X</button>' +
+        '</div>' +
       '</div>' +
       '<div class="form-group">' +
         '<label>Питання <span class="required">*</span></label>' +

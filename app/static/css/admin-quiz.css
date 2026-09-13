@@ -88,6 +88,19 @@
   margin-bottom: 12px;
 }
 
+/* Праворуч у шапці питання: «виведено з банку» і видалення. */
+.admin-quiz-question__tools {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Виведене питання лишається в редакторі (його можна повернути), але в
+   спроби не йде -- тож приглушене. */
+.admin-quiz-question--inactive {
+  opacity: 0.6;
+}
+
 /* Номер питання -- порядковий, перемальовується JS при видаленні. */
 .admin-quiz-question__number {
   display: inline-flex;

@@ -762,6 +762,59 @@ def test_deleted_question_is_not_counted_against_participant(app, no_pdf):
     ]
 
 
+def test_failed_auto_issue_notifies_admins(app, monkeypatch):
+    """Було: збій автовидачі лишався лише в лозі сервера."""
+    from app.services.email_service import EmailService
+
+    reg, _quiz = _setup()
+    calls = []
+
+    def boom(registration, issued_by=None):
+        raise ValueError('Не задано реєстраційний номер заходу БПР')
+
+    monkeypatch.setattr(certificate_service, 'issue_certificate', boom)
+    monkeypatch.setattr(EmailService, 'notify_admins_with_template',
+                        staticmethod(lambda **kw: calls.append(kw) or []))
+
+    assert quiz_service.award_and_issue(reg) is None
+    assert len(calls) == 1
+    call = calls[0]
+    assert call['event_type'] == 'certificate'
+    assert call['template_name'] == 'admin_certificate_failed'
+    assert 'номер заходу БПР' in call['context']['reason']
+    assert f'/admin/instances/{reg.instance_id}/quiz-results' in call['context']['admin_url']
+    # Без registration: інакше журнал вважав би це листом із сертифікатом учаснику.
+    assert call.get('registration') is None
+
+
+def test_failed_auto_issue_email_renders(app):
+    from flask import render_template
+
+    reg, _quiz = _setup()
+    html = render_template(
+        'emails/admin_certificate_failed.html', registration=reg,
+        instance=reg.instance, reason='Причина збою', admin_url='/admin/x')
+    assert 'Причина збою' in html
+    assert reg.user.email in html
+
+
+def test_editor_questions_pad_answers_and_keep_form_input(app):
+    reg, quiz = _setup(bank=1, per_attempt=1, passing=1)
+    quiz.questions[0].answers = _answers()[:3]
+    db.session.flush()
+
+    items = quiz_service.editor_questions(quiz)
+    assert len(items[0]['answers']) == 4
+    assert items[0]['model'] is quiz.questions[0]
+
+    form = _form(2)
+    form['question_1_inactive'] = '1'
+    items = quiz_service.editor_questions(quiz, form)
+    assert [i['text'] for i in items] == ['Питання 1?', 'Питання 2?']
+    assert [i['is_active'] for i in items] == [True, False]
+    assert all(i['model'] is None for i in items)
+
+
 def test_unanswered_positions_skip_deleted_question(app):
     reg, _quiz = _setup()
     attempt = quiz_service.start_attempt(reg)

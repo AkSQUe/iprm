@@ -284,6 +284,7 @@ def result(attempt_id):
         # сервіс: доки це була друга реалізація оцінювання, вона розійшлася б
         # із `grade_attempt` на першій же правці.
         wrong_numbers=quiz_service.wrong_numbers(attempt),
+        deadline_label=quiz_service.deadline_label(state.deadline),
     )
 
 

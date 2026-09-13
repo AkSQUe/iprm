@@ -107,7 +107,10 @@
     <p>{{ _('Спершу заповніть анкету для сертифіката — без неї бали БПР нарахувати неможливо.') }}</p>
     {% if state.missing_fields %}
     <p class="quiz-note">
-      {{ _('Не заповнено:') }} {{ state.missing_fields | join(', ') }}
+      {# Підписи приходять із моделі українською; msgid у каталогах уже є (їх
+         перекладає форма анкети), тож перекладаємо тут, а не друкуємо як є. #}
+      {{ _('Не заповнено:') }}
+      {% for label in state.missing_fields %}{{ _(label) }}{% if not loop.last %}, {% endif %}{% endfor %}
     </p>
     {% endif %}
     <a href="{{ url_for('auth.certificate_data') }}" class="apple-btn apple-btn--primary">

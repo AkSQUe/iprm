@@ -212,6 +212,19 @@ def test_question_content_uses_translations(get_localized, client,
     assert 'EN option one' in en
 
 
+def test_missing_profile_fields_are_translated(get_localized, client,
+                                              ready_registration):
+    """Було: «Не заповнено: По батькові» українською на /ru і /en."""
+    reg = ready_registration
+    reg.user.medical_profile.middle_name = None
+    db.session.flush()
+    _login(client, reg.user)
+
+    ru = get_localized(f'/ru/quiz/{reg.id}').get_data(as_text=True)
+    assert 'Отчество' in ru
+    assert 'По батькові' not in ru
+
+
 # ---- захист від fuzzy-підстановок -------------------------------------------
 #
 # `pybabel update` копіює новому msgid переклад найсхожішого наявного і ставить

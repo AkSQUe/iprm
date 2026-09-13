@@ -135,51 +135,78 @@
       <div class="form-section">
         <h3 class="admin-form__section-title">
           Банк питань
-          <span class="quiz-bank-count" data-quiz-bank-count>{{ quiz.questions | length }}</span>
+          <span class="quiz-bank-count" data-quiz-bank-count>{{ questions | selectattr('is_active') | list | length }}</span>
         </h3>
         <p class="form-hint">
           Одне питання – чотири варіанти, рівно один правильний. У банку мусить
           бути щонайменше стільки питань, скільки йде на спробу; більший банк
           робить заучування марним, бо кожна спроба тягне випадкові.
+          Питання, яке вже було у спробах, краще «вивести з банку», ніж
+          видаляти: видалене зникає з розбору вже зіграних спроб.
         </p>
+        {% if form.errors %}
+        <p class="form-hint">
+          Форму не збережено – питання нижче відновлено з неї. Переклади,
+          внесені цим збереженням, не застосовано.
+        </p>
+        {% endif %}
 
         <div id="quiz-questions">
-          {% for question in quiz.questions %}
-          <div class="admin-quiz-question" data-index="{{ loop.index0 }}">
+          {% for item in questions %}
+          {% set idx = loop.index0 %}
+          <div class="admin-quiz-question{% if not item.is_active %} admin-quiz-question--inactive{% endif %}"
+               data-index="{{ idx }}">
             <input type="hidden" data-role="id"
-                   name="question_{{ loop.index0 }}_id" value="{{ question.id }}">
+                   name="question_{{ idx }}_id" value="{{ item.id or '' }}">
             <div class="admin-quiz-question__head">
               <span class="admin-quiz-question__number">{{ loop.index }}</span>
-              <button type="button"
-                      class="btn-admin btn-admin--danger btn-admin--sm admin-quiz-question__remove">X</button>
+              <div class="admin-quiz-question__tools">
+                <label class="form-checkbox">
+                  <input type="checkbox" data-role="inactive" value="1"
+                         name="question_{{ idx }}_inactive"
+                         {% if not item.is_active %}checked{% endif %}>
+                  <span>Виведено з банку</span>
+                </label>
+                <button type="button"
+                        class="btn-admin btn-admin--danger btn-admin--sm admin-quiz-question__remove"
+                        {% if item.used %}
+                        data-confirm="Це питання вже було у спробах учасників. Видалення зарахує його як правильне в незавершених спробах і прибере з розбору завершених. Щоб лише прибрати його з наступних спроб, позначте «Виведено з банку»."
+                        data-confirm-ok="Видалити питання" data-confirm-danger
+                        {% endif %}>X</button>
+              </div>
             </div>
             <div class="form-group">
               <label>Питання <span class="required">*</span></label>
-              <textarea data-role="text" name="question_{{ loop.index0 }}_text"
-                        class="form-input" rows="2">{{ question.text }}</textarea>
-              {{ i18n.panes(question.translations or {}, 'text', widget='textarea',
-                            rows=2, obj=question, prefix='trq__' ~ question.id) }}
+              <textarea data-role="text" name="question_{{ idx }}_text"
+                        class="form-input" rows="2">{{ item.text }}</textarea>
+              {% if item.model %}
+              {{ i18n.panes(item.model.translations or {}, 'text', widget='textarea',
+                            rows=2, obj=item.model, prefix='trq__' ~ item.id) }}
+              {% endif %}
             </div>
+            {# Варіантів завжди чотири (сервіс доповнює порожніми): інакше
+               питання, збережене з трьома, не мало б поля для четвертого. #}
             <div class="admin-quiz-answers">
-              {% set outer = loop.index0 %}
-              {% for answer in question.answers %}
+              {% for answer in item.answers %}
               <div class="admin-quiz-answer">
                 <label class="admin-quiz-answer__radio"
                        title="Позначити правильною">
                   <input type="radio" data-role="correct"
-                         name="question_{{ outer }}_correct" value="{{ loop.index0 }}"
+                         name="question_{{ idx }}_correct" value="{{ loop.index0 }}"
                          {% if answer.is_correct %}checked{% endif %}>
                 </label>
                 <input type="text" data-role="answer"
-                       name="question_{{ outer }}_answer_{{ loop.index0 }}_text"
+                       name="question_{{ idx }}_answer_{{ loop.index0 }}_text"
                        class="form-input" value="{{ answer.text }}"
                        placeholder="Варіант {{ loop.index }}">
               </div>
               {% endfor %}
             </div>
+            {% if item.model %}
             <div class="form-group">
-              {{ i18n.json_panes(question, 'answers', prefix='trq__' ~ question.id) }}
+              {{ i18n.json_panes(item.model, 'answers', prefix='trq__' ~ item.id) }}
             </div>
+            {% endif %}
           </div>
           {% endfor %}
         </div>
@@ -196,14 +223,25 @@
       <div class="admin-form__actions">
         <button type="submit" class="btn-admin btn-admin--primary">Зберегти тест</button>
         {% if quiz.id %}
-        <button type="submit" formaction="{{ url_for('admin.quiz_delete', quiz_id=quiz.id) }}"
-                class="btn-admin btn-admin--danger"
-                data-confirm="Видалити тест разом із банком питань? Результати учасників збережуться.">
+        {# Кнопка належить окремій формі (атрибут form). Раніше вона була
+           formaction-кнопкою основної форми з data-confirm на собі, і діалог не
+           спрацьовував: confirm-action.js пропускає кліки по type=submit і
+           перехоплює лише submit форми, що сама має data-confirm. Тест
+           видалявся з першого кліку. #}
+        <button type="submit" form="quiz-delete-form" class="btn-admin btn-admin--danger">
           Видалити тест
         </button>
         {% endif %}
       </div>
     </form>
+    {% if quiz.id %}
+    <form method="POST" id="quiz-delete-form"
+          action="{{ url_for('admin.quiz_delete', quiz_id=quiz.id) }}"
+          data-confirm="Видалити тест разом із банком питань? Результати учасників збережуться."
+          data-confirm-ok="Видалити тест" data-confirm-danger>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    </form>
+    {% endif %}
 
   </div>
 </div>

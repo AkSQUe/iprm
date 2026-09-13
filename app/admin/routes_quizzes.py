@@ -68,9 +68,13 @@ def _apply_question_translations(quiz):
 
 def _render_editor(quiz, course, instance, form):
     errors = quiz_service.validation_errors(quiz) if quiz.id else []
+    # На POST сюди потрапляємо лише коли збереження не вдалося -- тоді банк
+    # малюємо з форми, інакше набране в цьому збереженні зникло б.
+    form_data = request.form if request.method == 'POST' else None
     return render_template(
         'admin/quiz_edit.html',
         quiz=quiz,
+        questions=quiz_service.editor_questions(quiz, form_data),
         course=course,
         instance=instance,
         form=form,

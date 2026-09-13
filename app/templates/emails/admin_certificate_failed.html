@@ -1,0 +1,57 @@
+{% extends "emails/base.html" %}
+{% from "emails/_macros.html" import button_primary, detail_row, section_title, spacer %}
+
+{#- Учасник склав тест, а сертифікат автоматично не видався. Сторінка
+    привітання обіцяє йому надіслати документ «найближчим часом», тож лист
+    мусить дійти до того, хто може видати його вручну. Результат тесту,
+    присутність і бали на момент листа вже збережено. -#}
+
+{% set LW = '130px' %}
+
+{% block title %}Сертифікат не видано автоматично{% endblock %}
+
+{% block preview_text %}Учасник склав тест, але сертифікат не видався{% endblock %}
+
+{% block content %}
+    <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 26px; font-weight: 700; color: #17131D; line-height: 1.25;">
+        Сертифікат не видано автоматично
+    </h1>
+
+    <p class="mobile-text" style="margin: 0 0 24px 0; font-size: 15px; color: #625A6D; line-height: 1.5;">
+        Учасник склав тест, але автоматична видача сертифіката не вдалася.
+        Результат, присутність і бали вже збережено – лишилось видати документ
+        вручну.
+    </p>
+
+    {{ section_title('Учасник') }}
+    <table role="presentation" style="width: 100%; margin-bottom: 24px; background-color: #F7F4FB; border: 1px solid #E9E4EF; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td style="padding: 20px 24px;">
+                {{ detail_row("Ім'я", (registration.user.full_name or registration.user.email) if registration.user else '–', LW) }}
+                {% if registration.user and registration.user.email %}
+                {{ detail_row('Email', registration.user.email, LW) }}
+                {% endif %}
+                {% if instance %}
+                {{ detail_row('Захід', (instance.effective_title or '–') ~ (', ' ~ instance.start_date.strftime('%d.%m.%Y') if instance.start_date else ''), LW) }}
+                {% endif %}
+                {{ detail_row('№ реєстрації', registration.id, LW) }}
+            </td>
+        </tr>
+    </table>
+
+    {{ section_title('Причина') }}
+    <p style="margin: 0 0 24px 0; font-size: 15px; color: #17131D; line-height: 1.5;">
+        {{ reason }}
+    </p>
+
+    {% if admin_url %}
+    {{ button_primary('Відкрити результати групи', admin_url) }}
+    {% endif %}
+
+    {{ spacer(8) }}
+
+    <p style="margin: 0; font-size: 13px; color: #6E667A; line-height: 1.5;">
+        Автоматичне сповіщення. Налаштувати одержувачів можна у
+        розділі «Сповіщення → Одержувачі» адмінки.
+    </p>
+{% endblock %}
