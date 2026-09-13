@@ -46,6 +46,11 @@ EXPORTABLE = [
     ('POSTHOG_ENABLED',            'posthog_enabled',            False, False),
     ('POSTHOG_PROJECT_API_KEY',    'posthog_project_api_key',    False, ''),
     ('POSTHOG_SESSION_RECORDING',  'posthog_session_recording',  False, False),
+    # Додатковий проєкт -- лише для перенесення між інстанціями: env-fallback
+    # у нього немає, застосунок ці змінні з оточення не читає.
+    ('POSTHOG_SECONDARY_API_KEY',  'posthog_secondary_api_key',  False, ''),
+    ('POSTHOG_SECONDARY_SESSION_RECORDING',
+     'posthog_secondary_session_recording', False, False),
 ]
 
 

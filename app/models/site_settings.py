@@ -170,6 +170,14 @@ class SiteSettings(TranslatableMixin, TimestampMixin, db.Model):
     posthog_project_api_key = db.Column(db.String(60), default='', nullable=False)
     posthog_session_recording = db.Column(db.Boolean, nullable=True)
     posthog_exclude_admin = db.Column(db.Boolean, nullable=True)
+    # Додатковий проєкт PostHog: ті самі події паралельно йдуть ще в один
+    # проєкт -- у кожного власника свої дашборди. Рубильники вище спільні:
+    # вимкнення аналітики чи реплею гасить обидва проєкти. Власний прапорець
+    # реплею двостанній і за замовчуванням вимкнений -- другий записувач
+    # подвоює навантаження на пристрій відвідувача.
+    posthog_secondary_api_key = db.Column(db.String(60), default='', nullable=False)
+    posthog_secondary_session_recording = db.Column(
+        db.Boolean, default=False, nullable=False)
 
     # Реєстраційний номер провайдера БПР (4 цифри) -- сегмент номера
     # сертифіката (формат РРРР-ПППП-ЗЗЗЗЗЗЗ-УУУУУУ).
@@ -837,6 +845,34 @@ class SiteSettings(TranslatableMixin, TimestampMixin, db.Model):
             return False
         return self._resolve_tristate_flag(
             self.posthog_session_recording, 'POSTHOG_SESSION_RECORDING')
+
+    @property
+    def effective_posthog_secondary_api_key(self):
+        """Ключ додаткового проєкту або '' якщо дублювати нікуди.
+
+        Порожньо, коли основний трекінг вимкнений: рубильник спільний, і
+        залишений другий проєкт робив би вимкнення неповним. Порожньо й тоді,
+        коли ключ збігається з основним -- інакше кожна подія рахувалась би
+        в тому самому проєкті двічі.
+        """
+        primary = self.effective_posthog_api_key
+        secondary = self.posthog_secondary_api_key or ''
+        if not primary or secondary == primary:
+            return ''
+        return secondary
+
+    @property
+    def effective_posthog_secondary_session_recording(self):
+        """Чи писати сесії ще й у додатковий проєкт.
+
+        Лише разом з основним реплеєм: posthog_session_recording -- аварійний
+        рубильник САМЕ запису екрана, і діяти він мусить на обидва проєкти.
+        """
+        return bool(
+            self.effective_posthog_secondary_api_key
+            and self.effective_posthog_session_recording
+            and self.posthog_secondary_session_recording
+        )
 
     @property
     def effective_posthog_exclude_admin(self):
