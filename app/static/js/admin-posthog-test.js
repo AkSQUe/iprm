@@ -20,6 +20,9 @@
 
   var apiHost = cur.getAttribute('data-ph-api-host') || '/ngx-e';
   var key = cur.getAttribute('data-ph-key') || '';
+  var secondaryKey = cur.getAttribute('data-ph-secondary-key') || '';
+  // Ім'я екземпляра додаткового проєкту -- те саме, що в posthog.js.
+  var SECONDARY_NAME = 'secondary';
 
   function setCell(id, text, ok) {
     var el = document.getElementById(id);
@@ -63,6 +66,9 @@
   } else {
     setCell('ph-check-array', 'ключ невідомий', false);
   }
+  if (secondaryKey) {
+    probe('ph-check-array-secondary', apiHost + '/array/' + secondaryKey + '/config.js');
+  }
 
   /* SDK вантажиться ліниво (див. posthog.js), тож одразу після рендеру його
      ще немає -- це нормально, а не помилка. Тому опитуємо з інтервалом і
@@ -95,16 +101,26 @@
        цілком реальний: SDK міг завантажитись частково або бути обрізаний
        блокувальником, і тоді метод є, а виклик кидає. Без перехоплення
        адміністратор лишився б узагалі без відповіді на натиснуту кнопку. */
+    var props = {
+      source: 'admin_test_page',
+      sent_at: new Date().toISOString(),
+    };
+    var secondary = window.posthog[SECONDARY_NAME];
     try {
-      window.posthog.capture('IPRMTestEvent', {
-        source: 'admin_test_page',
-        sent_at: new Date().toISOString(),
-      });
+      window.posthog.capture('IPRMTestEvent', props);
+      if (secondaryKey) {
+        if (!secondary || typeof secondary.capture !== 'function') {
+          say('В основний проєкт подію надіслано, але екземпляр додаткового '
+            + 'проєкту не ініціалізувався.');
+          return;
+        }
+        secondary.capture('IPRMTestEvent', props);
+      }
     } catch (e) {
       say('Не вдалося надіслати подію: ' + (e && e.message ? e.message : e));
       return;
     }
-    say('Подію IPRMTestEvent надіслано. Шукайте її в PostHog -> Activity '
-      + '(зазвичай приходить за кілька секунд).');
+    say('Подію IPRMTestEvent надіслано' + (secondaryKey ? ' в обидва проєкти' : '')
+      + '. Шукайте її в PostHog -> Activity (зазвичай приходить за кілька секунд).');
   });
 })();

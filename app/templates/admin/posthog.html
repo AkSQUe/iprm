@@ -15,6 +15,9 @@
     {% if cfg.recording %}
       <span class="badge badge--pending">Запис сесій</span>
     {% endif %}
+    {% if cfg.effective_secondary_key %}
+      <span class="badge badge--published">Два проєкти</span>
+    {% endif %}
   {% elif cfg.db_key or cfg.env_key %}
     <span class="badge badge--pending">Ключ є, трекінг вимкнено</span>
   {% else %}
@@ -35,6 +38,24 @@
     <span class="admin-readonly-config__label">Активний ключ</span>
     <code class="admin-readonly-config__value">{{ cfg.effective_key or 'PostHog вимкнено' }}</code>
   </div>
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Додатковий проєкт</span>
+    <code class="admin-readonly-config__value">
+      {%- if cfg.effective_secondary_key -%}
+        {{ cfg.effective_secondary_key }}
+      {%- elif cfg.secondary_key -%}
+        {{ cfg.secondary_key }} (не діє: основний трекінг вимкнено)
+      {%- else -%}
+        Не задано
+      {%- endif -%}
+    </code>
+  </div>
+  {% if cfg.secondary_key %}
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Запис сесій у додатковий</span>
+    <span class="admin-readonly-config__value">{{ 'Увімкнено' if cfg.secondary_recording else 'Вимкнено' }}</span>
+  </div>
+  {% endif %}
   <div class="admin-readonly-config__row">
     <span class="admin-readonly-config__label">Аналітика</span>
     <span class="admin-readonly-config__value">
@@ -140,6 +161,36 @@
       <code class="admin-code">iprm_section=admin</code> – відфільтрувати її можна в самому
       PostHog. Галка прибирає збір узагалі й економить квоту подій.
       Сторінка перевірки лишається під трекінгом у будь-якому разі.
+    </p>
+  </div>
+
+  <div class="form-group admin-form__full">
+    <label for="posthog_secondary_api_key">Додатковий Project API Key</label>
+    <input type="text" name="posthog_secondary_api_key" id="posthog_secondary_api_key"
+           class="form-input" pattern="^phc_[A-Za-z0-9_-]{20,60}$"
+           value="{{ cfg.secondary_key }}"
+           placeholder="phc_..." autocomplete="off" spellcheck="false">
+    <p class="form-hint">
+      Ключ іншого проєкту PostHog, куди паралельно йдуть ті самі події:
+      перегляди, кліки, конверсії з форм. Так кожен може вести власні
+      дашборди, не заважаючи іншому. Проєкт має бути в
+      <strong>EU Cloud</strong>: проксі <code class="admin-code">{{ cfg.api_host }}</code> спільний і
+      веде саме туди. Вимкнення аналітики чи запису сесій вище діє на обидва
+      проєкти. Порожнє поле – дублювання вимкнено.
+    </p>
+  </div>
+
+  <div class="form-group admin-form__full">
+    <div class="form-checkbox">
+      <input type="checkbox" name="posthog_secondary_session_recording"
+             id="posthog_secondary_session_recording"
+             {% if cfg.secondary_recording_saved %}checked{% endif %}>
+      <label for="posthog_secondary_session_recording">Записувати сесії і в додатковий проєкт</label>
+    </div>
+    <p class="form-hint">
+      Діє лише разом з основною галкою «Записувати сесії». Другий запис
+      подвоює навантаження на пристрій відвідувача, тож без потреби
+      вмикати не варто.
     </p>
   </div>
 

@@ -18,6 +18,12 @@
     <span class="admin-readonly-config__label">Ремоут-конфіг</span>
     <code class="admin-readonly-config__value admin-readonly-config__value--mono" id="ph-check-array">чекаємо…</code>
   </div>
+  {% if posthog_config.secondary_api_key %}
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Ремоут-конфіг (додатковий проєкт)</span>
+    <code class="admin-readonly-config__value admin-readonly-config__value--mono" id="ph-check-array-secondary">чекаємо…</code>
+  </div>
+  {% endif %}
   <div class="admin-readonly-config__row">
     <span class="admin-readonly-config__label">SDK у браузері</span>
     <code class="admin-readonly-config__value admin-readonly-config__value--mono" id="ph-check-sdk">чекаємо…</code>
@@ -75,5 +81,6 @@
 {{ super() }}
 <script defer src="{{ url_for('static', filename='js/admin-posthog-test.js') }}?v={{ assets_version }}"
         data-ph-api-host="{{ posthog_config.api_host }}"
-        data-ph-key="{{ posthog_config.project_api_key }}"></script>
+        data-ph-key="{{ posthog_config.project_api_key }}"
+        data-ph-secondary-key="{{ posthog_config.secondary_api_key }}"></script>
 {% endblock %}

@@ -142,6 +142,108 @@ class TestKillSwitch:
         assert s.effective_posthog_session_recording is False
 
 
+class TestSecondaryProject:
+    """Додатковий проєкт: ті самі події в другий проєкт PostHog.
+
+    Головне тут -- що аварійні рубильники лишились спільними. Другий проєкт,
+    який переживає вимкнення аналітики чи реплею, робив би рубильник
+    неповним, і найгірше, що помітити це з адмінки було б неможливо.
+    """
+
+    def test_absent_by_default(self, client, posthog_on):
+        html = client.get('/').get_data(as_text=True)
+        assert 'data-ph-secondary-key' not in html
+
+    def test_injected_when_set(self, client, posthog_on):
+        posthog_on.posthog_secondary_api_key = OTHER_KEY
+        db.session.flush()
+        html = client.get('/').get_data(as_text=True)
+        assert f'data-ph-key="{KEY}"' in html
+        assert f'data-ph-secondary-key="{OTHER_KEY}"' in html
+        assert 'data-ph-secondary-recording="0"' in html
+
+    def test_kill_switch_silences_secondary(self, app, posthog_on):
+        posthog_on.posthog_secondary_api_key = OTHER_KEY
+        posthog_on.posthog_enabled = False
+        db.session.flush()
+        assert posthog_on.effective_posthog_secondary_api_key == ''
+
+    def test_works_with_env_primary_key(self, app, posthog_env_only):
+        posthog_env_only.posthog_secondary_api_key = OTHER_KEY
+        db.session.flush()
+        assert posthog_env_only.effective_posthog_secondary_api_key == OTHER_KEY
+
+    def test_same_key_is_not_duplicated(self, app, posthog_on):
+        """Той самий ключ двічі -- кожна подія рахувалась би вдвічі."""
+        posthog_on.posthog_secondary_api_key = KEY
+        db.session.flush()
+        assert posthog_on.effective_posthog_secondary_api_key == ''
+
+    def test_recording_off_by_default(self, app, posthog_on):
+        posthog_on.posthog_secondary_api_key = OTHER_KEY
+        db.session.flush()
+        assert posthog_on.effective_posthog_session_recording is True
+        assert posthog_on.effective_posthog_secondary_session_recording is False
+
+    def test_recording_kill_switch_covers_secondary(self, app, posthog_on):
+        posthog_on.posthog_secondary_api_key = OTHER_KEY
+        posthog_on.posthog_secondary_session_recording = True
+        posthog_on.posthog_session_recording = False
+        db.session.flush()
+        assert posthog_on.effective_posthog_secondary_session_recording is False
+
+    def test_recording_enabled_explicitly(self, client, posthog_on):
+        posthog_on.posthog_secondary_api_key = OTHER_KEY
+        posthog_on.posthog_secondary_session_recording = True
+        db.session.flush()
+        html = client.get('/').get_data(as_text=True)
+        assert 'data-ph-secondary-recording="1"' in html
+
+    def test_save_stores_secondary(self, client, admin, posthog_on):
+        _login(client, admin)
+        client.post('/admin/posthog/save', data={
+            'posthog_project_api_key': KEY,
+            'posthog_enabled': 'on',
+            'posthog_secondary_api_key': OTHER_KEY,
+        }, follow_redirects=True)
+        s = SiteSettings.get()
+        assert s.posthog_secondary_api_key == OTHER_KEY
+        assert s.posthog_secondary_session_recording is False
+
+    def test_save_rejects_personal_key_as_secondary(self, client, admin, posthog_on):
+        _login(client, admin)
+        client.post('/admin/posthog/save', data={
+            'posthog_project_api_key': KEY,
+            'posthog_enabled': 'on',
+            'posthog_secondary_api_key': 'phx_' + 'a' * 30,
+        }, follow_redirects=True)
+        assert SiteSettings.get().posthog_secondary_api_key == ''
+
+    def test_save_rejects_duplicate_of_env_key(self, app, client, admin, posthog_env_only):
+        _login(client, admin)
+        client.post('/admin/posthog/save', data={
+            'posthog_project_api_key': '',
+            'posthog_enabled': 'on',
+            'posthog_secondary_api_key': KEY,
+        }, follow_redirects=True)
+        assert SiteSettings.get().posthog_secondary_api_key == ''
+
+    def test_page_shows_secondary(self, client, admin, posthog_on):
+        posthog_on.posthog_secondary_api_key = OTHER_KEY
+        db.session.flush()
+        _login(client, admin)
+        html = client.get('/admin/posthog').get_data(as_text=True)
+        assert 'Два проєкти' in html
+        assert f'value="{OTHER_KEY}"' in html
+
+    def test_test_page_probes_secondary(self, client, admin, posthog_on):
+        posthog_on.posthog_secondary_api_key = OTHER_KEY
+        db.session.flush()
+        _login(client, admin)
+        html = client.get('/admin/posthog/test').get_data(as_text=True)
+        assert 'ph-check-array-secondary' in html
+
+
 class TestScriptInjection:
     def test_absent_when_not_configured(self, app, client):
         app.config['POSTHOG_PROJECT_API_KEY'] = ''

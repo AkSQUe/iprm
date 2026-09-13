@@ -243,11 +243,14 @@ def integrations():
         ph_db_key, ph_db_err = _safe(lambda: settings.posthog_project_api_key, '')
         ph_rec, ph_rec_err = _safe(
             lambda: settings.effective_posthog_session_recording, False)
+        ph_secondary, ph_secondary_err = _safe(
+            lambda: settings.effective_posthog_secondary_api_key, '')
         posthog_status = {
             'is_configured': bool(ph_key),
             'has_key': bool(ph_db_key),
             'recording': bool(ph_rec),
-            'error': ph_err or ph_db_err or ph_rec_err,
+            'secondary': bool(ph_secondary),
+            'error': ph_err or ph_db_err or ph_rec_err or ph_secondary_err,
         }
 
         google_oauth_status = {

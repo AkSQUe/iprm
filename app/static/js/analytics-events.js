@@ -23,6 +23,9 @@
 (function () {
   'use strict';
 
+  // Ім'я екземпляра додаткового проєкту -- те саме, що в posthog.js.
+  var POSTHOG_SECONDARY = 'secondary';
+
   function send(name, params) {
     var payload = params || {};
     if (typeof window.gtag === 'function') {
@@ -30,6 +33,14 @@
     }
     if (window.posthog && typeof window.posthog.capture === 'function') {
       window.posthog.capture(name, payload);
+      /* Додатковий проєкт живе в іменованому екземплярі (див. posthog.js).
+         Autocapture і $pageview кожен екземпляр збирає сам, а ручні події --
+         лише ті, кому їх передали явно; без цього рядка конверсії не дійшли б
+         до другого проєкту. */
+      var secondary = window.posthog[POSTHOG_SECONDARY];
+      if (secondary && typeof secondary.capture === 'function') {
+        secondary.capture(name, payload);
+      }
     }
   }
 

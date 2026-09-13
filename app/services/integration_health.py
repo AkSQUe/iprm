@@ -263,6 +263,12 @@ def _check_posthog(settings):
             'status': HealthStatus.DEGRADED,
             'error': f'Формат ключа невалідний: {eff!r}',
         }
+    secondary = settings.effective_posthog_secondary_api_key
+    if not SiteSettings.is_valid_posthog_key(secondary):
+        return {
+            'status': HealthStatus.DEGRADED,
+            'error': f'Формат додаткового ключа невалідний: {secondary!r}',
+        }
 
     base_url = (getattr(g, 'health_base_url', None) or '').rstrip('/')
     api_host = (current_app.config.get('POSTHOG_API_HOST', '/ngx-e') or '').rstrip('/')
@@ -316,9 +322,10 @@ def _check_posthog(settings):
 
     recording = 'запис сесій увімкнено' if (
         settings.effective_posthog_session_recording) else 'запис сесій вимкнено'
+    extra = f' і додатковий {secondary[:12]}...' if secondary else ''
     return {
         'status': HealthStatus.OK,
-        'detail': f'Ключ {eff[:12]}..., проксі {api_host} віддає SDK, {recording}',
+        'detail': f'Ключ {eff[:12]}...{extra}, проксі {api_host} віддає SDK, {recording}',
     }
 
 

@@ -76,6 +76,10 @@ def active_posthog_config(settings=None):
         'ui_host': current_app.config.get(
             'POSTHOG_UI_HOST', 'https://eu.posthog.com'),
         'session_recording': settings.effective_posthog_session_recording,
+        # Додатковий проєкт: ті самі події, окремий екземпляр SDK. '' -- немає.
+        'secondary_api_key': settings.effective_posthog_secondary_api_key,
+        'secondary_session_recording':
+            settings.effective_posthog_secondary_session_recording,
         # Розділ сайту як властивість кожної події. Дешевша заміна вимиканню
         # трекінгу в адмінці: дані збираються скрізь, а відфільтрувати
         # внутрішній трафік можна в UI PostHog, не чіпаючи код.

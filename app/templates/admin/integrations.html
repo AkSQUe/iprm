@@ -155,6 +155,9 @@
               {% if posthog_status.recording %}
                 <span class="badge badge--pending">Запис сесій</span>
               {% endif %}
+              {% if posthog_status.secondary %}
+                <span class="badge badge--published">Два проєкти</span>
+              {% endif %}
             {% elif posthog_status.has_key %}
               <span class="badge badge--pending">Вимкнено</span>
             {% else %}

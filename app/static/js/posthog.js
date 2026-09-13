@@ -20,11 +20,20 @@
 
    Увесь трафік іде на власний домен (data-ph-api-host, напр. '/ngx-e'),
    звідки nginx проксує його на eu.i.posthog.com. Для блокувальників це
-   first-party-запити. */
+   first-party-запити.
+
+   Додатковий проєкт (data-ph-secondary-key) -- другий, іменований екземпляр
+   SDK: window.posthog.secondary. У кожного власника свій проєкт і свої
+   дашборди, тож події мають іти в обидва. SDK при цьому вантажиться один:
+   array.js програє чергу _i для всіх екземплярів. Проксі теж спільний --
+   тому додатковий проєкт мусить жити в тому самому регіоні (EU Cloud). */
 (function () {
   'use strict';
 
   var LOADER_MAX_DELAY_MS = 3000;
+
+  // Ім'я екземпляра додаткового проєкту -- те саме, що в analytics-events.js.
+  var SECONDARY_NAME = 'secondary';
 
   /* Методи, які стаб уміє чергувати. Список -- з офіційного snippet'а
      PostHog. Метод поза списком, викликаний до приходу SDK, кине
@@ -108,54 +117,74 @@
   var recording = cur.getAttribute('data-ph-recording') === '1';
   var maskAllText = cur.getAttribute('data-ph-mask-all-text') === '1';
   var userId = cur.getAttribute('data-ph-user-id') || '';
+  var secondaryKey = cur.getAttribute('data-ph-secondary-key') || '';
+  var secondaryRecording = cur.getAttribute('data-ph-secondary-recording') === '1';
 
   /* Маскування реплею. maskAllInputs ховає те, що ВВОДЯТЬ; maskTextSelector
      -- те, що вже відрендерено на сторінці. В адмінці потрібне друге:
      списки учасників з ПІБ, телефонами і медпрофілями інакше поїхали б у
-     запис відео. Лишаються кліки, скрол і навігація. */
-  var sessionRecording = {
-    maskAllInputs: true,
-    maskTextSelector: maskAllText ? '*' : '[data-ph-mask]',
-  };
+     запис відео. Лишаються кліки, скрол і навігація.
 
-  var config = {
-    api_host: apiHost,
-    // Без ui_host тулбар і плеєр записів не працюють: SDK не знає, де
-    // живе сам кабінет, бо api_host вказує на наш проксі.
-    ui_host: cur.getAttribute('data-ph-ui-host') || 'https://eu.posthog.com',
-    person_profiles: 'identified_only',
-    capture_pageview: true,
-    capture_pageleave: true,
-    autocapture: true,
-    enable_heatmaps: true,
-    capture_performance: { web_vitals: true },
-    // Проксі віддає версіоновані /static/*, тож фіче-скрипти (recorder.js)
-    // тягнуться тією самою версією, що й сам array.js, а не через
-    // query-рядок ?v=... -- інакше кеш може змішати версії.
-    strict_script_versioning: true,
-    disable_session_recording: !recording,
-    session_recording: sessionRecording,
-    loaded: function (instance) {
-      /* register ДО першого $pageview: супервластивості пишуться в
-         persistence синхронно, тож потрапляють уже в стартовий перегляд.
-         iprm_section -- заміна вимиканню трекінгу в адмінці: дані
-         збираються скрізь, а внутрішній трафік фільтрується в UI PostHog. */
-      instance.register({ iprm_section: section });
+     Функція, а не спільний об'єкт: кожен екземпляр SDK отримує власну копію
+     і не бачить змін, які міг би внести в неї інший. */
+  function sessionRecording() {
+    return {
+      maskAllInputs: true,
+      maskTextSelector: maskAllText ? '*' : '[data-ph-mask]',
+    };
+  }
 
-      if (userId) {
-        var props = {};
-        var email = cur.getAttribute('data-ph-email');
-        var role = cur.getAttribute('data-ph-role');
-        var lang = cur.getAttribute('data-ph-lang');
-        if (email) props.email = email;
-        if (role) props.iprm_role = role;
-        if (lang) props.iprm_lang = lang;
-        instance.identify(userId, props);
-      }
-    },
-  };
+  /* register ДО першого $pageview: супервластивості пишуться в persistence
+     синхронно, тож потрапляють уже в стартовий перегляд. iprm_section --
+     заміна вимиканню трекінгу в адмінці: дані збираються скрізь, а
+     внутрішній трафік фільтрується в UI PostHog.
 
-  window.posthog.init(key, config);
+     Кожен екземпляр має власну persistence (кука з токеном у назві), тож
+     register та identify робляться для кожного окремо. */
+  function onLoaded(instance) {
+    instance.register({ iprm_section: section });
+
+    if (userId) {
+      var props = {};
+      var email = cur.getAttribute('data-ph-email');
+      var role = cur.getAttribute('data-ph-role');
+      var lang = cur.getAttribute('data-ph-lang');
+      if (email) props.email = email;
+      if (role) props.iprm_role = role;
+      if (lang) props.iprm_lang = lang;
+      instance.identify(userId, props);
+    }
+  }
+
+  /* Конфіг однаковий для обох проєктів, крім реплею: другий записувач
+     подвоює навантаження на пристрій відвідувача, тож для додаткового
+     проєкту він вмикається окремою галкою. Маскування при цьому те саме. */
+  function buildConfig(withRecording) {
+    return {
+      api_host: apiHost,
+      // Без ui_host тулбар і плеєр записів не працюють: SDK не знає, де
+      // живе сам кабінет, бо api_host вказує на наш проксі.
+      ui_host: cur.getAttribute('data-ph-ui-host') || 'https://eu.posthog.com',
+      person_profiles: 'identified_only',
+      capture_pageview: true,
+      capture_pageleave: true,
+      autocapture: true,
+      enable_heatmaps: true,
+      capture_performance: { web_vitals: true },
+      // Проксі віддає версіоновані /static/*, тож фіче-скрипти (recorder.js)
+      // тягнуться тією самою версією, що й сам array.js, а не через
+      // query-рядок ?v=... -- інакше кеш може змішати версії.
+      strict_script_versioning: true,
+      disable_session_recording: !withRecording,
+      session_recording: sessionRecording(),
+      loaded: onLoaded,
+    };
+  }
+
+  window.posthog.init(key, buildConfig(recording));
+  if (secondaryKey && secondaryKey !== key) {
+    window.posthog.init(secondaryKey, buildConfig(secondaryRecording), SECONDARY_NAME);
+  }
 
   // ---- відкладена вставка array.js ----
   var loaderSrc = apiHost + '/static/array.js';
