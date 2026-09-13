@@ -762,6 +762,35 @@ def test_deleted_question_is_not_counted_against_participant(app, no_pdf):
     ]
 
 
+def test_unanswered_positions_skip_deleted_question(app):
+    reg, _quiz = _setup()
+    attempt = quiz_service.start_attempt(reg)
+    db.session.delete(db.session.get(QuizQuestion, attempt.question_ids[0]))
+    db.session.flush()
+
+    assert 0 not in quiz_service.unanswered_positions(attempt)
+    assert len(quiz_service.unanswered_positions(attempt)) == attempt.total - 1
+
+
+@pytest.mark.parametrize('status, payment, reason', [
+    ('cancelled', 'refunded', quiz_service.CANCELLED),
+    ('confirmed', 'unpaid', quiz_service.NOT_PAID),
+])
+def test_submit_refuses_closed_registration(app, no_pdf, status, payment, reason):
+    reg, _quiz = _setup()
+    attempt = quiz_service.start_attempt(reg)
+    _answer_all(attempt, correct_count=10)
+    reg.status = status
+    reg.payment_status = payment
+    db.session.flush()
+
+    with pytest.raises(quiz_service.AttemptBlocked) as exc:
+        quiz_service.submit_attempt(attempt)
+    assert exc.value.status == reason
+    assert not attempt.is_finished
+    assert reg.certificate is None
+
+
 def test_deleted_question_leaves_other_answers_intact(app, no_pdf):
     """Решта питань оцінюється як звичайно."""
     reg, quiz = _setup(bank=12, per_attempt=10, passing=8)

@@ -66,20 +66,23 @@ def _own_attempt(attempt_id):
     return attempt
 
 
-def _first_unanswered(attempt):
-    """Позиція першого питання без відповіді (або 0, якщо всі є)."""
-    for position, question_id in enumerate(attempt.question_ids or []):
-        if attempt.chosen_position(question_id) is None:
-            return position
-    return 0
-
-
 def _unanswered_numbers(attempt):
-    return [
-        position + 1
-        for position, question_id in enumerate(attempt.question_ids or [])
-        if attempt.chosen_position(question_id) is None
-    ]
+    return [position + 1
+            for position in quiz_service.unanswered_positions(attempt)]
+
+
+def _closed_registration(attempt):
+    """Редірект на умови тесту, якщо реєстрацію тим часом скасовано чи не оплачено.
+
+    Гейт старту цього не ловить: спроба могла початись до повернення коштів.
+    Сторінка умов сама пояснить причину (той самий `eligibility`).
+    """
+    reason = quiz_service.attempt_block_reason(attempt.registration)
+    if reason is None:
+        return None
+    logger.info('Quiz attempt %s blocked: %s', attempt.id, reason)
+    flash(_('Тестування зараз недоступне.'), 'error')
+    return redirect(url_for('quiz.start', reg_id=attempt.registration_id))
 
 
 @quiz_bp.route('/<int:reg_id>')
@@ -134,15 +137,19 @@ def question(attempt_id):
     attempt = _own_attempt(attempt_id)
     if attempt.is_finished:
         return redirect(url_for('quiz.result', attempt_id=attempt.id))
+    closed = _closed_registration(attempt)
+    if closed is not None:
+        return closed
 
     requested = request.args.get('position', type=int)
     if requested is None:
         # Відповіді є на все -- людині лишилось завершити, а не гортати з
         # першого питання. Так, зокрема, поводиться повернення за старим
         # посиланням: інакше кнопку «Завершити» довелось би шукати кліками.
-        if not _unanswered_numbers(attempt):
+        unanswered = quiz_service.unanswered_positions(attempt)
+        if not unanswered:
             return redirect(url_for('quiz.review', attempt_id=attempt.id))
-        position = _first_unanswered(attempt)
+        position = unanswered[0]
     else:
         position = requested
     view = quiz_service.attempt_view_model(attempt, position)
@@ -170,6 +177,9 @@ def answer(attempt_id):
     attempt = _own_attempt(attempt_id)
     if attempt.is_finished:
         return redirect(url_for('quiz.result', attempt_id=attempt.id))
+    closed = _closed_registration(attempt)
+    if closed is not None:
+        return closed
 
     position = request.form.get('position', type=int) or 0
     question_id = request.form.get('question_id')
@@ -205,6 +215,9 @@ def review(attempt_id):
     attempt = _own_attempt(attempt_id)
     if attempt.is_finished:
         return redirect(url_for('quiz.result', attempt_id=attempt.id))
+    closed = _closed_registration(attempt)
+    if closed is not None:
+        return closed
 
     return render_template(
         'quiz/review.html',
@@ -221,6 +234,9 @@ def submit(attempt_id):
     attempt = _own_attempt(attempt_id)
     if attempt.is_finished:
         return redirect(url_for('quiz.result', attempt_id=attempt.id))
+    closed = _closed_registration(attempt)
+    if closed is not None:
+        return closed
 
     missing = _unanswered_numbers(attempt)
     if missing:
@@ -232,6 +248,11 @@ def submit(attempt_id):
 
     try:
         quiz_service.submit_attempt(attempt)
+    except quiz_service.AttemptBlocked:
+        # Стан реєстрації змінився між перевіркою вище і завершенням.
+        db.session.rollback()
+        flash(_('Тестування зараз недоступне.'), 'error')
+        return redirect(url_for('quiz.start', reg_id=attempt.registration_id))
     except Exception:
         # `submit_attempt` комітить результат сам (до видачі сертифіката).
         # Якщо той коміт упав, сесія зламана: без відкоту людина отримала б 500

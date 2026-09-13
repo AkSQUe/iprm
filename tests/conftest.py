@@ -141,6 +141,20 @@ def db_session(app):
             _db.session.configure(bind=_db.engine)
 
 
+@pytest.fixture(autouse=True)
+def _reset_rate_limits(app):
+    """Лічильники Flask-Limiter -- з нуля на кожен тест.
+
+    `app` живе всю сесію, а з ним і in-memory сховище лімітів. Тож маршрут під
+    `limiter.limit('30 per hour')` рахував запити ВСІХ тестів прогону разом:
+    файли з 33 стартами тесту падали на тому, що запускався пізніше, і
+    результат залежав від порядку файлів, а не від коду.
+    """
+    from app.extensions import limiter
+    limiter.reset()
+    yield
+
+
 @pytest.fixture
 def client(app):
     """Flask test client."""

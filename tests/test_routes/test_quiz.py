@@ -950,3 +950,109 @@ def test_expired_deadline_refuses_to_start_an_attempt(client, app):
     resp = client.post(f'/quiz/{reg.id}/start', follow_redirects=True)
     assert QuizAttempt.query.filter_by(registration_id=reg.id).count() == 0
     assert any('недоступне' in m for m in _flashes(resp))
+
+
+# ---- питання, видалене посеред спроби ---------------------------------------
+
+def _start(client, reg):
+    # Через сервіс, а не POST /start: той під лімітером «30 на годину», а
+    # лічильник спільний на весь прогін -- зайві HTTP-старти валили б чужі тести.
+    attempt = quiz_service.start_attempt(reg)
+    db.session.commit()
+    _login(client, reg.user)
+    return attempt
+
+
+def test_deleted_question_does_not_loop_redirects(client, app):
+    """Було: /quiz/attempt/<id> редіректив сам на себе без кінця."""
+    reg, _ = _setup()
+    attempt = _start(client, reg)
+    db.session.delete(db.session.get(QuizQuestion, attempt.question_ids[0]))
+    db.session.commit()
+
+    for url in (f'/quiz/attempt/{attempt.id}',
+                f'/quiz/attempt/{attempt.id}?position=0'):
+        resp = client.get(url, follow_redirects=True)
+        assert resp.status_code == 200, url
+        assert len(resp.history) <= 1, url
+        assert 'Питання 1 з' not in resp.get_data(as_text=True), url
+
+
+def test_deleted_question_does_not_block_submit(client, app, no_pdf):
+    reg, _ = _setup()
+    attempt = _start(client, reg)
+    victim = attempt.question_ids[0]
+    db.session.delete(db.session.get(QuizQuestion, victim))
+    db.session.commit()
+
+    for position, question_id in enumerate(attempt.question_ids):
+        if question_id == victim:
+            continue
+        question = db.session.get(QuizQuestion, question_id)
+        right = attempt.ordered_answer_indexes(question_id).index(
+            question.correct_index)
+        client.post(f'/quiz/attempt/{attempt.id}/answer', data={
+            'position': str(position), 'question_id': str(question_id),
+            'choice': str(right), 'direction': 'next',
+        })
+
+    review = client.get(f'/quiz/attempt/{attempt.id}/review').get_data(as_text=True)
+    assert 'Перейти до питання' not in review
+
+    client.post(f'/quiz/attempt/{attempt.id}/submit')
+    db.session.expire_all()
+    finished = db.session.get(QuizAttempt, attempt.id)
+    assert finished.is_finished
+    assert finished.passed
+
+
+# ---- реєстрацію скасовано посеред спроби ------------------------------------
+
+def _refund(reg):
+    reg.status = 'cancelled'
+    reg.payment_status = 'refunded'
+    db.session.commit()
+
+
+def test_refund_mid_attempt_blocks_submit(client, app, no_pdf):
+    """Було: повернення коштів не заважало завершити тест і отримати сертифікат."""
+    reg, _ = _setup()
+    attempt = _start(client, reg)
+    _answer_all(client, attempt, correct_count=10)
+    _refund(reg)
+
+    resp = client.post(f'/quiz/attempt/{attempt.id}/submit')
+    assert resp.status_code == 302
+    assert resp.headers['Location'].endswith(f'/quiz/{reg.id}')
+
+    db.session.expire_all()
+    reg = db.session.get(EventRegistration, reg.id)
+    assert not db.session.get(QuizAttempt, attempt.id).is_finished
+    assert reg.certificate is None
+    assert not reg.attended
+    assert reg.cpd_points_awarded is None
+
+
+def test_refund_mid_attempt_blocks_answers(client, app):
+    reg, _ = _setup()
+    attempt = _start(client, reg)
+    _refund(reg)
+    question_id = attempt.question_ids[0]
+
+    resp = client.post(f'/quiz/attempt/{attempt.id}/answer', data={
+        'position': '0', 'question_id': str(question_id),
+        'choice': '1', 'direction': 'next',
+    })
+    assert resp.headers['Location'].endswith(f'/quiz/{reg.id}')
+    db.session.expire_all()
+    assert db.session.get(QuizAttempt, attempt.id).chosen_position(question_id) is None
+
+
+def test_refund_mid_attempt_hides_questions(client, app):
+    reg, _ = _setup()
+    attempt = _start(client, reg)
+    _refund(reg)
+    for url in (f'/quiz/attempt/{attempt.id}',
+                f'/quiz/attempt/{attempt.id}/review'):
+        resp = client.get(url)
+        assert resp.headers['Location'].endswith(f'/quiz/{reg.id}'), url

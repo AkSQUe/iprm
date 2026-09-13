@@ -12,7 +12,9 @@
   * resolve_quiz(instance) -> CourseQuiz | None
   * eligibility(registration) -> Eligibility
   * attempts_left(registration, quiz) -> int
+  * attempt_block_reason(registration) -> str | None
   * start_attempt(registration) -> QuizAttempt
+  * unanswered_positions(attempt) -> [int]
   * record_answer(attempt, question_id, position) -> bool
   * submit_attempt(attempt) -> QuizAttempt
   * award_and_issue(registration) -> Certificate | None
@@ -51,6 +53,29 @@ AVAILABLE = 'available'                    # можна починати
 
 # Статуси, за яких учасник може працювати з тестом просто зараз.
 ACTIONABLE = (AVAILABLE, IN_PROGRESS)
+
+
+class AttemptBlocked(ValueError):
+    """Спробу не можна продовжувати: реєстрацію скасовано або не оплачено."""
+
+    def __init__(self, status):
+        super().__init__(f'Спроба заблокована: {status}')
+        self.status = status
+
+
+def attempt_block_reason(registration):
+    """CANCELLED / NOT_PAID, якщо з реєстрацією вже не можна працювати, або None.
+
+    Один предикат і для допуску до старту, і для вже розпочатої спроби. Спроба
+    живе днями, а гроші за цей час можуть повернути: без цієї перевірки на
+    відповідях і завершенні людина зі скасованою реєстрацією дописувала тест і
+    отримувала сертифікат, бали й відмітку присутності.
+    """
+    if registration.status == 'cancelled':
+        return CANCELLED
+    if registration.payment_status != 'paid':
+        return NOT_PAID
+    return None
 
 
 class Eligibility(NamedTuple):
@@ -354,11 +379,9 @@ def eligibility(registration, context=None):
     if quiz is None:
         return Eligibility(NO_QUIZ)
 
-    if registration.status == 'cancelled':
-        return Eligibility(CANCELLED, quiz=quiz)
-
-    if registration.payment_status != 'paid':
-        return Eligibility(NOT_PAID, quiz=quiz)
+    blocked = attempt_block_reason(registration)
+    if blocked is not None:
+        return Eligibility(blocked, quiz=quiz)
 
     start = ensure_utc(instance.start_date if instance else None)
     if start is None or start > utcnow():
@@ -535,6 +558,27 @@ def record_answer(attempt, question_id, position):
     return True
 
 
+def unanswered_positions(attempt):
+    """Позиції питань без відповіді -- лише тих, що ще існують.
+
+    Питання, яке адмін видалив посеред спроби, відповіді вже не отримає: його
+    неможливо показати. Рахувати його «без відповіді» означало б глухий кут --
+    навігація вела б на нього по колу (нескінченний редірект), а завершити
+    спробу не давала б. Оцінка такі питання зараховує (`question_results`).
+    """
+    ids = attempt.question_ids or []
+    if not ids:
+        return []
+    existing = {
+        qid for (qid,) in
+        db.session.query(QuizQuestion.id).filter(QuizQuestion.id.in_(ids))
+    }
+    return [
+        position for position, question_id in enumerate(ids)
+        if question_id in existing and attempt.chosen_position(question_id) is None
+    ]
+
+
 def question_results(attempt, questions=None):
     """Результат по кожному питанню спроби: [(номер, question_id, зараховано)].
 
@@ -672,6 +716,12 @@ def submit_attempt(attempt):
     """
     if attempt.is_finished:
         return attempt
+
+    blocked = attempt_block_reason(attempt.registration)
+    if blocked is not None:
+        # Спробу лишаємо незавершеною, а не закриваємо з оцінкою: якщо
+        # повернення скасують, людина продовжить із того ж місця.
+        raise AttemptBlocked(blocked)
 
     attempt.score = grade_attempt(attempt)
     attempt.passed = attempt.score >= attempt.passing_score
