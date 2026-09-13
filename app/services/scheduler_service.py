@@ -3,6 +3,8 @@ APScheduler with SQLAlchemy jobstore for persistent scheduled jobs.
 
 Jobs:
 - daily_course_reminders: daily at 09:00, sends reminders for upcoming events.
+- quiz_invites: every 15 min, лист «тестування відкрито» через 5 годин після
+  початку заходу (quiz_service.send_quiz_invites).
 - email_queue_maintenance: every 5 min, cleans stale pending + retries failed.
 - webhook_queue_worker: every minute, dispatches partner webhooks.
 - payment_reconcile: every 15 min, re-asks LiqPay about payments stuck in
@@ -98,6 +100,16 @@ def init_scheduler(app):
         id='daily_certdata_reminders',
         replace_existing=True,
         name='Нагадування про дані для сертифіката',
+    )
+
+    # Кожні 15 хвилин: «через 5 годин після початку» при щоденному запуску
+    # означало б «наступного ранку».
+    scheduler.add_job(
+        send_quiz_invites,
+        trigger=CronTrigger(minute='*/15'),
+        id='quiz_invites',
+        replace_existing=True,
+        name='Запрошення на тестування після заходу',
     )
 
     scheduler.add_job(
@@ -413,6 +425,33 @@ def _send_certdata_reminders_locked():
         logger.exception('Certdata reminder job: failed to persist sent flags')
     logger.info('Certdata reminder job completed: sent=%d of %d candidates',
                 sent, len(registrations))
+
+
+def send_quiz_invites():
+    """Periodic job: лист «тестування відкрито» через 5 годин після початку заходу.
+
+    Вибірка й правила -- у quiz_service.send_quiz_invites; тут лише контекст
+    застосунку й advisory lock проти дублювання між gunicorn-воркерами.
+    """
+    app = scheduler._app
+    with app.app_context():
+        with _job_lock('quiz_invites') as got:
+            if not got:
+                logger.debug('quiz_invites: another worker holds the lock, skipping')
+                return
+            from app.extensions import db
+            from app.services import quiz_service
+            try:
+                sent, marked = quiz_service.send_quiz_invites()
+            except Exception:
+                db.session.rollback()
+                logger.exception('send_quiz_invites failed')
+                return
+            if sent or marked:
+                logger.info(
+                    'Запрошення на тестування: надіслано %d, позначено без листа %d',
+                    sent, marked,
+                )
 
 
 def email_queue_maintenance():

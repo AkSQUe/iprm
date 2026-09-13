@@ -22,6 +22,7 @@
 """
 import logging
 import random
+from datetime import timedelta
 from typing import NamedTuple
 
 from sqlalchemy.exc import IntegrityError
@@ -919,6 +920,110 @@ def award_and_issue(registration):
         certificate.number, registration.id,
     )
     return certificate
+
+
+# ---- Запрошення на тестування ----
+
+# Через скільки після початку заходу учасник отримує лист «тестування
+# відкрито». Не одразу зі стартом: на початку заходу людина слухає, а не
+# складає тест, і лист загубився б серед решти.
+QUIZ_INVITE_DELAY = timedelta(hours=5)
+
+# Наскільки давні заходи ще отримують запрошення. Запобіжник на деплой і на
+# тест, налаштований із запізненням: без нього перший же прогін розіслав би
+# листи учасникам усіх минулих заходів, де тест формально ще відкритий (тест
+# без дедлайну не закривається ніколи).
+QUIZ_INVITE_LOOKBACK = timedelta(days=7)
+
+# Запрошуємо, коли тест можна скласти зараз -- або щойно людина заповнить
+# анкету (тоді лист веде спершу до неї).
+_INVITE_STATES = (AVAILABLE, PROFILE_INCOMPLETE)
+
+# Стани, з яких «можна складати» вже не настане: позначаємо реєстрацію без
+# листа, щоб джоба не перебирала її щопрогону. Решту (тест ще не готовий,
+# немає даних БПР) лишаємо -- адмін може виправити, і лист тоді піде.
+_INVITE_FINAL_STATES = (
+    PASSED, IN_PROGRESS, ATTEMPTS_EXHAUSTED, DEADLINE_PASSED, CANCELLED, NOT_PAID,
+)
+
+
+def send_quiz_invites(now=None):
+    """Лист «тестування відкрито» тим, чий захід почався 5+ годин тому.
+
+    Лист транзакційний, а не розсилка: без тесту й анкети сертифіката не буде.
+    Тому тригер 'quiz' не входить в EmailLog.OPTIONAL_TRIGGERS і відписку від
+    розсилок не враховує.
+
+    Один лист на реєстрацію (`quiz_invite_sent_at`). Позначка комітиться
+    одразу після кожного листа: якщо прогін упаде посередині, наступний не
+    надішле тим самим людям удруге.
+
+    Повертає (надіслано, позначено без листа).
+    """
+    from sqlalchemy.orm import contains_eager, joinedload
+    from app.models.course_instance import CourseInstance
+    from app.models.registration import EventRegistration
+    from app.models.user import User
+    from app.services.email_service import EmailService
+
+    now = now or utcnow()
+    registrations = (
+        EventRegistration.query
+        .join(CourseInstance, EventRegistration.instance_id == CourseInstance.id)
+        .options(
+            contains_eager(EventRegistration.instance)
+            .joinedload(CourseInstance.course),
+            joinedload(EventRegistration.user).joinedload(User.medical_profile),
+        )
+        .filter(
+            CourseInstance.start_date <= now - QUIZ_INVITE_DELAY,
+            CourseInstance.start_date >= now - QUIZ_INVITE_LOOKBACK,
+            EventRegistration.status != 'cancelled',
+            EventRegistration.payment_status == 'paid',
+            EventRegistration.quiz_passed_at.is_(None),
+            EventRegistration.quiz_invite_sent_at.is_(None),
+        )
+        .all()
+    )
+    if not registrations:
+        return 0, 0
+
+    states = eligibility_map(registrations)
+    sent = marked = 0
+    for reg in registrations:
+        state = states[reg.id]
+        user = reg.user
+        has_address = user is not None and bool(user.email)
+
+        if state.status in _INVITE_STATES and has_address:
+            try:
+                log = EmailService.send_quiz_invite(reg, state)
+            except Exception:
+                db.session.rollback()
+                logger.exception('Quiz invite failed: reg=%s', reg.id)
+                continue
+            if log is None:
+                # Лист не сформувався -- не позначаємо, наступний прогін
+                # спробує ще раз.
+                continue
+            sent += 1
+        elif state.status in _INVITE_FINAL_STATES or not has_address:
+            marked += 1
+        else:
+            continue
+
+        reg.quiz_invite_sent_at = now
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            logger.exception(
+                'Quiz invite: failed to persist flag for reg=%s', reg.id)
+
+    if sent:
+        logger.info('Quiz invites: sent=%d marked=%d of %d candidates',
+                    sent, marked, len(registrations))
+    return sent, marked
 
 
 # ---- Банк питань: форма <-> БД ----

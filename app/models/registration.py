@@ -141,6 +141,13 @@ class EventRegistration(TimestampMixin, RefundableMixin, DiscountedMixin,
     quiz_extra_attempts = db.Column(
         db.Integer, nullable=False, default=0, server_default='0',
     )
+    # Коли надіслано лист «тестування відкрито» (scheduler-джоба
+    # send_quiz_invites, через 5 годин після початку заходу). Один лист на
+    # реєстрацію; також ставиться без листа, коли запрошувати вже пізно
+    # (склав, спроби вичерпано, термін минув), щоб джоба не перебирала рядок
+    # щоразу. Окрема колонка, а не пошук по email_logs: журнал чиститься й
+    # містить повторні відправки, а рішення «чи запрошено» мусить бути стабільним.
+    quiz_invite_sent_at = db.Column(db.DateTime(timezone=True))
 
     user = db.relationship('User', back_populates='registrations')
     instance = db.relationship(

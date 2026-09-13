@@ -60,7 +60,7 @@ class EmailLog(TimestampMixin, db.Model):
             "trigger IN ('registration', 'payment', 'reminder', 'status_change', "
             "'email_confirm', 'course_request', 'certificate', 'blog_comment', "
             "'password_reset', 'backup_failure', 'backup_report', 'materials', "
-            "'referral', 'meta_lead', 'transfer', 'test')",
+            "'referral', 'meta_lead', 'transfer', 'quiz', 'test')",
             name='ck_email_logs_trigger',
         ),
         db.Index('ix_email_logs_created_at', 'created_at'),
@@ -98,6 +98,9 @@ class EmailLog(TimestampMixin, db.Model):
         ('referral', 'Реферальний бонус'),
         ('meta_lead', 'Збій приймання лідів Meta'),
         ('transfer', 'Перенесення заходу'),
+        # Лист «тестування відкрито». Транзакційний, а не розсилка: без тесту
+        # й анкети сертифіката не буде, тож в OPTIONAL_TRIGGERS його немає.
+        ('quiz', 'Тестування після заходу'),
         ('test', 'Тест'),
     ]
 

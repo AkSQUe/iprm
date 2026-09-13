@@ -1394,6 +1394,54 @@ class EmailService:
         )
 
     @staticmethod
+    def send_quiz_invite(registration, state=None):
+        """Лист «тестування відкрито» (scheduler-джоба send_quiz_invites).
+
+        Транзакційний: без тесту й анкети сертифіката не буде, тож trigger
+        'quiz' не входить в OPTIONAL_TRIGGERS і відписку не враховує. Якщо
+        анкета не заповнена, лист веде спершу до неї -- тест без неї не
+        відкриється.
+
+        `state` -- готовий результат quiz_service.eligibility (джоба рахує
+        його батчем); без нього рахуємо тут.
+        """
+        from app.models.site_settings import SiteSettings
+        from app.services import quiz_service
+
+        if state is None:
+            state = quiz_service.eligibility(registration)
+        event = EmailService._event_from_registration(registration)
+        if state.quiz is None or event is None or registration.user is None:
+            logger.warning(
+                'Cannot send quiz invite: reg=%s has no quiz/event/user',
+                registration.id,
+            )
+            return None
+
+        base = (SiteSettings.get().website_url or '').rstrip('/')
+        # Дедлайн рахуємо напряму: Eligibility несе його не в кожному стані
+        # (для «анкета не заповнена» поле порожнє), а в листі він потрібен.
+        deadline = quiz_service.deadline_for(state.quiz, registration.instance)
+        return EmailService.send_email(
+            to=registration.user.email,
+            subject=lambda: _('Тестування відкрито: %(title)s', title=event.title),
+            template_name='quiz_invite',
+            context={
+                'user': registration.user,
+                'event': event,
+                'registration': registration,
+                'quiz': state.quiz,
+                'profile_incomplete': (
+                    state.status == quiz_service.PROFILE_INCOMPLETE),
+                'deadline_label': quiz_service.deadline_label(deadline),
+                'quiz_url': f'{base}/quiz/{registration.id}',
+                'certdata_url': f'{base}/auth/account/certificate-data',
+            },
+            trigger='quiz',
+            registration_id=registration.id,
+        )
+
+    @staticmethod
     def send_name_changed(user, old_name, new_name):
         """Повідомити власника акаунта, що його ПІБ змінили.
 

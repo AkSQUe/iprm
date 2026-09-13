@@ -1,0 +1,56 @@
+{% extends "emails/base.html" %}
+{% from "emails/_macros.html" import button_primary, detail_row, spacer %}
+
+{#- Лист «тестування відкрито» -- через 5 годин після початку заходу
+    (quiz_service.send_quiz_invites). Сертифікат із балами БПР видається лише
+    за двох умов: заповнена анкета і складений тест. Тому, якщо анкети ще
+    немає, головна дія листа -- анкета, а тест іде другим кроком. -#}
+
+{% block title %}{{ _('Тестування відкрито') }}{% endblock %}
+
+{% block preview_text %}{% trans title=event.title %}Складіть тест, щоб отримати сертифікат за {{ title }}{% endtrans %}{% endblock %}
+
+{% block content %}
+    <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #17131D; line-height: 1.25;">
+        {{ _('Тестування відкрито') }}
+    </h1>
+
+    <p class="mobile-text" style="margin: 0 0 24px 0; font-size: 15px; color: #625A6D; line-height: 1.5;">
+        {{ user.first_name or _('Шановний учаснику') }}, {{ _('тестування за вашим заходом уже відкрите. Сертифікат із балами БПР видається лише тим, хто заповнив анкету для сертифіката і склав тест.') }}
+    </p>
+
+    <table role="presentation" style="width: 100%; margin-bottom: 24px; background-color: #F7F4FB; border: 1px solid #E9E4EF; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td style="padding: 20px 24px;">
+                <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #17131D; line-height: 1.3;">{{ event.title }}</p>
+                {{ detail_row(_('Питань'), quiz.questions_per_attempt, '170px') }}
+                {{ detail_row(_('Потрібно правильних'), quiz.passing_score, '170px') }}
+                {{ detail_row(_('Спроб'), quiz.max_attempts, '170px') }}
+                {% if deadline_label %}
+                {{ detail_row(_('Скласти до'), deadline_label, '170px') }}
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+
+    {% if profile_incomplete %}
+    <p class="mobile-text" style="margin: 0 0 8px 0; font-size: 15px; color: #625A6D; line-height: 1.5;">
+        {{ _('Спершу заповніть анкету для сертифіката: без неї тест не відкриється. Це 2–3 хвилини, і анкета діє для всіх ваших курсів.') }}
+    </p>
+
+    {{ button_primary(_('Заповнити анкету'), certdata_url) }}
+
+    <p class="mobile-text" style="margin: 0 0 24px 0; font-size: 15px; color: #625A6D; line-height: 1.5;">
+        {{ _('Після анкети тест буде доступний за посиланням:') }}
+        <a href="{{ quiz_url }}" style="color: #7437C9; text-decoration: underline;">{{ quiz_url }}</a>
+    </p>
+    {% else %}
+    {{ button_primary(_('Пройти тестування'), quiz_url) }}
+    {% endif %}
+
+    {{ spacer(16) }}
+
+    <p style="margin: 0; font-size: 13px; color: #6E667A; line-height: 1.5;">
+        {{ _('Відповіді зберігаються одразу: якщо закриєте сторінку, продовжите з того ж місця.') }}
+    </p>
+{% endblock %}
