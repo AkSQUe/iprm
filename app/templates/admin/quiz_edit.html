@@ -161,6 +161,16 @@
             <div class="admin-quiz-question__head">
               <span class="admin-quiz-question__number">{{ loop.index }}</span>
               <div class="admin-quiz-question__tools">
+                {# Частка помилок по завершених спробах. Питання, де помиляється
+                   більшість, -- кандидат на неправильний ключ або погане
+                   формулювання; тому понад половину -- червоним. #}
+                {% if item.stats %}
+                {% set seen, wrong = item.stats %}
+                <span class="badge {{ 'badge--danger' if wrong * 2 > seen else 'badge--draft' }}"
+                      title="У завершених спробах: траплялось {{ seen }}, з помилкою {{ wrong }}">
+                  помилок {{ (wrong * 100 / seen) | round | int }}% з {{ seen }}
+                </span>
+                {% endif %}
                 <label class="form-checkbox">
                   <input type="checkbox" data-role="inactive" value="1"
                          name="question_{{ idx }}_inactive"

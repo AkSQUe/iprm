@@ -456,6 +456,27 @@ def test_revoked_certificate_counts_as_missing(client, admin, no_pdf):
     assert f'/admin/registrations/{reg.id}/certificate"' in html
 
 
+def test_editor_shows_error_rate_per_question(client, admin, no_pdf):
+    course = _course()
+    inst = _instance(course)
+    reg = _registration(inst)
+    _login(client, admin)
+    client.post(f'/admin/courses/{course.id}/quiz', data=_builder_payload(10))
+
+    attempt = quiz_service.start_attempt(reg)
+    for question_id in attempt.question_ids:
+        question = db.session.get(QuizQuestion, question_id)
+        order = attempt.ordered_answer_indexes(question_id)
+        wrong = next(p for p, original in enumerate(order)
+                     if original != question.correct_index)
+        quiz_service.record_answer(attempt, question_id, wrong)
+    quiz_service.submit_attempt(attempt)
+
+    html = client.get(f'/admin/courses/{course.id}/quiz').get_data(as_text=True)
+    assert 'помилок 100% з 1' in html
+    assert 'badge--danger' in html
+
+
 def test_instance_override_is_separate_quiz(client, admin):
     course = _course()
     inst = _instance(course)

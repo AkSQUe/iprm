@@ -613,15 +613,53 @@ def question_results(attempt, questions=None):
             results.append((position + 1, question_id, True))
             continue
 
-        chosen = attempt.chosen_position(question_id)
-        order = attempt.ordered_answer_indexes(question_id)
-        correct = (
-            chosen is not None
-            and 0 <= chosen < len(order)
-            and order[chosen] == question.correct_index
-        )
-        results.append((position + 1, question_id, correct))
+        results.append(
+            (position + 1, question_id, _answer_is_correct(attempt, question)))
     return results
+
+
+def _answer_is_correct(attempt, question):
+    """Чи обрав учасник правильний варіант цього питання в цій спробі.
+
+    Одна перевірка на оцінювання й статистику банку: друга копія цієї умови
+    розійшлася б із першою на першій правці формату `answer_order`.
+    """
+    chosen = attempt.chosen_position(question.id)
+    order = attempt.ordered_answer_indexes(question.id)
+    return (
+        chosen is not None
+        and 0 <= chosen < len(order)
+        and order[chosen] == question.correct_index
+    )
+
+
+def question_stats(quiz):
+    """{question_id: (траплялось, з помилкою)} по ЗАВЕРШЕНИХ спробах тесту.
+
+    Для білдера: питання, у якому помиляється більшість, -- або погано
+    сформульоване, або з неправильно позначеною відповіддю. Рахуємо за
+    ПОТОЧНИМ ключем питання, а не за тим, що діяв на момент спроби: саме так
+    виправлений ключ одразу видно по цифрі.
+
+    Незавершені спроби не рахуються -- там відповіді ще не остаточні.
+    """
+    if quiz is None or quiz.id is None:
+        return {}
+    questions = {q.id: q for q in quiz.questions}
+    stats = {}
+    attempts = QuizAttempt.query.filter(
+        QuizAttempt.quiz_id == quiz.id,
+        QuizAttempt.submitted_at.isnot(None),
+    )
+    for attempt in attempts:
+        for question_id in attempt.question_ids or []:
+            question = questions.get(question_id)
+            if question is None:
+                continue
+            seen, wrong = stats.get(question_id, (0, 0))
+            miss = 0 if _answer_is_correct(attempt, question) else 1
+            stats[question_id] = (seen + 1, wrong + miss)
+    return stats
 
 
 def grade_attempt(attempt):
@@ -1011,6 +1049,7 @@ def editor_questions(quiz, form_data=None):
         source = extract_questions_from_form(form_data)
 
     used = used_question_ids(quiz)
+    stats = question_stats(quiz)
     blank = {'text': '', 'is_correct': False}
     items = []
     for data in source:
@@ -1027,6 +1066,8 @@ def editor_questions(quiz, form_data=None):
             'is_active': data.get('is_active', True),
             'model': model,
             'used': model is not None and model.id in used,
+            # (траплялось, з помилкою) або None, якщо питання ще не грали.
+            'stats': stats.get(model.id) if model is not None else None,
         })
     return items
 

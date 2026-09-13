@@ -815,6 +815,24 @@ def test_editor_questions_pad_answers_and_keep_form_input(app):
     assert all(i['model'] is None for i in items)
 
 
+def test_question_stats_count_only_finished_attempts(app, no_pdf):
+    reg, quiz = _setup(bank=10, per_attempt=10, passing=8)
+    attempt = quiz_service.start_attempt(reg)
+    _answer_all(attempt, correct_count=6)
+
+    # Незавершена спроба ще не дає статистики.
+    assert quiz_service.question_stats(quiz) == {}
+
+    quiz_service.submit_attempt(attempt)
+    stats = quiz_service.question_stats(quiz)
+    assert set(stats) == set(attempt.question_ids)
+    assert all(seen == 1 for seen, _wrong in stats.values())
+    assert sum(wrong for _seen, wrong in stats.values()) == 4
+
+    wrong_ids = attempt.question_ids[6:]
+    assert all(stats[qid] == (1, 1) for qid in wrong_ids)
+
+
 def test_unanswered_positions_skip_deleted_question(app):
     reg, _quiz = _setup()
     attempt = quiz_service.start_attempt(reg)
