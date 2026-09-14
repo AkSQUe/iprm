@@ -22,6 +22,15 @@
     var el = document.getElementById(id);
     if (!el) { return; }
     stack.push({ id: id, trigger: trigger || document.activeElement });
+    // Переносимо вікно в <body> перед показом. На публічних сторінках
+    // <main> -- власний контекст накладання (molecular-background.css:
+    // position: relative; z-index: 2, щоб липка CTA курсу не ховалась під
+    // футером), і .modal усередині нього при будь-якому z-index лягає
+    // ПІД фіксовану шапку (z-index 1000). Той самий прийом, що й
+    // .iprm-confirm у confirm-action.js, який будується одразу в body.
+    // Переносимо один раз і не повертаємо: вміст (форма, її значення)
+    // при переносі вузла не втрачається, а фокус повертає стек нижче.
+    if (el.parentElement !== document.body) { document.body.appendChild(el); }
     el.hidden = false;
     document.body.style.overflow = 'hidden';
     // Той самий FOCUSABLE, що й трап нижче -- інакше діалог лише зі
