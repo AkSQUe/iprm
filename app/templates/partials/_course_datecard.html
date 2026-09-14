@@ -1,0 +1,68 @@
+{% from 'partials/_money.html' import money %}
+{% from 'partials/_bpr_points.html' import points_range %}
+{% from 'partials/_location_badge.html' import location_badge %}
+{# Картка однієї дати курсу -- макрос datecard(inst).
+
+   Живе окремо від _course_schedule.html, бо в неї два споживачі: колонка
+   дат у блоці «Про курс» і модалка вибору дати з липкої кнопки
+   «Реєстрація» (_course_date_modal.html). Тримати макрос у файлі колонки
+   не можна: у того файлу є власний верхньорівневий рендер, який читає
+   змінні контексту сторінки, і імпорт макроса з нього тягнув би за собою
+   той рендер.
+
+   Макроси money/points_range/location_badge імпортуємо тут, а не беремо з
+   контексту сторінки: макрос мусить бути самодостатнім для обох
+   споживачів. #}
+
+{% macro datecard(inst) %}
+<article class="iprm-datecard">
+  <div class="iprm-datecard__when">
+    {% if inst.start_date %}
+    <span class="iprm-datecard__day">{{ inst.start_date.strftime('%d') }}</span>
+    <span class="iprm-datecard__month">{{ inst.start_date.strftime('%m.%Y') }}</span>
+    {# Час доби -- частина вибору дати. Голий strftime, а НЕ `| kyiv`:
+       DateTimeLocalField в адмінці пише наївний datetime (київський
+       настінний час), який на проді лягає в timestamptz як UTC і читається
+       назад тими самими цифрами. `| kyiv` додав би до нього ще зсув зони.
+       Та сама умовність, що в картці hero, листах, підтвердженнях
+       реєстрації та startDate JSON-LD цієї ж сторінки. #}
+    <span class="iprm-datecard__time">{{ inst.start_date.strftime('%H:%M') }}</span>
+    {% else %}
+    <span class="iprm-datecard__day">TBD</span>
+    {% endif %}
+  </div>
+  {# h4, а не h3: над карткою може стояти підпис міста (h3), і рівні
+     заголовків мусять лишатись послідовними. Тема проведення, якщо
+     задана: під одним курсом дати можуть мати різні тематичні акценти
+     (CourseInstance.effective_title). #}
+  <h4 class="iprm-datecard__title iprm-block-title">{{ inst.effective_title }}</h4>
+  <div class="iprm-datecard__meta">
+    {{ location_badge(inst.event_format, inst.location) }}
+    {% if inst.cpd_range[0] %}<span class="iprm-schedule__tag iprm-schedule__tag--cpd">{{ points_range(*inst.cpd_range) }}</span>{% endif %}
+    {# Вид заходу -- за тим самим правилом, що й рівень нижче: лише там, де
+       ця дата вибивається з курсу. Вид, спільний для всіх дат, уже стоїть
+       hero-чипом біля назви курсу (distinct_event_type). #}
+    {% if inst.distinct_event_type %}<span class="iprm-schedule__tag iprm-schedule__tag--type">{{ inst.distinct_event_type_label }}</span>{% endif %}
+    {# Рівень -- лише там, де ця дата вибивається з курсу: рівень, спільний
+       для всіх дат, уже названо один раз біля опису (distinct_difficulty_level). #}
+    {% if inst.distinct_difficulty_level %}<span class="iprm-schedule__tag iprm-schedule__tag--level" title="{{ inst.difficulty_label }}">{% trans level=inst.distinct_difficulty_level %}Рівень {{ level }}/3{% endtrans %}</span>{% endif %}
+  </div>
+  {% set inst_tariffs = inst.active_tariffs %}
+  {% if inst_tariffs %}
+  {# Ціни окремим рядком немає навмисно: вона вже всередині пігулок. #}
+  <div class="iprm-datecard__tariffs" role="list" aria-label="{{ _('Тарифи участі') }}">
+    {% for tariff in inst_tariffs %}
+    {% set tariff_items = (tariff.t('description') or '').splitlines() | map('trim') | select | list %}
+    <a class="iprm-tariff-pill iprm-tariff-pill--link" role="listitem"
+       href="{{ url_for('registration.register_instance', instance_id=inst.id, tariff=tariff.id) }}"
+       {% if tariff_items %} title="{{ tariff_items | join('; ') }}"{% endif %}>
+      <span class="iprm-tariff-pill__name">{{ tariff.t('name') }}</span>
+      <span class="iprm-tariff-pill__price">{{ money(tariff.price) }}</span>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+  <a href="{{ url_for('registration.register_instance', instance_id=inst.id) }}"
+     class="apple-btn apple-btn--primary apple-btn--sm iprm-datecard__action">{{ _('Обрати дату') }}</a>
+</article>
+{% endmacro %}

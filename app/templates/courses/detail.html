@@ -19,6 +19,9 @@
    courses.css: там лишились специфічні для офлайну переозначення. #}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/course-landing.css') }}?v={{ assets_version }}">
 {% if gallery %}<link rel="stylesheet" href="{{ url_for('static', filename='css/lightbox.css') }}?v={{ assets_version }}">{% endif %}
+{# Модалка вибору дати з липкої кнопки «Реєстрація» -- лише коли є з чого
+   обирати (див. partials/_course_date_modal.html). #}
+{% if schedule_instances | length > 1 %}<link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css') }}?v={{ assets_version }}">{% endif %}
 {% if rec_courses %}<link rel="stylesheet" href="{{ url_for('static', filename='css/course-recommend.css') }}?v={{ assets_version }}">{% endif %}
 {% if referral_link %}<link rel="stylesheet" href="{{ url_for('static', filename='css/referral-share.css') }}?v={{ assets_version }}">{% endif %}
 {% endblock %}
@@ -450,12 +453,22 @@
       {# Другорядна дія ховається на найвужчих екранах (CSS), тому основна
          завжди йде другою -- щоб лишалась праворуч під великим пальцем. #}
       <a href="#request" class="iprm-sticky-cta__btn iprm-sticky-cta__btn--ghost">{{ _('Програма') }}</a>
-      <a href="{% if format_inst %}#formats{% elif schedule_instances %}#schedule{% else %}#request{% endif %}"
-         class="iprm-sticky-cta__btn">
-        {% if schedule_instances %}{{ _('Реєстрація') }}{% else %}{{ _('Залишити запит') }}{% endif %}
-      </a>
+      {# Кнопка обирає дату ЗА людину: вона вже дочитала до низу, і стрибок
+         назад до переліку дат (#schedule) змушував обирати вдруге. Одна
+         відкрита дата -- одразу форма реєстрації цього проведення; кілька
+         -- модалка з тими самими картками дат; жодної -- запит на
+         проведення. Модалку відкриває modal.js за data-modal-open. #}
+      {% if schedule_instances | length > 1 %}
+      <button type="button" class="iprm-sticky-cta__btn" data-modal-open="course-date-modal">{{ _('Реєстрація') }}</button>
+      {% elif open_inst %}
+      <a href="{{ url_for('registration.register_instance', instance_id=open_inst.id) }}"
+         class="iprm-sticky-cta__btn">{{ _('Реєстрація') }}</a>
+      {% else %}
+      <a href="#request" class="iprm-sticky-cta__btn">{{ _('Залишити запит') }}</a>
+      {% endif %}
     </div>
   </div>
+  {% if schedule_instances | length > 1 %}{% include 'partials/_course_date_modal.html' %}{% endif %}
 
 </div>
 {% endblock %}
@@ -463,6 +476,7 @@
 {% block extra_scripts %}
 <script src="{{ url_for('static', filename='js/apple-reveal.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/sticky-cta.js') }}?v={{ assets_version }}" defer></script>
+{% if schedule_instances | length > 1 %}<script src="{{ url_for('static', filename='js/modal.js') }}?v={{ assets_version }}" defer></script>{% endif %}
 <script src="{{ url_for('static', filename='js/faq-accordion.js') }}?v={{ assets_version }}" defer></script>
 <script src="{{ url_for('static', filename='js/course-program.js') }}?v={{ assets_version }}" defer></script>
 <script src="{{ url_for('static', filename='js/page-nav.js') }}?v={{ assets_version }}" defer></script>

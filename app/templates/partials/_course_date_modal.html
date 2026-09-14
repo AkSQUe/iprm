@@ -1,0 +1,44 @@
+{% from 'partials/_course_datecard.html' import datecard %}
+{# Модалка вибору дати з липкої кнопки «Реєстрація» (сторінка курсу).
+
+   Підключається лише коли відкритих проведень БІЛЬШЕ ОДНОГО: з однією
+   датою кнопка веде на форму реєстрації напряму, а без дат -- на запит
+   про проведення. Розмітка -- компонент .modal дизайн-системи (modal.css
+   + modal.js), тому сторінці не потрібен власний скрипт: кнопка з
+   data-modal-open="course-date-modal" відкриває вікно сама.
+
+   Усередині -- та сама картка, що й у колонці розкладу (datecard), у тій
+   самій рейці .iprm-daterail і з тим самим групуванням за містами, але
+   без розкривача «ще N дат»: у модалці людина вже обирає, тож ховати
+   від неї частину переліку немає сенсу. apple-reveal тут не ставимо --
+   у прихованому вікні IntersectionObserver не спрацьовує, і картки
+   лишились би прозорими.
+
+   apple-page на корені вікна -- не помилка: modal.js при відкритті
+   переносить .modal у <body>, за межі <div class="apple-page"> сторінки,
+   і кнопки всередині втратили б скоупні правила `.apple-page .apple-btn`
+   (висота 54px, підпис по центру). Сам клас .apple-page власних правил не
+   має -- лише для нащадків, тож на вікно він нічого не накладає.
+
+   Очікує schedule_instances, schedule_groups. #}
+{% set _groups = schedule_groups if schedule_groups else [(none, schedule_instances)] %}
+<div class="modal apple-page" id="course-date-modal" hidden>
+  <div class="modal__backdrop" data-modal-close></div>
+  <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="course-date-modal-title">
+    <div class="modal__head">
+      <h3 class="modal__title" id="course-date-modal-title">{{ _('Оберіть дату') }}</h3>
+      <button type="button" class="modal__close" data-modal-close aria-label="{{ _('Закрити') }}">&times;</button>
+    </div>
+    <div class="modal__body">
+      <div class="iprm-daterail">
+        {% for group_label, group_instances in _groups %}
+        {% if group_label %}<h3 class="iprm-daterail__group-title">{{ group_label }}</h3>{% endif %}
+        {% for inst in group_instances %}{{ datecard(inst) }}{% endfor %}
+        {% endfor %}
+      </div>
+    </div>
+    <div class="modal__foot">
+      <button type="button" class="apple-btn apple-btn--outline" data-modal-close>{{ _('Закрити') }}</button>
+    </div>
+  </div>
+</div>

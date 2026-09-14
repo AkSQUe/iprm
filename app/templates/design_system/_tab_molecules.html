@@ -589,11 +589,11 @@
           </div>
           <div class="iprm-sticky-cta__actions">
             <a class="iprm-sticky-cta__btn iprm-sticky-cta__btn--ghost" href="#course-landing">Програма</a>
-            <a class="iprm-sticky-cta__btn" href="#course-landing">Реєстрація</a>
+            <button type="button" class="iprm-sticky-cta__btn">Реєстрація</button>
           </div>
         </div>
       </div>
-      <p class="ds-hint">У бою — position: fixed, лише на mobile і лише коли JS зняв [hidden]. Тут статично через .ds-sticky-static. До 480px другорядна кнопка ховається</p>
+      <p class="ds-hint">У бою — position: fixed, лише на mobile і лише коли JS зняв [hidden]. Тут статично через .ds-sticky-static. До 480px другорядна кнопка ховається. .iprm-sticky-cta__btn буває і &lt;a&gt;, і &lt;button&gt; (тут — button): на сторінці курсу з кількома датами «Реєстрація» відкриває модалку вибору дати (partials/_course_date_modal.html, компонент .modal нижче) через data-modal-open, з однією датою — веде на форму реєстрації напряму</p>
 
     </div>
   </div>
@@ -1077,7 +1077,11 @@
       <p class="ds-label">Components</p>
       <h2 class="ds-title">Модальне вікно</h2>
       <p class="ds-hint">Вікно з довільним вмістом — форма, список, підтвердження зі складнішим
-         поясненням. Для простого «так/ні» лишається <code class="ds-code">.iprm-confirm</code>.</p>
+         поясненням. Для простого «так/ні» лишається <code class="ds-code">.iprm-confirm</code>.
+         При відкритті modal.js переносить вікно в &lt;body&gt;: на публічних сторінках &lt;main&gt; — власний
+         контекст накладання (molecular-background.css), і вікно всередині нього лягало б під фіксовану шапку.
+         Наслідок: вміст випадає з-під скоупу сторінки, тож на apple-сторінках корінь вікна несе ще й клас
+         apple-page (приклад — partials/_course_date_modal.html).</p>
       <div class="ds-demo">
         <button type="button" class="btn-admin btn-admin--secondary" data-modal-open="ds-modal-demo">
           Відкрити модалку

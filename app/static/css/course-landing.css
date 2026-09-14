@@ -1485,12 +1485,18 @@
      з'їдати екран на телефоні. */
   min-height: 46px;
   padding: 11px 18px;
+  /* border: 0, font: inherit, cursor -- бо кнопка буває і <button>
+     (відкриває модалку вибору дати), а не лише <a>: без скидання UA-стилів
+     вона мала б системну рамку й системний шрифт. */
+  border: 0;
   border-radius: var(--iprm-radius-pill);
   background: var(--iprm-accent);
   color: var(--iprm-on-accent);
+  font: inherit;
   font-size: 0.9375rem;
   font-weight: 600;
   text-decoration: none;
+  cursor: pointer;
   transition: background 0.15s var(--ease-interact);
 }
 
