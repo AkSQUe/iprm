@@ -125,7 +125,7 @@
     padding: 0 16mm;
     display: flex; justify-content: space-between; align-items: flex-end;
   }
-  /* Бічні колонки (Директор / Лектор) опущені нижче за центральну (QR). */
+  /* Бічні колонки (Директор / Тренер) опущені нижче за центральну (QR). */
   .cert__col { width: 54mm; text-align: center; position: relative; top: 28mm; }
   .cert__col--center { width: 60mm; top: 0; }
 
@@ -223,7 +223,7 @@
           </div>
           <div class="cert__site">{{ site_domain }}</div>
         </div>
-        <!-- Підпис 2: Лектор. lecturer_signature -- підпис тренера заходу
+        <!-- Підпис 2: Тренер. lecturer_signature -- підпис тренера заходу
              (Trainer.signature), знятий у сертифікат на момент видачі; для
              adhoc-генерації резолвиться за ПІБ. Фолбек -- спільний
              trainer-sign.webp (див. _DEFAULT_SIGNATURE у сервісі). -->
@@ -231,7 +231,7 @@
           {% if cert_kind != 'lecturer' %}
           <img class="cert__sign-img" src="{{ lecturer_signature }}" alt="Підпис">
           <div class="cert__person">{{ certificate.lecturer_name or '[ ПІБ ]' }}</div>
-          <div class="cert__role">Лектор</div>
+          <div class="cert__role">Тренер</div>
           {% endif %}
         </div>
       </div>
