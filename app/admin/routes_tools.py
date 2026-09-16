@@ -63,8 +63,8 @@ def tool_certificate_generator_template():
         'Сучасні протоколи PRP-терапії', '15.05.2026', 'м. Київ', 10,
         'Абрамович Є.В.', demo_specialties, '1028974', '1',
     ])
-    # Приклад лектора: ПІБ у давальному відмінку, тип заходу в родовому,
-    # номер у діапазоні 1xxxxx (окремий для лекторів), поле "ПІБ лектора" порожнє.
+    # Приклад тренера: ПІБ у давальному відмінку, тип заходу в родовому,
+    # номер у діапазоні 1xxxxx (окремий для тренерів), поле "ПІБ тренера" порожнє.
     ws.append([
         'Тренер', 'Абрамовичу Євгену Володимировичу', 'семінару',
         'Сучасні протоколи PRP-терапії', '15.05.2026', 'м. Київ', 20,
@@ -83,7 +83,7 @@ def tool_certificate_generator_template():
     ws.add_data_validation(dv_type)
     dv_type.add(f'{type_col}2:{type_col}1000')
 
-    # Випадаючий список лекторів у колонці "ПІБ лектора": ПІБ тренерів
+    # Випадаючий список тренерів у колонці "ПІБ тренера": ПІБ тренерів
     # тримаємо на прихованому аркуші, на колонку вішаємо list-валідацію.
     names = [t.full_name for t in Trainer.query
              .filter_by(is_active=True).order_by(Trainer.full_name).all()]
@@ -92,7 +92,7 @@ def tool_certificate_generator_template():
         for i, nm in enumerate(names, start=1):
             ref.cell(row=i, column=1, value=nm)
         ref.sheet_state = 'hidden'
-        col = get_column_letter(batch.COLUMNS.index('ПІБ лектора') + 1)
+        col = get_column_letter(batch.COLUMNS.index('ПІБ тренера') + 1)
         dv = DataValidation(
             type='list', formula1=f'=lectors!$A$1:$A${len(names)}',
             allow_blank=True,

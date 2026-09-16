@@ -321,7 +321,7 @@ _CERT_COLS = [
 _CERT_LABELS = {
     'number': 'Номер', 'recipient': 'Учасник', 'email': 'Email',
     'event': 'Захід', 'event_date': 'Дата заходу', 'cpd_points': 'Бали БПР',
-    'lecturer': 'Лектор', 'event_place': 'Місце', 'issued_at': 'Видано',
+    'lecturer': 'Тренер', 'event_place': 'Місце', 'issued_at': 'Видано',
     'issued_by': 'Ким видано', 'state': 'Стан',
 }
 _CERT_WIDTHS = {
