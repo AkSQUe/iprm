@@ -155,7 +155,7 @@
       Array.prototype.forEach.call(select.options, function (option) {
         option.selected = false;
       });
-      // Порядок курсу = порядок лекторів, тож переносимо <option> у кінець
+      // Порядок курсу = порядок тренерів, тож переносимо <option> у кінець
       // по черзі: у впорядкованому полі позиція і є роллю.
       ids.forEach(function (id) {
         var option = select.querySelector('option[value="' + id + '"]');

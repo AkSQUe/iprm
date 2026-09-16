@@ -201,7 +201,7 @@
         </div>
 
         <div class="form-group">
-          <label for="bpr_lecturer_points">Бали БПР лектору</label>
+          <label for="bpr_lecturer_points">Бали БПР тренеру</label>
           {{ form.bpr_lecturer_points(class="form-input", id="bpr_lecturer_points",
                                       placeholder=(inherited_lecturer | points_uk) if inherited_lecturer is not none else "") }}
           <small class="form-hint">{{ form.bpr_lecturer_points.description }}</small>
@@ -221,7 +221,7 @@
           {% if inherited and inherited.trainers %}
           {# Явна альтернатива успадкуванню: коли склад цієї дати треба саме
              ЗАФІКСУВАТИ (курс потім переграють, а видані сертифікати мають
-             лишитись зі своїми лекторами), його копіюють сюди одним рухом,
+             лишитись зі своїми тренерами), його копіюють сюди одним рухом,
              а не переобирають руками по одному. #}
           <button type="button" class="btn-admin btn-admin--secondary btn-admin--sm admin-speakers__copy"
                   data-speakers-copy="trainer_ids">
@@ -235,7 +235,7 @@
                data-speakers-url="{{ url_for('admin.trainer_card_json', trainer_id=0) | replace('/0/', '/__ID__/') }}"
                data-speakers-inherited="{{ (inherited.trainers | map(attribute='id') | list if inherited else []) | tojson }}"
                data-speakers-inherited-note="Власних тренерів немає -- захід веде склад курсу:"
-               data-speakers-empty="Тренерів немає ні у проведення, ні в курсу: сертифікати й розсилка «Тренер заходу» лишаться без лектора.">
+               data-speakers-empty="Тренерів немає ні у проведення, ні в курсу: сертифікати й розсилка «Тренер заходу» лишаться без тренера.">
           </div>
         </div>
 
@@ -252,7 +252,7 @@
 
   {% if instance %}
   <div class="form-section">
-    <h3 class="admin-form__section-title">Сертифікат лектора</h3>
+    <h3 class="admin-form__section-title">Сертифікат тренера</h3>
     {% if lecturers and not instance.trainers %}
     {# Склад тут успадкований: у самої дати свого переліку немає. Сказати про
        це треба саме тут -- сертифікат виписується на конкретну людину, і
@@ -267,7 +267,7 @@
     <table class="admin-table">
       <thead>
         <tr>
-          <th>Лектор</th>
+          <th>Тренер</th>
           <th>Сертифікат</th>
         </tr>
       </thead>

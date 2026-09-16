@@ -403,9 +403,9 @@ def event_type_genitive_for(instance):
 
 
 def resolve_signature(lecturer_name):
-    """Знайти шлях до підпису тренера за ПІБ лектора (для adhoc-генерації).
+    """Знайти шлях до підпису тренера за його ПІБ (для adhoc-генерації).
 
-    Спершу точний збіг повного імені (так лектор обирається з випадаючого
+    Спершу точний збіг повного імені (так тренер обирається з випадаючого
     списку в xlsx). Як запасний варіант -- збіг за прізвищем + ініціалами
     (напр. "Гусак В.С." -> "Гусак Валерія Сергіївна"). Повертає шлях або None.
     """
@@ -436,7 +436,7 @@ def resolve_signature(lecturer_name):
 def render_certificate_html(certificate, kind='participant', cert_format=None):
     """Відрендерити HTML сертифіката для WeasyPrint.
 
-    kind: 'participant' (учасник, за замовчуванням) або 'lecturer' (лектор --
+    kind: 'participant' (учасник, за замовчуванням) або 'lecturer' (тренер --
     інший текст тіла, лише підпис Директора). Стиль/верстка спільні.
     cert_format: 'a4'/'compact' або None (береться з налаштувань сайту) --
     макет однаковий, канвас масштабується під обрану сторінку.
@@ -498,7 +498,7 @@ def render_adhoc_pdf(*, number, recipient_name, event_title, event_date=None,
                      cert_format=None):
     """Згенерувати PDF із довільних даних (без запису в БД).
 
-    Використовується генератором сертифікатів з xlsx та для лекторського
+    Використовується генератором сертифікатів з xlsx та для тренерського
     серта (kind='lecturer'). Передаємо легкий обʼєкт у той самий рендер.
     """
     from types import SimpleNamespace
@@ -853,16 +853,16 @@ def reissue_certificate(registration, issued_by=None):
     return cert
 
 
-# ---- Лекторський сертифікат ----
+# ---- Сертифікат тренера ----
 def issue_lecturer_certificate(instance, trainer, issued_by=None):
-    """Видати (або повернути наявний) сертифікат лектора для пари
+    """Видати (або повернути наявний) сертифікат тренера для пари
     «проведення + тренер».
 
     Захід може мати кількох тренерів (`effective_trainers`), і кожен читає
     лекцію особисто -- ідемпотентність тому на парі (instance_id, trainer_id),
     а не на самому проведенні: повторна видача ТОМУ Ж тренеру повертає той
     самий номер, а видача ІНШОМУ тренеру того самого заходу створює власний
-    запис. Номер лектора у діапазоні 1xxxxx (окремий лічильник). Тип заходу
+    запис. Номер тренера у діапазоні 1xxxxx (окремий лічильник). Тип заходу
     зберігаємо у родовому відмінку.
     """
     from app.models.lecturer_certificate import (
@@ -872,7 +872,7 @@ def issue_lecturer_certificate(instance, trainer, issued_by=None):
     # ДО запиту, а не після: інакше `trainer.id` нижче впаде AttributeError-ом
     # на порожньому тренері замість зрозумілого ValueError.
     if trainer is None:
-        raise ValueError('Не задано лектора для сертифіката.')
+        raise ValueError('Не задано тренера для сертифіката.')
 
     existing = LecturerCertificate.query.filter_by(
         instance_id=instance.id, trainer_id=trainer.id,
@@ -916,7 +916,7 @@ def issue_lecturer_certificate(instance, trainer, issued_by=None):
 
 
 def _apply_lecturer_snapshot(lc, instance, trainer, points, issued_at, issued_by):
-    """Знімок проведення в лекторський запис -- видача і перевидача однаково."""
+    """Знімок проведення в запис тренера -- видача і перевидача однаково."""
     lc.trainer_id = trainer.id
     lc.recipient_name = (trainer.full_name_dative or '').strip() or trainer.full_name
     lc.event_title = instance.effective_title_for(DEFAULT_LANGUAGE) or 'Захід'
@@ -934,26 +934,26 @@ def _apply_lecturer_snapshot(lc, instance, trainer, points, issued_at, issued_by
 
 
 def _lecturer_points(instance):
-    """Бали БПР лектору -- або ValueError з причиною.
+    """Бали БПР тренеру -- або ValueError з причиною.
 
-    Норма проведення, інакше курсова: дата може дати лектору іншу кількість,
+    Норма проведення, інакше курсова: дата може дати тренеру іншу кількість,
     ніж курс узагалі (див. `effective_lecturer_points`). Тренера цей хелпер
     не шукає -- заходів з кількома тренерами він не розрізнив би, тому
     видача й перевидача отримують тренера параметром.
     """
     points = instance.effective_lecturer_points
     if points is None:
-        raise ValueError('Не задано бали БПР лектору (Адмінка -> Курс або '
+        raise ValueError('Не задано бали БПР тренеру (Адмінка -> Курс або '
                          'конкретне проведення -> редагувати).')
     return points
 
 
 def reissue_lecturer_certificate(instance, trainer, issued_by=None):
-    """Перевидати сертифікат лектора пари «проведення + тренер».
+    """Перевидати сертифікат тренера пари «проведення + тренер».
 
     Та сама потреба, що й у `reissue_certificate`: виправлений номер заходу
     мусить дійти до вже виданого документа. Файлів тут прибирати не треба --
-    лекторський PDF не зберігається, `render_lecturer_pdf` збирає його з
+    тренерський PDF не зберігається, `render_lecturer_pdf` збирає його з
     запису на кожне завантаження.
 
     Тренер приходить параметром, як і у видачі: у заходу їх може бути
@@ -963,13 +963,13 @@ def reissue_lecturer_certificate(instance, trainer, issued_by=None):
     from app.models.lecturer_certificate import LecturerCertificate
 
     if trainer is None:
-        raise ValueError('Не задано лектора для сертифіката.')
+        raise ValueError('Не задано тренера для сертифіката.')
 
     lc = LecturerCertificate.query.filter_by(
         instance_id=instance.id, trainer_id=trainer.id,
     ).first()
     if lc is None:
-        raise ValueError('Сертифікат лектора не видано -- перевидавати нема чого.')
+        raise ValueError('Сертифікат тренера не видано -- перевидавати нема чого.')
 
     points = _lecturer_points(instance)
     provider, event_num = _bpr_number_inputs(instance)
@@ -993,7 +993,7 @@ def reissue_lecturer_certificate(instance, trainer, issued_by=None):
 
 
 def render_lecturer_pdf(lecturer_cert, font_config=None):
-    """PDF лекторського серта зі збереженого запису (рендер за знімками)."""
+    """PDF серта тренера зі збереженого запису (рендер за знімками)."""
     return render_adhoc_pdf(
         kind='lecturer',
         number=lecturer_cert.number,

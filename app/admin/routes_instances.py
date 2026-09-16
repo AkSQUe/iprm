@@ -453,9 +453,9 @@ def instances_report_export():
 
 
 def _lecturer_certs_by_trainer(instance):
-    """Видані сертифікати лектора заходу, за trainer_id -- для рядків у шаблоні.
+    """Видані сертифікати тренера заходу, за trainer_id -- для рядків у шаблоні.
 
-    Один захід тепер може мати кілька лекторських сертифікатів (по одному на
+    Один захід тепер може мати кілька сертифікатів тренера (по одному на
     тренера), тож замість одного запису шаблону потрібен словник.
     """
     from app.models.lecturer_certificate import LecturerCertificate
@@ -486,7 +486,7 @@ def _render_instance_form(form, instance, preselected_course_id=None):
         lecturer_certs=certs,
         # Сертифікат, виданий тренеру, якого зі складу вже прибрали (або який
         # дістався заходу успадкуванням, а курс потім переграли). Рядка в
-        # переліку лекторів у нього немає, але сам документ існує, має номер
+        # переліку тренерів у нього немає, але сам документ існує, має номер
         # і вже на руках у людини -- зникнути з адмінки він не може.
         orphan_certs=[lc for tid, lc in certs.items() if tid not in in_lineup],
     )
@@ -573,7 +573,7 @@ def instance_edit(instance_id):
 @admin_bp.route('/instances/<int:instance_id>/lecturer-certificate', methods=['POST'])
 @permission_required('instances.manage')
 def instance_lecturer_certificate(instance_id):
-    """Видати/завантажити сертифікат лектора для проведення (PDF)."""
+    """Видати/завантажити сертифікат тренера для проведення (PDF)."""
     import io
     from flask import send_file
     from app.services import certificate_service as cs
@@ -599,7 +599,7 @@ def instance_lecturer_certificate(instance_id):
             pdf = cs.render_lecturer_pdf(lc)
         except Exception:
             current_app.logger.exception('lecturer cert render failed')
-            flash('Не вдалося сформувати PDF сертифіката лектора', 'error')
+            flash('Не вдалося сформувати PDF сертифіката тренера', 'error')
             return redirect(url_for('admin.instance_edit', instance_id=instance_id))
         return send_file(io.BytesIO(pdf), mimetype='application/pdf',
                          as_attachment=True, download_name=f'lecturer-{lc.number}.pdf')
@@ -611,7 +611,7 @@ def instance_lecturer_certificate(instance_id):
     if trainer is None:
         # Свого тренера серед тренерів заходу -- чужого id (підміна у формі)
         # не приймаємо, так само як відсутність вибору.
-        flash('Оберіть лектора зі списку тренерів заходу', 'error')
+        flash('Оберіть тренера зі списку тренерів заходу', 'error')
         return redirect(url_for('admin.instance_edit', instance_id=instance_id))
 
     try:
@@ -622,7 +622,7 @@ def instance_lecturer_certificate(instance_id):
         return redirect(url_for('admin.instance_edit', instance_id=instance_id))
     except Exception:
         current_app.logger.exception('lecturer cert generation failed')
-        flash('Не вдалося згенерувати сертифікат лектора', 'error')
+        flash('Не вдалося згенерувати сертифікат тренера', 'error')
         return redirect(url_for('admin.instance_edit', instance_id=instance_id))
 
     audit_logger.info('Admin %s issued lecturer cert %s instance=%s',
@@ -635,7 +635,7 @@ def instance_lecturer_certificate(instance_id):
                 methods=['POST'])
 @permission_required('instances.manage')
 def instance_lecturer_certificate_reissue(instance_id):
-    """Перевидати сертифікат лектора за поточними даними й віддати PDF.
+    """Перевидати сертифікат тренера за поточними даними й віддати PDF.
 
     Потрібне після виправлення номера заходу в проведенні: видача номер
     уже виданого серта не переписує (див. certificate_service.reissue_*).
@@ -673,7 +673,7 @@ def instance_lecturer_certificate_reissue(instance_id):
         return redirect(url_for('admin.instance_edit', instance_id=instance_id))
     except Exception:
         current_app.logger.exception('lecturer cert reissue failed')
-        flash('Не вдалося перевидати сертифікат лектора', 'error')
+        flash('Не вдалося перевидати сертифікат тренера', 'error')
         return redirect(url_for('admin.instance_edit', instance_id=instance_id))
 
     audit_logger.info('Admin %s reissued lecturer cert %s instance=%s trainer=%s',

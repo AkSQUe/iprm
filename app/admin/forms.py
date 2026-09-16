@@ -55,7 +55,7 @@ class TrainerForm(FlaskForm):
         validators=[DataRequired(message='ПІБ обов\'язкове'), Length(max=200)],
     )
     full_name_dative = StringField(
-        'ПІБ у давальному відмінку (для серта лектора, напр. "Гусак Валерії")',
+        'ПІБ у давальному відмінку (для серта тренера, напр. "Гусак Валерії")',
         validators=[Optional(), Length(max=200)],
     )
     slug = StringField(
@@ -576,15 +576,15 @@ class CourseForm(FlaskForm):
                     'Список -- офіційна номенклатура; choices присвоюються в роуті.',
     )
     bpr_lecturer_points = PointsField(
-        'Бали БПР лектору',
+        'Бали БПР тренеру',
         validators=[Optional(), NumberRange(min=0)],
-        description='Бали, що нараховуються лектору заходу (відрізняються від балів учасника).',
+        description='Бали, що нараховуються тренеру заходу (відрізняються від балів учасника).',
     )
     trainer_ids = TrainerSelectField(
         'Тренери',
         coerce=int,
         validators=[Optional()],
-        description='Порядок має значення: перший -- головний лектор, '
+        description='Порядок має значення: перший -- головний тренер, '
                     'його підпис іде на сертифікат учасника.',
     )
     is_active = BooleanField('Активний у каталозі', default=True)
@@ -767,9 +767,9 @@ class CourseInstanceForm(FlaskForm):
         description='Залиште порожнім щоб взяти з курсу',
     )
     bpr_lecturer_points = PointsField(
-        'Бали БПР лектору',
+        'Бали БПР тренеру',
         validators=[Optional(), NumberRange(min=0)],
-        description='Нараховуються лектору, а не учаснику, і від формату '
+        description='Нараховуються тренеру, а не учаснику, і від формату '
                     'участі не залежать. Залиште порожнім щоб взяти з курсу.',
     )
     max_participants = IntegerField(
@@ -797,7 +797,7 @@ class CourseInstanceForm(FlaskForm):
         'Тренери',
         coerce=int,
         validators=[Optional()],
-        description='Порядок має значення: перший -- головний лектор, '
+        description='Порядок має значення: перший -- головний тренер, '
                     'його підпис іде на сертифікат учасника. Залиште порожнім, '
                     'щоб узяти тренерів курсу.',
     )

@@ -174,7 +174,7 @@ def test_missing_trainer_raises_value_error():
     db.session.flush()
 
     assert instance.effective_trainers == []
-    with pytest.raises(ValueError, match='лектора'):
+    with pytest.raises(ValueError, match='тренера'):
         certificate_service.issue_lecturer_certificate(
             instance, instance.effective_trainer,
         )

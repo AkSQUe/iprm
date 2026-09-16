@@ -88,7 +88,7 @@ def test_rejects_trainer_not_among_the_events_trainers(client, admin, login_admi
 
     assert resp.status_code == 200
     assert LecturerCertificate.query.filter_by(instance_id=instance.id).count() == 0
-    assert 'Оберіть лектора' in resp.get_data(as_text=True)
+    assert 'Оберіть тренера' in resp.get_data(as_text=True)
 
 
 def test_rejects_missing_trainer_id(client, admin, login_admin):
