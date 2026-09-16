@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: IPRM VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-09-12 09:26+0300\n"
+"POT-Creation-Date: 2026-09-16 21:45+0300\n"
 "PO-Revision-Date: 2026-07-24 15:52+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -313,8 +313,8 @@ msgstr "Format"
 msgid "Тип заходу"
 msgstr "Event type"
 
-msgid "Лектор"
-msgstr "Lecturer"
+msgid "Тренер"
+msgstr "Trainer"
 
 msgid "Офлайн"
 msgstr "Offline"
@@ -692,9 +692,6 @@ msgstr "How it works"
 msgid "Програма"
 msgstr "Programme"
 
-msgid "Тренер"
-msgstr "Trainer"
-
 msgid "Відгуки"
 msgstr "Reviews"
 
@@ -739,54 +736,6 @@ msgstr "Thank you! We will notify you once a date is scheduled."
 
 msgid "Помилка при надсиланні запиту. Спробуйте ще раз."
 msgstr "Error submitting your request. Please try again."
-
-msgid "Будь ласка, вкажіть ваше ім'я"
-msgstr "Please enter your name"
-
-msgid "Ім'я не може перевищувати 100 символів"
-msgstr "Name cannot exceed 100 characters"
-
-msgid "Будь ласка, вкажіть email"
-msgstr "Please enter your email"
-
-msgid "Email не може перевищувати 200 символів"
-msgstr "Email cannot exceed 200 characters"
-
-msgid "Телефон не може перевищувати 20 символів"
-msgstr "Phone cannot exceed 20 characters"
-
-msgid "Тема не може перевищувати 200 символів"
-msgstr "Subject cannot exceed 200 characters"
-
-msgid "Тема повідомлення"
-msgstr "Message subject"
-
-msgid "Будь ласка, введіть повідомлення"
-msgstr "Please enter a message"
-
-msgid "Повідомлення має бути від 10 до 5000 символів"
-msgstr "Message must be between 10 and 5000 characters"
-
-msgid "Ваше повідомлення..."
-msgstr "Your message..."
-
-msgid "Коментар"
-msgstr "Comment"
-
-msgid "Коментар не може перевищувати 2000 символів"
-msgstr "Comment cannot exceed 2000 characters"
-
-msgid "Якщо чогось бракує -- напишіть тут (необов'язково)"
-msgstr "If something is missing, write here (optional)"
-
-msgid "Дякуємо! Ваше підтвердження отримано."
-msgstr "Thank you! Your confirmation has been received."
-
-msgid "Не вдалося сформувати PDF. Спробуйте пізніше."
-msgstr "Could not generate the PDF. Please try again later."
-
-msgid "Дякуємо за ваше повідомлення! Ми зв'яжемося з вами найближчим часом."
-msgstr "Thank you for your message! We will get in touch with you shortly."
 
 msgid "Терапія"
 msgstr "Internal medicine"
@@ -1015,6 +964,54 @@ msgstr "Nursing"
 
 msgid "Інша спеціалізація"
 msgstr "Other specialization"
+
+msgid "Будь ласка, вкажіть ваше ім'я"
+msgstr "Please enter your name"
+
+msgid "Ім'я не може перевищувати 100 символів"
+msgstr "Name cannot exceed 100 characters"
+
+msgid "Будь ласка, вкажіть email"
+msgstr "Please enter your email"
+
+msgid "Email не може перевищувати 200 символів"
+msgstr "Email cannot exceed 200 characters"
+
+msgid "Телефон не може перевищувати 20 символів"
+msgstr "Phone cannot exceed 20 characters"
+
+msgid "Тема не може перевищувати 200 символів"
+msgstr "Subject cannot exceed 200 characters"
+
+msgid "Тема повідомлення"
+msgstr "Message subject"
+
+msgid "Будь ласка, введіть повідомлення"
+msgstr "Please enter a message"
+
+msgid "Повідомлення має бути від 10 до 5000 символів"
+msgstr "Message must be between 10 and 5000 characters"
+
+msgid "Ваше повідомлення..."
+msgstr "Your message..."
+
+msgid "Коментар"
+msgstr "Comment"
+
+msgid "Коментар не може перевищувати 2000 символів"
+msgstr "Comment cannot exceed 2000 characters"
+
+msgid "Якщо чогось бракує -- напишіть тут (необов'язково)"
+msgstr "If something is missing, write here (optional)"
+
+msgid "Дякуємо! Ваше підтвердження отримано."
+msgstr "Thank you! Your confirmation has been received."
+
+msgid "Не вдалося сформувати PDF. Спробуйте пізніше."
+msgstr "Could not generate the PDF. Please try again later."
+
+msgid "Дякуємо за ваше повідомлення! Ми зв'яжемося з вами найближчим часом."
+msgstr "Thank you for your message! We will get in touch with you shortly."
 
 msgid "Email обовʼязковий"
 msgstr "Email is required"
@@ -1281,6 +1278,10 @@ msgstr "Your certificate: %(title)s"
 #, python-format
 msgid "Заповніть дані для сертифіката: %(title)s"
 msgstr "Fill in your certificate details: %(title)s"
+
+#, python-format
+msgid "Тестування відкрито: %(title)s"
+msgstr ""
 
 msgid "ПІБ у вашому акаунті змінено"
 msgstr "The name on your account has changed"
@@ -3096,6 +3097,45 @@ msgid ""
 msgstr ""
 "Share this link with a colleague. You earn bonus points for every paid "
 "registration made on your recommendation."
+
+msgid "Тестування відкрито"
+msgstr ""
+
+#, python-format
+msgid "Складіть тест, щоб отримати сертифікат за %(title)s"
+msgstr ""
+
+msgid ""
+"тестування за вашим заходом уже відкрите. Сертифікат із балами БПР видається"
+" лише тим, хто заповнив анкету для сертифіката і склав тест."
+msgstr ""
+
+msgid "Питань"
+msgstr ""
+
+msgid "Потрібно правильних"
+msgstr ""
+
+msgid "Спроб"
+msgstr ""
+
+msgid "Скласти до"
+msgstr ""
+
+msgid ""
+"Спершу заповніть анкету для сертифіката: без неї тест не відкриється. Це 2–3"
+" хвилини, і анкета діє для всіх ваших курсів."
+msgstr ""
+
+msgid "Після анкети тест буде доступний за посиланням:"
+msgstr ""
+
+msgid ""
+"Відповіді зберігаються одразу: якщо закриєте сторінку, продовжите з того ж "
+"місця."
+msgstr ""
+"Answers are saved immediately: if you close the page, you will continue from"
+" the same place."
 
 msgid "Вам нараховано бонусні бали"
 msgstr "You have been awarded bonus points"
@@ -4998,6 +5038,12 @@ msgstr "Recommended"
 msgid "Фільтр за тегами"
 msgstr "Filter by tags"
 
+msgid "Тарифи участі"
+msgstr "Participation tiers"
+
+msgid "Обрати дату"
+msgstr "Choose a date"
+
 #, python-format
 msgid "Уже проведено (%(count)s):"
 msgstr "Already held (%(count)s):"
@@ -5093,9 +5139,6 @@ msgstr "To be announced"
 msgid "Вільні місця"
 msgstr "Seats left"
 
-msgid "Обрати дату"
-msgstr "Choose a date"
-
 msgid "Відгуки та довіра"
 msgstr "Reviews and trust"
 
@@ -5151,9 +5194,6 @@ msgstr "At this pace that is about"
 msgid "Потенційний місячний оборот:"
 msgstr "Potential monthly revenue:"
 
-msgid "Тарифи участі"
-msgstr "Participation tiers"
-
 #, python-format
 msgid "Ще %(count)s %(noun)s"
 msgstr "%(count)s more %(noun)s"
@@ -5194,11 +5234,11 @@ msgstr "What's included:"
 msgid "Зареєструватися на %(date)s"
 msgstr "Register for %(date)s"
 
-msgid "Ваш <span class=\"apple-gradient-text\">тренер</span>"
-msgstr "Your <span class=\"apple-gradient-text\">trainer</span>"
-
 msgid "Ваші <span class=\"apple-gradient-text\">тренери</span>"
 msgstr "Your <span class=\"apple-gradient-text\">trainers</span>"
+
+msgid "Ваш <span class=\"apple-gradient-text\">тренер</span>"
+msgstr "Your <span class=\"apple-gradient-text\">trainer</span>"
 
 msgid "Умови отримання <span class=\"apple-gradient-text\">сертифікату</span>"
 msgstr ""
@@ -5243,40 +5283,6 @@ msgid ""
 msgstr ""
 "A certificate with BPR points appears in your account right after you pass "
 "the test."
-
-msgid "Ключові <span class=\"apple-gradient-text\">особливості</span>"
-msgstr "Key <span class=\"apple-gradient-text\">features</span>"
-
-msgid "Перевірені експерти"
-msgstr "Trusted experts"
-
-msgid ""
-"Досвідчені спеціалісти з багаторічною практикою у регенеративній та "
-"PRP-медицині."
-msgstr ""
-"Experienced specialists with many years of practice in regenerative and PRP "
-"medicine."
-
-msgid "Зручний формат"
-msgstr "Convenient format"
-
-msgid ""
-"Онлайн та офлайн навчання з доступом з будь-якого місця у зручний для вас "
-"час."
-msgstr ""
-"Online and offline learning with access from anywhere at a time that suits "
-"you."
-
-msgid "Офіційні сертифікати з балами безперервного професійного розвитку."
-msgstr "Official certificates with continuing professional development points."
-
-msgid "Практична цінність"
-msgstr "Practical value"
-
-msgid "Без води – тільки доказові знання, що одразу застосовуються у практиці."
-msgstr ""
-"No filler – only evidence-based knowledge you can apply in practice right "
-"away."
 
 msgid "або"
 msgstr "or"
@@ -5552,6 +5558,28 @@ msgstr ""
 msgid "Щоб спробувати ще раз, спершу заповніть анкету для сертифіката."
 msgstr "To try again, first fill in your certificate details."
 
+#, python-format
+msgid ""
+"\n"
+"      Термін складання завершився %(until)s.\n"
+"      "
+msgstr ""
+"\n"
+"      The deadline passed on %(until)s.\n"
+"      "
+
+msgid "Якщо ви не встигли з поважної причини — напишіть організаторам."
+msgstr "If you missed it for a valid reason, please contact the organisers."
+
+msgid "Тест ще готується. Ми повідомимо, коли його можна буде пройти."
+msgstr "The test is still being prepared. We will let you know when it is ready."
+
+msgid "Реєстрацію скасовано."
+msgstr "Registration cancelled."
+
+msgid "Тестування відкривається після оплати участі."
+msgstr "Testing opens once your participation is paid."
+
 msgid "Перевірка відповідей"
 msgstr "Check your answers"
 
@@ -5604,13 +5632,6 @@ msgstr "%(count)s questions; %(need)s correct answers required."
 msgid "Одне питання на екран, по чотири варіанти. Правильний — один."
 msgstr "One question per screen, four options each. Only one is correct."
 
-msgid ""
-"Відповіді зберігаються одразу: якщо закриєте сторінку, продовжите з того ж "
-"місця."
-msgstr ""
-"Answers are saved immediately: if you close the page, you will continue from"
-" the same place."
-
 #, python-format
 msgid ""
 "\n"
@@ -5650,30 +5671,8 @@ msgstr ""
 msgid "Не заповнено:"
 msgstr "Not filled in:"
 
-msgid "Тестування відкривається після оплати участі."
-msgstr "Testing opens once your participation is paid."
-
 msgid "Тест відкриється після початку заходу."
 msgstr "The test opens after the event starts."
-
-#, python-format
-msgid ""
-"\n"
-"      Термін складання завершився %(until)s.\n"
-"      "
-msgstr ""
-"\n"
-"      The deadline passed on %(until)s.\n"
-"      "
-
-msgid "Якщо ви не встигли з поважної причини — напишіть організаторам."
-msgstr "If you missed it for a valid reason, please contact the organisers."
-
-msgid "Тест ще готується. Ми повідомимо, коли його можна буде пройти."
-msgstr "The test is still being prepared. We will let you know when it is ready."
-
-msgid "Реєстрацію скасовано."
-msgstr "Registration cancelled."
 
 msgid "Для цього заходу тестування не передбачене."
 msgstr "No test is required for this event."
@@ -6570,34 +6569,44 @@ msgstr ""
 #~ "through your bank using the details "
 #~ "provided."
 
-msgid "Тестування відкрито"
-msgstr ""
+#~ msgid "Лектор"
+#~ msgstr "Lecturer"
 
-#, python-format
-msgid "Тестування відкрито: %(title)s"
-msgstr ""
+#~ msgid "Ключові <span class=\"apple-gradient-text\">особливості</span>"
+#~ msgstr "Key <span class=\"apple-gradient-text\">features</span>"
 
-#, python-format
-msgid "Складіть тест, щоб отримати сертифікат за %(title)s"
-msgstr ""
+#~ msgid "Перевірені експерти"
+#~ msgstr "Trusted experts"
 
-msgid "тестування за вашим заходом уже відкрите. Сертифікат із балами БПР видається лише тим, хто заповнив анкету для сертифіката і склав тест."
-msgstr ""
+#~ msgid ""
+#~ "Досвідчені спеціалісти з багаторічною практикою"
+#~ " у регенеративній та PRP-медицині."
+#~ msgstr ""
+#~ "Experienced specialists with many years of"
+#~ " practice in regenerative and PRP "
+#~ "medicine."
 
-msgid "Питань"
-msgstr ""
+#~ msgid "Зручний формат"
+#~ msgstr "Convenient format"
 
-msgid "Потрібно правильних"
-msgstr ""
+#~ msgid ""
+#~ "Онлайн та офлайн навчання з доступом "
+#~ "з будь-якого місця у зручний для вас"
+#~ " час."
+#~ msgstr ""
+#~ "Online and offline learning with access "
+#~ "from anywhere at a time that suits"
+#~ " you."
 
-msgid "Спроб"
-msgstr ""
+#~ msgid "Офіційні сертифікати з балами безперервного професійного розвитку."
+#~ msgstr "Official certificates with continuing professional development points."
 
-msgid "Скласти до"
-msgstr ""
+#~ msgid "Практична цінність"
+#~ msgstr "Practical value"
 
-msgid "Спершу заповніть анкету для сертифіката: без неї тест не відкриється. Це 2–3 хвилини, і анкета діє для всіх ваших курсів."
-msgstr ""
+#~ msgid "Без води – тільки доказові знання, що одразу застосовуються у практиці."
+#~ msgstr ""
+#~ "No filler – only evidence-based "
+#~ "knowledge you can apply in practice "
+#~ "right away."
 
-msgid "Після анкети тест буде доступний за посиланням:"
-msgstr ""
