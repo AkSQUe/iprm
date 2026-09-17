@@ -169,3 +169,12 @@
 </div>
 {% include 'admin/partials/_transfer_modal.html' %}
 {% endblock %}
+
+{% block extra_scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/admin-copy-link.js') }}?v={{ assets_version }}" defer></script>
+<script src="{{ url_for('static', filename='js/admin-inline-edit.js') }}?v={{ assets_version }}" defer></script>
+<script src="{{ url_for('static', filename='js/modal.js') }}?v={{ assets_version }}" defer></script>
+<script src="{{ url_for('static', filename='js/admin-transfer.js') }}?v={{ assets_version }}" defer></script>
+<script src="{{ url_for('static', filename='js/admin-registrations-grouped.js') }}?v={{ assets_version }}" defer></script>
+{% endblock %}
