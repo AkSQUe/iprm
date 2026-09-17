@@ -89,7 +89,10 @@
   document.addEventListener('DOMContentLoaded', function () {
     var raw = new URLSearchParams(window.location.search).get(OPEN_PARAM);
     (raw ? raw.split(',') : []).forEach(function (id) {
-      if (!id) return;
+      // id заходу -- завжди ціле число. Будь-що інше в ?open= прийшло з
+      // чужих рук: у селекторі воно дало б SyntaxError і поховало б
+      // відновлення решти панелей разом із собою.
+      if (!/^\d+$/.test(id)) return;
       var head = document.querySelector('[data-instance-id="' + id + '"]');
       if (head) toggle(head, true);
     });
