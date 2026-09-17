@@ -720,6 +720,47 @@ def registrations_all():
     )
 
 
+# Стеля рядків у панелі заходу. Вебінар на 300 осіб у розгорнутій панелі --
+# це рівно та вага, від якої режим і тікав: далі -- на сторінку заходу,
+# у неї є пагінація.
+_GROUP_ROWS_LIMIT = 100
+
+
+@admin_bp.route('/registrations/group/<int:instance_id>/rows')
+@permission_required('registrations.view')
+def registration_group_rows(instance_id):
+    """Рядки учасників одного заходу -- фрагмент для розгорнутої панелі.
+
+    Фільтри ті самі, що й на сторінці: панель мусить показувати рівно тих,
+    кого порахував заголовок групи.
+    """
+    filters = _registration_filters()
+    query = _apply_registration_filters(
+        EventRegistration.query.options(*_registration_row_options()),
+        filters,
+    ).filter(EventRegistration.instance_id == instance_id)
+
+    rows = query.order_by(EventRegistration.created_at.desc()).limit(
+        _GROUP_ROWS_LIMIT + 1).all()
+    truncated = len(rows) > _GROUP_ROWS_LIMIT
+    rows = rows[:_GROUP_ROWS_LIMIT]
+
+    # back приходить із клієнта і йде у приховане поле `next` рядкових форм --
+    # тобто в редірект. Чужий хост тут означав би відкритий редірект.
+    back_url = request.args.get('back', '')
+    if not is_safe_redirect_url(back_url):
+        back_url = url_for('admin.registrations_all', view='grouped')
+
+    return render_template(
+        'admin/partials/_registration_rows.html',
+        registrations=rows,
+        ctx=_registration_rows_context(rows),
+        back_url=back_url,
+        instance_id=instance_id,
+        truncated=truncated,
+    )
+
+
 def _registration_select_options():
     """Довідники для селектів фільтра: курси / тренери / заходи.
 

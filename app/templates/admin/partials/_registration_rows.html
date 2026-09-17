@@ -1,0 +1,28 @@
+{# Учасники ОДНОГО заходу -- відповідь маршруту `registration_group_rows`.
+
+   Віддаємо цілу таблицю, а не голі <tr>: панель заходу вставляє відповідь
+   як є, і кожна панель має власну шапку колонок. Сама шапка й рядок --
+   ті самі макроси, що й у плаcкому списку. #}
+{% from 'admin/partials/_registration_row.html' import registration_headers, registration_row %}
+<div class="admin-table-wrap">
+  <table class="admin-table admin-table--wide">
+    <thead>
+      <tr>
+        {{ registration_headers() }}
+      </tr>
+    </thead>
+    <tbody>
+      {% for reg in registrations %}
+      {{ registration_row(reg, ctx, back_url) }}
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% if truncated %}
+<p class="registrations-groups__fallback">
+  Показано перших {{ registrations | length }}.
+  <a href="{{ url_for('admin.instance_registrations', instance_id=instance_id) }}">
+    {{ icon('open_in_new') }} Відкрити захід повністю
+  </a>
+</p>
+{% endif %}
