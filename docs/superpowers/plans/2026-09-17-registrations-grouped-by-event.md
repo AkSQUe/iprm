@@ -1346,15 +1346,16 @@ px тут -- норма: сусідні `page-admin-*.css` роблять так
                 {% endif %}
               </span>
             </button>
-            {# Без JS панель лишається згорнутою, і єдиний шлях до людей --
-               посилання всередині. Саме тому воно тут, а не лише в меню. #}
-            <div class="admin-disclosure__panel" id="inst-{{ row.instance.id }}" hidden>
-              <p class="registrations-groups__fallback">
-                <a href="{{ url_for('admin.instance_registrations', instance_id=row.instance.id) }}">
-                  {{ icon('open_in_new') }} Відкрити захід
-                </a>
-              </p>
-            </div>
+            {# Посилання стоїть ПОЗА панеллю навмисно: панель згорнута
+               атрибутом hidden, і всередині неї без JS не досяжне ніщо.
+               Зовні воно лишається єдиним шляхом до людей, коли скрипт не
+               виконався, і корисним «перейти до заходу», коли виконався. #}
+            <p class="registrations-groups__fallback">
+              <a href="{{ url_for('admin.instance_registrations', instance_id=row.instance.id) }}">
+                {{ icon('open_in_new') }} Відкрити захід
+              </a>
+            </p>
+            <div class="admin-disclosure__panel" id="inst-{{ row.instance.id }}" hidden></div>
           </div>
           {% endfor %}
         </div>
