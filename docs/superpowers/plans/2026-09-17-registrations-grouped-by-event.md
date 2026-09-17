@@ -1589,6 +1589,132 @@ git commit -m "docs(routes): режим «За заходами» у перел�
 
 ---
 
+### Task 8: Перехід на захід -- іконкою в самому заголовку
+
+Додано за прямим проханням користувача вже під час виконання: посилання
+«Відкрити захід» окремим рядком під заголовком дати займає місце і повторює
+текст на кожній даті. Воно має переїхати в САМ заголовок -- без тексту, самою
+іконкою, праворуч від суми.
+
+Обмеження, яке визначає всю конструкцію: `<a>` не можна вкласти в `<button>`.
+Тому заголовок стає рядком із двох сусідніх елементів -- кнопка-розгортач і
+посилання-іконка, -- а не однією кнопкою. Це зміна КОМПОНЕНТА, тож вона
+робиться в `admin.css` і показується в каталозі.
+
+**Files:**
+- Modify: `app/static/css/admin.css` (додати `admin-disclosure__bar`,
+  `admin-disclosure__action`)
+- Modify: `app/templates/design_system/_tab_admin.html` (показати новий вигляд)
+- Modify: `app/templates/admin/registrations_grouped.html`
+- Test: `tests/test_routes/test_admin_registrations_grouped.py`
+
+**Interfaces:**
+- Consumes: компонент `admin-disclosure` з Task 4, розмітку сторінки з Task 5.
+- Produces: класи `admin-disclosure__bar` (рядок заголовка) і
+  `admin-disclosure__action` (дія праворуч, іконкою).
+
+- [ ] **Step 1: Дописати падаючий тест**
+
+Додати в `tests/test_routes/test_admin_registrations_grouped.py`:
+
+```python
+def test_event_link_lives_in_the_header(client, admin, event_with_two_people):
+    """Перехід на захід -- іконка в заголовку, а не рядок тексту під ним."""
+    _, inst, _ = event_with_two_people
+    _login(client, admin)
+
+    html = client.get('/admin/registrations?view=grouped').get_data(as_text=True)
+
+    assert 'admin-disclosure__action' in html
+    assert f'/admin/instances/{inst.id}/registrations' in html
+    # Іконка без підпису: сам текст на кнопці більше не друкується, але
+    # доступна назва лишається -- інакше для скрінрідера це посилання в нікуди.
+    assert 'aria-label="Відкрити захід"' in html
+    assert '>Відкрити захід<' not in html
+```
+
+- [ ] **Step 2: Прогнати тест і переконатись, що він падає**
+
+Run: `venv/Scripts/python.exe -m pytest tests/test_routes/test_admin_registrations_grouped.py::test_event_link_lives_in_the_header -q`
+Expected: FAIL -- класу `admin-disclosure__action` у відповіді ще немає.
+
+- [ ] **Step 3: Розширити компонент**
+
+Дописати в `app/static/css/admin.css`, одразу після правил `admin-disclosure`:
+
+```css
+/* Заголовок із дією праворуч: посилання не можна вкласти в кнопку, тож
+   рядок заголовка -- це кнопка-розгортач плюс сусідня дія-іконка. */
+.admin-disclosure__bar {
+  display: flex;
+  align-items: stretch;
+  background: var(--iprm-surface-inset);
+}
+
+.admin-disclosure__bar .admin-disclosure__head {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.admin-disclosure__action {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 16px;
+  color: var(--iprm-text-secondary);
+}
+
+.admin-disclosure__action:hover {
+  background: var(--iprm-divider);
+  color: var(--iprm-accent);
+}
+```
+
+- [ ] **Step 4: Перебудувати заголовок дати**
+
+У `app/templates/admin/registrations_grouped.html` обгорнути кнопку дати в
+`admin-disclosure__bar` і поставити поруч посилання-іконку; блок
+`<p class="registrations-groups__fallback">` із текстом «Відкрити захід»
+ПРИБРАТИ (сам клас лишається -- його вживає скрипт для станів завантаження
+й помилки):
+
+```jinja
+            <div class="admin-disclosure__bar">
+              <button type="button" class="admin-disclosure__head"
+                      aria-expanded="false" aria-controls="inst-{{ row.instance.id }}"
+                      data-instance-id="{{ row.instance.id }}" data-group-total="{{ row.total }}"
+                      data-rows-url="{{ url_for('admin.registration_group_rows', instance_id=row.instance.id, **dict(filter_args, back=back_url)) }}">
+                ... (вміст кнопки лишається без змін) ...
+              </button>
+              {# Без JS це єдиний шлях до людей, зі скриптом -- швидкий перехід
+                 на картку заходу. Іконка без підпису, тож доступна назва
+                 задається явно. #}
+              <a class="admin-disclosure__action"
+                 href="{{ url_for('admin.instance_registrations', instance_id=row.instance.id) }}"
+                 title="Відкрити захід" aria-label="Відкрити захід">{{ icon('open_in_new') }}</a>
+            </div>
+```
+
+- [ ] **Step 5: Показати новий вигляд у каталозі**
+
+У `app/templates/design_system/_tab_admin.html` обгорнути кнопку ВКЛАДЕНОГО
+рівня демо в `admin-disclosure__bar` і додати поруч таке саме посилання-іконку
+(`href="#"`, `title` і `aria-label`). Правило без живої розмітки в каталозі
+валить `test_admin_css_has_no_unused_rules`.
+
+- [ ] **Step 6: Прогнати тести**
+
+Run: `venv/Scripts/python.exe -m pytest tests/test_routes/test_admin_registrations_grouped.py tests/test_design_system/ tests/test_lint_templates.py -q`
+Expected: PASS -- усе.
+
+- [ ] **Step 7: Коміт**
+
+```bash
+git add app/static/css/admin.css app/templates/design_system/_tab_admin.html app/templates/admin/registrations_grouped.html tests/test_routes/test_admin_registrations_grouped.py
+git commit -m "feat(admin): перехід на захід -- іконкою в заголовку дати"
+```
+
+---
+
 ## Перевірене вручну до написання плану
 
 Щоб задачі не спіткнулись на здогадах, три речі перевірені на живому коді:
