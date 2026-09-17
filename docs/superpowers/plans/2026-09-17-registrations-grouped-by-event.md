@@ -555,7 +555,6 @@ git commit -m "feat(admin): агрегати реєстрацій за курс�
 **Files:**
 - Modify: `app/admin/routes_registrations.py` (новий маршрут)
 - Create: `app/templates/admin/partials/_registration_rows.html`
-- Create: `app/static/css/page-admin-registrations.css`
 - Test: `tests/test_routes/test_admin_registrations_grouped.py`
 
 **Interfaces:**
@@ -748,7 +747,9 @@ Expected: FAIL -- 404 на `/admin/registrations/group/<id>/rows`.
   </table>
 </div>
 {% if truncated %}
-<p class="registrations-groups__fallback">
+{# Клас беремо наявний: власного layout-файлу в цієї задачі немає, а CSS
+   без жодного шаблону-споживача валить сторожа ds_audit. #}
+<p class="admin-text-muted">
   Показано перших {{ registrations | length }}.
   <a href="{{ url_for('admin.instance_registrations', instance_id=instance_id) }}">
     {{ icon('open_in_new') }} Відкрити захід повністю
@@ -757,40 +758,7 @@ Expected: FAIL -- 404 на `/admin/registrations/group/<id>/rows`.
 {% endif %}
 ```
 
-- [ ] **Step 4: Layout сторінки окремим файлом**
-
-Клас, ужитий у розмітці, мусить мати правило в ТОМУ Ж коміті -- інакше
-`tests/test_design_system/test_css_markup_sync.py::test_every_class_in_markup_has_a_rule`
-лишається червоним між задачами. Тому файл layout заводиться тут, одразу з
-трьома правилами: `__fallback` потрібен цій задачі, решта -- сторінці з Task 5.
-
-Спершу звірити імена токенів:
-
-Run: `grep -n -- "--iprm-space-2\|--iprm-space-3\|--iprm-space-5" app/static/css/common.css | head`
-Токен, якого немає у виводі, замінити наявним сусіднім: вигаданий валить
-`test_css_markup_sync.py::test_every_token_named_outside_css_exists`.
-
-Створити `app/static/css/page-admin-registrations.css`:
-
-```css
-/* Layout реєстру «За заходами»: лише сітка й відступи рівнів.
-   Декор (колір, шрифт, межа, тінь) живе в компонентах admin.css. */
-.registrations-groups {
-  display: flex;
-  flex-direction: column;
-  gap: var(--iprm-space-3);
-}
-
-.registrations-groups__dates {
-  padding-left: var(--iprm-space-5);
-}
-
-.registrations-groups__fallback {
-  margin: var(--iprm-space-2) 0 0;
-}
-```
-
-- [ ] **Step 5: Додати маршрут**
+- [ ] **Step 4: Додати маршрут**
 
 У `app/admin/routes_registrations.py`, після `registrations_all`:
 
@@ -836,16 +804,16 @@ def registration_group_rows(instance_id):
     )
 ```
 
-- [ ] **Step 6: Прогнати тести і сторожів розмітки**
+- [ ] **Step 5: Прогнати тести і сторожів розмітки**
 
 Run: `venv/Scripts/python.exe -m pytest tests/test_routes/test_admin_registrations_grouped.py tests/test_design_system/ -q`
 Expected: PASS -- усі пʼять нових і вся дизайн-система. Червоний сторож тут
 означає клас без правила або вигаданий токен.
 
-- [ ] **Step 7: Коміт**
+- [ ] **Step 6: Коміт**
 
 ```bash
-git add app/admin/routes_registrations.py app/templates/admin/partials/_registration_rows.html app/static/css/page-admin-registrations.css tests/test_routes/test_admin_registrations_grouped.py
+git add app/admin/routes_registrations.py app/templates/admin/partials/_registration_rows.html tests/test_routes/test_admin_registrations_grouped.py
 git commit -m "feat(admin): фрагмент рядків учасників для розгорнутого заходу"
 ```
 
@@ -873,11 +841,14 @@ git commit -m "feat(admin): фрагмент рядків учасників д�
 
 - [ ] **Step 1: Звірити імена токенів**
 
-Run: `grep -n -- "--iprm-space-2\|--iprm-space-3\|--iprm-space-4\|--iprm-space-5\|--iprm-surface-inset\|--iprm-border\b\|--iprm-radius-md\|--iprm-text-secondary\|--iprm-transition-fast\|--iprm-white" app/static/css/common.css | head -20`
-Кожен токен, ужитий у наступному кроці, мусить бути в цьому виводі. Токена
-немає -- беремо наявний сусідній; вигаданий валить
-`tests/test_design_system/test_css_markup_sync.py::test_every_token_named_outside_css_exists`.
-Голих значень кольору не писати.
+Run: `grep -n "iprm-surface-inset:|iprm-border:|iprm-radius-md:|iprm-text-secondary:|iprm-transition:|iprm-white:|iprm-bg:" -E app/static/css/common.css`
+Кожен токен, ужитий у наступному кроці, мусить бути в цьому виводі; вигаданий
+валить `tests/test_design_system/test_css_markup_sync.py::test_every_token_named_outside_css_exists`.
+
+Шкали відступів у цій дизайн-системі НЕМАЄ: родини `--iprm-space-*` не існує,
+і сусідні компоненти в `admin.css` задають відступи буквальними px. Тому px для
+відступів тут -- норма проєкту, а не недогляд. Забороненими лишаються голі
+значення КОЛЬОРУ: колір, межа, тінь і радіус беруться токенами.
 
 - [ ] **Step 2: Компонент у `admin.css`**
 
@@ -899,15 +870,19 @@ Run: `grep -n -- "--iprm-space-2\|--iprm-space-3\|--iprm-space-4\|--iprm-space-5
 .admin-disclosure__head {
   display: flex;
   align-items: center;
-  gap: var(--iprm-space-3);
+  gap: 12px;
   width: 100%;
-  padding: var(--iprm-space-3) var(--iprm-space-4);
+  padding: 12px 16px;
   border: 0;
   background: var(--iprm-surface-inset);
   font: inherit;
   color: inherit;
   text-align: left;
   cursor: pointer;
+}
+
+.admin-disclosure__head:hover {
+  background: var(--iprm-bg);
 }
 
 .admin-disclosure__title {
@@ -918,7 +893,7 @@ Run: `grep -n -- "--iprm-space-2\|--iprm-space-3\|--iprm-space-4\|--iprm-space-5
 .admin-disclosure__metrics {
   display: flex;
   align-items: center;
-  gap: var(--iprm-space-2);
+  gap: 8px;
   flex-wrap: wrap;
 }
 
@@ -929,7 +904,7 @@ Run: `grep -n -- "--iprm-space-2\|--iprm-space-3\|--iprm-space-4\|--iprm-space-5
 
 .admin-disclosure__chevron {
   display: inline-flex;
-  transition: transform var(--iprm-transition-fast);
+  transition: transform var(--iprm-transition);
 }
 
 .admin-disclosure__head[aria-expanded="true"] .admin-disclosure__chevron {
@@ -937,11 +912,11 @@ Run: `grep -n -- "--iprm-space-2\|--iprm-space-3\|--iprm-space-4\|--iprm-space-5
 }
 
 .admin-disclosure__panel {
-  padding: var(--iprm-space-3) var(--iprm-space-4);
+  padding: 12px 16px;
 }
 
 .admin-disclosure--nested {
-  margin: var(--iprm-space-2) 0;
+  margin: 8px 0;
 }
 ```
 
@@ -1006,6 +981,7 @@ baseline без JS.
 **Files:**
 - Modify: `app/admin/routes_registrations.py` (`_registration_filters`,
   `registrations_all`, новий `_registration_page_context`)
+- Create: `app/static/css/page-admin-registrations.css`
 - Create: `app/templates/admin/registrations_grouped.html`
 - Create: `app/templates/admin/partials/_registrations_view_switch.html`
 - Modify: `app/templates/admin/registrations.html` (вставити перемикач)
@@ -1195,7 +1171,36 @@ def _registration_page_context(filters, stats):
 якщо її в субсеті немає, узяти наявну (наприклад `list_alt`), інакше
 `tests/test_icons.py` покаже сире слово замість гліфа.
 
-- [ ] **Step 5: Шаблон згрупованого режиму**
+- [ ] **Step 5: Layout сторінки окремим файлом**
+
+Створити `app/static/css/page-admin-registrations.css`. Файл заводиться саме
+тут, разом із розміткою, що його вживає, і підключається РІВНО з одного
+шаблону -- `registrations_grouped.html`. Два споживачі зробили б його
+компонентним за правилом проєкту, і тоді ім'я `page-` стало б хибним.
+
+Шкали відступів у дизайн-системі немає (родини `--iprm-space-*` не існує), тож
+px тут -- норма: сусідні `page-admin-*.css` роблять так само. Кольору, шрифта,
+межі й тіні в цьому файлі бути не повинно -- це layout.
+
+```css
+/* Layout реєстру «За заходами»: лише сітка й відступи рівнів.
+   Декор (колір, шрифт, межа, тінь) живе в компонентах admin.css. */
+.registrations-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.registrations-groups__dates {
+  padding-left: 24px;
+}
+
+.registrations-groups__fallback {
+  margin: 8px 0 0;
+}
+```
+
+- [ ] **Step 6: Шаблон згрупованого режиму**
 
 Створити `app/templates/admin/registrations_grouped.html`:
 
@@ -1375,17 +1380,17 @@ def _registration_page_context(filters, stats):
 `data-instance-id` і `data-group-total` стоять саме в такому порядку і поруч --
 на це спирається `test_grouped_numbers_follow_the_filter`.
 
-- [ ] **Step 6: Прогнати тести сторінки**
+- [ ] **Step 7: Прогнати тести сторінки**
 
 Run: `venv/Scripts/python.exe -m pytest tests/test_routes/test_admin_registrations_grouped.py tests/test_lint_templates.py -q`
 Expected: PASS -- усі девʼять. `test_grouped_page_does_not_grow_with_events`
 мусить бути зеленим без жодних додаткових правок: сторінка не гідратує
 реєстрацій.
 
-- [ ] **Step 7: Коміт**
+- [ ] **Step 8: Коміт**
 
 ```bash
-git add app/admin/routes_registrations.py app/templates/admin/registrations_grouped.html app/templates/admin/partials/_registrations_view_switch.html app/templates/admin/registrations.html tests/test_routes/test_admin_registrations_grouped.py
+git add app/admin/routes_registrations.py app/static/css/page-admin-registrations.css app/templates/admin/registrations_grouped.html app/templates/admin/partials/_registrations_view_switch.html app/templates/admin/registrations.html tests/test_routes/test_admin_registrations_grouped.py
 git commit -m "feat(admin): режим «За заходами» у реєстрі реєстрацій"
 ```
 
