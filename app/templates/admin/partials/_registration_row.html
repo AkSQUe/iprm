@@ -1,0 +1,117 @@
+{# Рядок учасника в реєстрі реєстрацій -- ОДНЕ оголошення на два місця:
+   плаский список (`registrations.html`) і фрагмент розгорнутого заходу
+   (`_registration_rows.html`). Поки розмітка була скопійована, дві таблиці
+   встигали розійтись на кожній новій колонці.
+
+   ctx -- набір батчів на сторінку (`_registration_rows_context`): реферери,
+   стан тестування, незакриті доплати. Одним обʼєктом, а не чотирма
+   аргументами: показників у рядку більшатиме, а сигнатура макроса -- ні.
+
+   back_url -- куди повернутись після дії в рядку. #}
+{% from 'partials/_money.html' import money %}
+{% from 'admin/partials/_registration_actions.html' import registration_actions %}
+{% import 'admin/partials/_registration_progress.html' as progress %}
+
+{% macro registration_headers() %}
+<th class="admin-cell-title">Захід</th>
+<th>№</th>
+<th>Учасник</th>
+<th>Реферер</th>
+<th>Телефон</th>
+<th>Статус</th>
+<th>Оплата</th>
+<th>Сума</th>
+{{ progress.headers() }}
+<th>Дата</th>
+<th>Дії</th>
+{% endmacro %}
+
+{% macro registration_row(reg, ctx, back_url='') %}
+<tr>
+  <td class="admin-cell-title">
+    {% if reg.instance_id and reg.target_title %}
+      <a href="{{ url_for('admin.instance_registrations', instance_id=reg.instance_id) }}">{{ reg.target_title }}</a>
+    {% else %}
+      <span class="admin-text-muted">–</span>
+    {% endif %}
+  </td>
+  <td data-place-cell>
+    {% if reg.place_number %}
+      <strong>№{{ reg.place_number }}</strong>
+    {% else %}
+      <span class="admin-text-muted">—</span>
+    {% endif %}
+  </td>
+  <td>
+    {# Редагування учасника зараз ховається під меню «...»; ПІБ -- це
+       та ж дія, лиш без зайвого кліку й пошуку очима. #}
+    <strong><a href="{{ url_for('admin.participant_edit', reg_id=reg.id) }}">{{ reg.user.first_name }} {{ reg.user.last_name }}</a></strong><br>
+    <small><a href="{{ url_for('admin.user_detail', user_id=reg.user.id) }}">{{ reg.user.email }}</a></small>
+  </td>
+  <td>
+    {% set ref = ctx.referrer_map.get(reg.referral_code) if reg.referral_code else None %}
+    {% if ref %}
+      <a href="{{ url_for('admin.referral_referrer_detail', kind=ref.kind, referrer_id=ref.id) }}">{{ ref.name }}</a>
+      <br><small class="admin-text-muted">{{ 'тренер' if ref.kind == 'trainer' else 'учасник' }}</small>
+    {% elif reg.referral_code %}
+      <span class="admin-text-muted" title="Код реферера не знайдено серед активних">{{ reg.referral_code }}</span>
+    {% else %}
+      <span class="admin-text-muted">–</span>
+    {% endif %}
+  </td>
+  <td>{{ reg.phone }}</td>
+  <td>
+    <select class="admin-inline-select" data-state="{{ reg.status }}"
+            data-inline-url="{{ url_for('admin.registration_status', reg_id=reg.id) }}"
+            data-inline-field="status" data-csrf="{{ csrf_token() }}" aria-label="Статус">
+      {% for val, label in reg.STATUSES %}
+      <option value="{{ val }}"{% if reg.status == val %} selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </td>
+  <td>
+    <select class="admin-inline-select" data-state="{{ reg.payment_status }}"
+            data-inline-url="{{ url_for('admin.registration_payment', reg_id=reg.id) }}"
+            data-inline-field="payment" data-csrf="{{ csrf_token() }}" aria-label="Оплата">
+      {% for val, label in reg.PAYMENT_STATUSES %}
+      <option value="{{ val }}"{% if reg.payment_status == val %} selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    {% if reg.payment_amount and reg.payment_amount > 0 %}
+    <div class="admin-text-muted" title="Обраний спосіб оплати">
+      {{ 'За рахунком' if reg.payment_method == 'invoice' else 'Онлайн' }}
+    </div>
+    {% endif %}
+  </td>
+  <td>
+    {% if reg.payment_amount %}
+      {# nowrap: у вузькій колонці «10000» і «₴» опинялись на різних
+         рядках, і сума читалась як два різні числа. #}
+      <span class="admin-nowrap">{{ money(reg.payment_amount) }}</span>
+    {% else %}
+      <span class="admin-text-muted">–</span>
+    {% endif %}
+    {% if reg.has_discount %}
+      {# Без цього рядка менеджер бачить занижену суму і не знає, чому. #}
+      <div class="admin-text-muted">
+        {% if reg.promo_code %}
+          <a href="{{ url_for('admin.promo_code_detail', promo_id=reg.promo_code_id) }}">{{ reg.promo_code.code }}</a>
+        {% else %}промокод{% endif %}
+        &minus;{{ money(reg.discount_amount) }}
+      </div>
+    {% endif %}
+    {# Без плашки фільтр «Доплата: не надійшла» видавав рядки, на
+       яких нічого не написано: людина відфільтрувала й не бачить,
+       ЩО саме знайшлось. Словник -- один запит на сторінку. #}
+    {% set reg_surcharge_due = ctx.surcharge_due.get(reg.id) %}
+    {% if reg_surcharge_due %}
+      <div class="badge badge--pending">Доплата {{ money(reg_surcharge_due) }} не надійшла</div>
+    {% endif %}
+  </td>
+  {{ progress.cells(reg, ctx.quiz_states, ctx.quiz_statuses) }}
+  <td>{{ reg.created_at.strftime('%d.%m.%Y') }}</td>
+  <td>
+    {{ registration_actions(reg, back_url) }}
+  </td>
+</tr>
+{% endmacro %}

@@ -2,6 +2,7 @@ import logging
 import os
 from datetime import datetime, timezone
 from decimal import Decimal
+from types import SimpleNamespace
 from flask import (
     render_template, redirect, url_for, flash, request, send_file, jsonify,
 )
@@ -538,6 +539,40 @@ def _preset_matches(key, filters):
     )
 
 
+def _registration_row_options():
+    """Loader-опції, без яких рядок учасника вистрілює запитом на колонку.
+
+    medical_profile і quiz_attempts -- для колонок прогресу
+    (_registration_progress.html). Учасники в реєстрі різні, тож без
+    eager-load кожен рядок тягнув би анкету й спроби окремо.
+    """
+    return (
+        joinedload(EventRegistration.user).joinedload(User.medical_profile),
+        joinedload(EventRegistration.quiz_attempts),
+        joinedload(EventRegistration.instance).joinedload(CourseInstance.course),
+        joinedload(EventRegistration.certificate),
+        joinedload(EventRegistration.promo_code),
+    )
+
+
+def _registration_rows_context(rows):
+    """Батчі, на яких стоїть рядок учасника -- один набір на сторінку.
+
+    Спільне для плаского списку і для фрагмента розгорнутого заходу: поштучні
+    виклики тут дають +5 SELECT на рядок, і саме це стереже
+    test_page_does_not_grow_with_participants.
+    """
+    from app.services import quiz_service, referral_service, transfer_service
+    return SimpleNamespace(
+        referrer_map=referral_service.resolve_referrers_bulk(
+            [r.referral_code for r in rows]),
+        quiz_states=quiz_service.eligibility_map(rows),
+        quiz_statuses=quiz_service,
+        surcharge_due=transfer_service.unpaid_surcharge_amounts(
+            [r.id for r in rows]),
+    )
+
+
 def _registration_filters():
     """Фільтри списку реєстрацій з query-string.
 
@@ -650,49 +685,21 @@ def registrations_all():
     ).one()
 
     query = _apply_registration_filters(
-        EventRegistration.query.options(
-            # medical_profile і quiz_attempts -- для колонок прогресу
-            # (_registration_progress.html). Учасники тут різні, тож без
-            # eager-load кожен рядок тягнув би анкету й спроби окремо.
-            joinedload(EventRegistration.user).joinedload(User.medical_profile),
-            joinedload(EventRegistration.quiz_attempts),
-            joinedload(EventRegistration.instance).joinedload(CourseInstance.course),
-            joinedload(EventRegistration.certificate),
-            joinedload(EventRegistration.promo_code),
-        ),
+        EventRegistration.query.options(*_registration_row_options()),
         filters,
     )
 
     pagination = query.order_by(EventRegistration.created_at.desc()).paginate(
         page=page, per_page=per_page, error_out=False,
     )
-
-    # Реферальна атрибуція: резолв кодів у імена рефереров (bulk, без N+1).
-    from app.services import referral_service
-    referrer_map = referral_service.resolve_referrers_bulk(
-        [r.referral_code for r in pagination.items],
-    )
-
-    # Стан тестування -- лише для рядків цієї сторінки, одним набором запитів.
-    from app.services import quiz_service
-    quiz_states = quiz_service.eligibility_map(pagination.items)
-
-    # Незакрита доплата -- тим самим батчем, що й на сторінці заходу.
-    # Без цього фільтр «Доплата: не надійшла» видавав би рядки, на яких
-    # про доплату не сказано нічого.
-    from app.services import transfer_service
-    surcharge_due = transfer_service.unpaid_surcharge_amounts(
-        [r.id for r in pagination.items])
+    ctx = _registration_rows_context(pagination.items)
 
     return render_template(
         'admin/registrations.html',
         registrations=pagination.items,
-        surcharge_due=surcharge_due,
         pagination=pagination,
         stats=stats,
-        referrer_map=referrer_map,
-        quiz_states=quiz_states,
-        quiz_statuses=quiz_service,
+        ctx=ctx,
         filters=filters,
         # Непорожні параметри -- один набір для пілюль, пагінації й експорту:
         # усі три мають вести на той самий зріз.
