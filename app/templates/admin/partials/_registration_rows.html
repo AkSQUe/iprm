@@ -19,7 +19,9 @@
   </table>
 </div>
 {% if truncated %}
-<p class="registrations-groups__fallback">
+{# Клас беремо наявний: власного layout-файлу в цієї задачі немає, а CSS
+   без жодного шаблону-споживача валить сторожа ds_audit. #}
+<p class="admin-text-muted">
   Показано перших {{ registrations | length }}.
   <a href="{{ url_for('admin.instance_registrations', instance_id=instance_id) }}">
     {{ icon('open_in_new') }} Відкрити захід повністю
