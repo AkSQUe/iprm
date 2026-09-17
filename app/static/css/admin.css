@@ -3999,3 +3999,66 @@ th.access-perm__label {
   font-size: 12px;
 }
 .admin-speaker-card__warning a { color: inherit; font-weight: 600; }
+
+/* ===== Диклоужер: заголовок із підсумками + панель ===================== */
+/* Рядок-група, що розгортається: реєстр «За заходами» кладе в нього курс,
+   дату і таблицю учасників. Не <details>: панель дати вантажиться лениво,
+   і стан потрібен в ARIA, а не лише у вигляді. */
+.admin-disclosure {
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-md);
+  background: var(--iprm-white);
+  overflow: hidden;
+}
+
+.admin-disclosure__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 16px;
+  border: 0;
+  background: var(--iprm-surface-inset);
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.admin-disclosure__head:hover {
+  background: var(--iprm-bg);
+}
+
+.admin-disclosure__title {
+  flex: 1 1 auto;
+  font-weight: 600;
+}
+
+.admin-disclosure__metrics {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-disclosure__metric {
+  color: var(--iprm-text-secondary);
+  white-space: nowrap;
+}
+
+.admin-disclosure__chevron {
+  display: inline-flex;
+  transition: transform var(--iprm-transition);
+}
+
+.admin-disclosure__head[aria-expanded="true"] .admin-disclosure__chevron {
+  transform: rotate(90deg);
+}
+
+.admin-disclosure__panel {
+  padding: 12px 16px;
+}
+
+.admin-disclosure--nested {
+  margin: 8px 0;
+}

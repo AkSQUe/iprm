@@ -34,6 +34,35 @@
     </div>
     <p class="ds-hint">.admin-table: поверхня --iprm-white, шапка --iprm-surface-inset (окремий токен для вкладеної в картку поверхні: у тёмній темі --iprm-card-bg сам стає поверхнею картки, і шапка зливалася з даними) / .admin-seats: нейтральна плашка лічильника, --over вмикає червону</p>
 
+    <h3 class="ds-section-heading">Диклоужер (група, що розгортається)</h3>
+    <div class="ds-demo">
+      <section class="admin-disclosure">
+        <button type="button" class="admin-disclosure__head" aria-expanded="true" aria-controls="ds-disclosure-1">
+          <span class="admin-disclosure__chevron" aria-hidden="true">{{ icon('chevron_right') }}</span>
+          <span class="admin-disclosure__title">Базовий курс плазмотерапії</span>
+          <span class="admin-disclosure__metrics">
+            <span class="admin-disclosure__metric">19 реєстр.</span>
+            <span class="admin-disclosure__metric">81 000 &#8372;</span>
+            <span class="badge badge--pending">борг 11 000 &#8372;</span>
+          </span>
+        </button>
+        <div class="admin-disclosure__panel" id="ds-disclosure-1">
+          <div class="admin-disclosure admin-disclosure--nested">
+            <button type="button" class="admin-disclosure__head" aria-expanded="false" aria-controls="ds-disclosure-2">
+              <span class="admin-disclosure__chevron" aria-hidden="true">{{ icon('chevron_right') }}</span>
+              <span class="admin-disclosure__title">15.03.2026 &middot; Київ</span>
+              <span class="admin-disclosure__metrics">
+                <span class="admin-disclosure__metric">12 реєстр.</span>
+                <span class="admin-seats">9/12</span>
+              </span>
+            </button>
+            <div class="admin-disclosure__panel" id="ds-disclosure-2" hidden></div>
+          </div>
+        </div>
+      </section>
+    </div>
+    <p class="ds-hint">.admin-disclosure: заголовок із підсумками плюс панель; стан тримає aria-expanded на кнопці, --nested -- вкладений рівень. Панель може вантажитись лениво (реєстр «За заходами»).</p>
+
     <h3 class="ds-section-heading">Стани інлайн-селекта</h3>
     <div class="ds-demo">
       <div class="ds-row">
