@@ -214,6 +214,7 @@ login_required) і на сторінці замовлення (`order/<token>/re
 | POST | `/admin/registrations/<id>/certificate/reissue` | Перевидати за поточними даними заходу (+ email) |
 | GET | `/admin/registrations/<id>/certificate/download` | Завантажити сертифікат (адмін) |
 | GET | `/admin/registrations` | Всі реєстрації (stub) |
+| GET | `/admin/registrations?view=grouped` | Реєстрації, згруповані по заходам; лінивого довантаження учасників |
 | GET | `/admin/registrations/<id>/transfer/options` | JSON для модалки перенесення: придатні заходи, тарифи, різниці, блокери |
 | POST | `/admin/registrations/<id>/transfer` | Перенести реєстрацію на інше проведення |
 | GET | `/admin/payments` | Redirect на LiqPay |
@@ -284,6 +285,12 @@ login_required) і на сторінці замовлення (`order/<token>/re
 | POST | `/admin/access/roles/<id>/delete` | Видалити несистемну роль без носіїв (`access.manage`) |
 | POST | `/admin/access/roles/<id>/reset` | Скинути системну роль до дефолтів (`access.manage`) |
 | POST | `/admin/users/<id>/roles` | Призначити ролі користувачу (`access.assign`) |
+
+Режим `?view=grouped` у `/admin/registrations` показує реєстрації, відсортовані за
+«курс → дата → учасники». Числа в заголовках фільтрів рахуються тими ж фільтрами,
+що й звичайний режим. Рядки учасників довантажуються через
+`GET /admin/registrations/group/<instance_id>/rows` (стеля -- 100 рядків; далі --
+перехід на сторінку заходу).
 
 ## API v1 (партнери та інструменти)
 
