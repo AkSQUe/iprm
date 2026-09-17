@@ -882,7 +882,9 @@ Run: `grep -n "iprm-surface-inset:|iprm-border:|iprm-radius-md:|iprm-text-second
 }
 
 .admin-disclosure__head:hover {
-  background: var(--iprm-bg);
+  /* Саме --iprm-divider, як у .admin-sidebar__link:hover: --iprm-bg у світлій
+     темі збігається з --iprm-surface-inset, і hover був би непомітний. */
+  background: var(--iprm-divider);
 }
 
 .admin-disclosure__title {
