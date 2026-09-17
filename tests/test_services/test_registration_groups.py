@@ -123,3 +123,30 @@ def test_oldest_first_flips_the_order(two_dates):
 
     assert [row.instance.id for row in _group_of(groups, course).instances] == [
         instances[0].id, instances[1].id]
+
+
+def test_undated_event_stays_last_in_both_directions(two_dates):
+    """Захід без дати -- скраю, а не зверху типового перегляду."""
+    course, instances = two_dates
+    tbd = CourseInstance(
+        course_id=course.id, status='published', event_format='offline',
+        start_date=None,
+    )
+    db.session.add(tbd)
+    db.session.flush()
+    user = User.create_with_password(
+        f'grp-{_uid()}@test.com', 'password123', first_name='Т', last_name='Б')
+    db.session.flush()
+    db.session.add(EventRegistration(
+        user_id=user.id, instance_id=tbd.id, phone='+380670000000',
+        specialty='T', workplace='Клініка', status='confirmed',
+        payment_status='paid', payment_amount=1000,
+    ))
+    db.session.flush()
+
+    for oldest_first in (False, True):
+        groups, _ = registration_groups.grouped_page(
+            _matched(), page=1, per_page=25, oldest_first=oldest_first)
+        order = [row.instance.id for row in _group_of(groups, course).instances]
+        assert order[-1] == tbd.id, (
+            f'oldest_first={oldest_first}: TBD опинився не в кінці ({order})')

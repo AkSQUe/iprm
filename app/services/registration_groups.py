@@ -101,10 +101,13 @@ def grouped_page(matched_query, page, per_page, oldest_first=False):
         rows = by_course.get(course_id)
         if not rows:
             continue
-        # Заходи без дати (TBD) тримаємо скраю: None не порівняти з датою.
-        rows.sort(key=lambda r: (r.instance.start_date is None,
-                                 r.instance.start_date),
-                  reverse=not oldest_first)
+        # Заходи без дати (TBD) тримаємо в кінці за БУДЬ-ЯКОГО напрямку:
+        # спільний ключ із прапорцем `is None` перевертався разом зі
+        # списком, і в типовому "новіші зверху" TBD опинявся першим.
+        dated = [r for r in rows if r.instance.start_date is not None]
+        undated = [r for r in rows if r.instance.start_date is None]
+        dated.sort(key=lambda r: r.instance.start_date, reverse=not oldest_first)
+        rows = dated + undated
         groups.append(SimpleNamespace(
             course=rows[0].instance.course,
             instances=rows,
