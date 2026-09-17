@@ -1,0 +1,125 @@
+"""Агрегати режиму «За заходами»: число заголовка = те, що розгорнеться."""
+from datetime import datetime, timedelta, timezone
+from uuid import uuid4
+
+import pytest
+
+from app.extensions import db
+from app.models.course import Course
+from app.models.course_instance import CourseInstance
+from app.models.registration import EventRegistration
+from app.models.user import User
+from app.services import registration_groups
+
+
+def _uid():
+    return uuid4().hex[:8]
+
+
+@pytest.fixture
+def two_dates(app):
+    """Курс із двома датами: на ближчій -- дві реєстрації, на дальшій -- одна.
+
+    Тільки flush: автоматична фікстура db_session відкочує транзакцію, а
+    закомічений користувач переживав би тест і ламав чужі посторінкові тести.
+    """
+    course = Course(title=f'Курс {_uid()}', slug=f'grp-{_uid()}', is_active=True)
+    db.session.add(course)
+    db.session.flush()
+
+    now = datetime.now(timezone.utc)
+    instances = []
+    for offset in (10, 20):
+        inst = CourseInstance(
+            course_id=course.id, status='published', event_format='offline',
+            start_date=now + timedelta(days=offset),
+        )
+        db.session.add(inst)
+        db.session.flush()
+        instances.append(inst)
+
+    def _reg(inst, status, payment_status, amount):
+        user = User.create_with_password(
+            f'grp-{_uid()}@test.com', 'password123',
+            first_name='Г', last_name='Т',
+        )
+        db.session.flush()
+        reg = EventRegistration(
+            user_id=user.id, instance_id=inst.id, phone='+380670000000',
+            specialty='T', workplace='Клініка', status=status,
+            payment_status=payment_status, payment_amount=amount,
+        )
+        db.session.add(reg)
+        db.session.flush()
+        return reg
+
+    _reg(instances[0], 'confirmed', 'paid', 3500)
+    _reg(instances[0], 'pending', 'unpaid', 2975)
+    _reg(instances[1], 'confirmed', 'paid', 4500)
+    return course, instances
+
+
+def _matched(status=None):
+    query = db.session.query(EventRegistration.id)
+    if status:
+        query = query.filter(EventRegistration.status == status)
+    return query
+
+
+def _group_of(groups, course):
+    return next(g for g in groups if g.course.id == course.id)
+
+
+def test_group_sums_its_dates(two_dates):
+    course, _ = two_dates
+    groups, pagination = registration_groups.grouped_page(
+        _matched(), page=1, per_page=25)
+
+    group = _group_of(groups, course)
+    assert group.total == 3
+    assert group.confirmed == 2
+    assert group.pending == 1
+    assert group.amount == 3500 + 2975 + 4500
+    assert group.paid == 3500 + 4500
+    assert group.due == 2975
+    assert pagination.total >= 1
+
+
+def test_dates_carry_their_own_numbers(two_dates):
+    course, instances = two_dates
+    groups, _ = registration_groups.grouped_page(_matched(), page=1, per_page=25)
+
+    by_id = {row.instance.id: row for row in _group_of(groups, course).instances}
+    assert by_id[instances[0].id].total == 2
+    assert by_id[instances[1].id].total == 1
+    assert by_id[instances[0].id].due == 2975
+    assert by_id[instances[1].id].due == 0
+
+
+def test_filter_shrinks_the_numbers(two_dates):
+    """Заголовок не сміє обіцяти більше, ніж розгорнеться."""
+    course, instances = two_dates
+    groups, _ = registration_groups.grouped_page(
+        _matched(status='pending'), page=1, per_page=25)
+
+    group = _group_of(groups, course)
+    assert group.total == 1
+    assert [row.instance.id for row in group.instances] == [instances[0].id]
+
+
+def test_course_without_matches_disappears(two_dates):
+    """Курс, у якого після фільтра нуль реєстрацій, у видачу не потрапляє."""
+    course, _ = two_dates
+    groups, _ = registration_groups.grouped_page(
+        _matched(status='cancelled'), page=1, per_page=25)
+
+    assert all(g.course.id != course.id for g in groups)
+
+
+def test_oldest_first_flips_the_order(two_dates):
+    course, instances = two_dates
+    groups, _ = registration_groups.grouped_page(
+        _matched(), page=1, per_page=25, oldest_first=True)
+
+    assert [row.instance.id for row in _group_of(groups, course).instances] == [
+        instances[0].id, instances[1].id]
