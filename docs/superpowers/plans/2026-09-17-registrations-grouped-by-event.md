@@ -48,10 +48,17 @@
 
 ## Порядок задач
 
-Задачі йдуть так, щоб кожна була зеленою САМА ПО СОБІ: спершу спільний рядок
-(1), потім числа (2), потім маршрут-фрагмент (3) і лише тоді сторінка (4), яка
-на цей маршрут посилається. Якби сторінка йшла раніше, її `url_for` падав би
-`BuildError` і задача не мала б зеленого стану.
+Задачі йдуть так, щоб зеленою була не лише кожна задача, а й дерево після
+КОЖНОГО коміту: спільний рядок (1), числа (2), маршрут-фрагмент разом із його
+layout-файлом (3), компонент у дизайн-системі з показом у каталозі (4), і лише
+тоді сторінка, яка все це вживає (5), скрипт розгортання (6) і документація (7).
+
+Дві залежності тут не косметичні, а технічні. Сторінка не може йти раніше за
+маршрут-фрагмент: `url_for('admin.registration_group_rows', ...)` упав би
+`BuildError`. І компонент не може йти після сторінки: `test_block_is_on_showcase`
+параметризований по всіх класах-блоках `admin.css`, а
+`test_every_class_in_markup_has_a_rule` -- по всій розмітці, тож клас без
+правила або без вітрини робить збірку червоною в той самий коміт, де зʼявився.
 
 ---
 
@@ -245,7 +252,7 @@ git commit -m "refactor(admin): рядок учасника реєстру -- о
 ### Task 2: Агрегати груп «курс -> дата»
 
 Чисті числа, без UI. Сервіс віддає готову структуру груп і пагінацію по курсах;
-маршрут із Task 4 лише передає йому відфільтрований запит.
+маршрут із Task 5 лише передає йому відфільтрований запит.
 
 **Files:**
 - Create: `app/services/registration_groups.py`
@@ -543,11 +550,12 @@ git commit -m "feat(admin): агрегати реєстрацій за курс�
 ### Task 3: Маршрут-фрагмент із рядками учасників
 
 Окремий маршрут, який віддає готову таблицю учасників ОДНОГО заходу. Працює і
-без сторінки з Task 4 -- перевіряється прямим GET.
+без сторінки з Task 5 -- перевіряється прямим GET.
 
 **Files:**
 - Modify: `app/admin/routes_registrations.py` (новий маршрут)
 - Create: `app/templates/admin/partials/_registration_rows.html`
+- Create: `app/static/css/page-admin-registrations.css`
 - Test: `tests/test_routes/test_admin_registrations_grouped.py`
 
 **Interfaces:**
@@ -749,13 +757,40 @@ Expected: FAIL -- 404 на `/admin/registrations/group/<id>/rows`.
 {% endif %}
 ```
 
-Клас `registrations-groups__fallback` оголошується в Task 5
-(`page-admin-registrations.css`). До того часу
-`tests/test_design_system/test_css_markup_sync.py::test_every_class_in_markup_has_a_rule`
-на нього поскаржиться -- тому повний прогін сторожів дизайн-системи стоїть у
-Task 5, а не тут.
+- [ ] **Step 4: Layout сторінки окремим файлом**
 
-- [ ] **Step 4: Додати маршрут**
+Клас, ужитий у розмітці, мусить мати правило в ТОМУ Ж коміті -- інакше
+`tests/test_design_system/test_css_markup_sync.py::test_every_class_in_markup_has_a_rule`
+лишається червоним між задачами. Тому файл layout заводиться тут, одразу з
+трьома правилами: `__fallback` потрібен цій задачі, решта -- сторінці з Task 5.
+
+Спершу звірити імена токенів:
+
+Run: `grep -n -- "--iprm-space-2\|--iprm-space-3\|--iprm-space-5" app/static/css/common.css | head`
+Токен, якого немає у виводі, замінити наявним сусіднім: вигаданий валить
+`test_css_markup_sync.py::test_every_token_named_outside_css_exists`.
+
+Створити `app/static/css/page-admin-registrations.css`:
+
+```css
+/* Layout реєстру «За заходами»: лише сітка й відступи рівнів.
+   Декор (колір, шрифт, межа, тінь) живе в компонентах admin.css. */
+.registrations-groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--iprm-space-3);
+}
+
+.registrations-groups__dates {
+  padding-left: var(--iprm-space-5);
+}
+
+.registrations-groups__fallback {
+  margin: var(--iprm-space-2) 0 0;
+}
+```
+
+- [ ] **Step 5: Додати маршрут**
 
 У `app/admin/routes_registrations.py`, після `registrations_all`:
 
@@ -801,24 +836,171 @@ def registration_group_rows(instance_id):
     )
 ```
 
-- [ ] **Step 5: Прогнати тести і переконатись, що вони проходять**
+- [ ] **Step 6: Прогнати тести і сторожів розмітки**
 
-Run: `venv/Scripts/python.exe -m pytest tests/test_routes/test_admin_registrations_grouped.py -q`
-Expected: PASS -- усі пʼять.
+Run: `venv/Scripts/python.exe -m pytest tests/test_routes/test_admin_registrations_grouped.py tests/test_design_system/ -q`
+Expected: PASS -- усі пʼять нових і вся дизайн-система. Червоний сторож тут
+означає клас без правила або вигаданий токен.
 
-- [ ] **Step 6: Коміт**
+- [ ] **Step 7: Коміт**
 
 ```bash
-git add app/admin/routes_registrations.py app/templates/admin/partials/_registration_rows.html tests/test_routes/test_admin_registrations_grouped.py
+git add app/admin/routes_registrations.py app/templates/admin/partials/_registration_rows.html app/static/css/page-admin-registrations.css tests/test_routes/test_admin_registrations_grouped.py
 git commit -m "feat(admin): фрагмент рядків учасників для розгорнутого заходу"
 ```
 
 ---
 
-### Task 4: Режим «За заходами» на сторінці
+### Task 4: Компонент диклоужера в дизайн-системі
+
+Компонент оголошується й ПОКАЗУЄТЬСЯ раніше, ніж ним починає користуватись
+сторінка. Причина технічна, не церемоніальна: `test_block_is_on_showcase`
+параметризований по всіх класах-блоках `admin.css`, тож клас без вітрини
+робить збірку червоною в ту ж мить, коли зʼявляється в CSS.
+
+**Files:**
+- Modify: `app/static/css/admin.css` (компонент `admin-disclosure`)
+- Modify: `app/templates/design_system/_tab_admin.html`
+- Modify: `tests/test_design_system/catalog_gap_baseline.json` (лише якщо
+  сторож вимагатиме -- і лише в бік зменшення)
+
+**Interfaces:**
+- Produces: класи `admin-disclosure`, `admin-disclosure__head`,
+  `admin-disclosure__title`, `admin-disclosure__metrics`,
+  `admin-disclosure__metric`, `admin-disclosure__chevron`,
+  `admin-disclosure__panel`, `admin-disclosure--nested`. На них спираються
+  розмітка Task 5 і скрипт Task 6.
+
+- [ ] **Step 1: Звірити імена токенів**
+
+Run: `grep -n -- "--iprm-space-2\|--iprm-space-3\|--iprm-space-4\|--iprm-space-5\|--iprm-surface-inset\|--iprm-border\b\|--iprm-radius-md\|--iprm-text-secondary\|--iprm-transition-fast\|--iprm-white" app/static/css/common.css | head -20`
+Кожен токен, ужитий у наступному кроці, мусить бути в цьому виводі. Токена
+немає -- беремо наявний сусідній; вигаданий валить
+`tests/test_design_system/test_css_markup_sync.py::test_every_token_named_outside_css_exists`.
+Голих значень кольору не писати.
+
+- [ ] **Step 2: Компонент у `admin.css`**
+
+Дописати в кінець `app/static/css/admin.css` (клас оголошується ТУТ і більше
+ніде -- інакше падає `test_component_ownership`):
+
+```css
+/* ===== Диклоужер: заголовок із підсумками + панель ===================== */
+/* Рядок-група, що розгортається: реєстр «За заходами» кладе в нього курс,
+   дату і таблицю учасників. Не <details>: панель дати вантажиться лениво,
+   і стан потрібен в ARIA, а не лише у вигляді. */
+.admin-disclosure {
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-md);
+  background: var(--iprm-white);
+  overflow: hidden;
+}
+
+.admin-disclosure__head {
+  display: flex;
+  align-items: center;
+  gap: var(--iprm-space-3);
+  width: 100%;
+  padding: var(--iprm-space-3) var(--iprm-space-4);
+  border: 0;
+  background: var(--iprm-surface-inset);
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.admin-disclosure__title {
+  flex: 1 1 auto;
+  font-weight: 600;
+}
+
+.admin-disclosure__metrics {
+  display: flex;
+  align-items: center;
+  gap: var(--iprm-space-2);
+  flex-wrap: wrap;
+}
+
+.admin-disclosure__metric {
+  color: var(--iprm-text-secondary);
+  white-space: nowrap;
+}
+
+.admin-disclosure__chevron {
+  display: inline-flex;
+  transition: transform var(--iprm-transition-fast);
+}
+
+.admin-disclosure__head[aria-expanded="true"] .admin-disclosure__chevron {
+  transform: rotate(90deg);
+}
+
+.admin-disclosure__panel {
+  padding: var(--iprm-space-3) var(--iprm-space-4);
+}
+
+.admin-disclosure--nested {
+  margin: var(--iprm-space-2) 0;
+}
+```
+
+- [ ] **Step 3: Показати компонент у каталозі**
+
+Додати в `app/templates/design_system/_tab_admin.html`, після секції
+«Реєстр (таблиця)»:
+
+```jinja
+    <h3 class="ds-section-heading">Диклоужер (група, що розгортається)</h3>
+    <div class="ds-demo">
+      <section class="admin-disclosure">
+        <button type="button" class="admin-disclosure__head" aria-expanded="true" aria-controls="ds-disclosure-1">
+          <span class="admin-disclosure__chevron" aria-hidden="true">{{ icon('chevron_right') }}</span>
+          <span class="admin-disclosure__title">Базовий курс плазмотерапії</span>
+          <span class="admin-disclosure__metrics">
+            <span class="admin-disclosure__metric">19 реєстр.</span>
+            <span class="admin-disclosure__metric">81 000 &#8372;</span>
+            <span class="badge badge--pending">борг 11 000 &#8372;</span>
+          </span>
+        </button>
+        <div class="admin-disclosure__panel" id="ds-disclosure-1">
+          <div class="admin-disclosure admin-disclosure--nested">
+            <button type="button" class="admin-disclosure__head" aria-expanded="false" aria-controls="ds-disclosure-2">
+              <span class="admin-disclosure__chevron" aria-hidden="true">{{ icon('chevron_right') }}</span>
+              <span class="admin-disclosure__title">15.03.2026 &middot; Київ</span>
+              <span class="admin-disclosure__metrics">
+                <span class="admin-disclosure__metric">12 реєстр.</span>
+                <span class="admin-seats">9/12</span>
+              </span>
+            </button>
+            <div class="admin-disclosure__panel" id="ds-disclosure-2" hidden></div>
+          </div>
+        </div>
+      </section>
+    </div>
+    <p class="ds-hint">.admin-disclosure: заголовок із підсумками плюс панель; стан тримає aria-expanded на кнопці, --nested -- вкладений рівень. Панель може вантажитись лениво (реєстр «За заходами»).</p>
+```
+
+- [ ] **Step 4: Прогнати сторожів каталогу**
+
+Run: `venv/Scripts/python.exe -m pytest tests/test_design_system/ -q`
+Expected: PASS. `test_catalog_gap_baseline_only_shrinks` дозволяє базлайну лише
+зменшуватись: якщо він вимагає правки, число в `catalog_gap_baseline.json`
+має ЗМЕНШИТИСЬ, а не вирости.
+
+- [ ] **Step 5: Коміт**
+
+```bash
+git add app/static/css/admin.css app/templates/design_system/_tab_admin.html tests/test_design_system/catalog_gap_baseline.json
+git commit -m "feat(design-system): диклоужер -- група з підсумками, що розгортається"
+```
+
+---
+
+### Task 5: Режим «За заходами» на сторінці
 
 Фільтр `view`, перемикач і шаблон із заголовками. Учасників сторінка не малює:
-дата віддає посилання на захід, а панель наповнить JS із Task 5. Це і є
+дата віддає посилання на захід, а панель наповнить JS із Task 6. Це і є
 baseline без JS.
 
 **Files:**
@@ -836,7 +1018,7 @@ baseline без JS.
 - Produces: `routes_registrations._registration_page_context(filters, stats)`
   -> `dict` спільних для обох режимів ключів шаблону.
 - Produces: розмітку з `data-group-total`, `data-instance-id`, `data-rows-url`,
-  `aria-expanded`, `aria-controls` -- на них стоїть JS із Task 5.
+  `aria-expanded`, `aria-controls` -- на них стоїть JS із Task 6.
 
 - [ ] **Step 1: Дописати падаючі тести**
 
@@ -1209,116 +1391,18 @@ git commit -m "feat(admin): режим «За заходами» у реєстр
 
 ---
 
-### Task 5: Компонент, розгортання і памʼять про відкрите
+### Task 6: Розгортання і памʼять про відкрите
 
 **Files:**
-- Modify: `app/static/css/admin.css` (компонент `admin-disclosure`)
-- Create: `app/static/css/page-admin-registrations.css`
 - Create: `app/static/js/admin-registrations-grouped.js`
 - Modify: `app/templates/admin/registrations_grouped.html` (блок `extra_scripts`)
 
 **Interfaces:**
 - Consumes: `data-rows-url`, `aria-expanded`, `aria-controls`,
-  `data-instance-id` з розмітки Task 4.
+  `data-instance-id` з розмітки Task 5, класи `admin-disclosure*` з Task 4.
 - Produces: параметр `?open=<instance_id>[,<instance_id>]` на сторінці режиму.
 
-- [ ] **Step 1: Звірити імена токенів**
-
-Run: `grep -n -- "--iprm-space-2\|--iprm-space-3\|--iprm-space-4\|--iprm-space-5\|--iprm-surface-inset\|--iprm-border\b\|--iprm-radius-md\|--iprm-text-secondary\|--iprm-transition-fast\|--iprm-white" app/static/css/common.css | head -20`
-Кожен токен, ужитий у наступних двох кроках, мусить бути в цьому виводі. Токена
-немає -- беремо наявний сусідній; вигаданий валить
-`tests/test_design_system/test_css_markup_sync.py::test_every_token_named_outside_css_exists`.
-Голих значень кольору не писати.
-
-- [ ] **Step 2: Компонент у `admin.css`**
-
-Дописати в кінець `app/static/css/admin.css` (клас оголошується ТУТ і більше
-ніде -- інакше падає `test_component_ownership`):
-
-```css
-/* ===== Диклоужер: заголовок із підсумками + панель ===================== */
-/* Рядок-група, що розгортається: реєстр «За заходами» кладе в нього курс,
-   дату і таблицю учасників. Не <details>: панель дати вантажиться лениво,
-   і стан потрібен в ARIA, а не лише у вигляді. */
-.admin-disclosure {
-  border: 1px solid var(--iprm-border);
-  border-radius: var(--iprm-radius-md);
-  background: var(--iprm-white);
-  overflow: hidden;
-}
-
-.admin-disclosure__head {
-  display: flex;
-  align-items: center;
-  gap: var(--iprm-space-3);
-  width: 100%;
-  padding: var(--iprm-space-3) var(--iprm-space-4);
-  border: 0;
-  background: var(--iprm-surface-inset);
-  font: inherit;
-  color: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.admin-disclosure__title {
-  flex: 1 1 auto;
-  font-weight: 600;
-}
-
-.admin-disclosure__metrics {
-  display: flex;
-  align-items: center;
-  gap: var(--iprm-space-2);
-  flex-wrap: wrap;
-}
-
-.admin-disclosure__metric {
-  color: var(--iprm-text-secondary);
-  white-space: nowrap;
-}
-
-.admin-disclosure__chevron {
-  display: inline-flex;
-  transition: transform var(--iprm-transition-fast);
-}
-
-.admin-disclosure__head[aria-expanded="true"] .admin-disclosure__chevron {
-  transform: rotate(90deg);
-}
-
-.admin-disclosure__panel {
-  padding: var(--iprm-space-3) var(--iprm-space-4);
-}
-
-.admin-disclosure--nested {
-  margin: var(--iprm-space-2) 0;
-}
-```
-
-- [ ] **Step 3: Layout сторінки окремо**
-
-Створити `app/static/css/page-admin-registrations.css`:
-
-```css
-/* Layout реєстру «За заходами»: лише сітка й відступи рівнів.
-   Декор (колір, шрифт, межа, тінь) живе в компонентах admin.css. */
-.registrations-groups {
-  display: flex;
-  flex-direction: column;
-  gap: var(--iprm-space-3);
-}
-
-.registrations-groups__dates {
-  padding-left: var(--iprm-space-5);
-}
-
-.registrations-groups__fallback {
-  margin: var(--iprm-space-2) 0 0;
-}
-```
-
-- [ ] **Step 4: Скрипт розгортання**
+- [ ] **Step 1: Скрипт розгортання**
 
 Створити `app/static/js/admin-registrations-grouped.js`:
 
@@ -1422,7 +1506,7 @@ Run: `grep -n -- "--iprm-space-2\|--iprm-space-3\|--iprm-space-4\|--iprm-space-5
 }());
 ```
 
-- [ ] **Step 5: Підключити скрипти**
+- [ ] **Step 2: Підключити скрипти**
 
 У `app/templates/admin/registrations_grouped.html` додати наприкінці файлу:
 
@@ -1437,15 +1521,13 @@ Run: `grep -n -- "--iprm-space-2\|--iprm-space-3\|--iprm-space-4\|--iprm-space-5
 {% endblock %}
 ```
 
-- [ ] **Step 6: Прогнати сторожів дизайн-системи і сторінку**
+- [ ] **Step 3: Прогнати тести сторінки**
 
-Run: `venv/Scripts/python.exe -m pytest tests/test_design_system/ tests/test_routes/test_admin_registrations_grouped.py -q`
-Expected: усе PASS, крім можливого
-`test_catalog_coverage`/`test_catalog_links_components`: компонент ще не
-показаний у каталозі -- це Task 6. Якщо червоний саме він, іти далі; будь-який
-інший червоний лагодиться тут.
+Run: `venv/Scripts/python.exe -m pytest tests/test_routes/test_admin_registrations_grouped.py tests/test_design_system/ -q`
+Expected: PASS -- усе. Скрипт розмітки не змінює, тож червоний тут означає
+зламаний шаблон, а не JS.
 
-- [ ] **Step 7: Подивитись сторінку очима**
+- [ ] **Step 4: Подивитись сторінку очима**
 
 Run: `venv/Scripts/python.exe run.py` і відкрити
 `http://127.0.0.1:5000/admin/registrations?view=grouped` адміном.
@@ -1454,73 +1536,24 @@ Run: `venv/Scripts/python.exe run.py` і відкрити
 у рядку працюють селекти статусу й оплати; після дії в рядку сторінка
 повертається з тією самою розгорнутою панеллю (`?open=` в адресі).
 
-- [ ] **Step 8: Коміт**
+- [ ] **Step 5: Коміт**
 
 ```bash
-git add app/static/css/admin.css app/static/css/page-admin-registrations.css app/static/js/admin-registrations-grouped.js app/templates/admin/registrations_grouped.html
+git add app/static/js/admin-registrations-grouped.js app/templates/admin/registrations_grouped.html
 git commit -m "feat(admin): розгортання заходів із лінивим довантаженням учасників"
 ```
 
 ---
 
-### Task 6: Каталог дизайн-системи і документація
-
-Компонент, якого не видно в каталозі, наступний напише заново. Сторожі каталогу
-тримають саме це.
+### Task 7: Документація і повний прогін
 
 **Files:**
-- Modify: `app/templates/design_system/_tab_admin.html`
 - Modify: `docs/routes.md`
-- Modify: `tests/test_design_system/catalog_gap_baseline.json` (лише якщо
-  сторож вимагатиме -- і лише в бік зменшення)
 
 **Interfaces:**
-- Consumes: класи `admin-disclosure*` з Task 5.
+- Consumes: режим сторінки з Task 5 і компонент із Task 4.
 
-- [ ] **Step 1: Показати компонент у каталозі**
-
-Додати в `app/templates/design_system/_tab_admin.html`, після секції
-«Реєстр (таблиця)»:
-
-```jinja
-    <h3 class="ds-section-heading">Диклоужер (група, що розгортається)</h3>
-    <div class="ds-demo">
-      <section class="admin-disclosure">
-        <button type="button" class="admin-disclosure__head" aria-expanded="true" aria-controls="ds-disclosure-1">
-          <span class="admin-disclosure__chevron" aria-hidden="true">{{ icon('chevron_right') }}</span>
-          <span class="admin-disclosure__title">Базовий курс плазмотерапії</span>
-          <span class="admin-disclosure__metrics">
-            <span class="admin-disclosure__metric">19 реєстр.</span>
-            <span class="admin-disclosure__metric">81 000 &#8372;</span>
-            <span class="badge badge--pending">борг 11 000 &#8372;</span>
-          </span>
-        </button>
-        <div class="admin-disclosure__panel" id="ds-disclosure-1">
-          <div class="admin-disclosure admin-disclosure--nested">
-            <button type="button" class="admin-disclosure__head" aria-expanded="false" aria-controls="ds-disclosure-2">
-              <span class="admin-disclosure__chevron" aria-hidden="true">{{ icon('chevron_right') }}</span>
-              <span class="admin-disclosure__title">15.03.2026 &middot; Київ</span>
-              <span class="admin-disclosure__metrics">
-                <span class="admin-disclosure__metric">12 реєстр.</span>
-                <span class="admin-seats">9/12</span>
-              </span>
-            </button>
-            <div class="admin-disclosure__panel" id="ds-disclosure-2" hidden></div>
-          </div>
-        </div>
-      </section>
-    </div>
-    <p class="ds-hint">.admin-disclosure: заголовок із підсумками плюс панель; стан тримає aria-expanded на кнопці, --nested -- вкладений рівень. Панель може вантажитись лениво (реєстр «За заходами»).</p>
-```
-
-- [ ] **Step 2: Прогнати сторожів каталогу**
-
-Run: `venv/Scripts/python.exe -m pytest tests/test_design_system/ -q`
-Expected: PASS. `test_catalog_gap_baseline_only_shrinks` дозволяє базлайну лише
-зменшуватись: якщо він вимагає правки, число в `catalog_gap_baseline.json`
-має ЗМЕНШИТИСЬ, а не вирости.
-
-- [ ] **Step 3: Описати режим у документації маршрутів**
+- [ ] **Step 1: Описати режим у документації маршрутів**
 
 У `docs/routes.md`, у розділі адмінки поруч із `/admin/registrations`, додати:
 
@@ -1532,18 +1565,18 @@ Expected: PASS. `test_catalog_gap_baseline_only_shrinks` дозволяє баз
   далі -- на сторінку заходу).
 ```
 
-- [ ] **Step 4: Повний прогін**
+- [ ] **Step 2: Повний прогін**
 
 Run: `venv/Scripts/python.exe -m pytest tests/ -q`
 Expected: PASS -- уся збірка. Окремо звірити, що не впав
 `tests/test_routes/test_api_v1_clients.py`: він падає, коли тест лишив по собі
 закомічених користувачів.
 
-- [ ] **Step 5: Коміт**
+- [ ] **Step 3: Коміт**
 
 ```bash
-git add app/templates/design_system/_tab_admin.html docs/routes.md tests/test_design_system/catalog_gap_baseline.json
-git commit -m "docs(design-system): диклоужер у каталозі та режим груп у docs/routes"
+git add docs/routes.md
+git commit -m "docs(routes): режим «За заходами» у переліку маршрутів"
 ```
 
 ---
