@@ -599,6 +599,9 @@ def _registration_filters():
         'surcharge': _listing.choice_arg('surcharge', ('due',)),
         'scope': scope,
         'per_page': _listing.choice_arg('per_page', _listing.PER_PAGE_CHOICES),
+        # Режим перегляду -- такий самий фільтр, як решта: інакше він злітав
+        # би з кожної пілюлі, пагінації й «Застосувати».
+        'view': _listing.choice_arg('view', ('list', 'grouped'), 'list'),
     }
 
 
@@ -666,6 +669,28 @@ def _apply_registration_filters(query, filters):
     return query
 
 
+def _registration_page_context(filters, stats):
+    """Ключі, однакові для обох режимів реєстру: пілюлі, пресети, довідники."""
+    return dict(
+        stats=stats,
+        filters=filters,
+        filter_args=_listing.filter_args(filters),
+        presets=[
+            (key, preset['label'], preset['icon'], _preset_args(key))
+            for key, preset in REGISTRATION_PRESETS.items()
+        ],
+        active_preset=next(
+            (key for key in REGISTRATION_PRESETS
+             if _preset_matches(key, filters)), None,
+        ),
+        status_options=EventRegistration.STATUSES,
+        payment_options=EventRegistration.PAYMENT_STATUSES,
+        method_options=EventRegistration.PAYMENT_METHODS,
+        per_page_options=_listing.PER_PAGE_OPTIONS,
+        **_registration_select_options(),
+    )
+
+
 @admin_bp.route('/registrations')
 @permission_required('registrations.view')
 def registrations_all():
@@ -684,6 +709,23 @@ def registrations_all():
         ).label('total_paid'),
     ).one()
 
+    if filters['view'] == 'grouped':
+        from app.services import registration_groups
+        groups, pagination = registration_groups.grouped_page(
+            _apply_registration_filters(
+                db.session.query(EventRegistration.id), filters),
+            page=page,
+            # На цій сторінці рядок -- курс, а не реєстрація: 200 курсів
+            # на екрані не читає ніхто.
+            per_page=min(per_page, 25),
+            oldest_first=filters['scope'] == 'upcoming',
+        )
+        return render_template(
+            'admin/registrations_grouped.html',
+            groups=groups, pagination=pagination,
+            **_registration_page_context(filters, stats),
+        )
+
     query = _apply_registration_filters(
         EventRegistration.query.options(*_registration_row_options()),
         filters,
@@ -698,25 +740,8 @@ def registrations_all():
         'admin/registrations.html',
         registrations=pagination.items,
         pagination=pagination,
-        stats=stats,
         ctx=ctx,
-        filters=filters,
-        # Непорожні параметри -- один набір для пілюль, пагінації й експорту:
-        # усі три мають вести на той самий зріз.
-        filter_args=_listing.filter_args(filters),
-        presets=[
-            (key, preset['label'], preset['icon'], _preset_args(key))
-            for key, preset in REGISTRATION_PRESETS.items()
-        ],
-        active_preset=next(
-            (key for key in REGISTRATION_PRESETS
-             if _preset_matches(key, filters)), None,
-        ),
-        status_options=EventRegistration.STATUSES,
-        payment_options=EventRegistration.PAYMENT_STATUSES,
-        method_options=EventRegistration.PAYMENT_METHODS,
-        per_page_options=_listing.PER_PAGE_OPTIONS,
-        **_registration_select_options(),
+        **_registration_page_context(filters, stats),
     )
 
 

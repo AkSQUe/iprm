@@ -143,3 +143,75 @@ def test_rows_fragment_requires_permission(client, app, event_with_two_people):
     response = client.get(f'/admin/registrations/group/{inst.id}/rows')
 
     assert response.status_code in (302, 403)
+
+
+def test_grouped_view_shows_course_and_date(client, admin, event_with_two_people):
+    course, inst, _ = event_with_two_people
+    _login(client, admin)
+
+    html = client.get('/admin/registrations?view=grouped').get_data(as_text=True)
+
+    assert course.title in html
+    assert f'data-instance-id="{inst.id}"' in html
+    assert f'/admin/registrations/group/{inst.id}/rows' in html
+    assert f'/admin/instances/{inst.id}/registrations' in html
+
+
+def test_grouped_numbers_follow_the_filter(client, admin, event_with_two_people):
+    """Заголовок не сміє обіцяти більше, ніж розгорнеться."""
+    _, inst, _ = event_with_two_people
+    _login(client, admin)
+
+    full = client.get('/admin/registrations?view=grouped').get_data(as_text=True)
+    narrowed = client.get(
+        '/admin/registrations?view=grouped&status=pending').get_data(as_text=True)
+
+    assert f'data-instance-id="{inst.id}" data-group-total="2"' in full
+    assert f'data-instance-id="{inst.id}" data-group-total="1"' in narrowed
+
+
+def test_empty_group_disappears_under_filter(client, admin, event_with_two_people):
+    course, inst, _ = event_with_two_people
+    _login(client, admin)
+
+    html = client.get(
+        '/admin/registrations?view=grouped&status=cancelled').get_data(as_text=True)
+
+    assert f'data-instance-id="{inst.id}"' not in html
+
+
+def test_grouped_page_does_not_grow_with_events(client, admin):
+    """Сторінка -- це числа. 12 заходів мусять коштувати як 2."""
+    from sqlalchemy import event as sa_event
+
+    _login(client, admin)
+
+    def _count():
+        seen = []
+
+        def _tap(_conn, _cursor, statement, _params, _ctx, _many):
+            if statement.lstrip().upper().startswith('SELECT'):
+                seen.append(statement)
+
+        sa_event.listen(db.engine, 'before_cursor_execute', _tap)
+        try:
+            client.get('/admin/registrations?view=grouped&scope=all')
+        finally:
+            sa_event.remove(db.engine, 'before_cursor_execute', _tap)
+        return len(seen)
+
+    course = _course()
+    for _ in range(2):
+        _registration(_instance(course))
+    db.session.flush()
+    few = _count()
+
+    for _ in range(10):
+        _registration(_instance(course))
+    db.session.flush()
+    many = _count()
+
+    assert many - few <= 2, (
+        f'12 заходів замість 2 дали +{many - few} SELECT ({few} -> {many}) -- '
+        f'схоже, підсумки рахуються поштучно'
+    )

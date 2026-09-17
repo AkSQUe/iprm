@@ -1,0 +1,15 @@
+{# Перемикач режиму реєстру -- спільний для плаского списку і для груп.
+   Обидва шаблони показують ті самі дві пілюлі; копія розійшлася б на
+   першому ж новому режимі. #}
+{% macro view_switch(filters, filter_args) %}
+<div class="admin-pills">
+  {% for value, label, ico in [
+       ('list', 'Список', 'format_list_bulleted'),
+       ('grouped', 'За заходами', 'hub')] %}
+  <a href="{{ url_for('admin.registrations_all', **dict(filter_args, view=value)) }}"
+     class="admin-pill{% if filters.view == value %} admin-pill--active{% endif %}">
+    {{ icon(ico) }} {{ label }}
+  </a>
+  {% endfor %}
+</div>
+{% endmacro %}

@@ -1,0 +1,15 @@
+/* Layout реєстру «За заходами»: лише сітка й відступи рівнів.
+   Декор (колір, шрифт, межа, тінь) живе в компонентах admin.css. */
+.registrations-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.registrations-groups__dates {
+  padding-left: 24px;
+}
+
+.registrations-groups__fallback {
+  margin: 8px 0 0;
+}

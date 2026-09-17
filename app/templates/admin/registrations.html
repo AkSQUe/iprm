@@ -10,6 +10,7 @@
 {% endblock %}
 
 {% from 'admin/partials/_filter_bar.html' import filter_bar, pager, empty_state, stat_cards  %}
+{% from 'admin/partials/_registrations_view_switch.html' import view_switch %}
 {% from 'partials/_money.html' import money %}
 {% from 'admin/partials/_registration_row.html' import registration_headers, registration_row %}
 
@@ -75,6 +76,8 @@
                   {'value': stats.pending, 'label': 'Очікує', 'mod': 'warning'},
                   {'value': stats.cancelled, 'label': 'Скасовано', 'mod': 'danger'},
                   {'value': money(stats.total_paid), 'label': 'Оплачено', 'mod': 'accent'}]) }}
+
+    {{ view_switch(filters, filter_args) }}
 
     <!-- Quick-filter pills (за часом заходу) -->
     <div class="admin-pills">

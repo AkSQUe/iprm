@@ -1,0 +1,170 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Реєстрації за заходами | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-quiz.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-registrations.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% from 'admin/partials/_filter_bar.html' import filter_bar, pager, empty_state, stat_cards %}
+{% from 'admin/partials/_registrations_view_switch.html' import view_switch %}
+{% from 'partials/_money.html' import money %}
+
+{% block content %}
+{# Куди повернутись після дії в рядку: поточний URL разом із фільтрами і
+   переліком розгорнутих панелей (?open=). Без цього кожна дія згортала б
+   усе назад. #}
+{% set back_url = request.full_path.rstrip('?') %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout admin-layout--wide">
+
+    <div class="admin-hero">
+      <div>
+        <div class="admin-breadcrumb">
+          <a href="{{ url_for('admin.courses_list') }}" class="admin-breadcrumb__link">Панель</a>
+          <span class="admin-breadcrumb__sep">/</span>
+          <span class="admin-breadcrumb__current">Реєстрації</span>
+        </div>
+        <h1 class="admin-hero__title">Реєстрації за заходами</h1>
+        <p class="admin-hero__subtitle">
+          Курс, під ним дати проведення, у даті &mdash; зареєстровані.
+          Числа в заголовках рахуються тими самими фільтрами, що й список.
+        </p>
+      </div>
+    </div>
+
+    {% include 'partials/flash_messages.html' %}
+
+    {{ stat_cards([{'value': stats.total, 'label': 'Всього'},
+                   {'value': stats.confirmed, 'label': 'Підтверджено', 'mod': 'success'},
+                   {'value': stats.pending, 'label': 'Очікує', 'mod': 'warning'},
+                   {'value': stats.cancelled, 'label': 'Скасовано', 'mod': 'danger'},
+                   {'value': money(stats.total_paid), 'label': 'Оплачено', 'mod': 'accent'}]) }}
+
+    {{ view_switch(filters, filter_args) }}
+
+    <div class="admin-pills">
+      {% for value, label, ico in [
+           ('upcoming', 'Майбутні заходи', 'event_upcoming'),
+           ('past', 'Минулі', 'history'),
+           ('all', 'Усі', 'format_list_bulleted')] %}
+      <a href="{{ url_for('admin.registrations_all', **dict(filter_args, scope=value)) }}"
+         class="admin-pill{% if filters.scope == value %} admin-pill--active{% endif %}">
+        {{ icon(ico) }} {{ label }}
+      </a>
+      {% endfor %}
+    </div>
+
+    <div class="admin-pills admin-pills--presets">
+      {% for key, label, ico, args in presets %}
+      <a href="{{ url_for('admin.registrations_all', scope=filters.scope, view='grouped', **args) }}"
+         class="admin-pill{% if active_preset == key %} admin-pill--active{% endif %}">
+        {{ icon(ico) }} {{ label }}
+      </a>
+      {% endfor %}
+    </div>
+
+    {{ filter_bar(
+         endpoint='admin.registrations_all',
+         values=filters,
+         search={'name': 'q', 'placeholder': 'Пошук за іменем, email або телефоном'},
+         fields=[
+           {'name': 'status', 'label': 'Статус', 'placeholder': 'Всі статуси', 'options': status_options},
+           {'name': 'payment', 'label': 'Оплата', 'placeholder': 'Всі оплати', 'options': payment_options},
+           {'name': 'payment_method', 'label': 'Спосіб оплати', 'placeholder': 'Всі способи', 'options': method_options},
+           {'name': 'course_id', 'label': 'Курс', 'placeholder': 'Всі курси', 'options': course_options},
+           {'name': 'trainer_id', 'label': 'Тренер', 'placeholder': 'Всі тренери', 'options': trainer_options},
+           {'name': 'instance_id', 'label': 'Захід', 'placeholder': 'Всі заходи', 'options': instance_options},
+           {'name': 'date_from', 'label': 'Реєстрації з', 'type': 'date'},
+           {'name': 'date_to', 'label': 'Реєстрації по', 'type': 'date'},
+           {'name': 'no_certificate', 'label': 'Сертифікат',
+            'placeholder': 'Будь-який', 'options': [('1', 'Ще не виданий')]},
+           {'name': 'surcharge', 'label': 'Доплата',
+            'placeholder': 'Будь-яка', 'options': [('due', 'Не надійшла')]},
+           {'name': 'per_page', 'label': 'Курсів на сторінці', 'placeholder': '25 (типово)', 'options': per_page_options, 'narrowing': False},
+         ],
+         base_args={'scope': filters.scope, 'user_id': filters.user_id, 'view': 'grouped'},
+         export_endpoint='admin.registrations_export',
+       ) }}
+
+    {% if groups %}
+    <div class="registrations-groups">
+      {% for group in groups %}
+      <section class="admin-disclosure">
+        <button type="button" class="admin-disclosure__head"
+                aria-expanded="true" aria-controls="course-{{ group.course.id }}">
+          <span class="admin-disclosure__chevron" aria-hidden="true">{{ icon('chevron_right') }}</span>
+          <span class="admin-disclosure__title">{{ group.course.title }}</span>
+          <span class="admin-disclosure__metrics">
+            <span class="admin-disclosure__metric">{{ group.total }} реєстр.</span>
+            <span class="admin-disclosure__metric">{{ money(group.amount) }}</span>
+            {% if group.due %}
+            <span class="badge badge--pending">борг {{ money(group.due) }}</span>
+            {% endif %}
+          </span>
+        </button>
+        <div class="admin-disclosure__panel registrations-groups__dates" id="course-{{ group.course.id }}">
+          {% for row in group.instances %}
+          <div class="admin-disclosure admin-disclosure--nested">
+            <button type="button" class="admin-disclosure__head"
+                    aria-expanded="false" aria-controls="inst-{{ row.instance.id }}"
+                    data-instance-id="{{ row.instance.id }}" data-group-total="{{ row.total }}"
+                    data-rows-url="{{ url_for('admin.registration_group_rows', instance_id=row.instance.id, **dict(filter_args, back=back_url)) }}">
+              <span class="admin-disclosure__chevron" aria-hidden="true">{{ icon('chevron_right') }}</span>
+              <span class="admin-disclosure__title">
+                {{ row.instance.effective_title }}
+                <span class="admin-text-muted">
+                  {{ row.instance.start_date.strftime('%d.%m.%Y') if row.instance.start_date else 'без дати' }}
+                  {%- if row.instance.location %} &middot; {{ row.instance.location }}{% endif %}
+                </span>
+              </span>
+              <span class="admin-disclosure__metrics">
+                <span class="admin-disclosure__metric">{{ row.total }} реєстр.</span>
+                <span class="badge badge--active">{{ row.confirmed }}</span>
+                <span class="badge badge--pending">{{ row.pending }}</span>
+                {% if row.cancelled %}<span class="badge badge--cancelled">{{ row.cancelled }}</span>{% endif %}
+                <span class="admin-disclosure__metric">{{ money(row.amount) }}</span>
+                {% if row.due %}
+                <span class="badge badge--pending">борг {{ money(row.due) }}</span>
+                {% endif %}
+                {% if row.capacity %}
+                <span class="admin-seats{% if row.overbooked %} admin-seats--over{% endif %}">{{ row.occupied }}/{{ row.capacity }}</span>
+                {% endif %}
+              </span>
+            </button>
+            {# Без JS панель лишається згорнутою, і єдиний шлях до людей --
+               посилання всередині. Саме тому воно тут, а не лише в меню. #}
+            <div class="admin-disclosure__panel" id="inst-{{ row.instance.id }}" hidden>
+              <p class="registrations-groups__fallback">
+                <a href="{{ url_for('admin.instance_registrations', instance_id=row.instance.id) }}">
+                  {{ icon('open_in_new') }} Відкрити захід
+                </a>
+              </p>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+      {% endfor %}
+    </div>
+
+    {{ pager('admin.registrations_all', pagination, filter_args) }}
+    {% else %}
+    {% call empty_state('admin.registrations_all', filter_args,
+                        base_args={'scope': filters.scope, 'view': 'grouped'},
+                        narrow_args={'user_id': filters.user_id, 'per_page': False},
+                        icon_name='how_to_reg', title='Реєстрацій немає') %}
+      <p>На цьому зрізі жоден захід не має реєстрацій.
+        <a href="{{ url_for('admin.registrations_all', view='grouped', scope='all') }}">Показати всі заходи</a>.</p>
+    {% endcall %}
+    {% endif %}
+
+  </div>
+</div>
+{% include 'admin/partials/_transfer_modal.html' %}
+{% endblock %}
