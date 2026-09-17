@@ -180,6 +180,21 @@ def test_empty_group_disappears_under_filter(client, admin, event_with_two_peopl
     assert f'data-instance-id="{inst.id}"' not in html
 
 
+def test_event_link_lives_in_the_header(client, admin, event_with_two_people):
+    """Перехід на захід -- іконка в заголовку, а не рядок тексту під ним."""
+    _, inst, _ = event_with_two_people
+    _login(client, admin)
+
+    html = client.get('/admin/registrations?view=grouped').get_data(as_text=True)
+
+    assert 'admin-disclosure__action' in html
+    assert f'/admin/instances/{inst.id}/registrations' in html
+    # Іконка без підпису: сам текст на кнопці більше не друкується, але
+    # доступна назва лишається -- інакше для скрінрідера це посилання в нікуди.
+    assert 'aria-label="Відкрити захід"' in html
+    assert '>Відкрити захід<' not in html
+
+
 def test_grouped_page_does_not_grow_with_events(client, admin):
     """Сторінка -- це числа. 12 заходів мусять коштувати як 2."""
     from sqlalchemy import event as sa_event

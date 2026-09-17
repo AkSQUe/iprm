@@ -48,20 +48,23 @@
         </button>
         <div class="admin-disclosure__panel" id="ds-disclosure-1">
           <div class="admin-disclosure admin-disclosure--nested">
-            <button type="button" class="admin-disclosure__head" aria-expanded="false" aria-controls="ds-disclosure-2">
-              <span class="admin-disclosure__chevron" aria-hidden="true">{{ icon('chevron_right') }}</span>
-              <span class="admin-disclosure__title">15.03.2026 &middot; Київ</span>
-              <span class="admin-disclosure__metrics">
-                <span class="admin-disclosure__metric">12 реєстр.</span>
-                <span class="admin-seats">9/12</span>
-              </span>
-            </button>
+            <div class="admin-disclosure__bar">
+              <button type="button" class="admin-disclosure__head" aria-expanded="false" aria-controls="ds-disclosure-2">
+                <span class="admin-disclosure__chevron" aria-hidden="true">{{ icon('chevron_right') }}</span>
+                <span class="admin-disclosure__title">15.03.2026 &middot; Київ</span>
+                <span class="admin-disclosure__metrics">
+                  <span class="admin-disclosure__metric">12 реєстр.</span>
+                  <span class="admin-seats">9/12</span>
+                </span>
+              </button>
+              <a class="admin-disclosure__action" href="#" title="Відкрити захід" aria-label="Відкрити захід">{{ icon('open_in_new') }}</a>
+            </div>
             <div class="admin-disclosure__panel" id="ds-disclosure-2" hidden></div>
           </div>
         </div>
       </section>
     </div>
-    <p class="ds-hint">.admin-disclosure: заголовок із підсумками плюс панель; стан тримає aria-expanded на кнопці, --nested -- вкладений рівень. Панель може вантажитись лениво (реєстр «За заходами»).</p>
+    <p class="ds-hint">.admin-disclosure: заголовок із підсумками плюс панель; стан тримає aria-expanded на кнопці, --nested -- вкладений рівень. Панель може вантажитись лениво (реєстр «За заходами»). .admin-disclosure__bar/__action: посилання не вкладається в кнопку, тож заголовок вкладеного рівня -- кнопка-розгортач і сусідня іконка-дія.</p>
 
     <h3 class="ds-section-heading">Стани інлайн-селекта</h3>
     <div class="ds-demo">

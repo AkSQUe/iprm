@@ -4064,3 +4064,28 @@ th.access-perm__label {
 .admin-disclosure--nested {
   margin: 8px 0;
 }
+
+/* Заголовок із дією праворуч: посилання не можна вкласти в кнопку, тож
+   рядок заголовка -- це кнопка-розгортач плюс сусідня дія-іконка. */
+.admin-disclosure__bar {
+  display: flex;
+  align-items: stretch;
+  background: var(--iprm-surface-inset);
+}
+
+.admin-disclosure__bar .admin-disclosure__head {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.admin-disclosure__action {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 16px;
+  color: var(--iprm-text-secondary);
+}
+
+.admin-disclosure__action:hover {
+  background: var(--iprm-divider);
+  color: var(--iprm-accent);
+}

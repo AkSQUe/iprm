@@ -111,41 +111,40 @@
         <div class="admin-disclosure__panel registrations-groups__dates" id="course-{{ group.course.id }}">
           {% for row in group.instances %}
           <div class="admin-disclosure admin-disclosure--nested">
-            <button type="button" class="admin-disclosure__head"
-                    aria-expanded="false" aria-controls="inst-{{ row.instance.id }}"
-                    data-instance-id="{{ row.instance.id }}" data-group-total="{{ row.total }}"
-                    data-rows-url="{{ url_for('admin.registration_group_rows', instance_id=row.instance.id, **dict(filter_args, back=back_url)) }}">
-              <span class="admin-disclosure__chevron" aria-hidden="true">{{ icon('chevron_right') }}</span>
-              <span class="admin-disclosure__title">
-                {{ row.instance.effective_title }}
-                <span class="admin-text-muted">
-                  {{ row.instance.start_date.strftime('%d.%m.%Y') if row.instance.start_date else 'без дати' }}
-                  {%- if row.instance.location %} &middot; {{ row.instance.location }}{% endif %}
+            <div class="admin-disclosure__bar">
+              <button type="button" class="admin-disclosure__head"
+                      aria-expanded="false" aria-controls="inst-{{ row.instance.id }}"
+                      data-instance-id="{{ row.instance.id }}" data-group-total="{{ row.total }}"
+                      data-rows-url="{{ url_for('admin.registration_group_rows', instance_id=row.instance.id, **dict(filter_args, back=back_url)) }}">
+                <span class="admin-disclosure__chevron" aria-hidden="true">{{ icon('chevron_right') }}</span>
+                <span class="admin-disclosure__title">
+                  {{ row.instance.effective_title }}
+                  <span class="admin-text-muted">
+                    {{ row.instance.start_date.strftime('%d.%m.%Y') if row.instance.start_date else 'без дати' }}
+                    {%- if row.instance.location %} &middot; {{ row.instance.location }}{% endif %}
+                  </span>
                 </span>
-              </span>
-              <span class="admin-disclosure__metrics">
-                <span class="admin-disclosure__metric">{{ row.total }} реєстр.</span>
-                <span class="badge badge--active">{{ row.confirmed }}</span>
-                <span class="badge badge--pending">{{ row.pending }}</span>
-                {% if row.cancelled %}<span class="badge badge--cancelled">{{ row.cancelled }}</span>{% endif %}
-                <span class="admin-disclosure__metric">{{ money(row.amount) }}</span>
-                {% if row.due %}
-                <span class="badge badge--pending">борг {{ money(row.due) }}</span>
-                {% endif %}
-                {% if row.capacity %}
-                <span class="admin-seats{% if row.overbooked %} admin-seats--over{% endif %}">{{ row.occupied }}/{{ row.capacity }}</span>
-                {% endif %}
-              </span>
-            </button>
-            {# Посилання стоїть ПОЗА панеллю навмисно: панель згорнута
-               атрибутом hidden, і всередині неї без JS не досяжне ніщо.
-               Зовні воно лишається єдиним шляхом до людей, коли скрипт не
-               виконався, і корисним «перейти до заходу», коли виконався. #}
-            <p class="registrations-groups__fallback">
-              <a href="{{ url_for('admin.instance_registrations', instance_id=row.instance.id) }}">
-                {{ icon('open_in_new') }} Відкрити захід
-              </a>
-            </p>
+                <span class="admin-disclosure__metrics">
+                  <span class="admin-disclosure__metric">{{ row.total }} реєстр.</span>
+                  <span class="badge badge--active">{{ row.confirmed }}</span>
+                  <span class="badge badge--pending">{{ row.pending }}</span>
+                  {% if row.cancelled %}<span class="badge badge--cancelled">{{ row.cancelled }}</span>{% endif %}
+                  <span class="admin-disclosure__metric">{{ money(row.amount) }}</span>
+                  {% if row.due %}
+                  <span class="badge badge--pending">борг {{ money(row.due) }}</span>
+                  {% endif %}
+                  {% if row.capacity %}
+                  <span class="admin-seats{% if row.overbooked %} admin-seats--over{% endif %}">{{ row.occupied }}/{{ row.capacity }}</span>
+                  {% endif %}
+                </span>
+              </button>
+              {# Без JS це єдиний шлях до людей, зі скриптом -- швидкий перехід
+                 на картку заходу. Іконка без підпису, тож доступна назва
+                 задається явно. #}
+              <a class="admin-disclosure__action"
+                 href="{{ url_for('admin.instance_registrations', instance_id=row.instance.id) }}"
+                 title="Відкрити захід" aria-label="Відкрити захід">{{ icon('open_in_new') }}</a>
+            </div>
             <div class="admin-disclosure__panel" id="inst-{{ row.instance.id }}" hidden></div>
           </div>
           {% endfor %}
