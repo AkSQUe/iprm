@@ -8,7 +8,7 @@
 """
 from types import SimpleNamespace
 
-from sqlalchemy import case, func, select
+from sqlalchemy import and_, case, func, nullslast, select
 from sqlalchemy.orm import joinedload
 
 from app.extensions import db
@@ -33,8 +33,13 @@ def grouped_page(matched_query, page, per_page, oldest_first=False):
     instance_ids = select(EventRegistration.instance_id).where(
         EventRegistration.id.in_(matched_ids))
 
-    order_col = (func.min(CourseInstance.start_date).asc() if oldest_first
-                 else func.max(CourseInstance.start_date).desc())
+    # nullslast -- явно, в обидві гілки: без нього PostgreSQL дає DESC ->
+    # NULLS FIRST, і курс без жодної дати став би ПЕРШИМ у типовому перегляді
+    # -- рівно те, що вже визнано неприйнятним для дат УСЕРЕДИНІ курсу нижче.
+    # SQLite такого нахилу не має, тож без цього тест на цій БД пройшов би, а
+    # прод -- ні.
+    order_col = (nullslast(func.min(CourseInstance.start_date).asc()) if oldest_first
+                 else nullslast(func.max(CourseInstance.start_date).desc()))
     courses_stmt = select(CourseInstance.course_id).where(
         CourseInstance.id.in_(instance_ids),
     ).group_by(CourseInstance.course_id).order_by(order_col)
@@ -58,6 +63,19 @@ def grouped_page(matched_query, page, per_page, oldest_first=False):
             func.coalesce(func.sum(case((
                 EventRegistration.payment_status == 'paid',
                 EventRegistration.payment_amount))), 0).label('paid'),
+            # amount_active/paid_active -- ті самі суми, але БЕЗ скасованих:
+            # борг рахується тільки від них (нижче, `due`). `amount`/`paid`
+            # лишаються по всьому зрізу -- гроші, що реально надійшли по
+            # реєстрації, яку потім скасували, нікуди не діваються, і сторінка
+            # має показувати їх. Тому `amount - paid != due`, і це навмисно:
+            # хтось інший це «полагодить», якщо не буде цього коментаря.
+            func.coalesce(func.sum(case((
+                EventRegistration.status != 'cancelled',
+                EventRegistration.payment_amount))), 0).label('amount_active'),
+            func.coalesce(func.sum(case((
+                and_(EventRegistration.status != 'cancelled',
+                     EventRegistration.payment_status == 'paid'),
+                EventRegistration.payment_amount))), 0).label('paid_active'),
         ).filter(
             EventRegistration.id.in_(matched_ids),
         ).group_by(EventRegistration.instance_id).all()
@@ -90,7 +108,9 @@ def grouped_page(matched_query, page, per_page, oldest_first=False):
             cancelled=row.cancelled,
             amount=row.amount,
             paid=row.paid,
-            due=row.amount - row.paid,
+            # Скасована реєстрація не рахується в борг (`amount_active` /
+            # `paid_active` -- див. коментар у запиті вище).
+            due=row.amount_active - row.paid_active,
             occupied=taken,
             capacity=capacity,
             overbooked=capacity is not None and taken > capacity,
@@ -117,6 +137,9 @@ def grouped_page(matched_query, page, per_page, oldest_first=False):
             cancelled=sum(r.cancelled for r in rows),
             amount=sum(r.amount for r in rows),
             paid=sum(r.paid for r in rows),
+            # `r.due` уже полічений без скасованих (див. коментар у запиті
+            # вище), тож проста сума по датах не тягне їх назад -- і тут
+            # `amount - paid != due` так само навмисно.
             due=sum(r.due for r in rows),
         ))
     return groups, pagination

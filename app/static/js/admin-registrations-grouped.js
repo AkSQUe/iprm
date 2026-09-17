@@ -40,9 +40,16 @@
   }
 
   function load(head, panel) {
-    var url = head.getAttribute('data-rows-url');
-    if (!url || head.getAttribute('data-loaded') === '1') return;
+    var raw = head.getAttribute('data-rows-url');
+    if (!raw || head.getAttribute('data-loaded') === '1') return;
     head.setAttribute('data-loaded', '1');
+    // `back` у data-rows-url зашитий сервером на момент рендеру сторінки --
+    // без ?open=, якщо панель щойно розгорнув сам менеджер. rememberOpen()
+    // (викликаний у toggle() ДО load()) уже поклав актуальний ?open= в адресу
+    // сторінки, тож переносимо його сюди, а не шлемо застарілий back.
+    var u = new URL(raw, window.location.origin);
+    u.searchParams.set('back', window.location.pathname + window.location.search);
+    var url = u.pathname + u.search;
     panel.innerHTML = '<p class="registrations-groups__fallback">Завантаження...</p>';
     fetch(url, {
       headers: { 'X-Requested-With': 'XMLHttpRequest' },
@@ -68,8 +75,12 @@
     if (!panel) return;
     head.setAttribute('aria-expanded', expand ? 'true' : 'false');
     panel.hidden = !expand;
-    if (expand) load(head, panel);
+    // rememberOpen() ДО load(): load() читає ?open= з поточної адреси
+    // сторінки, щоб зашити його в back для рядкових дій -- запізніла
+    // адреса означала б, що панель, яку менеджер щойно сам розгорнув,
+    // після дії в рядку знову згорнута.
     if (head.hasAttribute('data-instance-id')) rememberOpen();
+    if (expand) load(head, panel);
   }
 
   document.addEventListener('click', function (event) {

@@ -116,6 +116,32 @@ def test_course_without_matches_disappears(two_dates):
     assert all(g.course.id != course.id for g in groups)
 
 
+def test_cancelled_unpaid_does_not_inflate_debt(two_dates):
+    """Скасована неоплачена реєстрація -- не борг: нікому його не пред'явиш."""
+    course, instances = two_dates
+    user = User.create_with_password(
+        f'grp-{_uid()}@test.com', 'password123', first_name='С', last_name='К')
+    db.session.flush()
+    db.session.add(EventRegistration(
+        user_id=user.id, instance_id=instances[0].id, phone='+380670000000',
+        specialty='T', workplace='Клініка', status='cancelled',
+        payment_status='unpaid', payment_amount=5000,
+    ))
+    db.session.flush()
+
+    groups, _ = registration_groups.grouped_page(_matched(), page=1, per_page=25)
+
+    group = _group_of(groups, course)
+    date_row = next(r for r in group.instances if r.instance.id == instances[0].id)
+    # Борг на дату -- незмінний (2975, як і до скасованої реєстрації), а сума
+    # виросла на всю скасовану реєстрацію: гроші, які по ній НЕ надійшли,
+    # ніхто не винен.
+    assert date_row.due == 2975
+    assert date_row.amount == 3500 + 2975 + 5000
+    # І на рівні курсу борг так само не зрушив.
+    assert group.due == 2975
+
+
 def test_oldest_first_flips_the_order(two_dates):
     course, instances = two_dates
     groups, _ = registration_groups.grouped_page(

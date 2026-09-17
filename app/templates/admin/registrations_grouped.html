@@ -86,7 +86,6 @@
             'placeholder': 'Будь-який', 'options': [('1', 'Ще не виданий')]},
            {'name': 'surcharge', 'label': 'Доплата',
             'placeholder': 'Будь-яка', 'options': [('due', 'Не надійшла')]},
-           {'name': 'per_page', 'label': 'Курсів на сторінці', 'placeholder': '25 (типово)', 'options': per_page_options, 'narrowing': False},
          ],
          base_args={'scope': filters.scope, 'user_id': filters.user_id, 'view': 'grouped'},
          export_endpoint='admin.registrations_export',
@@ -102,9 +101,12 @@
           <span class="admin-disclosure__title">{{ group.course.title }}</span>
           <span class="admin-disclosure__metrics">
             <span class="admin-disclosure__metric">{{ group.total }} реєстр.</span>
+            <span class="badge badge--active" title="Підтверджено">{{ group.confirmed }}</span>
+            <span class="badge badge--pending" title="Очікує">{{ group.pending }}</span>
+            {% if group.cancelled %}<span class="badge badge--cancelled" title="Скасовано">{{ group.cancelled }}</span>{% endif %}
             <span class="admin-disclosure__metric">{{ money(group.amount) }}</span>
             {% if group.due %}
-            <span class="badge badge--pending">борг {{ money(group.due) }}</span>
+            <span class="badge badge--pending" title="Борг">борг {{ money(group.due) }}</span>
             {% endif %}
           </span>
         </button>
@@ -126,12 +128,12 @@
                 </span>
                 <span class="admin-disclosure__metrics">
                   <span class="admin-disclosure__metric">{{ row.total }} реєстр.</span>
-                  <span class="badge badge--active">{{ row.confirmed }}</span>
-                  <span class="badge badge--pending">{{ row.pending }}</span>
-                  {% if row.cancelled %}<span class="badge badge--cancelled">{{ row.cancelled }}</span>{% endif %}
+                  <span class="badge badge--active" title="Підтверджено">{{ row.confirmed }}</span>
+                  <span class="badge badge--pending" title="Очікує">{{ row.pending }}</span>
+                  {% if row.cancelled %}<span class="badge badge--cancelled" title="Скасовано">{{ row.cancelled }}</span>{% endif %}
                   <span class="admin-disclosure__metric">{{ money(row.amount) }}</span>
                   {% if row.due %}
-                  <span class="badge badge--pending">борг {{ money(row.due) }}</span>
+                  <span class="badge badge--pending" title="Борг">борг {{ money(row.due) }}</span>
                   {% endif %}
                   {% if row.capacity %}
                   <span class="admin-seats{% if row.overbooked %} admin-seats--over{% endif %}">{{ row.occupied }}/{{ row.capacity }}</span>
@@ -155,9 +157,19 @@
 
     {{ pager('admin.registrations_all', pagination, filter_args) }}
     {% else %}
+    {# Виключення розміру сторінки зі звуження тут навмисно прибрано разом
+       із полем: filter_bar цього режиму його більше не оголошує (воно
+       нічого не робило -- маршрут і так ріже курси до 25), а
+       test_admin_per_page_narrowing_guard.py вимагає, щоб таке виключення
+       жило лише поруч із полем, яке воно виключає. Якщо розмір сторінки
+       доїде сюди перемикачем режимів зі списку (view_switch несе
+       filter_args як є) на СПРАВДІ порожньому зрізі -- порожній стан
+       покаже «Нічого не знайдено, скинути фільтри» замість «Реєстрацій
+       немає»; це відомий і прийнятний компроміс, не побічний ефект, який
+       хтось випадково не помітив. #}
     {% call empty_state('admin.registrations_all', filter_args,
                         base_args={'scope': filters.scope, 'view': 'grouped'},
-                        narrow_args={'user_id': filters.user_id, 'per_page': False},
+                        narrow_args={'user_id': filters.user_id},
                         icon_name='how_to_reg', title='Реєстрацій немає') %}
       <p>На цьому зрізі жоден захід не має реєстрацій.
         <a href="{{ url_for('admin.registrations_all', view='grouped', scope='all') }}">Показати всі заходи</a>.</p>
