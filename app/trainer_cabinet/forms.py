@@ -4,7 +4,7 @@ import re
 from flask_babel import lazy_gettext as _l
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed, FileField
-from wtforms import DateField, StringField, TextAreaField
+from wtforms import BooleanField, DateField, StringField, TextAreaField
 from wtforms.validators import (
     DataRequired, Email, Length, Optional, URL, ValidationError)
 
@@ -50,6 +50,11 @@ class TrainerProfileForm(FlaskForm):
                                 _l('Дозволені формати: JPG, PNG, WebP, HEIC'))])
     photo_url = StringField(_l('Або посилання на фото (файлообмінник)'),
                             validators=_link_validators())
+    # Завантажений файл має перевагу над посиланням (TrainerProfile.photo_src),
+    # тож без явного прибирання перейти з файлу на посилання було неможливо.
+    # Лише явна галочка: порожнє поле файлу в кожному сабміті -- норма, і
+    # мовчки чистити фото за ним не можна.
+    remove_photo = BooleanField(_l('Прибрати завантажене фото'))
 
     # Реквізити ФОП
     fop_recipient = StringField(_l('Отримувач'), validators=[Optional(), Length(max=300)])

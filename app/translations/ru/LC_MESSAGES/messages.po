@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: IPRM VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-09-19 21:56+0300\n"
+"POT-Creation-Date: 2026-09-19 21:58+0300\n"
 "PO-Revision-Date: 2026-07-24 15:52+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ru\n"
@@ -6296,6 +6296,12 @@ msgstr "Фотография для сайта"
 msgid "Поточне фото"
 msgstr "Текущее фото"
 
+msgid "Зараз використовується завантажений файл: він має перевагу над посиланням."
+msgstr "Сейчас используется загруженный файл: он имеет приоритет над ссылкой."
+
+msgid "Зараз використовується фото за посиланням."
+msgstr "Сейчас используется фото по ссылке."
+
 msgid "Реквізити ФОП"
 msgstr "Реквизиты ФОП"
 
@@ -6540,6 +6546,9 @@ msgstr "Разрешённые форматы: JPG, PNG, WebP, HEIC"
 
 msgid "Або посилання на фото (файлообмінник)"
 msgstr "Или ссылка на фото (файлообменник)"
+
+msgid "Прибрати завантажене фото"
+msgstr "Убрать загруженное фото"
 
 msgid "РНОКПП"
 msgstr "РНОКПП"

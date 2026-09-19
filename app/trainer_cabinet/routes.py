@@ -71,6 +71,8 @@ def profile():
         for name in TrainerProfileForm.MODEL_FIELDS:
             value = getattr(form, name).data
             setattr(record, name, value.strip() if isinstance(value, str) else value)
+        if form.remove_photo.data:
+            record.photo_media_id = None
         photo_error = _save_photo(form, record)
         if photo_error:
             db.session.rollback()

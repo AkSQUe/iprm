@@ -50,3 +50,51 @@ def test_clearing_secret_keeps_nothing(client):
     client.post('/trainer/profile', data=_data(card_number=''))
     db.session.expire_all()
     assert TrainerProfile.query.filter_by(trainer_id=trainer.id).one().card_number == ''
+
+
+# --- B6: з файлу фото на посилання ---------------------------------------------
+
+def _with_media_photo(trainer):
+    from app.models.media_file import MediaFile
+    media = MediaFile(filename='tc-photo.webp', file_path='2026/09/tc-photo.webp',
+                      mime_type='image/webp')
+    db.session.add(media)
+    db.session.flush()
+    profile = TrainerProfile(trainer_id=trainer.id, photo_media_id=media.id)
+    db.session.add(profile)
+    db.session.commit()
+    return profile
+
+
+def test_remove_photo_clears_uploaded_file(client):
+    user = make_user()
+    trainer = make_trainer(user)
+    _with_media_photo(trainer)
+    login(client, user)
+    client.post('/trainer/profile', data=_data(
+        remove_photo='y', photo_url='https://drive.google.com/photo.jpg'))
+    db.session.expire_all()
+    profile = TrainerProfile.query.filter_by(trainer_id=trainer.id).one()
+    assert profile.photo_media_id is None
+    assert profile.photo_src == 'https://drive.google.com/photo.jpg'
+
+
+def test_photo_kept_without_explicit_checkbox(client):
+    user = make_user()
+    trainer = make_trainer(user)
+    media_id = _with_media_photo(trainer).photo_media_id
+    login(client, user)
+    client.post('/trainer/profile', data=_data(photo_url='https://drive.google.com/photo.jpg'))
+    db.session.expire_all()
+    assert TrainerProfile.query.filter_by(trainer_id=trainer.id).one().photo_media_id == media_id
+
+
+def test_remove_checkbox_shown_only_with_uploaded_photo(client):
+    user = make_user()
+    trainer = make_trainer(user)
+    login(client, user)
+    assert 'name="remove_photo"' not in client.get('/trainer/profile').get_data(as_text=True)
+    _with_media_photo(trainer)
+    html = client.get('/trainer/profile').get_data(as_text=True)
+    assert 'name="remove_photo"' in html
+    assert 'Зараз використовується завантажений файл' in html

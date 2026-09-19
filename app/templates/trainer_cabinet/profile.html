@@ -62,6 +62,17 @@
               {% if photo_href %}
               <p class="form-hint"><a href="{{ photo_href }}" class="auth-card__link" target="_blank" rel="noopener">{{ _('Поточне фото') }}</a></p>
               {% endif %}
+              {# Файл перекриває посилання: кажемо, яке джерело зараз діє, і
+                 даємо явно прибрати файл, щоб перейти на посилання. #}
+              {% if record and record.photo_media_id %}
+              <p class="form-hint">{{ _('Зараз використовується завантажений файл: він має перевагу над посиланням.') }}</p>
+              <div class="form-checkbox">
+                {{ form.remove_photo(id=form.remove_photo.id) }}
+                <label for="{{ form.remove_photo.id }}">{{ form.remove_photo.label.text }}</label>
+              </div>
+              {% elif record and record.photo_url %}
+              <p class="form-hint">{{ _('Зараз використовується фото за посиланням.') }}</p>
+              {% endif %}
             {% endcall %}
             {{ field(form.photo_url) }}
           </div>
