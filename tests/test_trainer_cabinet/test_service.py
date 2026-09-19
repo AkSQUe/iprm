@@ -74,6 +74,16 @@ def test_trainer_courses(trainer):
     assert _ids(svc.trainer_courses(trainer)) == [course.id]
 
 
+def test_trainer_courses_includes_inactive(trainer):
+    """C19: тренер лишається автором курсу, навіть якщо курс приховали --
+    приховування курсу не питання тренера, а сторінка про це не бреше."""
+    course = make_course()
+    course.is_active = False
+    set_trainers(course, [trainer.id])
+    db.session.commit()
+    assert _ids(svc.trainer_courses(trainer)) == [course.id]
+
+
 def test_proposal_transitions(trainer):
     p = TrainerCourseProposal(trainer_id=trainer.id, title='Т', theses=['a'])
     db.session.add(p)

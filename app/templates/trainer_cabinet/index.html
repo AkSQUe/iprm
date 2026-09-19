@@ -91,9 +91,18 @@
       <ul class="account-grid trainer-courses">
         {% for course in courses %}
         <li>
+          {% if course.is_active %}
           <a href="{{ url_for('courses.course_by_slug', slug=course.slug) }}" class="account-card account-card--link">
             <h3 class="iprm-block-title">{{ course.t('title') }}</h3>
           </a>
+          {% else %}
+          {# Курс приховано -- публічна сторінка 404-ить (courses.course_by_slug
+             фільтрує is_active=True). Тренер і далі бачить, що викладає його. #}
+          <div class="account-card">
+            <h3 class="iprm-block-title">{{ course.t('title') }}</h3>
+            <p class="account-card__text">{{ _('Курс приховано на сайті') }}</p>
+          </div>
+          {% endif %}
         </li>
         {% endfor %}
       </ul>

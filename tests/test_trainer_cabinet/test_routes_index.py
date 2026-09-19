@@ -52,6 +52,24 @@ def test_dashboard_shows_event_and_counts(client):
     assert resp.headers.get('X-Robots-Tag') == 'noindex, nofollow'
 
 
+def test_inactive_course_listed_without_link(client):
+    """C19: курс приховали (Course.is_active=False) -- посилання вело б на
+    404 (courses.course_by_slug фільтрує is_active=True), тож назва
+    лишається текстом, а курс не зникає зі списку тренера."""
+    user = make_user()
+    trainer = make_trainer(user)
+    course = make_course('Прихований курс')
+    course.is_active = False
+    set_trainers(course, [trainer.id])
+    db.session.commit()
+    login(client, user)
+    html = client.get('/trainer/').get_data(as_text=True)
+    assert 'Прихований курс' in html
+    course_block = html[html.index('Мої курси'):]
+    assert f"course_by_slug', slug='{course.slug}')" not in course_block
+    assert f'/{course.slug}' not in course_block
+
+
 def test_dashboard_empty_state(client):
     user = make_user()
     make_trainer(user)

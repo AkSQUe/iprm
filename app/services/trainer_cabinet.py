@@ -115,11 +115,18 @@ def registration_counts(instance_ids):
 
 
 def trainer_courses(trainer):
-    """Активні курси, де тренер призначений на рівні курсу."""
+    """Курси, де тренер призначений на рівні курсу -- активні й приховані.
+
+    Приховування курсу (Course.is_active=False) -- рішення адміна про
+    публічну сторінку, а не про те, чи тренер його викладав; курс лишається
+    в списку. Шаблон вирішує, чи давати посилання на публічну сторінку
+    (courses.course_by_slug фільтрує is_active=True -- лінк на прихований
+    курс вів би на 404).
+    """
     return (
         Course.query
         .join(course_trainers, course_trainers.c.course_id == Course.id)
-        .filter(course_trainers.c.trainer_id == trainer.id, Course.is_active.is_(True))
+        .filter(course_trainers.c.trainer_id == trainer.id)
         .order_by(Course.title)
         .all()
     )

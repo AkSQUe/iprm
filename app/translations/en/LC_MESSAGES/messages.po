@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: IPRM VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-09-19 22:31+0300\n"
+"POT-Creation-Date: 2026-09-19 22:46+0300\n"
 "PO-Revision-Date: 2026-07-24 15:52+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -6306,6 +6306,9 @@ msgstr "Seats"
 msgid "Найближчих заходів з вашою участю поки немає."
 msgstr "There are no upcoming events with your participation yet."
 
+msgid "Курс приховано на сайті"
+msgstr "This course is hidden on the site"
+
 msgid "Анкета тренера | ІПРМ"
 msgstr "Trainer questionnaire | IPRM"
 
@@ -6643,11 +6646,14 @@ msgstr ""
 "The proposal has already been sent to the curator and can no longer be "
 "changed"
 
+msgid "Пропозицію надіслано куратору"
+msgstr "Proposal sent to curator"
+
 msgid "Чернетку збережено"
 msgstr "Draft saved"
 
-msgid "Пропозицію надіслано куратору"
-msgstr "Proposal sent to curator"
+msgid "Помилка при видаленні"
+msgstr "Error while deleting"
 
 msgid "Чернетку видалено"
 msgstr "Draft deleted"
