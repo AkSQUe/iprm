@@ -137,6 +137,18 @@ def _trainer_proposal_key(proposal):
     return f'trainer-proposal-{proposal.id}-{stamp}'
 
 
+def _trainer_requisites_key(profile):
+    """Ключ ідемпотентності листа про зміну реквізитів: одне збереження -- один лист.
+
+    updated_at з мікросекундами: два різні збереження не зливаються, а
+    повторний виклик для того самого збереження листа не дублює.
+    """
+    updated = profile.updated_at if profile is not None else None
+    stamp = int(updated.timestamp() * 1_000_000) if updated else 0
+    trainer_id = profile.trainer_id if profile is not None else 0
+    return f'trainer-requisites-{trainer_id}-{stamp}'
+
+
 def _open_smtp(smtp_cfg):
     """Відкрити автентифіковане SMTP-з'єднання за конфігом."""
     host_cls = smtplib.SMTP_SSL if smtp_cfg['use_ssl'] else smtplib.SMTP
@@ -1562,6 +1574,40 @@ class EmailService:
             },
             trigger='trainer_proposal',
             idempotency_key=_trainer_proposal_key(proposal),
+            lang='uk',
+        )
+
+    @staticmethod
+    def send_trainer_requisites_notification(trainer, fields):
+        """Тренер змінив реквізити -- лист на ту саму адресу, що й пропозиції.
+
+        fields -- назви полів із TrainerProfile.SENSITIVE_FIELDS. У лист
+        ідуть лише їхні підписи: значення реквізитів пошта не несе, куратор
+        дивиться їх в адмінці з правом trainers.finance.
+        """
+        from app.models.site_settings import SiteSettings
+        from app.models.trainer_profile import TrainerProfile
+        from app.services import trainer_cabinet
+        settings = SiteSettings.get()
+        to = trainer_cabinet.contract_email(settings)
+        if not to:
+            logger.warning('Trainer %s requisites changed: no recipient '
+                           '(trainer_contract_email and site email are empty)', trainer.id)
+            return None
+        labels = [TrainerProfile.SENSITIVE_LABELS.get(name, name) for name in fields]
+        base = (settings.website_url or '').rstrip('/')
+        path = f'/admin/trainers/{trainer.id}/questionnaire'
+        return EmailService.send_email(
+            to=to,
+            subject=f'Тренер змінив реквізити: {trainer.full_name}',
+            template_name='trainer_requisites_changed',
+            context={
+                'trainer': trainer,
+                'fields': labels,
+                'admin_url': f'{base}{path}' if base else path,
+            },
+            trigger='trainer_requisites',
+            idempotency_key=_trainer_requisites_key(trainer.profile),
             lang='uk',
         )
 

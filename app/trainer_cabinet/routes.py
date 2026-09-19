@@ -14,6 +14,7 @@ from app.trainer_cabinet.decorators import trainer_required
 from app.trainer_cabinet.forms import ProposalForm, TrainerProfileForm
 
 logger = logging.getLogger(__name__)
+audit_logger = logging.getLogger('audit')
 
 PROPOSAL_FIELDS = (
     'title', 'language', 'relevance', 'target_specialties', 'resources',
@@ -56,6 +57,27 @@ def _save_photo(form, profile):
     return None
 
 
+def _after_requisites_change(trainer, before, changed):
+    """Аудит і лист куратору після ЗБЕРЕЖЕНОЇ зміни реквізитів.
+
+    Реквізити -- куди йде гонорар: тиха заміна (помилка чи чужий доступ до
+    акаунта) означала б переказ не туди. У журнал -- лише назви полів,
+    ніколи значення. Перше заповнення (усе було порожнім) -- лише аудит:
+    лист про «зміну» з нічого куратору не потрібен. Збій пошти не скасовує
+    збереження -- анкета вже в БД.
+    """
+    if not changed:
+        return
+    audit_logger.info('Trainer %s changed requisites: %s', trainer.id, ', '.join(changed))
+    if not any(before.values()):
+        return
+    from app.services.email_service import EmailService
+    try:
+        EmailService.send_trainer_requisites_notification(trainer, changed)
+    except Exception:
+        logger.exception('Failed to notify curator about trainer %s requisites', trainer.id)
+
+
 @trainer_cabinet_bp.route('/profile', methods=['GET', 'POST'])
 @trainer_required
 def profile():
@@ -68,6 +90,7 @@ def profile():
 
     if form.validate_on_submit():
         record = svc.get_or_create_profile(trainer)
+        requisites_before = svc.requisites_snapshot(record)
         for name in TrainerProfileForm.MODEL_FIELDS:
             value = getattr(form, name).data
             setattr(record, name, value.strip() if isinstance(value, str) else value)
@@ -78,14 +101,17 @@ def profile():
             db.session.rollback()
             form.photo.errors.append(photo_error)
         else:
+            changed = svc.changed_requisites(requisites_before, record)
             try:
                 db.session.commit()
-                flash(_('Анкету збережено'), 'success')
-                return redirect(url_for('trainer_cabinet.profile'))
             except Exception:
                 logger.exception('Failed to save trainer profile %s', trainer.id)
                 db.session.rollback()
                 flash(_('Помилка при збереженні'), 'error')
+            else:
+                _after_requisites_change(trainer, requisites_before, changed)
+                flash(_('Анкету збережено'), 'success')
+                return redirect(url_for('trainer_cabinet.profile'))
 
     return render_template(
         'trainer_cabinet/profile.html', trainer=trainer, form=form,

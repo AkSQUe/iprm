@@ -17,6 +17,11 @@ class TrainerProfile(TimestampMixin, db.Model):
     __tablename__ = 'trainer_profiles'
 
     SENSITIVE_FIELDS = ('fop_iban', 'fop_rnokpp', 'card_number', 'tax_id')
+    # Підписи для адмінських текстів (лист куратору про зміну реквізитів).
+    SENSITIVE_LABELS = {
+        'fop_iban': 'IBAN', 'fop_rnokpp': 'РНОКПП',
+        'card_number': 'Номер картки', 'tax_id': 'Ідентифікаційний код',
+    }
     # Персональні дані для договору: не шифруються, але в адмінці їх видно
     # лише з правом trainers.finance -- без нього поле приховане повністю
     # (маска з 4 символів адреси чи дати нічого корисного не дає).

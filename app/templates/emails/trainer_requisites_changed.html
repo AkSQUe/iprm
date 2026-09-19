@@ -1,0 +1,31 @@
+{% extends "emails/base.html" %}
+{% from "emails/_macros.html" import button_primary, detail_row, spacer %}
+
+{% block title %}Тренер змінив реквізити{% endblock %}
+
+{% block preview_text %}{{ trainer.full_name }} -- {{ fields | join(', ') }}{% endblock %}
+
+{% block content %}
+    <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #17131D; line-height: 1.25;">
+        Тренер змінив реквізити
+    </h1>
+
+    <p class="mobile-text" style="margin: 0 0 24px 0; font-size: 15px; color: #625A6D; line-height: 1.5;">
+        Тренер оновив в анкеті реквізити для гонорару. Якщо зміну не погоджено з тренером, уточніть її до наступної виплати.
+    </p>
+
+    {# Лише назви полів: значення реквізитів пошта не несе, їх видно в
+       адмінці з правом «Тренери: Фінансові реквізити». #}
+    <table role="presentation" style="width: 100%; margin-bottom: 24px; background-color: #F7F4FB; border: 1px solid #E9E4EF; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td style="padding: 20px 24px;">
+                {{ detail_row("Тренер", trainer.full_name) }}
+                {{ detail_row("Змінено", fields | join(', ')) }}
+            </td>
+        </tr>
+    </table>
+
+    {{ button_primary("Відкрити анкету в адмінці", admin_url) }}
+
+    {{ spacer(16) }}
+{% endblock %}

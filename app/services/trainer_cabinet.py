@@ -188,6 +188,17 @@ def faq_html(settings):
     return sanitize_rich_text(html)
 
 
+def requisites_snapshot(profile):
+    """Розшифровані реквізити анкети до правки: {поле: значення}."""
+    return {name: (getattr(profile, name) or '') for name in TrainerProfile.SENSITIVE_FIELDS}
+
+
+def changed_requisites(before, profile):
+    """Назви реквізитів, що змінились відносно знімка, у порядку SENSITIVE_FIELDS."""
+    return [name for name in TrainerProfile.SENSITIVE_FIELDS
+            if (getattr(profile, name) or '') != before.get(name, '')]
+
+
 def get_or_create_profile(trainer):
     if trainer.profile is None:
         trainer.profile = TrainerProfile(trainer_id=trainer.id)
