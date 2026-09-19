@@ -176,3 +176,48 @@ def test_undated_event_stays_last_in_both_directions(two_dates):
         order = [row.instance.id for row in _group_of(groups, course).instances]
         assert order[-1] == tbd.id, (
             f'oldest_first={oldest_first}: TBD опинився не в кінці ({order})')
+
+
+def _course_with_one_registration(start_date):
+    """Окремий курс з однією датою й однією реєстрацією -- для порядку курсів."""
+    course = Course(title=f'Курс {_uid()}', slug=f'grp-{_uid()}', is_active=True)
+    db.session.add(course)
+    db.session.flush()
+    inst = CourseInstance(
+        course_id=course.id, status='published', event_format='offline',
+        start_date=start_date,
+    )
+    db.session.add(inst)
+    db.session.flush()
+    user = User.create_with_password(
+        f'grp-{_uid()}@test.com', 'password123', first_name='П', last_name='К')
+    db.session.flush()
+    db.session.add(EventRegistration(
+        user_id=user.id, instance_id=inst.id, phone='+380670000000',
+        specialty='T', workplace='Клініка', status='confirmed',
+        payment_status='paid', payment_amount=1000,
+    ))
+    db.session.flush()
+    return course
+
+
+def test_courses_order_by_date_and_undated_course_goes_last(app):
+    """Порядок КУРСІВ на сторінці: за датою в обидва боки, а курс, у якого
+    жодна дата не призначена, -- в кінці за будь-якого напрямку.
+
+    Без явного NULLS LAST PostgreSQL при спаданні ставить такий курс ПЕРШИМ,
+    а SQLite -- останнім; тест фіксує спільну для обох поведінку.
+    """
+    now = datetime.now(timezone.utc)
+    near = _course_with_one_registration(now + timedelta(days=10))
+    far = _course_with_one_registration(now + timedelta(days=20))
+    undated = _course_with_one_registration(None)
+    ours = {near.id, far.id, undated.id}
+
+    def _order(oldest_first):
+        groups, _ = registration_groups.grouped_page(
+            _matched(), page=1, per_page=200, oldest_first=oldest_first)
+        return [g.course.id for g in groups if g.course.id in ours]
+
+    assert _order(oldest_first=False) == [far.id, near.id, undated.id]
+    assert _order(oldest_first=True) == [near.id, far.id, undated.id]
