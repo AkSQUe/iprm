@@ -41,11 +41,19 @@ def trainer_questionnaire(trainer_id):
             finance[name] = value if can_finance else TrainerProfile.mask(value)
         for name in TrainerProfile.PRIVATE_FIELDS:
             finance[name] = getattr(profile, name) if can_finance else None
+    proposals = trainer.proposals.all()
+    # Один ProposalReturnForm на ВСІ картки давав однакові name/id textarea
+    # на сторінці (невалідний HTML, submit будь-якої форми ніс те саме
+    # поле) -- префікс за id пропозиції робить кожен екземпляр окремим.
+    return_forms = {
+        pr.id: ProposalReturnForm(prefix=f'p{pr.id}')
+        for pr in proposals if pr.status == TrainerCourseProposal.SUBMITTED
+    }
     return render_template(
         'admin/trainer_questionnaire.html', trainer=trainer, profile=profile,
         finance=finance, can_finance=can_finance,
         can_manage=has_permission(current_user, 'trainers.manage'),
-        proposals=trainer.proposals.all(), return_form=ProposalReturnForm(),
+        proposals=proposals, return_forms=return_forms,
     )
 
 
@@ -86,7 +94,9 @@ def trainer_proposal_unaccept(proposal_id):
 @permission_required('trainers.manage')
 def trainer_proposal_return(proposal_id):
     proposal = _proposal_or_404(proposal_id)
-    form = ProposalReturnForm()
+    # Той самий префікс, яким шаблон рендерив ЦЮ картку (p{proposal_id}):
+    # без нього форма читала б поле іншої пропозиції на тій самій сторінці.
+    form = ProposalReturnForm(prefix=f'p{proposal_id}')
     if not form.validate_on_submit():
         # Помилка поля -- її текст; інше (прострочена форма тощо) -- загальне
         # повідомлення, а не "задовгий" на будь-який збій.

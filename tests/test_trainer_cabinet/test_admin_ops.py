@@ -72,7 +72,7 @@ def _submitted():
 def test_return_too_long_comment_shows_field_error(client):
     _admin(client)
     p = _submitted()
-    client.post(f'/admin/trainers/proposals/{p.id}/return', data={'comment': 'x' * 2001})
+    client.post(f'/admin/trainers/proposals/{p.id}/return', data={f'p{p.id}-comment': 'x' * 2001})
     assert any('2000' in m for m in _flashes(client))
     db.session.expire_all()
     assert p.status == 'submitted'

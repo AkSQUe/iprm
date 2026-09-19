@@ -98,7 +98,7 @@ def test_accept_and_return(client):
     _admin(client)
     trainer = make_trainer(make_user())
     p = _submitted(trainer)
-    client.post(f'/admin/trainers/proposals/{p.id}/return', data={'comment': 'Уточніть'})
+    client.post(f'/admin/trainers/proposals/{p.id}/return', data={f'p{p.id}-comment': 'Уточніть'})
     db.session.expire_all()
     assert p.status == 'draft' and p.curator_comment == 'Уточніть'
     p.status = 'submitted'
@@ -116,7 +116,9 @@ def test_list_indicators(client):
     _submitted(trainer)
     html = client.get('/admin/trainers').get_data(as_text=True)
     assert 'data-trainer-linked="' + str(trainer.id) + '"' in html
-    assert 'data-trainer-new-proposals="' + str(trainer.id) + '">1<' in html
+    assert 'data-trainer-new-proposals="' + str(trainer.id) + '"' in html
+    # C15: бейдж-число без підпису скрінрідер озвучує як голе "1".
+    assert 'aria-label="Нових пропозицій: 1"' in html
 
 
 # --- A1: фінансові й персональні дані лише з trainers.finance ---------------
@@ -363,3 +365,53 @@ def test_accept_and_unaccept_buttons_ask_confirmation(client):
     form_tag = html[html.rindex('<form', 0, html.index(unaccept_action)):html.index(unaccept_action) + 200]
     assert 'data-confirm=' in form_tag
     assert 'Скасувати прийняття' in html
+
+
+# --- C15: доступність форми повернення на доопрацювання --------------------
+
+def _second_trainer_proposal(trainer, title='Другий курс'):
+    p = TrainerCourseProposal(trainer_id=trainer.id, title=title, theses=['a'],
+                              status='submitted')
+    db.session.add(p)
+    db.session.commit()
+    return p
+
+
+def test_two_submitted_proposals_have_distinct_comment_fields(client):
+    """Раніше return_form був ОДИН на всю сторінку -- дві форми повернення
+    рендерили textarea з однаковими name/id (невалідний HTML, і submit
+    будь-якої форми ніс те саме поле)."""
+    _admin(client)
+    trainer = make_trainer(make_user())
+    p1 = _submitted(trainer)
+    p2 = _second_trainer_proposal(trainer)
+    html = client.get(f'/admin/trainers/{trainer.id}/questionnaire').get_data(as_text=True)
+    name1, name2 = f'name="p{p1.id}-comment"', f'name="p{p2.id}-comment"'
+    assert name1 in html and name2 in html
+    assert name1 != name2
+
+
+def test_return_binds_correct_proposal_among_several(client):
+    _admin(client)
+    trainer = make_trainer(make_user())
+    p1 = _submitted(trainer)
+    p2 = _second_trainer_proposal(trainer)
+    client.post(f'/admin/trainers/proposals/{p2.id}/return',
+               data={f'p{p2.id}-comment': 'Доопрацюйте другий'})
+    db.session.expire_all()
+    assert p2.status == 'draft' and p2.curator_comment == 'Доопрацюйте другий'
+    assert p1.status == 'submitted' and p1.curator_comment is None
+
+
+def test_return_textarea_has_visible_label(client):
+    """Скрінрідер має озвучити ЩО за поле -- не просто "текстове поле"."""
+    _admin(client)
+    trainer = make_trainer(make_user())
+    p = _submitted(trainer)
+    html = client.get(f'/admin/trainers/{trainer.id}/questionnaire').get_data(as_text=True)
+    field_id = f'p{p.id}-comment'
+    assert f'for="{field_id}"' in html
+    label_pos = html.index(f'for="{field_id}"')
+    label_tag = html[html.rindex('<label', 0, label_pos):html.index('</label>', label_pos)]
+    assert 'visually-hidden' in label_tag
+    assert 'Коментар для тренера' in label_tag

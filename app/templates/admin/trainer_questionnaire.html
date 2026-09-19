@@ -124,8 +124,12 @@
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm">Прийнято</button>
           </form>
+          {% set return_form = return_forms[pr.id] %}
           <form method="POST" action="{{ url_for('admin.trainer_proposal_return', proposal_id=pr.id) }}" class="admin-control-row">
             {{ return_form.hidden_tag() }}
+            {# Поле народжене скриптом рендера, не власним <label> у розмітці:
+               без нього скрінрідер озвучує лише "текстове поле". #}
+            {{ return_form.comment.label(class="visually-hidden") }}
             {{ return_form.comment(class="form-input", rows=1, placeholder="Що доопрацювати") }}
             <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">Повернути на доопрацювання</button>
           </form>

@@ -112,8 +112,10 @@
               {% if trainer.user_id %}<span class="badge badge--active" data-trainer-linked="{{ trainer.id }}">Акаунт</span>{% endif %}
               {% if trainer.id in complete_profiles %}<span class="badge badge--info">Анкета</span>{% endif %}
               {% if new_proposals.get(trainer.id) %}
+              {# Голе число скрінрідер озвучив би без контексту. #}
               <a href="{{ url_for('admin.trainer_questionnaire', trainer_id=trainer.id) }}"
-                 class="badge badge--pending" data-trainer-new-proposals="{{ trainer.id }}">{{ new_proposals[trainer.id] }}</a>
+                 class="badge badge--pending" data-trainer-new-proposals="{{ trainer.id }}"
+                 aria-label="Нових пропозицій: {{ new_proposals[trainer.id] }}">{{ new_proposals[trainer.id] }}</a>
               {% endif %}
             </div>
           </div>
