@@ -1955,8 +1955,15 @@ form[data-single-submit][data-submitting='true'] input[type='submit'] {
 
 /* ========== FORM SECTIONS (структуровані форми) ========== */
 
+/* Біла поверхня + межа, як і в адмінській картці форми
+   (.admin-with-sidebar .form-section). Раніше тло було --iprm-card-bg без
+   межі: картка трималась лише на різниці тла, а в тёмній темі
+   --iprm-card-bg, --iprm-white і тло body однакові (#1c1c22) -- секції форми
+   реєстрації й анкет зливались зі сторінкою. Тіні немає свідомо: форма --
+   площина, яку заповнюють, а не картка, що плаває над секцією. */
 .form-section {
-  background: var(--iprm-card-bg);
+  background: var(--iprm-white);
+  border: 1px solid var(--iprm-border);
   border-radius: var(--iprm-radius);
   padding: 28px;
 }
@@ -2003,10 +2010,13 @@ form[data-single-submit][data-submitting='true'] input[type='submit'] {
   font-family: var(--iprm-font);
   border: 1px solid var(--iprm-border);
   border-radius: var(--iprm-radius-sm);
-  background: var(--iprm-white);
   color: var(--iprm-text);
   /* transition прибрано: база дає 0.2s cubic-bezier, а тут стояло 0.25s --
-     той самий компонент мав три різні криві на трьох шарах. */
+     той самий компонент мав три різні криві на трьох шарах.
+     Тло теж не задаємо: поле бере базове --iprm-card-bg. Біле тло мало сенс,
+     поки сама картка була --iprm-card-bg; на білій картці біле поле
+     трималось лише межею (1.25). До того ж скорочення `background` скидало
+     стрілку select.form-input -- див. коментар до бази нижче. */
 }
 
 /* Кільце фокуса тут БУЛО і дослівно повторювало базове
@@ -2082,6 +2092,22 @@ form[data-single-submit][data-submitting='true'] input[type='submit'] {
 .form-input--sm {
   padding: 6px 12px;
   font-size: 13px;
+}
+
+/* Кнопка вибору файлу всередині .form-input[type=file]. Без цього правила
+   браузер малював свою сіру кнопку з рамкою -- єдиний елемент форми, що не
+   мав нічого спільного з рештою. Пара кольорів та сама, що в eyebrow
+   (--iprm-nav-active на --iprm-accent-light): це дія, але вторинна. */
+.form-input::file-selector-button {
+  margin-right: 12px;
+  padding: 4px 14px;
+  font: inherit;
+  font-weight: 600;
+  color: var(--iprm-nav-active);
+  background: var(--iprm-accent-light);
+  border: 0;
+  border-radius: var(--iprm-radius-pill);
+  cursor: pointer;
 }
 
 /* Багаторядкове поле тягнеться лише ВНИЗ -- одне оголошення на весь сайт.

@@ -736,12 +736,17 @@ html {
 
 /* ========== EMPTY STATE ========== */
 
+/* Пунктирна межа -- не декор: у тёмній темі --iprm-card-bg дорівнює тлу
+   сторінки й поверхні картки (#1c1c22), і плашка без межі зникала, лишаючи
+   текст висіти в порожнечі. Пунктир, а не суцільна, -- бо це місце, де
+   чогось ще немає, а не картка. */
 .apple-page .iprm-empty-state {
   text-align: center;
   padding: 80px 24px;
   font-size: 17px;
   color: var(--iprm-text-light);
   background: var(--iprm-card-bg);
+  border: 1px dashed var(--iprm-border-strong);
   border-radius: var(--iprm-radius);
 }
 
