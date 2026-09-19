@@ -21,9 +21,10 @@
       <h1 class="admin-hero__title">Налаштування сайту</h1>
       <p class="admin-hero__subtitle">Реквізити, контакти, інтеграції та поведінка сайту</p>
     </div>
+    <div class="admin-hero__actions">
+      <a href="{{ url_for('admin.settings_trainers') }}" class="btn-admin btn-admin--secondary">Для тренерів: договір і часті питання</a>
+    </div>
   </div>
-
-  <p><a href="{{ url_for('admin.settings_trainers') }}">Для тренерів: договір і часті питання</a></p>
 
   {% include 'partials/flash_messages.html' %}
 

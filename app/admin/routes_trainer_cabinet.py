@@ -114,8 +114,11 @@ def settings_trainers():
 
         # Якщо збережений текст дослівно збігається з дефолтом -- зберігаємо
         # порожній рядок, щоб майбутні правки дефолту в коді доходили до сайту.
+        # Браузер нормалізує переноси рядків у textarea в \r\n, тоді як
+        # DEFAULT_TRAINER_FAQ_HTML написаний з \n -- без нормалізації
+        # порівняння ніколи не збігалось би при реальному сабміті форми.
         from app.data.trainer_faq import DEFAULT_TRAINER_FAQ_HTML
-        faq = (form.faq_html.data or '').strip()
+        faq = (form.faq_html.data or '').strip().replace('\r\n', '\n').replace('\r', '\n')
         site.trainer_faq_html = '' if faq == DEFAULT_TRAINER_FAQ_HTML.strip() else faq
         site.trainer_contract_email = (form.contract_email.data or '').strip().lower()
         db.session.commit()

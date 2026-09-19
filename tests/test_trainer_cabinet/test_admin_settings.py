@@ -1,5 +1,6 @@
 import io
 
+from app.data.trainer_faq import DEFAULT_TRAINER_FAQ_HTML
 from app.extensions import db
 from app.models.site_settings import SiteSettings
 from tests.support.rbac import make_super_admin
@@ -56,6 +57,20 @@ def test_remove_contract(client):
         'faq_html': '', 'contract_email': '', 'remove_contract': 'y'})
     db.session.refresh(s)
     assert not s.has_trainer_contract and s.trainer_contract_pdf is None
+
+
+def test_default_faq_with_crlf_saves_as_empty(client):
+    """Браузер нормалізує переноси рядків textarea у \\r\\n -- порівняння з
+    дефолтом (де \\n) не мусить через це ламатись і зберігати повний текст
+    замість ''."""
+    _admin(client)
+    client.post('/admin/settings/trainers', data={
+        'faq_html': DEFAULT_TRAINER_FAQ_HTML.replace('\n', '\r\n'),
+        'contract_email': '',
+    })
+    s = SiteSettings.get()
+    db.session.refresh(s)
+    assert s.trainer_faq_html == ''
 
 
 def test_requires_settings_permission(client):
