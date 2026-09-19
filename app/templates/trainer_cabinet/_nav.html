@@ -1,8 +1,10 @@
 {# Навігація кабінету тренера. active: 'profile' | 'contract' | 'faq' | None #}
 <nav class="account-grid trainer-nav" aria-label="{{ _('Розділи кабінету тренера') }}">
-  <a href="{{ url_for('trainer_cabinet.profile') }}" class="account-card account-card--link{% if active == 'profile' %} is-active{% endif %}">
+  {# Незаповнена анкета позначається так само, як незаповнені дані для
+     сертифіката в особистому кабінеті: той самий бейдж і рамка картки. #}
+  <a href="{{ url_for('trainer_cabinet.profile') }}" class="account-card account-card--link{% if not profile_complete %} account-card--attention{% endif %}{% if active == 'profile' %} is-active{% endif %}">
     <h3 class="iprm-block-title">{{ _('Анкета тренера') }}
-      {% if not profile_complete %}<span class="badge badge--pending">{{ _('Не заповнено') }}</span>{% endif %}
+      {% if not profile_complete %}<span class="badge badge--danger">{{ _('Не заповнено') }}</span>{% endif %}
     </h3>
     <p class="account-card__text">{{ _('Контакти, реквізити ФОП, дані для договору та інформація про ваші курси') }}</p>
   </a>

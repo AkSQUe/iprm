@@ -214,11 +214,23 @@
   margin-bottom: 32px;
 }
 
+/* Рецепт картки еталона (як .apple-feature-card): межа + майже невидима
+   тінь. Без межі картка трималась лише на різниці тла -- на білій секції
+   вона зникала, а в тёмній темі --iprm-white і --iprm-card-bg однакові
+   (#1c1c22), тож зникала на будь-якій. */
 .account-card {
   background: var(--iprm-white);
+  border: 1px solid var(--iprm-border);
   border-radius: var(--iprm-radius);
+  box-shadow: var(--iprm-shadow-soft);
   padding: 32px;
   transition: transform 0.3s var(--ease-interact), box-shadow 0.3s var(--ease-interact);
+}
+
+/* Відступ під карткою тримає сама картка: заголовок чи абзац останнім
+   рядком не мусить додавати свій margin-bottom до падінга. */
+.account-card > :last-child {
+  margin-bottom: 0;
 }
 
 .account-card:hover {

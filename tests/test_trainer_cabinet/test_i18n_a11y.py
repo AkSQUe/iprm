@@ -38,7 +38,9 @@ def test_dashboard_uses_translated_content(client):
     db.session.commit()
     login(client, user)
     html = client.get('/en/trainer/').get_data(as_text=True)
-    assert 'Ivan Ivanenko' in html and 'Іваненко Іван' not in html
+    # Останнє слово імені в h1 -- градієнтний span, тож ім'я розірване тегом.
+    assert 'Ivan <span class="apple-gradient-text">Ivanenko</span>' in html
+    assert 'Іваненко' not in html
     assert 'Test City EN' in html
     # Назва і в заході, і в "Мої курси" -- обидві перекладені.
     assert html.count('Acid-base balance') == 2

@@ -1,25 +1,57 @@
-/* Кабінет тренера (/trainer/): сітка заходів і лічильників. Декор -- з
-   account.css, apple-pages.css (.iprm-stat-card) і common.css; тут лише
+/* Кабінет тренера (/trainer/): сітка заходів, лічильників і курсів. Декор --
+   з account.css, apple-pages.css (.iprm-stat-card) і common.css; тут лише
    розташування. У проєкті немає токенів --space-*, тому відступи -- прямі
    px, як і в інших page-*.css. */
+
+/* Навігація живе у власній компактній секції: нижній відступ .account-grid
+   (32px) доклався б до падінга секції. */
 .trainer-nav {
-  margin-top: 24px;
+  margin-bottom: 0;
+}
+
+/* Розділів рівно три: auto-fit на 280px між 720 і ~960 давав 2 + 1 із
+   сиротою в другому ряду. */
+@media (min-width: 721px) {
+  .trainer-nav {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 .trainer-events,
 .trainer-courses {
   list-style: none;
-  margin: 0;
   padding: 0;
+}
+
+.trainer-events {
   display: grid;
   gap: 16px;
+  margin: 0;
+}
+
+/* Картка курсу -- посилання всередині <li>: grid на пункті розтягує її на
+   висоту рядка, інакше короткі назви давали картки різної висоти. */
+.trainer-courses {
+  margin-bottom: 0;
+}
+
+.trainer-courses > li {
+  display: grid;
 }
 
 .trainer-events__item {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 16px;
+  gap: 16px 24px;
   align-items: center;
+}
+
+.trainer-events__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-bottom: 8px;
 }
 
 /* .apple-page -- не декор, а вага селектора: лічильники сидять у
@@ -30,21 +62,50 @@
   text-align: center;
 }
 
-@media (max-width: 720px) {
+/* Стек з 900, а не з 720: п'ять лічильників по 96px займають ~530px, і на
+   760 під назву заходу лишалось ~120px. */
+@media (max-width: 900px) {
   .trainer-events__item {
     grid-template-columns: 1fr;
   }
 
   .apple-page .trainer-events__counts {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+/* Нижче ~820 п'ять у ряд уже не вміщають найдовший підпис. Шість треків
+   дають 3 + 2 без порожньої клітинки: перші три по два треки, останні два
+   -- по три. */
+@media (max-width: 820px) {
+  .apple-page .trainer-events__counts {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .apple-page .trainer-events__counts > * {
+    grid-column: span 2;
+  }
+
+  .apple-page .trainer-events__counts > :nth-last-child(-n + 2) {
+    grid-column: span 3;
   }
 }
 
 /* Вузькі телефони: у три колонки картка вужча за найдовший підпис
    ("Зарегистрировано" в ru, "Зареєстровано" в uk) -- текст вилазив за
-   межі картки. Перевірено на 390/440/480 px у uk/ru/en. */
+   межі картки. Перевірено на 390/440/480 px у uk/ru/en. П'ятий лічильник
+   (місткість) займає весь рядок, щоб не висіти сиротою в половині. */
 @media (max-width: 520px) {
   .apple-page .trainer-events__counts {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .apple-page .trainer-events__counts > *,
+  .apple-page .trainer-events__counts > :nth-last-child(-n + 2) {
+    grid-column: auto;
+  }
+
+  .apple-page .trainer-events__counts > :last-child {
+    grid-column: 1 / -1;
   }
 }

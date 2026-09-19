@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from 'partials/_location_badge.html' import location_badge %}
 
 {% block title %}{{ _('Кабінет тренера | ІПРМ') }}{% endblock %}
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
@@ -10,30 +11,42 @@
 
 {% block content %}
 <div class="apple-page">
-  <section class="iprm-section">
+  {# Заголовок -- як у особистому кабінеті: ім'я в h1, останнє слово
+     градієнтом; назва розділу -- у плашці над ним. #}
+  {% set name_parts = trainer.t('full_name').rsplit(' ', 1) %}
+  <div class="iprm-hero-wrap">
+    <section class="iprm-hero" aria-labelledby="trainer-home-title">
+      <div class="iprm-hero__content">
+        <span class="iprm-eyebrow">{{ _('Кабінет тренера') }}</span>
+        <h1 id="trainer-home-title" class="iprm-hero__title">
+          {%- if name_parts | length > 1 %}{{ name_parts[0] }} {% endif -%}
+          <span class="apple-gradient-text">{{ name_parts[-1] }}</span>
+        </h1>
+      </div>
+    </section>
+  </div>
+
+  <section class="iprm-section iprm-section--compact apple-section-gray">
     <div class="iprm-section__inner">
-      <h1 class="iprm-section__title">{{ _('Кабінет тренера') }}</h1>
-      <p class="account-card__text">{{ trainer.t('full_name') }}</p>
       {% set active = None %}
       {% include 'trainer_cabinet/_nav.html' %}
     </div>
   </section>
 
-  <section class="iprm-section apple-section-gray">
+  <section class="iprm-section" aria-labelledby="trainer-events-title">
     <div class="iprm-section__inner">
-      <h2 class="iprm-section__title">{{ _('Найближчі заходи') }}</h2>
+      <h2 id="trainer-events-title" class="iprm-section__title">{{ _('Найближчі заходи') }}</h2>
       {% if upcoming %}
       <ul class="trainer-events">
         {% for inst in upcoming %}
         {% set c = counts.get(inst.id, {'total': 0, 'paid': 0, 'online': 0, 'offline': 0}) %}
         <li class="account-card trainer-events__item">
           <div class="trainer-events__main">
-            <p class="account-card__text">
-              {# Місце може бути невідоме (очний захід без міста й адреси) --
-                 тоді без розділювача, інакше рядок закінчувався "·". #}
-              {% set place = _('Онлайн') if inst.event_format == 'online' else (inst.city.t('name') if inst.city else (inst.location | localize_location or '')) %}
-              {% if inst.start_date %}{{ inst.start_date | kyiv('%d.%m.%Y %H:%M') }}{% else %}{{ _('Дата уточнюється') }}{% endif %}
-              {% if place %}&middot; {{ place }}{% endif %}
+            {# Місце може бути невідоме (очний захід без міста й адреси) --
+               тоді бейдж не виводиться, лишається тільки дата. #}
+            <p class="account-card__text trainer-events__meta">
+              {{ location_badge(inst.event_format, inst.city.t('name') if inst.city else inst.location) }}
+              <span>{% if inst.start_date %}{{ inst.start_date | kyiv('%d.%m.%Y %H:%M') }}{% else %}{{ _('Дата уточнюється') }}{% endif %}</span>
             </p>
             <h3 class="iprm-block-title">
               <a href="{{ url_for('courses.course_by_slug', slug=inst.course.slug) }}" class="account-course__link">{{ inst.effective_title }}</a>
@@ -73,12 +86,16 @@
   </section>
 
   {% if courses %}
-  <section class="iprm-section">
+  <section class="iprm-section apple-section-gray" aria-labelledby="trainer-courses-title">
     <div class="iprm-section__inner">
-      <h2 class="iprm-section__title">{{ _('Мої курси') }}</h2>
-      <ul class="trainer-courses">
+      <h2 id="trainer-courses-title" class="iprm-section__title">{{ _('Мої курси') }}</h2>
+      <ul class="account-grid trainer-courses">
         {% for course in courses %}
-        <li><a href="{{ url_for('courses.course_by_slug', slug=course.slug) }}" class="account-course__link">{{ course.t('title') }}</a></li>
+        <li>
+          <a href="{{ url_for('courses.course_by_slug', slug=course.slug) }}" class="account-card account-card--link">
+            <h3 class="iprm-block-title">{{ course.t('title') }}</h3>
+          </a>
+        </li>
         {% endfor %}
       </ul>
     </div>
