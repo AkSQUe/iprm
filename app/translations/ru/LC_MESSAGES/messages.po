@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: IPRM VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-09-19 20:43+0300\n"
+"POT-Creation-Date: 2026-09-19 20:51+0300\n"
 "PO-Revision-Date: 2026-07-24 15:52+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ru\n"
@@ -6347,6 +6347,9 @@ msgstr "Сохранить черновик"
 
 msgid "Надіслати куратору"
 msgstr "Отправить куратору"
+
+msgid "Видалити чернетку? Відновити її буде неможливо."
+msgstr "Удалить черновик? Восстановить его будет невозможно."
 
 msgid "Видалити чернетку"
 msgstr "Удалить черновик"

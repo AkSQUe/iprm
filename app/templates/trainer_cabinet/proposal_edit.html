@@ -57,7 +57,10 @@
 
   {% if proposal %}
   <div class="trainer-proposal__actions">
-    <form method="POST" action="{{ url_for('trainer_cabinet.proposal_delete', proposal_id=proposal.id) }}" data-single-submit>
+    {# Незворотно -- через спільний діалог confirm-action.js (base.html). #}
+    <form method="POST" action="{{ url_for('trainer_cabinet.proposal_delete', proposal_id=proposal.id) }}" data-single-submit
+          data-confirm="{{ _('Видалити чернетку? Відновити її буде неможливо.') }}"
+          data-confirm-ok="{{ _('Видалити чернетку') }}" data-confirm-danger>
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button type="submit" class="apple-btn apple-btn--secondary">{{ _('Видалити чернетку') }}</button>
     </form>

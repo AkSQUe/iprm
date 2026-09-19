@@ -697,7 +697,7 @@ def create_app(config_name=None):
     # (кабінет, адмінка, форми реєстрації на захід, оплати). Для них лишається
     # no-store.
     PRIVATE_HTML_BLUEPRINTS = frozenset({
-        'auth', 'admin', 'registration', 'payments', 'quiz',
+        'auth', 'admin', 'registration', 'payments', 'quiz', 'trainer_cabinet',
     })
 
     # Окремі приватні сторінки в публічному блупринті. Каталог онлайн-курсів

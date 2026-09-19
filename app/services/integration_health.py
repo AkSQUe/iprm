@@ -390,6 +390,27 @@ def clear_cache():
     _CACHE.clear()
 
 
+def _warm_settings(settings):
+    """Довантажити в поточному потоці всі НЕвідкладені колонки SiteSettings.
+
+    Відкладені (deferred) колонки пропускаємо: це великі бінарні поля, які
+    жодному health-чеку не потрібні (PDF договору тренера -- до 10 МБ), а
+    чеки звертаються лише до звичайних колонок. Раніше тут вантажилось
+    "усе, що не завантажене", і кожне відкриття сторінки інтеграцій тягло
+    з бази цілий PDF.
+    """
+    try:
+        state = sa_inspect(settings)
+        column_attrs = state.mapper.column_attrs
+        for attr in list(state.unloaded):
+            prop = column_attrs.get(attr)
+            if prop is not None and prop.deferred:
+                continue
+            getattr(settings, attr, None)
+    except Exception:
+        logger.exception('Failed to warm SiteSettings before health checks')
+
+
 def run_all_checks(settings, use_cache=True, base_url=None):
     """Запускає всі checks parallel у thread-pool. Повертає dict
     {provider_key: {'label': ..., 'status': ..., 'detail': ..., 'checked_at': ...}}.
@@ -420,14 +441,7 @@ def run_all_checks(settings, use_cache=True, base_url=None):
     # commit'у expired УСІ), і перше ж звертання з чужого потоку піде
     # довантажувати його через спільну сесію. Відмова була б рідкою,
     # плавучою і невідтворюваною -- найгірший різновид.
-    #
-    # SiteSettings -- один рядок, тож повне довантаження тут дешеве.
-    try:
-        state = sa_inspect(settings)
-        for attr in list(state.unloaded):
-            getattr(settings, attr, None)
-    except Exception:
-        logger.exception('Failed to warm SiteSettings before health checks')
+    _warm_settings(settings)
 
     def _worker(provider):
         with app.app_context():

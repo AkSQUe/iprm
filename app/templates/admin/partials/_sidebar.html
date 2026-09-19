@@ -56,7 +56,7 @@
       </a>
       {% endif %}
       {% if can('trainers.view') %}
-      <a href="{{ url_for('admin.trainers_list') }}" class="admin-sidebar__link{% if ep in ('admin.trainers_list', 'admin.trainer_create', 'admin.trainer_edit', 'admin.trainer_delete') %} admin-sidebar__link--active{% endif %}">
+      <a href="{{ url_for('admin.trainers_list') }}" class="admin-sidebar__link{% if ep in ('admin.trainers_list', 'admin.trainer_create', 'admin.trainer_edit', 'admin.trainer_delete', 'admin.trainer_questionnaire') %} admin-sidebar__link--active{% endif %}">
         {{ icon('co_present') }}
         <span class="admin-sidebar__text">Тренери</span>
       </a>
@@ -290,7 +290,7 @@
       </a>
       {% endif %}
       {% if can('settings.manage') %}
-      <a href="{{ url_for('admin.settings') }}" class="admin-sidebar__link{% if ep == 'admin.settings' %} admin-sidebar__link--active{% endif %}">
+      <a href="{{ url_for('admin.settings') }}" class="admin-sidebar__link{% if ep in ('admin.settings', 'admin.settings_trainers') %} admin-sidebar__link--active{% endif %}">
         {{ icon('settings') }}
         <span class="admin-sidebar__text">Налаштування</span>
       </a>

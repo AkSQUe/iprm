@@ -109,10 +109,14 @@ def contract_download():
     data = settings.trainer_contract_pdf if settings.has_trainer_contract else None
     if not data:
         abort(404)
-    return send_file(
+    response = send_file(
         io.BytesIO(data), mimetype='application/pdf', as_attachment=True,
         download_name=settings.trainer_contract_filename or 'contract.pdf',
     )
+    # Документ лише для тренерів: кеш-політика HTML (after_request) на PDF не
+    # діє, тож забороняємо зберігати його проміжним і браузерним кешам тут.
+    response.headers['Cache-Control'] = 'no-store, private'
+    return response
 
 
 @trainer_cabinet_bp.route('/faq')

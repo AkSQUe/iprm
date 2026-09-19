@@ -1333,7 +1333,8 @@ class RoleForm(FlaskForm):
 
 class ProposalReturnForm(FlaskForm):
     """Повернення пропозиції курсу тренеру на доопрацювання -- з коментарем куратора."""
-    comment = TextAreaField('Коментар для тренера', validators=[Optional(), Length(max=2000)])
+    comment = TextAreaField('Коментар для тренера', validators=[
+        Optional(), Length(max=2000, message='Коментар задовгий: не більше 2000 символів')])
 
 
 class TrainerSettingsForm(FlaskForm):

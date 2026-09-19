@@ -66,7 +66,10 @@ def trainer_proposal_return(proposal_id):
     proposal = _proposal_or_404(proposal_id)
     form = ProposalReturnForm()
     if not form.validate_on_submit():
-        flash('Коментар задовгий', 'error')
+        # Помилка поля -- її текст; інше (прострочена форма тощо) -- загальне
+        # повідомлення, а не "задовгий" на будь-який збій.
+        errors = form.comment.errors
+        flash(errors[0] if errors else 'Не вдалося повернути пропозицію: оновіть сторінку й спробуйте ще раз', 'error')
     else:
         try:
             svc.return_proposal(proposal, form.comment.data)
