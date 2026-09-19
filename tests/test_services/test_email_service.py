@@ -239,3 +239,17 @@ def test_dedup_skips_same_recipient_trigger(enabled_mail):
         to='dd@example.com', subject='s', template_name='test', trigger='registration',
     )
     assert second is None
+
+
+def test_dedup_does_not_merge_distinct_idempotency_keys(enabled_mail):
+    """Ключ ідемпотентності точно розрізняє події: два РІЗНІ ключі на ту саму
+    адресу й тригер -- два листи, 60-секундне вікно їх не зливає."""
+    first = EmailService.send_email(
+        to='dk@example.com', subject='s', template_name='test',
+        trigger='registration', idempotency_key='event-a',
+    )
+    second = EmailService.send_email(
+        to='dk@example.com', subject='s', template_name='test',
+        trigger='registration', idempotency_key='event-b',
+    )
+    assert first is not None and second is not None

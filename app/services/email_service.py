@@ -126,6 +126,17 @@ def _sender_address(sender):
     return sender
 
 
+def _trainer_proposal_key(proposal):
+    """Ключ ідемпотентності листа про пропозицію: одне надсилання -- один лист.
+
+    submitted_at у ключі відрізняє повторне надсилання після повернення на
+    доопрацювання (нова подія) від повторного виклику для того самого.
+    """
+    submitted = proposal.submitted_at
+    stamp = int(submitted.timestamp()) if submitted else 0
+    return f'trainer-proposal-{proposal.id}-{stamp}'
+
+
 def _open_smtp(smtp_cfg):
     """Відкрити автентифіковане SMTP-з'єднання за конфігом."""
     host_cls = smtplib.SMTP_SSL if smtp_cfg['use_ssl'] else smtplib.SMTP
@@ -170,9 +181,15 @@ class EmailService:
         return recent_failures >= CIRCUIT_BREAKER_THRESHOLD
 
     @staticmethod
-    def _check_duplicate(to, trigger, registration_id):
-        """Return True if a duplicate email was sent/queued recently."""
-        if not trigger or trigger == 'test':
+    def _check_duplicate(to, trigger, registration_id, idempotency_key=None):
+        """Return True if a duplicate email was sent/queued recently.
+
+        З ключем ідемпотентності вікно не застосовується: ключ точно
+        визначає подію, і справжній дубль відсіє _idempotency_seen. Інакше
+        дві різні події на ту саму адресу й тригер (дві пропозиції курсу,
+        два реферальні бонуси) за 60 с злилися б в один лист.
+        """
+        if not trigger or trigger == 'test' or idempotency_key:
             return False
         cutoff = datetime.now(timezone.utc) - timedelta(seconds=DEDUP_WINDOW_SECONDS)
         query = EmailLog.query.filter(
@@ -323,7 +340,7 @@ class EmailService:
             db.session.commit()
             return log_entry
 
-        if EmailService._check_duplicate(to, trigger, registration_id):
+        if EmailService._check_duplicate(to, trigger, registration_id, idempotency_key):
             logger.info('Dedup: skipping %s -> %s (trigger=%s reg=%s)',
                         template_name, to, trigger, registration_id)
             return None
@@ -1517,8 +1534,10 @@ class EmailService:
     def send_trainer_proposal_notification(proposal):
         """Тренер надіслав пропозицію курсу -- лист на email для договорів.
 
-        Тригер 'course_request': семантично це теж заявка на навчання, а
-        нового значення CHECK ck_email_logs_trigger не має.
+        Власний тригер 'trainer_proposal' і ключ ідемпотентності на
+        пропозицію + момент надсилання: дві різні пропозиції не зливаються в
+        60-секундному dedup, повторний виклик для того самого надсилання
+        листа не дублює, а повторне надсилання після повернення -- нова подія.
         """
         from app.models.site_settings import SiteSettings
         from app.services import trainer_cabinet
@@ -1537,7 +1556,8 @@ class EmailService:
                 'trainer': proposal.trainer,
                 'admin_url': f'{base}{path}' if base else path,
             },
-            trigger='course_request',
+            trigger='trainer_proposal',
+            idempotency_key=_trainer_proposal_key(proposal),
             lang='uk',
         )
 

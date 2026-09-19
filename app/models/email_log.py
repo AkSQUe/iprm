@@ -60,7 +60,8 @@ class EmailLog(TimestampMixin, db.Model):
             "trigger IN ('registration', 'payment', 'reminder', 'status_change', "
             "'email_confirm', 'course_request', 'certificate', 'blog_comment', "
             "'password_reset', 'backup_failure', 'backup_report', 'materials', "
-            "'referral', 'meta_lead', 'transfer', 'quiz', 'test')",
+            "'referral', 'meta_lead', 'transfer', 'quiz', 'trainer_proposal', "
+            "'test')",
             name='ck_email_logs_trigger',
         ),
         db.Index('ix_email_logs_created_at', 'created_at'),
@@ -101,6 +102,10 @@ class EmailLog(TimestampMixin, db.Model):
         # Лист «тестування відкрито». Транзакційний, а не розсилка: без тесту
         # й анкети сертифіката не буде, тож в OPTIONAL_TRIGGERS його немає.
         ('quiz', 'Тестування після заходу'),
+        # Лист куратору про пропозицію курсу з кабінету тренера. Окремо від
+        # 'course_request': dedup ключується на адресу+тригер, і спільний
+        # тригер з заявками на курси й B2B ковтав лист протягом 60 с.
+        ('trainer_proposal', 'Пропозиція курсу від тренера'),
         ('test', 'Тест'),
     ]
 
