@@ -1544,6 +1544,10 @@ class EmailService:
         settings = SiteSettings.get()
         to = trainer_cabinet.contract_email(settings)
         if not to:
+            # Ні адреси для договорів, ні email сайту: лист нікуди не піде, і
+            # без запису в лозі пропозиція тихо лежала б без уваги куратора.
+            logger.warning('Trainer proposal %s: no recipient (trainer_contract_email '
+                           'and site email are empty), curator not notified', proposal.id)
             return None
         base = (settings.website_url or '').rstrip('/')
         path = f'/admin/trainers/{proposal.trainer_id}/questionnaire#proposal-{proposal.id}'

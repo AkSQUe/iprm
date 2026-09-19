@@ -25,6 +25,14 @@
 
   {% include 'partials/flash_messages.html' %}
 
+  {# Порожні обидві адреси: листи про пропозиції не йдуть нікуди, а тренер
+     не знає, куди надсилати договір. Попереджаємо тут, де це лікується. #}
+  {% if not (site.trainer_contract_email or '').strip() and not (site.email or '').strip() %}
+  <div class="alert alert--warning" role="alert" data-contract-email-missing>
+    Не вказано ні email для договорів, ні email сайту (Налаштування сайту, «Контактна інформація»). Листи про пропозиції курсу не надсилаються, а тренерам показано «адресу уточніть у куратора».
+  </div>
+  {% endif %}
+
   <form method="POST" class="admin-form" enctype="multipart/form-data">
     {{ form.hidden_tag() }}
     {% include 'admin/partials/_form_errors.html' %}

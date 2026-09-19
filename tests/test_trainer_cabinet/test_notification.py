@@ -132,3 +132,20 @@ def test_resubmission_after_return_sends_again(smtp_stage):
     db.session.commit()
     EmailService.send_trainer_proposal_notification(p)
     assert len(smtp_stage) == 2
+
+
+# --- B9: немає куди слати -- попередження в лог, а не тиша ------------------
+
+def test_no_recipient_logs_warning(app, caplog):
+    import logging
+    s = SiteSettings.get()
+    s.trainer_contract_email = ''
+    s.email = ''
+    db.session.commit()
+    p = _draft(make_trainer(make_user()))
+    with mock.patch.object(EmailService, 'send_email') as send, \
+            caplog.at_level(logging.WARNING, logger='app.services.email_service'):
+        assert EmailService.send_trainer_proposal_notification(p) is None
+    send.assert_not_called()
+    assert any('no recipient' in r.getMessage() for r in caplog.records
+               if r.levelno == logging.WARNING)

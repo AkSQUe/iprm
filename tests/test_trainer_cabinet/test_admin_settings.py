@@ -79,3 +79,25 @@ def test_requires_settings_permission(client):
     db.session.commit()
     login(client, viewer)
     assert client.get('/admin/settings/trainers').status_code == 403
+
+
+# --- B9: немає жодної адреси для договорів ---------------------------------------
+
+def test_warning_when_no_contract_address(client):
+    _admin(client)
+    s = SiteSettings.get()
+    s.trainer_contract_email = ''
+    s.email = ''
+    db.session.commit()
+    html = client.get('/admin/settings/trainers').get_data(as_text=True)
+    assert 'data-contract-email-missing' in html
+
+
+def test_no_warning_when_site_email_is_fallback(client):
+    _admin(client)
+    s = SiteSettings.get()
+    s.trainer_contract_email = ''
+    s.email = 'office@test.com'
+    db.session.commit()
+    html = client.get('/admin/settings/trainers').get_data(as_text=True)
+    assert 'data-contract-email-missing' not in html

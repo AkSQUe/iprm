@@ -34,7 +34,13 @@
         <li class="iprm-steps__item">
           <span class="iprm-steps__number" aria-hidden="true">3</span>
           <h2 class="iprm-steps__heading">{{ _('Надішліть файл') }}</h2>
+          {# Без жодної адреси (ні окремої для договорів, ні email сайту)
+             обіцянка «надішліть на ...» обривалась би на порожньому місці. #}
+          {% if contract_email %}
           <p class="iprm-steps__text">{% trans email=contract_email %}Додайте своє прізвище в назву файлу та надішліть договір на {{ email }}.{% endtrans %}</p>
+          {% else %}
+          <p class="iprm-steps__text">{{ _('Додайте своє прізвище в назву файлу. Адресу для надсилання уточніть у куратора.') }}</p>
+          {% endif %}
         </li>
         <li class="iprm-steps__item">
           <span class="iprm-steps__number" aria-hidden="true">4</span>

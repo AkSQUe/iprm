@@ -48,3 +48,28 @@ def test_contract_shows_email(client):
     db.session.commit()
     _trainer_login(client)
     assert 'curator@test.com' in client.get('/trainer/contract').get_data(as_text=True)
+
+
+# --- B9: без адреси не обіцяємо «надішліть на ...» -----------------------------
+
+def test_contract_without_any_email_shows_neutral_text(client):
+    s = SiteSettings.get()
+    s.trainer_contract_email = ''
+    s.email = ''
+    db.session.commit()
+    _trainer_login(client)
+    html = client.get('/trainer/contract').get_data(as_text=True)
+    assert 'надішліть договір на' not in html
+    assert 'Адресу для надсилання уточніть у куратора' in html
+
+
+def test_faq_without_any_email_shows_neutral_text(client):
+    s = SiteSettings.get()
+    s.trainer_contract_email = ''
+    s.email = ''
+    s.trainer_faq_html = ''
+    db.session.commit()
+    _trainer_login(client)
+    html = client.get('/trainer/faq').get_data(as_text=True)
+    assert 'на адресу .' not in html and 'на адресу  ' not in html
+    assert 'уточніть у куратора' in html

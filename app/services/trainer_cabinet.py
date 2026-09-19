@@ -4,6 +4,7 @@
 Переходи статусів пропозиції курсу -- тільки тут; функції змінюють об'єкт
 і не комітять (commit і лист робить маршрут).
 """
+import re
 from datetime import datetime, timezone
 
 from markupsafe import escape
@@ -167,9 +168,23 @@ def faq_source(settings):
     return (settings.trainer_faq_html or '').strip() or DEFAULT_TRAINER_FAQ_HTML
 
 
+# Коли адреси немає зовсім, «надішліть на адресу {email}» перетворювалось на
+# «надішліть на адресу .». Текст FAQ -- український контент з адмінки, тож і
+# підстановка українська: перекладений шматок посеред українського абзацу
+# читався б гірше за будь-яку з мов.
+_FAQ_EMAIL_PHRASE = re.compile(r'на\s+адресу\s*\{email\}')
+_FAQ_NO_EMAIL_PHRASE = 'на адресу, яку уточніть у куратора'
+_FAQ_NO_EMAIL = 'адресу уточніть у куратора'
+
+
 def faq_html(settings):
     """Безпечний HTML FAQ з підставленим email для договорів."""
-    html = faq_source(settings).replace('{email}', str(escape(contract_email(settings))))
+    email = contract_email(settings)
+    html = faq_source(settings)
+    if email:
+        html = html.replace('{email}', str(escape(email)))
+    else:
+        html = _FAQ_EMAIL_PHRASE.sub(_FAQ_NO_EMAIL_PHRASE, html).replace('{email}', _FAQ_NO_EMAIL)
     return sanitize_rich_text(html)
 
 
