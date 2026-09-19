@@ -1774,7 +1774,10 @@ select.badge-select:disabled {
   border-bottom: 1px solid var(--iprm-border);
 }
 
-/* ========== STEPS (кроки: сертифікат, процес пацієнта) ========== */
+/* ========== STEPS (кроки: сертифікат, процес пацієнта) ==========
+
+   Порядок кроків -- зміст, тож розмітка може бути й <ol>: маркери й
+   відступ списку скинуто тут, щоб номер малював лише .iprm-steps__number. */
 
 .iprm-steps {
   display: grid;
@@ -1782,6 +1785,8 @@ select.badge-select:disabled {
   gap: 32px;
   max-width: 1000px;
   margin: 0 auto;
+  padding: 0;
+  list-style: none;
   position: relative;
 }
 
@@ -1810,7 +1815,9 @@ select.badge-select:disabled {
   width: 64px;
   height: 64px;
   border-radius: 50%;
-  background: var(--iprm-accent);
+  /* Заливка -- токен кнопки, не --iprm-accent: у тёмній темі акцент стає
+     світлим бузком, і біла цифра на ньому давала 2.58 замість 5.04. */
+  background: var(--iprm-btn-bg);
   color: var(--iprm-on-accent);
   font-size: 1.5rem;
   font-weight: 800;

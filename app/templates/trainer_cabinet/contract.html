@@ -11,16 +11,42 @@
 <div class="apple-page">
   <section class="iprm-section">
     <div class="iprm-section__inner">
-      <p><a href="{{ url_for('trainer_cabinet.index') }}" class="account-course__link">{{ _('Кабінет тренера') }}</a></p>
-      <h1 class="iprm-section__title">{{ _('Договір') }}</h1>
-      <ol class="account-card__text">
-        <li>{{ _('Завантажте примірник договору.') }}</li>
-        <li>{{ _('Заповніть Договір, Додаток №1 та Декларацію. У Додатку №1 вкажіть тему першого заходу, який ви будете проводити.') }}</li>
-        <li>{% trans email=contract_email %}Додайте своє прізвище в назву файлу та надішліть договір на {{ email }}.{% endtrans %}</li>
-        <li>{{ _('Вкажіть у листі, куди надіслати підписані керівництвом ІПРМ примірники (бажано Нова Пошта).') }}</li>
+      <a href="{{ url_for('trainer_cabinet.index') }}" class="iprm-back-link">{{ _('Кабінет тренера') }}</a>
+
+      <header class="apple-section-head">
+        <span class="iprm-eyebrow">{{ _('Чотири кроки') }}</span>
+        <h1 class="iprm-section__title"><span class="apple-gradient-text">{{ _('Договір') }}</span></h1>
+        <p class="iprm-section__subtitle">{{ _('Примірник договору та порядок його оформлення') }}</p>
+      </header>
+
+      {# role="list": без маркерів Safari/VoiceOver інакше забуває, що це список. #}
+      <ol class="iprm-steps" role="list">
+        <li class="iprm-steps__item">
+          <span class="iprm-steps__number" aria-hidden="true">1</span>
+          <h2 class="iprm-steps__heading">{{ _('Завантажте договір') }}</h2>
+          <p class="iprm-steps__text">{{ _('Завантажте примірник договору.') }}</p>
+        </li>
+        <li class="iprm-steps__item">
+          <span class="iprm-steps__number" aria-hidden="true">2</span>
+          <h2 class="iprm-steps__heading">{{ _('Заповніть документи') }}</h2>
+          <p class="iprm-steps__text">{{ _('Заповніть Договір, Додаток №1 та Декларацію. У Додатку №1 вкажіть тему першого заходу, який ви будете проводити.') }}</p>
+        </li>
+        <li class="iprm-steps__item">
+          <span class="iprm-steps__number" aria-hidden="true">3</span>
+          <h2 class="iprm-steps__heading">{{ _('Надішліть файл') }}</h2>
+          <p class="iprm-steps__text">{% trans email=contract_email %}Додайте своє прізвище в назву файлу та надішліть договір на {{ email }}.{% endtrans %}</p>
+        </li>
+        <li class="iprm-steps__item">
+          <span class="iprm-steps__number" aria-hidden="true">4</span>
+          <h2 class="iprm-steps__heading">{{ _('Вкажіть адресу доставки') }}</h2>
+          <p class="iprm-steps__text">{{ _('Вкажіть у листі, куди надіслати підписані керівництвом ІПРМ примірники (бажано Нова Пошта).') }}</p>
+        </li>
       </ol>
+
       {% if has_contract %}
-      <a href="{{ url_for('trainer_cabinet.contract_download') }}" class="apple-btn apple-btn--primary">{{ _('Завантажити договір (PDF)') }}</a>
+      <div class="apple-section-cta">
+        <a href="{{ url_for('trainer_cabinet.contract_download') }}" class="apple-btn apple-btn--primary">{{ _('Завантажити договір (PDF)') }}</a>
+      </div>
       {% else %}
       <div class="iprm-empty-state"><p>{{ _('Договір буде додано найближчим часом.') }}</p></div>
       {% endif %}

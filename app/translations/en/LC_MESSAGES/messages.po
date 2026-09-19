@@ -6239,6 +6239,21 @@ msgstr "Contract | Trainer cabinet | IPRM"
 msgid "Завантажте примірник договору."
 msgstr "Download a copy of the contract."
 
+msgid "Чотири кроки"
+msgstr "Four steps"
+
+msgid "Завантажте договір"
+msgstr "Download the contract"
+
+msgid "Заповніть документи"
+msgstr "Fill in the documents"
+
+msgid "Надішліть файл"
+msgstr "Send the file"
+
+msgid "Вкажіть адресу доставки"
+msgstr "Give a delivery address"
+
 msgid ""
 "Заповніть Договір, Додаток №1 та Декларацію. У Додатку №1 вкажіть тему "
 "першого заходу, який ви будете проводити."

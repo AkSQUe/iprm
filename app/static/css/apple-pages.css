@@ -246,6 +246,40 @@ html {
   text-align: center;
 }
 
+/* ---------- Посилання «назад» над заголовковим блоком ----------
+
+   Повернення в розділ-батько (кабінет, список). Приглушене, щоб не
+   сперечатись із заголовком, але мусить читатись як посилання: раніше тут
+   стояло посилання з color: inherit, неподібне на посилання взагалі.
+   Стрілка -- у ::before з порожнім alt-текстом, тож скрінрідер читає лише
+   назву розділу; другий рядок content -- фолбек для браузерів без alt. */
+
+.apple-page .iprm-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+  color: var(--iprm-text-light);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.apple-page .iprm-back-link::before {
+  content: '\2190';
+  content: '\2190' / '';
+  transition: transform 0.2s ease;
+}
+
+.apple-page .iprm-back-link:hover {
+  color: var(--iprm-nav-active);
+}
+
+.apple-page .iprm-back-link:hover::before {
+  transform: translateX(-3px);
+}
+
 /* ========== APPLE BUTTONS (global, 3-state) ==========
 
    Метрики еталона: висота 54px, падінг 14x24, радіус 12px, вага 800,
