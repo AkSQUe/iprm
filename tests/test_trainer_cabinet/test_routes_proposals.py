@@ -1,6 +1,23 @@
+import json
+import re
+
 from app.extensions import db
 from app.models.trainer_course_proposal import TrainerCourseProposal
 from tests.test_trainer_cabinet._factories import login, make_trainer, make_user
+
+
+def _page_flashes(resp):
+    r"""Тексти flash-повідомлень зі сторінки, рендеренної в ЦІЙ ЖЕ відповіді.
+
+    base.html віддає їх JSON-ом у <script id="iprm-flash-data">, а |tojson
+    екранує кирилицю в \uXXXX -- шукати підрядок у сирому HTML не можна."""
+    match = re.search(
+        r'<script type="application/json" id="iprm-flash-data">(.*?)</script>',
+        resp.data.decode(), re.S,
+    )
+    if not match:
+        return []
+    return [item['message'] for item in json.loads(match.group(1))]
 
 DATA = {
     'title': 'КОС крові: діагностика',
@@ -99,6 +116,49 @@ def test_delete_draft(client):
     p = TrainerCourseProposal.query.filter_by(trainer_id=trainer.id).one()
     assert client.post(f'/trainer/proposals/{p.id}/delete').status_code == 302
     assert TrainerCourseProposal.query.filter_by(trainer_id=trainer.id).count() == 0
+
+
+# --- C17: збій коміту при збереженні/видаленні пропозиції не валить 500 ----
+
+def _boom_on_proposal_commit(real_commit):
+    """Валить лише коміт, що чіпає TrainerCourseProposal -- інакше падає й
+    сторонній db.session.commit() у preload_site_settings (before_request),
+    що спрацьовує ще ДО самого маршруту."""
+    def boom():
+        pending = db.session.new | db.session.dirty | db.session.deleted
+        if any(isinstance(obj, TrainerCourseProposal) for obj in pending):
+            raise RuntimeError('db is on fire')
+        return real_commit()
+    return boom
+
+
+def _flashes(client):
+    # Тост рендериться JSON-ом (ui-feedback.js), тож у HTML тексту флеша
+    # немає -- дивимось у сесію, як і test_locked_post_flashes_message вище.
+    with client.session_transaction() as sess:
+        return [m for _cat, m in sess.get('_flashes', [])]
+
+
+def test_save_commit_failure_flashes_and_keeps_tree_working(client, monkeypatch):
+    trainer = _setup(client)
+    monkeypatch.setattr(db.session, 'commit', _boom_on_proposal_commit(db.session.commit))
+    resp = client.post('/trainer/proposals/new', data=DATA)
+    assert resp.status_code == 200
+    # Немає редіректу -- шаблон рендериться в ЦІЙ самій відповіді і одразу
+    # споживає flash у base.html (iprm-flash-data), а не лишає його в сесії.
+    assert 'Помилка при збереженні' in _page_flashes(resp)
+    assert TrainerCourseProposal.query.filter_by(trainer_id=trainer.id).count() == 0
+
+
+def test_delete_commit_failure_flashes_and_keeps_draft(client, monkeypatch):
+    trainer = _setup(client)
+    client.post('/trainer/proposals/new', data=DATA)
+    p = TrainerCourseProposal.query.filter_by(trainer_id=trainer.id).one()
+    monkeypatch.setattr(db.session, 'commit', _boom_on_proposal_commit(db.session.commit))
+    resp = client.post(f'/trainer/proposals/{p.id}/delete')
+    assert resp.status_code == 302
+    assert any('Помилка при видаленні' in m for m in _flashes(client))
+    assert db.session.get(TrainerCourseProposal, p.id) is not None
 
 
 def test_foreign_proposal_is_404(client):

@@ -197,17 +197,27 @@ def _save_proposal(form, proposal):
     """Зберігає форму; для "Надіслати куратору" -- ще й надсилає тим самим
     комітом. Раніше надсилання йшло окремою формою і брало ОСТАННЮ збережену
     версію: незбережені правки мовчки губились."""
+    is_new = proposal.id is None
     _apply_proposal(form, proposal)
     db.session.add(proposal)
-    if not _wants_submit():
+    wants_submit = _wants_submit()
+    if wants_submit:
+        svc.submit_proposal(proposal)
+    try:
         db.session.commit()
-        flash(_('Чернетку збережено'), 'success')
-        return redirect(url_for('trainer_cabinet.proposal_edit', proposal_id=proposal.id))
-    svc.submit_proposal(proposal)
-    db.session.commit()
-    _after_submit(proposal)
-    flash(_('Пропозицію надіслано куратору'), 'success')
-    return redirect(url_for('trainer_cabinet.profile'))
+    except Exception:
+        logger.exception('Failed to save trainer proposal (trainer %s)', g.trainer.id)
+        db.session.rollback()
+        flash(_('Помилка при збереженні'), 'error')
+        return render_template(
+            'trainer_cabinet/proposal_edit.html',
+            **_proposal_edit_context(form, None if is_new else proposal))
+    if wants_submit:
+        _after_submit(proposal)
+        flash(_('Пропозицію надіслано куратору'), 'success')
+        return redirect(url_for('trainer_cabinet.profile'))
+    flash(_('Чернетку збережено'), 'success')
+    return redirect(url_for('trainer_cabinet.proposal_edit', proposal_id=proposal.id))
 
 
 def _proposal_edit_context(form, proposal):
@@ -267,6 +277,12 @@ def proposal_delete(proposal_id):
     if not proposal.is_editable:
         return _locked(proposal)
     db.session.delete(proposal)
-    db.session.commit()
+    try:
+        db.session.commit()
+    except Exception:
+        logger.exception('Failed to delete trainer proposal %s', proposal_id)
+        db.session.rollback()
+        flash(_('Помилка при видаленні'), 'error')
+        return redirect(url_for('trainer_cabinet.proposal_edit', proposal_id=proposal_id))
     flash(_('Чернетку видалено'), 'success')
     return redirect(url_for('trainer_cabinet.profile'))
