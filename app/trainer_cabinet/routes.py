@@ -1,10 +1,12 @@
+import io
 import logging
 
-from flask import abort, flash, g, redirect, render_template, request, url_for
+from flask import abort, flash, g, redirect, render_template, request, send_file, url_for
 from flask_babel import gettext as _
 from flask_login import current_user
 
 from app.extensions import db
+from app.models.site_settings import SiteSettings
 from app.models.trainer_course_proposal import TrainerCourseProposal
 from app.services import trainer_cabinet as svc
 from app.trainer_cabinet import trainer_cabinet_bp
@@ -88,13 +90,30 @@ def profile():
 @trainer_cabinet_bp.route('/contract')
 @trainer_required
 def contract():
-    return render_template('trainer_cabinet/contract.html', trainer=g.trainer)
+    settings = SiteSettings.get()
+    return render_template(
+        'trainer_cabinet/contract.html', trainer=g.trainer,
+        has_contract=settings.has_trainer_contract,
+        contract_email=svc.contract_email(settings),
+    )
+
+
+@trainer_cabinet_bp.route('/contract/download')
+@trainer_required
+def contract_download():
+    settings = SiteSettings.get()
+    data = settings.trainer_contract_pdf if settings.has_trainer_contract else None
+    if not data:
+        abort(404)
+    return send_file(
+        io.BytesIO(data), mimetype='application/pdf', as_attachment=True,
+        download_name=settings.trainer_contract_filename or 'contract.pdf',
+    )
 
 
 @trainer_cabinet_bp.route('/faq')
 @trainer_required
 def faq():
-    from app.models.site_settings import SiteSettings
     return render_template(
         'trainer_cabinet/faq.html', trainer=g.trainer,
         faq_html=svc.faq_html(SiteSettings.get()),

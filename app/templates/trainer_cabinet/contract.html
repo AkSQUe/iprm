@@ -13,6 +13,17 @@
     <div class="iprm-section__inner">
       <p><a href="{{ url_for('trainer_cabinet.index') }}" class="account-course__link">{{ _('Кабінет тренера') }}</a></p>
       <h1 class="iprm-section__title">{{ _('Договір') }}</h1>
+      <ol class="account-card__text">
+        <li>{{ _('Завантажте примірник договору.') }}</li>
+        <li>{{ _('Заповніть Договір, Додаток №1 та Декларацію. У Додатку №1 вкажіть тему першого заходу, який ви будете проводити.') }}</li>
+        <li>{% trans email=contract_email %}Додайте своє прізвище в назву файлу та надішліть договір на {{ email }}.{% endtrans %}</li>
+        <li>{{ _('Вкажіть у листі, куди надіслати підписані керівництвом ІПРМ примірники (бажано Нова Пошта).') }}</li>
+      </ol>
+      {% if has_contract %}
+      <a href="{{ url_for('trainer_cabinet.contract_download') }}" class="apple-btn apple-btn--primary">{{ _('Завантажити договір (PDF)') }}</a>
+      {% else %}
+      <div class="iprm-empty-state"><p>{{ _('Договір буде додано найближчим часом.') }}</p></div>
+      {% endif %}
     </div>
   </section>
 </div>
