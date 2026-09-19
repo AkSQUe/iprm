@@ -1514,6 +1514,34 @@ class EmailService:
         )
 
     @staticmethod
+    def send_trainer_proposal_notification(proposal):
+        """Тренер надіслав пропозицію курсу -- лист на email для договорів.
+
+        Тригер 'course_request': семантично це теж заявка на навчання, а
+        нового значення CHECK ck_email_logs_trigger не має.
+        """
+        from app.models.site_settings import SiteSettings
+        from app.services import trainer_cabinet
+        settings = SiteSettings.get()
+        to = trainer_cabinet.contract_email(settings)
+        if not to:
+            return None
+        base = (settings.website_url or '').rstrip('/')
+        path = f'/admin/trainers/{proposal.trainer_id}/questionnaire#proposal-{proposal.id}'
+        return EmailService.send_email(
+            to=to,
+            subject=f'Пропозиція курсу від тренера: {proposal.title}',
+            template_name='trainer_proposal_submitted',
+            context={
+                'proposal': proposal,
+                'trainer': proposal.trainer,
+                'admin_url': f'{base}{path}' if base else path,
+            },
+            trigger='course_request',
+            lang='uk',
+        )
+
+    @staticmethod
     def notify_overbooking(registration, occupied, capacity):
         """Попередити адмінів, що оплачених місць стало більше за місткість.
 

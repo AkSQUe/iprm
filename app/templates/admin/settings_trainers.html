@@ -1,0 +1,86 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Для тренерів | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+  <div class="admin-hero">
+    <div>
+      <div class="admin-breadcrumb">
+        <a href="{{ url_for('admin.settings') }}" class="admin-breadcrumb__link">Налаштування</a>
+        <span class="admin-breadcrumb__sep">/</span>
+        <span class="admin-breadcrumb__current">Для тренерів</span>
+      </div>
+      <h1 class="admin-hero__title">Для тренерів</h1>
+      <p class="admin-hero__subtitle">Договір і часті питання в кабінеті тренера</p>
+    </div>
+  </div>
+
+  {% include 'partials/flash_messages.html' %}
+
+  <form method="POST" class="admin-form" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+    {% include 'admin/partials/_form_errors.html' %}
+
+    <div class="form-section" id="faq">
+      <h3 class="admin-form__section-title">Часті питання</h3>
+      <div class="admin-form__grid">
+
+        <div class="form-group admin-form__full">
+          <label for="faq_html">{{ form.faq_html.label.text }}</label>
+          {{ form.faq_html(class="form-input", id="faq_html", rows=24) }}
+          {% if form.faq_html.description %}<small class="form-hint">{{ form.faq_html.description }}</small>{% endif %}
+          {% for error in form.faq_html.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+
+      </div>
+    </div>
+
+    <div class="form-section" id="contract">
+      <h3 class="admin-form__section-title">Договір</h3>
+      <div class="admin-form__grid">
+
+        <div class="form-group admin-form__full">
+          <label for="contract_email">{{ form.contract_email.label.text }}</label>
+          {{ form.contract_email(class="form-input" + (" is-invalid" if form.contract_email.errors else ""), id="contract_email", placeholder="curator@iprm.com") }}
+          {% if form.contract_email.description %}<small class="form-hint">{{ form.contract_email.description }}</small>{% endif %}
+          {% for error in form.contract_email.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+
+        {% if site.has_trainer_contract %}
+        <div class="form-group admin-form__full">
+          <label>Поточний файл</label>
+          <div class="form-input admin-field-readonly">
+            {{ site.trainer_contract_filename }}, завантажено {{ site.trainer_contract_uploaded_at | kyiv }}
+          </div>
+          <div class="form-checkbox">
+            {{ form.remove_contract(id="remove_contract") }}
+            <label for="remove_contract">{{ form.remove_contract.label.text }}</label>
+          </div>
+        </div>
+        {% endif %}
+
+        <div class="form-group admin-form__full">
+          <label for="contract_pdf">{{ form.contract_pdf.label.text }}</label>
+          {{ form.contract_pdf(id="contract_pdf") }}
+          {% for error in form.contract_pdf.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+
+      </div>
+    </div>
+
+    <div class="admin-form__actions">
+      <a href="{{ url_for('admin.settings') }}" class="btn-admin btn-admin--secondary">Скасувати</a>
+      <button type="submit" class="btn-admin btn-admin--primary">{{ icon('check') }} Зберегти</button>
+    </div>
+  </form>
+  </div>
+</div>
+{% endblock %}

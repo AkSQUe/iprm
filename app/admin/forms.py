@@ -1,6 +1,7 @@
 from datetime import date
 
 from flask_wtf import FlaskForm
+from flask_wtf.file import FileField, FileAllowed
 from wtforms import (
     StringField, TextAreaField, SelectField, SelectMultipleField, IntegerField,
     DecimalField, BooleanField, DateField, DateTimeLocalField, HiddenField,
@@ -1333,3 +1334,22 @@ class RoleForm(FlaskForm):
 class ProposalReturnForm(FlaskForm):
     """Повернення пропозиції курсу тренеру на доопрацювання -- з коментарем куратора."""
     comment = TextAreaField('Коментар для тренера', validators=[Optional(), Length(max=2000)])
+
+
+class TrainerSettingsForm(FlaskForm):
+    """Налаштування «Для тренерів»: текст FAQ, email для договорів, сам PDF."""
+    faq_html = TextAreaField(
+        'Текст «Частих питань»',
+        validators=[Optional()],
+        description='HTML: p, h3, ul/ol, li, strong, em, a. {email} -- адреса для договорів. '
+                    'Порожнє поле -- текст за замовчуванням.',
+    )
+    contract_email = StringField(
+        'Email для надсилання договорів',
+        validators=[Optional(), Email(message='Невалідний email'), Length(max=255)],
+        description='Порожнє -- загальний email сайту.',
+    )
+    contract_pdf = FileField(
+        'PDF договору', validators=[Optional(), FileAllowed(['pdf'], 'Лише PDF')],
+    )
+    remove_contract = BooleanField('Прибрати завантажений договір')

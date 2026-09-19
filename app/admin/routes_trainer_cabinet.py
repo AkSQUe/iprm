@@ -1,12 +1,14 @@
 """Адмінка кабінету тренера: анкета, пропозиції курсу, налаштування «Для тренерів»."""
 import logging
+from datetime import datetime, timezone
 
-from flask import abort, flash, redirect, render_template, url_for
+from flask import abort, flash, redirect, render_template, request, url_for
 from flask_login import current_user
 
 from app.admin import admin_bp
-from app.admin.forms import ProposalReturnForm
+from app.admin.forms import ProposalReturnForm, TrainerSettingsForm
 from app.extensions import db
+from app.models.site_settings import SiteSettings
 from app.models.trainer import Trainer
 from app.models.trainer_course_proposal import TrainerCourseProposal
 from app.models.trainer_profile import TrainerProfile
@@ -15,6 +17,8 @@ from app.rbac.access import has_permission
 from app.services import trainer_cabinet as svc
 
 audit_logger = logging.getLogger('audit')
+
+CONTRACT_MAX_BYTES = 10 * 1024 * 1024
 
 
 @admin_bp.route('/trainers/<int:trainer_id>/questionnaire')
@@ -72,3 +76,51 @@ def trainer_proposal_return(proposal_id):
         except svc.ProposalTransitionError:
             flash('Неможливо повернути: пропозиція не на розгляді', 'error')
     return redirect(url_for('admin.trainer_questionnaire', trainer_id=proposal.trainer_id))
+
+
+def _read_contract(file):
+    """Байти PDF або (None, помилка). Перевіряємо сигнатуру, а не лише розширення."""
+    data = file.read()
+    if not data.startswith(b'%PDF-'):
+        return None, 'Файл не є PDF'
+    if len(data) > CONTRACT_MAX_BYTES:
+        return None, 'PDF більший за 10 МБ'
+    return data, None
+
+
+@admin_bp.route('/settings/trainers', methods=['GET', 'POST'])
+@permission_required('settings.manage')
+def settings_trainers():
+    site = SiteSettings.get()
+    form = TrainerSettingsForm()
+    if request.method == 'GET':
+        form.faq_html.data = svc.faq_source(site)
+        form.contract_email.data = site.trainer_contract_email
+
+    if form.validate_on_submit():
+        upload = form.contract_pdf.data
+        if upload and getattr(upload, 'filename', ''):
+            data, error = _read_contract(upload)
+            if error:
+                form.contract_pdf.errors.append(error)
+                return render_template('admin/settings_trainers.html', form=form, site=site)
+            site.trainer_contract_pdf = data
+            site.trainer_contract_filename = upload.filename
+            site.trainer_contract_uploaded_at = datetime.now(timezone.utc)
+        elif form.remove_contract.data:
+            site.trainer_contract_pdf = None
+            site.trainer_contract_filename = ''
+            site.trainer_contract_uploaded_at = None
+
+        # Якщо збережений текст дослівно збігається з дефолтом -- зберігаємо
+        # порожній рядок, щоб майбутні правки дефолту в коді доходили до сайту.
+        from app.data.trainer_faq import DEFAULT_TRAINER_FAQ_HTML
+        faq = (form.faq_html.data or '').strip()
+        site.trainer_faq_html = '' if faq == DEFAULT_TRAINER_FAQ_HTML.strip() else faq
+        site.trainer_contract_email = (form.contract_email.data or '').strip().lower()
+        db.session.commit()
+        audit_logger.info('Admin %s updated trainer settings', current_user.email)
+        flash('Налаштування для тренерів збережено', 'success')
+        return redirect(url_for('admin.settings_trainers'))
+
+    return render_template('admin/settings_trainers.html', form=form, site=site)

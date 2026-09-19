@@ -1,0 +1,33 @@
+{% extends "emails/base.html" %}
+{% from "emails/_macros.html" import button_primary, detail_row, spacer %}
+
+{% block title %}Пропозиція курсу від тренера{% endblock %}
+
+{% block preview_text %}{{ trainer.full_name }} -- {{ proposal.title }}{% endblock %}
+
+{% block content %}
+    <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #17131D; line-height: 1.25;">
+        Нова пропозиція курсу
+    </h1>
+
+    <p class="mobile-text" style="margin: 0 0 24px 0; font-size: 15px; color: #625A6D; line-height: 1.5;">
+        Тренер заповнив інформацію курсу в анкеті й надіслав її на розгляд.
+    </p>
+
+    <table role="presentation" style="width: 100%; margin-bottom: 24px; background-color: #F7F4FB; border: 1px solid #E9E4EF; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td style="padding: 20px 24px;">
+                <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #17131D; line-height: 1.3;">
+                    {{ proposal.title }}
+                </p>
+                {{ detail_row("Тренер", trainer.full_name) }}
+                {{ detail_row("Мова", proposal.language or "—") }}
+                {{ detail_row("Тез", proposal.theses | length) }}
+            </td>
+        </tr>
+    </table>
+
+    {{ button_primary("Відкрити анкету в адмінці", admin_url) }}
+
+    {{ spacer(16) }}
+{% endblock %}

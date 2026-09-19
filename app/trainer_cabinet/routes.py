@@ -170,7 +170,12 @@ def proposal_edit(proposal_id):
 
 
 def _after_submit(proposal):
-    """Побічні дії після надсилання пропозиції (лист куратору -- Task 8)."""
+    """Лист куратору. Збій пошти не скасовує надсилання -- пропозиція вже збережена."""
+    from app.services.email_service import EmailService
+    try:
+        EmailService.send_trainer_proposal_notification(proposal)
+    except Exception:
+        logger.exception('Failed to notify curator about proposal %s', proposal.id)
 
 
 @trainer_cabinet_bp.route('/proposals/<int:proposal_id>/submit', methods=['POST'])
