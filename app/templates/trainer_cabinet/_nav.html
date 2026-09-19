@@ -1,18 +1,20 @@
-{# Навігація кабінету тренера. active: 'profile' | 'contract' | 'faq' | None #}
+{# Навігація кабінету тренера: єдиний include -- на index.html, тож пункту
+   "активний розділ" тут немає (нема іншої сторінки, де ця навігація
+   рендериться поверх себе самої). #}
 <nav class="account-grid trainer-nav" aria-label="{{ _('Розділи кабінету тренера') }}">
   {# Незаповнена анкета позначається так само, як незаповнені дані для
      сертифіката в особистому кабінеті: той самий бейдж і рамка картки. #}
-  <a href="{{ url_for('trainer_cabinet.profile') }}" class="account-card account-card--link{% if not profile_complete %} account-card--attention{% endif %}{% if active == 'profile' %} is-active{% endif %}">
+  <a href="{{ url_for('trainer_cabinet.profile') }}" class="account-card account-card--link{% if not profile_complete %} account-card--attention{% endif %}">
     <h3 class="iprm-block-title">{{ _('Анкета тренера') }}
       {% if not profile_complete %}<span class="badge badge--danger">{{ _('Не заповнено') }}</span>{% endif %}
     </h3>
     <p class="account-card__text">{{ _('Контакти, реквізити ФОП, дані для договору та інформація про ваші курси') }}</p>
   </a>
-  <a href="{{ url_for('trainer_cabinet.contract') }}" class="account-card account-card--link{% if active == 'contract' %} is-active{% endif %}">
+  <a href="{{ url_for('trainer_cabinet.contract') }}" class="account-card account-card--link">
     <h3 class="iprm-block-title">{{ _('Договір') }}</h3>
     <p class="account-card__text">{{ _('Примірник договору та порядок його оформлення') }}</p>
   </a>
-  <a href="{{ url_for('trainer_cabinet.faq') }}" class="account-card account-card--link{% if active == 'faq' %} is-active{% endif %}">
+  <a href="{{ url_for('trainer_cabinet.faq') }}" class="account-card account-card--link">
     <h3 class="iprm-block-title">{{ _('Часті питання') }}</h3>
     <p class="account-card__text">{{ _('Підготовка до заходу, розклад дня, гонорар') }}</p>
   </a>

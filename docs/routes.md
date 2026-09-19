@@ -133,8 +133,7 @@ login_required) і на сторінці замовлення (`order/<token>/re
 | GET | `/trainer/` | Найближчі заходи з лічильниками реєстрацій, посилання на дочірні сторінки |
 | GET/POST | `/trainer/profile` | Анкета тренера: контакти, ФОП, договір, фото |
 | GET/POST | `/trainer/proposals/new` | Нова пропозиція курсу (чернетка) |
-| GET/POST | `/trainer/proposals/<id>` | Перегляд/редагування пропозиції (редагування -- лише чернетка) |
-| POST | `/trainer/proposals/<id>/submit` | Надіслати пропозицію куратору |
+| GET/POST | `/trainer/proposals/<id>` | Перегляд/редагування пропозиції (кнопка «Надіслати куратору» -- у цій самій формі, `?action=submit`) |
 | POST | `/trainer/proposals/<id>/delete` | Видалити чернетку |
 | GET | `/trainer/contract` | Договір: інструкція і кнопка завантаження |
 | GET | `/trainer/contract/download` | Завантажити PDF договору (лише тренерам; 404 без файлу) |

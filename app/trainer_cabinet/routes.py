@@ -248,23 +248,6 @@ def _after_submit(proposal):
         logger.exception('Failed to notify curator about proposal %s', proposal.id)
 
 
-@trainer_cabinet_bp.route('/proposals/<int:proposal_id>/submit', methods=['POST'])
-@trainer_required
-def proposal_submit(proposal_id):
-    """Надсилання збереженої версії без форми (кнопка тепер у самій формі
-    редагування, але маршрут лишається: на нього посилаються тести й
-    документація)."""
-    proposal = _own_proposal(proposal_id)
-    try:
-        svc.submit_proposal(proposal)
-    except svc.ProposalTransitionError:
-        return _locked(proposal)
-    db.session.commit()
-    _after_submit(proposal)
-    flash(_('Пропозицію надіслано куратору'), 'success')
-    return redirect(url_for('trainer_cabinet.profile'))
-
-
 @trainer_cabinet_bp.route('/proposals/<int:proposal_id>/delete', methods=['POST'])
 @trainer_required
 def proposal_delete(proposal_id):
