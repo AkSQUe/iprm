@@ -348,6 +348,46 @@
     </div>
   </div>
 
+  <!-- ===== ПРОЗОВИЙ БЛОК (LEGAL-SECTION) ===== -->
+  <div class="ds-section" id="legal-section">
+      <p class="ds-label">Components</p>
+      <h2 class="ds-title">Прозовий блок (legal-section)</h2>
+      <div class="ds-demo">
+        <div class="ds-demo-narrow">
+          <section class="legal-section">
+            <h2>1. Заголовок розділу</h2>
+            <p>Типографіка правового/довідкового тексту: заголовки, абзаци, списки й посилання одним набором правил.</p>
+            <ul>
+              <li>Перший пункт</li>
+              <li>Другий пункт</li>
+            </ul>
+          </section>
+        </div>
+      </div>
+      <p class="ds-hint">.legal-section (legal.css) -- прозовий контейнер: h2/h3/p/ul/ol/li/a. Використовується на правових сторінках (privacy, offer, cookies, refund, disclaimer, bpr_documents) і в кабінеті тренера (FAQ) -- спільний компонент кількох доменів, а не деталь однієї сторінки.</p>
+  </div>
+
+  <!-- ===== КАРТКИ КАБІНЕТУ (ACCOUNT-CARD) ===== -->
+  <div class="ds-section-alt">
+    <div class="ds-section" id="account-cards">
+        <p class="ds-label">Components</p>
+        <h2 class="ds-title">Картки кабінету (account-card)</h2>
+        <div class="ds-demo">
+          <div class="account-grid">
+            <a href="#" class="account-card account-card--link">
+              <h3 class="iprm-block-title">Анкета тренера</h3>
+              <p class="account-card__text">Короткий опис розділу кабінету.</p>
+            </a>
+            <a href="#" class="account-card account-card--link">
+              <h3 class="iprm-block-title">Договір</h3>
+              <p class="account-card__text">Ще один розділ кабінету.</p>
+            </a>
+          </div>
+        </div>
+        <p class="ds-hint">.account-grid + .account-card (account.css) -- сітка карток-посилань на розділи кабінету. Використовується в особистому кабінеті (auth/account.html) і кабінеті тренера (trainer_cabinet) -- спільний компонент кількох доменів.</p>
+    </div>
+  </div>
+
   <!-- ===== COOKIE BANNER ===== -->
   <div class="ds-section" id="cookie-banner">
       <p class="ds-label">Components</p>

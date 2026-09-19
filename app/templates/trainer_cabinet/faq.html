@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Часті питання | Кабінет тренера | ІПРМ') }}{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/legal.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="apple-page">
+  <section class="iprm-section">
+    <div class="iprm-section__inner">
+      <p><a href="{{ url_for('trainer_cabinet.index') }}" class="account-course__link">{{ _('Кабінет тренера') }}</a></p>
+      <h1 class="iprm-section__title">{{ _('Часті питання') }}</h1>
+      <div class="legal-section">{{ faq_html }}</div>
+    </div>
+  </section>
+</div>
+{% endblock %}

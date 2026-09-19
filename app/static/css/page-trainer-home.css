@@ -1,0 +1,38 @@
+/* Кабінет тренера (/trainer/): сітка заходів і лічильників. Декор -- з
+   account.css, apple-pages.css (.iprm-stat-card) і common.css; тут лише
+   розташування. У проєкті немає токенів --space-*, тому відступи -- прямі
+   px, як і в інших page-*.css. */
+.trainer-nav {
+  margin-top: 24px;
+}
+
+.trainer-events,
+.trainer-courses {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 16px;
+}
+
+.trainer-events__item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+}
+
+.trainer-events__counts {
+  grid-template-columns: repeat(5, minmax(96px, auto));
+  text-align: center;
+}
+
+@media (max-width: 720px) {
+  .trainer-events__item {
+    grid-template-columns: 1fr;
+  }
+
+  .trainer-events__counts {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

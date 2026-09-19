@@ -58,6 +58,9 @@
             <a href="{{ url_for('admin.dashboard') }}" class="iprm-nav__mobile-link iprm-nav__mobile-link--admin">{{ _('Панель адміністратора') }}</a>
           {% endif %}
           <a href="{{ url_for('auth.account') }}" class="iprm-nav__mobile-link">{{ _('Особистий кабінет') }}</a>
+          {% if current_user.active_trainer %}
+          <a href="{{ url_for('trainer_cabinet.index') }}" class="iprm-nav__mobile-link">{{ _('Кабінет тренера') }}</a>
+          {% endif %}
           {% if certdata_incomplete %}
           <a href="{{ url_for('auth.certificate_data') }}" class="iprm-nav__mobile-link iprm-nav__mobile-link--certdata">
             <span class="iprm-header__certdata-badge" aria-hidden="true">1</span>
@@ -82,6 +85,9 @@
           <a href="{{ url_for('admin.dashboard') }}" class="iprm-header__admin-link">Admin</a>
         {% endif %}
         <a href="{{ url_for('auth.account') }}" class="iprm-header__user-link">{{ current_user.first_name }}</a>
+        {% if current_user.active_trainer %}
+          <a href="{{ url_for('trainer_cabinet.index') }}" class="iprm-header__admin-link">{{ _('Кабінет тренера') }}</a>
+        {% endif %}
         {% if certdata_incomplete %}
         <a href="{{ url_for('auth.certificate_data') }}" class="iprm-header__certdata" aria-label="{{ _('1 незаповнена анкета: дані для сертифіката') }}">
           <span class="iprm-header__certdata-badge" aria-hidden="true">1</span>

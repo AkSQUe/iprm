@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Кабінет тренера | ІПРМ') }}{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-trainer-home.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="apple-page">
+  <section class="iprm-section">
+    <div class="iprm-section__inner">
+      <h1 class="iprm-section__title">{{ _('Кабінет тренера') }}</h1>
+      <p class="account-card__text">{{ trainer.full_name }}</p>
+      {% set active = None %}
+      {% include 'trainer_cabinet/_nav.html' %}
+    </div>
+  </section>
+
+  <section class="iprm-section apple-section-gray">
+    <div class="iprm-section__inner">
+      <h2 class="iprm-section__title">{{ _('Найближчі заходи') }}</h2>
+      {% if upcoming %}
+      <ul class="trainer-events">
+        {% for inst in upcoming %}
+        {% set c = counts.get(inst.id, {'total': 0, 'paid': 0, 'online': 0, 'offline': 0}) %}
+        <li class="account-card trainer-events__item">
+          <div class="trainer-events__main">
+            <p class="account-card__text">
+              {% if inst.start_date %}{{ inst.start_date | kyiv('%d.%m.%Y %H:%M') }}{% else %}{{ _('Дата уточнюється') }}{% endif %}
+              &middot;
+              {% if inst.event_format == 'online' %}{{ _('Онлайн') }}{% else %}{{ inst.city.name if inst.city else (inst.location or '') }}{% endif %}
+            </p>
+            <h3 class="iprm-block-title">
+              <a href="{{ url_for('courses.course_by_slug', slug=inst.course.slug) }}" class="account-course__link">{{ inst.topic or inst.course.title }}</a>
+            </h3>
+          </div>
+          <div class="iprm-stat-grid trainer-events__counts">
+            <div class="iprm-stat-card">
+              <span class="iprm-stat-card__value" data-count="total">{{ c.total }}</span>
+              <span class="iprm-stat-card__label">{{ _('Зареєстровано') }}</span>
+            </div>
+            <div class="iprm-stat-card">
+              <span class="iprm-stat-card__value" data-count="paid">{{ c.paid }}</span>
+              <span class="iprm-stat-card__label">{{ _('Оплачено') }}</span>
+            </div>
+            <div class="iprm-stat-card">
+              <span class="iprm-stat-card__value" data-count="offline">{{ c.offline }}</span>
+              <span class="iprm-stat-card__label">{{ _('Очно') }}</span>
+            </div>
+            <div class="iprm-stat-card">
+              <span class="iprm-stat-card__value" data-count="online">{{ c.online }}</span>
+              <span class="iprm-stat-card__label">{{ _('Онлайн') }}</span>
+            </div>
+            <div class="iprm-stat-card">
+              <span class="iprm-stat-card__value" data-count="capacity">{{ inst.effective_max_participants or '—' }}</span>
+              <span class="iprm-stat-card__label">{{ _('Місць') }}</span>
+            </div>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <div class="iprm-empty-state">
+        <p>{{ _('Найближчих заходів з вашою участю поки немає.') }}</p>
+      </div>
+      {% endif %}
+    </div>
+  </section>
+
+  {% if courses %}
+  <section class="iprm-section">
+    <div class="iprm-section__inner">
+      <h2 class="iprm-section__title">{{ _('Мої курси') }}</h2>
+      <ul class="trainer-courses">
+        {% for course in courses %}
+        <li><a href="{{ url_for('courses.course_by_slug', slug=course.slug) }}" class="account-course__link">{{ course.title }}</a></li>
+        {% endfor %}
+      </ul>
+    </div>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

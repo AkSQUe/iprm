@@ -186,6 +186,9 @@ def create_app(config_name=None):
     from app.trainers import trainers_bp
     app.register_blueprint(trainers_bp)
 
+    from app.trainer_cabinet import trainer_cabinet_bp
+    app.register_blueprint(trainer_cabinet_bp)
+
     from app.clinics import clinics_bp
     app.register_blueprint(clinics_bp)
 
