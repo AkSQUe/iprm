@@ -5,6 +5,8 @@ from app.models.trainer_links import course_trainers, course_instance_trainers  
 from app.models.auth_identity import AuthIdentity
 from app.models.medical_profile import MedicalProfile
 from app.models.trainer import Trainer
+from app.models.trainer_profile import TrainerProfile
+from app.models.trainer_course_proposal import TrainerCourseProposal
 from app.models.program_block import ProgramBlock
 from app.models.registration import EventRegistration
 from app.models.registration_transfer import RegistrationTransfer
@@ -53,7 +55,8 @@ __all__ = [
     'TimestampMixin', 'BigIntPK', 'utcnow', 'User',
     'Role', 'Permission', 'UserRole',
     'AuthIdentity',
-    'MedicalProfile', 'Trainer', 'ProgramBlock', 'EventRegistration',
+    'MedicalProfile', 'Trainer', 'TrainerProfile', 'TrainerCourseProposal',
+    'ProgramBlock', 'EventRegistration',
     'RegistrationTransfer',
     'Certificate', 'LecturerCertificate',
     'Clinic', 'EmailLog', 'EmailSettings', 'EmailSuppression', 'NotificationRule',

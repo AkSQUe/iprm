@@ -273,6 +273,12 @@ class User(TimestampMixin, UserMixin, db.Model):
         адмінку / показувати адмін-лінк»."""
         return bool(self.roles)
 
+    @property
+    def active_trainer(self):
+        """Прив'язана активна картка тренера або None -- доступ до /trainer."""
+        card = self.trainer_card
+        return card if card is not None and card.is_active else None
+
     def has_permission(self, name):
         from app.rbac.service import has_permission
         return has_permission(self, name)

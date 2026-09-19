@@ -49,6 +49,7 @@ class MediaFile(TimestampMixin, SoftDeleteMixin, db.Model):
         'trainer': 'Тренер',
         'course': 'Курс',
         'online_course': 'Онлайн-курс',
+        'trainer_profile': 'Анкета тренера',
     }
 
     id = db.Column(BigIntPK, primary_key=True)

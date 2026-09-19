@@ -104,6 +104,21 @@ class SiteSettings(TranslatableMixin, TimestampMixin, db.Model):
         db.Boolean, default=True, server_default='true', nullable=False,
     )
 
+    # Кабінет тренера. Порожній trainer_faq_html означає «текст за
+    # замовчуванням» (app/data/trainer_faq.py) -- так міграція не дублює
+    # довгий HTML. PDF договору -- у БД, а не в медіа-реєстрі: /media/
+    # віддається публічно, а договір бачать лише тренери. deferred -- щоб
+    # синглтон, який читається на кожному запиті, не тягнув байти файлу.
+    trainer_faq_html = db.Column(db.Text, nullable=False, default='', server_default='')
+    trainer_contract_email = db.Column(
+        db.String(255), nullable=False, default='', server_default='',
+    )
+    trainer_contract_pdf = db.deferred(db.Column(db.LargeBinary))
+    trainer_contract_filename = db.Column(
+        db.String(255), nullable=False, default='', server_default='',
+    )
+    trainer_contract_uploaded_at = db.Column(db.DateTime(timezone=True))
+
     # LiqPay. Public key -- відкритий ідентифікатор, plaintext. Private
     # key -- секрет з доступом до коштів; зберігаємо Fernet-зашифрованим
     # (як recaptcha/apple/partner). DB-колонка лишається 'liqpay_private_key'
@@ -973,6 +988,11 @@ class SiteSettings(TranslatableMixin, TimestampMixin, db.Model):
             and self._meta_page_token_encrypted
             and self.meta_page_id
         )
+
+    @property
+    def has_trainer_contract(self):
+        """Чи завантажено PDF договору (без читання самих байтів)."""
+        return bool(self.trainer_contract_filename)
 
     @classmethod
     def get(cls):

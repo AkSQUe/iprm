@@ -36,6 +36,15 @@ class Trainer(TranslatableMixin, TimestampMixin, db.Model):
     email = db.Column(db.String(255))
     is_active = db.Column(db.Boolean, default=True, index=True)
 
+    # Акаунт на сайті, з яким тренер входить у кабінет /trainer. Прив'язує
+    # адмін у формі тренера. Unique: один акаунт -- одна картка. Це і є
+    # «роль тренера»: RBAC-роль тут не годиться, бо будь-яка роль робить
+    # User.is_staff істиною і відкриває адмінку.
+    user_id = db.Column(
+        db.BigInteger, db.ForeignKey('users.id', ondelete='SET NULL'),
+        nullable=True, unique=True,
+    )
+
     # Реферальний код тренера (лениво генерується). Префікс 't' -- щоб коди
     # User і Trainer були глобально унікальні між собою.
     referral_code = db.Column(db.String(32), unique=True, index=True)
@@ -79,6 +88,19 @@ class Trainer(TranslatableMixin, TimestampMixin, db.Model):
         viewonly=True, lazy='dynamic',
     )
     photo_media = db.relationship('MediaFile', foreign_keys=[photo_media_id])
+    user = db.relationship(
+        'User', foreign_keys=[user_id],
+        backref=db.backref('trainer_card', uselist=False),
+    )
+    profile = db.relationship(
+        'TrainerProfile', back_populates='trainer', uselist=False,
+        cascade='all, delete-orphan',
+    )
+    proposals = db.relationship(
+        'TrainerCourseProposal', back_populates='trainer', lazy='dynamic',
+        cascade='all, delete-orphan',
+        order_by='TrainerCourseProposal.created_at.desc()',
+    )
 
     @property
     def photo_src(self):
