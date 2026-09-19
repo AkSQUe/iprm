@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% macro field(f, hint=None) %}
+<div class="form-group">
+  <label for="{{ f.id }}">{{ f.label.text }}</label>
+  {% if hint %}<p class="form-hint">{{ hint }}</p>{% endif %}
+  {{ f(class="form-input" + (" is-invalid" if f.errors else ""), id=f.id, **kwargs) }}
+  {% for error in f.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+</div>
+{% endmacro %}
+
+{% block title %}{{ _('Інформація курсу | Кабінет тренера | ІПРМ') }}{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/registration.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-trainer-proposal.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="apple-page reg-layout">
+  <p><a href="{{ url_for('trainer_cabinet.profile') }}" class="account-course__link">{{ _('Анкета тренера') }}</a></p>
+  <h1 class="reg-confirmation__title">{{ _('Інформація курсу') }}</h1>
+
+  {% if proposal and proposal.curator_comment %}
+  <aside class="reg-moh-notice" role="note">
+    <div class="reg-moh-notice__icon" aria-hidden="true">i</div>
+    <p><strong>{{ _('Коментар куратора:') }}</strong> {{ proposal.curator_comment }}</p>
+  </aside>
+  {% endif %}
+
+  <form method="POST" data-validate data-single-submit
+        action="{{ url_for('trainer_cabinet.proposal_edit', proposal_id=proposal.id) if proposal else url_for('trainer_cabinet.proposal_new') }}">
+    {{ form.hidden_tag() }}
+    <div class="form-section reg-form-section">
+      {{ field(form.title, _('Лаконічно та чітко сформульована; до 50 символів'), maxlength=50) }}
+      {{ field(form.theses, _('Одна теза на рядок, 5-10 головних тез доповіді'), rows=8, **{'data-theses': '', 'data-add-label': _('+ теза'), 'data-remove-label': _('Видалити')}) }}
+      {{ field(form.language) }}
+      {{ field(form.relevance, _('Лікарю важливо це знати, тому що...; до чого може призвести незнання цієї інформації; у яких випадках/станах знадобляться ці знання; з якими хворобами, симптомами, ситуаціями лікар знатиме, як діяти'), rows=8) }}
+      {{ field(form.target_specialties) }}
+      {{ field(form.resources) }}
+      {{ field(form.future_topics) }}
+      {{ field(form.quiz_url, _("Обов'язково для онлайн-навчання: перевірка знань слухачів у день заходу (Постанова КМУ № 725)")) }}
+    </div>
+    <div class="trainer-proposal__actions">
+      <button type="submit" class="apple-btn apple-btn--secondary">{{ _('Зберегти чернетку') }}</button>
+    </div>
+  </form>
+
+  {% if proposal %}
+  <div class="trainer-proposal__actions">
+    <form method="POST" action="{{ url_for('trainer_cabinet.proposal_submit', proposal_id=proposal.id) }}" data-single-submit>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="apple-btn apple-btn--primary">{{ _('Надіслати куратору') }}</button>
+    </form>
+    <form method="POST" action="{{ url_for('trainer_cabinet.proposal_delete', proposal_id=proposal.id) }}" data-single-submit>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="apple-btn apple-btn--secondary">{{ _('Видалити чернетку') }}</button>
+    </form>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/trainer-theses.js') }}?v={{ assets_version }}" defer></script>
+{% endblock %}

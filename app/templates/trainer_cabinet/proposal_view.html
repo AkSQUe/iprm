@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}{{ proposal.title }} | {{ _('Кабінет тренера | ІПРМ') }}{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="apple-page">
+  <section class="iprm-section">
+    <div class="iprm-section__inner">
+      <p><a href="{{ url_for('trainer_cabinet.profile') }}" class="account-course__link">{{ _('Анкета тренера') }}</a></p>
+      <h1 class="iprm-section__title">{{ proposal.title }}</h1>
+      <p><span class="badge badge--{{ proposal.status_badge }}">{% if proposal.status == 'submitted' %}{{ _('Надіслано куратору') }}{% else %}{{ _('Прийнято') }}{% endif %}</span></p>
+      <p class="account-card__text">{{ _('Пропозиція на розгляді куратора. Щоб внести зміни, зверніться до куратора курсу.') }}</p>
+
+      <h3 class="iprm-block-title">{{ _('Програма виступу') }}</h3>
+      <ol>{% for t in proposal.theses %}<li>{{ t }}</li>{% endfor %}</ol>
+      {% for label, value in [
+          (_('Мова доповіді'), proposal.language),
+          (_('Актуальність'), proposal.relevance),
+          (_('Яким спеціальностям буде корисним'), proposal.target_specialties),
+          (_('Цікаві статті/ресурси'), proposal.resources),
+          (_('Теми на майбутнє'), proposal.future_topics),
+          (_('Тестування'), proposal.quiz_url),
+      ] if value %}
+      <h3 class="iprm-block-title">{{ label }}</h3>
+      <p class="account-card__text">{{ value }}</p>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,23 @@
+/* page-trainer-proposal.css -- Пропозиція курсу (кабінет тренера):
+   розкладка списку тез і кнопок дій. Завантажується після account.css. */
+
+.trainer-theses {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding-left: 20px;
+}
+
+.trainer-theses__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.trainer-proposal__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+}
