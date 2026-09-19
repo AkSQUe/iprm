@@ -6630,6 +6630,9 @@ msgstr "Proposal sent to curator"
 msgid "Чернетку видалено"
 msgstr "Draft deleted"
 
+msgid "Для договору та гонорару"
+msgstr "For the contract and fee"
+
 #~ msgid "Неможливо використати цей email"
 #~ msgstr "This email cannot be used"
 

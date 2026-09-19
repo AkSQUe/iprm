@@ -4,6 +4,7 @@
 <div class="form-group{% if wide %} form-section__full{% endif %}">
   <label for="{{ f.id }}">{{ f.label.text }}</label>
   {{ f(class="form-input" + (" is-invalid" if f.errors else ""), id=f.id) }}
+  {{ caller() if caller }}
   {% for error in f.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
 </div>
 {% endmacro %}
@@ -19,81 +20,104 @@
 {% endblock %}
 
 {% block content %}
-<div class="apple-page reg-layout">
-  <p><a href="{{ url_for('trainer_cabinet.index') }}" class="account-course__link">{{ _('Кабінет тренера') }}</a></p>
-  <h1 class="reg-confirmation__title">{{ _('Анкета тренера') }}</h1>
+<div class="apple-page">
+  <section class="iprm-section iprm-section--compact">
+    <div class="iprm-section__inner trainer-profile">
+      <a href="{{ url_for('trainer_cabinet.index') }}" class="iprm-back-link">{{ _('Кабінет тренера') }}</a>
 
-  <form method="POST" action="{{ url_for('trainer_cabinet.profile') }}" enctype="multipart/form-data" data-validate data-single-submit>
-    {{ form.hidden_tag() }}
+      {# Останнє слово назви -- градієнтом, як на інших сторінках кабінету. #}
+      {% set title_parts = _('Анкета тренера').rsplit(' ', 1) %}
+      <header class="apple-section-head">
+        <span class="iprm-eyebrow">{{ _('Для договору та гонорару') }}</span>
+        <h1 class="iprm-section__title">
+          {%- if title_parts | length > 1 %}{{ title_parts[0] }} {% endif -%}
+          <span class="apple-gradient-text">{{ title_parts[-1] }}</span>
+        </h1>
+        <p class="iprm-section__subtitle">{{ _('Контакти, реквізити ФОП, дані для договору та інформація про ваші курси') }}</p>
+      </header>
 
-    <div class="form-section reg-form-section">
-      <h3 class="form-section__title reg-form-section__title">{{ _('Контактна інформація') }}</h3>
-      <div class="form-section__grid">
-        {{ field(form.full_name) }}
-        {{ field(form.birth_date) }}
-        {{ field(form.phone) }}
-        {{ field(form.email) }}
-        {{ field(form.education, wide=True) }}
-        {{ field(form.position_titles, wide=True) }}
-        {{ field(form.workplace, wide=True) }}
-        {{ field(form.social_links, wide=True) }}
-      </div>
+      <form method="POST" action="{{ url_for('trainer_cabinet.profile') }}" enctype="multipart/form-data" data-validate data-single-submit>
+        {{ form.hidden_tag() }}
+
+        <section class="form-section reg-form-section" aria-labelledby="tp-contacts">
+          <h2 id="tp-contacts" class="form-section__title reg-form-section__title">{{ _('Контактна інформація') }}</h2>
+          <div class="form-section__grid">
+            {{ field(form.full_name) }}
+            {{ field(form.birth_date) }}
+            {{ field(form.phone) }}
+            {{ field(form.email) }}
+            {{ field(form.education, wide=True) }}
+            {{ field(form.position_titles, wide=True) }}
+            {{ field(form.workplace, wide=True) }}
+            {{ field(form.social_links, wide=True) }}
+          </div>
+        </section>
+
+        <section class="form-section reg-form-section" aria-labelledby="tp-photo">
+          <h2 id="tp-photo" class="form-section__title reg-form-section__title">{{ _('Фотографія для сайту') }}</h2>
+          {# href лише для http(s)/шляху сайту -- див. фільтр safe_href. #}
+          {% set photo_href = record.photo_src | safe_href if record else '' %}
+          <div class="form-section__grid">
+            {% call field(form.photo) %}
+              {% if photo_href %}
+              <p class="form-hint"><a href="{{ photo_href }}" class="auth-card__link" target="_blank" rel="noopener">{{ _('Поточне фото') }}</a></p>
+              {% endif %}
+            {% endcall %}
+            {{ field(form.photo_url) }}
+          </div>
+        </section>
+
+        <section class="form-section reg-form-section" aria-labelledby="tp-fop">
+          <h2 id="tp-fop" class="form-section__title reg-form-section__title">{{ _('Реквізити ФОП') }}</h2>
+          <p class="alert alert--info" role="note">{{ _("У зв'язку з обмеженнями банківської системи гонорар перераховується лише на рахунок ФОП.") }}</p>
+          <div class="form-section__grid">
+            {{ field(form.fop_recipient) }}
+            {{ field(form.fop_iban) }}
+            {{ field(form.fop_rnokpp) }}
+            {{ field(form.card_number) }}
+            {{ field(form.fop_payment_purpose, wide=True) }}
+          </div>
+        </section>
+
+        <section class="form-section reg-form-section" aria-labelledby="tp-contract">
+          <h2 id="tp-contract" class="form-section__title reg-form-section__title">{{ _('Дані для підписання договору') }}</h2>
+          <div class="form-section__grid">
+            {{ field(form.tax_id) }}
+            {{ field(form.edrpou) }}
+            {{ field(form.registration_address, wide=True) }}
+          </div>
+        </section>
+
+        <div class="reg-actions trainer-profile__actions">
+          <button type="submit" class="apple-btn apple-btn--primary">{{ _('Зберегти анкету') }}</button>
+        </div>
+      </form>
+
+      <section class="form-section reg-form-section" aria-labelledby="tp-proposals">
+        <h2 id="tp-proposals" class="form-section__title reg-form-section__title">{{ _('Інформація курсу') }}</h2>
+        {% if proposals %}
+        <ul class="trainer-profile__proposals">
+          {% for p in proposals %}
+          <li class="account-online__row">
+            <div class="account-online__body">
+              <h3 class="account-online__title">
+                <a href="{{ url_for('trainer_cabinet.proposal_edit', proposal_id=p.id) }}" class="account-course__link">{{ p.title }}</a>
+              </h3>
+              <p class="account-online__meta">
+                <span class="badge badge--{{ p.status_badge }}">{% if p.status == 'draft' %}{{ _('Чернетка') }}{% elif p.status == 'submitted' %}{{ _('Надіслано куратору') }}{% else %}{{ _('Прийнято') }}{% endif %}</span>
+              </p>
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <div class="iprm-empty-state"><p>{{ _('Ви ще не додали жодного курсу чи доповіді.') }}</p></div>
+        {% endif %}
+        <div class="trainer-profile__add">
+          <a href="{{ url_for('trainer_cabinet.proposal_new') }}" class="apple-btn apple-btn--outline apple-btn--sm">{{ _('Додати курс / доповідь') }}</a>
+        </div>
+      </section>
     </div>
-
-    <div class="form-section reg-form-section">
-      <h3 class="form-section__title reg-form-section__title">{{ _('Фотографія для сайту') }}</h3>
-      {# href лише для http(s)/шляху сайту -- див. фільтр safe_href. #}
-      {% set photo_href = record.photo_src | safe_href if record else '' %}
-      {% if photo_href %}
-      <p class="account-card__text"><a href="{{ photo_href }}" class="account-course__link" target="_blank" rel="noopener">{{ _('Поточне фото') }}</a></p>
-      {% endif %}
-      <div class="form-section__grid">
-        {{ field(form.photo) }}
-        {{ field(form.photo_url) }}
-      </div>
-    </div>
-
-    <div class="form-section reg-form-section">
-      <h3 class="form-section__title reg-form-section__title">{{ _('Реквізити ФОП') }}</h3>
-      <p class="account-card__text">{{ _("У зв'язку з обмеженнями банківської системи гонорар перераховується лише на рахунок ФОП.") }}</p>
-      <div class="form-section__grid">
-        {{ field(form.fop_recipient) }}
-        {{ field(form.fop_iban) }}
-        {{ field(form.fop_rnokpp) }}
-        {{ field(form.card_number) }}
-        {{ field(form.fop_payment_purpose, wide=True) }}
-      </div>
-    </div>
-
-    <div class="form-section reg-form-section">
-      <h3 class="form-section__title reg-form-section__title">{{ _('Дані для підписання договору') }}</h3>
-      <div class="form-section__grid">
-        {{ field(form.tax_id) }}
-        {{ field(form.edrpou) }}
-        {{ field(form.registration_address, wide=True) }}
-      </div>
-    </div>
-
-    <div class="reg-actions trainer-profile__actions">
-      <button type="submit" class="apple-btn apple-btn--primary">{{ _('Зберегти анкету') }}</button>
-    </div>
-  </form>
-
-  <section class="form-section reg-form-section">
-    <h3 class="form-section__title reg-form-section__title">{{ _('Інформація курсу') }}</h3>
-    {% if proposals %}
-    <ul class="account-grid trainer-profile__proposals">
-      {% for p in proposals %}
-      <li class="account-card">
-        <a href="{{ url_for('trainer_cabinet.proposal_edit', proposal_id=p.id) }}" class="account-course__link">{{ p.title }}</a>
-        <span class="badge badge--{{ p.status_badge }}">{% if p.status == 'draft' %}{{ _('Чернетка') }}{% elif p.status == 'submitted' %}{{ _('Надіслано куратору') }}{% else %}{{ _('Прийнято') }}{% endif %}</span>
-      </li>
-      {% endfor %}
-    </ul>
-    {% else %}
-    <div class="iprm-empty-state"><p>{{ _('Ви ще не додали жодного курсу чи доповіді.') }}</p></div>
-    {% endif %}
-    <a href="{{ url_for('trainer_cabinet.proposal_new') }}" class="apple-btn apple-btn--secondary">{{ _('Додати курс / доповідь') }}</a>
   </section>
 </div>
 {% endblock %}

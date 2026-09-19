@@ -1,6 +1,13 @@
 /* page-trainer-profile.css -- Анкета тренера (кабінет тренера): лише
-   розкладка. Декор -- з auth.css, registration.css і account.css.
+   розкладка. Декор -- з common.css (.form-section, .alert), auth.css,
+   registration.css, account.css (.account-online__row) і apple-pages.css.
    Завантажується після account.css. */
+
+/* Форма в дві колонки на 1200px розтягувала поле телефону на пів екрана:
+   тримаємо ширину читання, як у форми реєстрації. */
+.trainer-profile {
+  max-width: 880px;
+}
 
 /* Кнопка збереження стоїть між формою і секцією пропозицій: без відступу
    вона прилипала до секції нижче. */
@@ -8,9 +15,17 @@
   margin-bottom: 24px;
 }
 
-/* Список пропозицій -- <ul> для семантики, але маркер біля картки зайвий
-   (.account-grid розрахований на div). */
+/* Список пропозицій -- <ul> для семантики; маркер біля рядка зайвий.
+   Рядки -- .account-online__row, але обгортку .account-online не беремо:
+   вона центрує список у 900px, а тут ширину тримає картка-секція. */
 .trainer-profile__proposals {
   list-style: none;
+  margin: 0;
   padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.trainer-profile__add {
+  margin-top: 20px;
 }
