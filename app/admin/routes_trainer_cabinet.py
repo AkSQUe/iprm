@@ -17,6 +17,7 @@ from app.rbac.access import has_permission
 from app.services import trainer_cabinet as svc
 from app.utils import truncate_filename
 
+logger = logging.getLogger(__name__)
 audit_logger = logging.getLogger('audit')
 
 CONTRACT_MAX_BYTES = 10 * 1024 * 1024
@@ -61,6 +62,20 @@ def _proposal_or_404(proposal_id):
     return db.session.get(TrainerCourseProposal, proposal_id) or abort(404)
 
 
+def _notify_trainer(proposal):
+    """Лист тренеру про рішення -- ПІСЛЯ коміту і без права зірвати дію.
+
+    Рішення куратора вже в БД; збій пошти (SMTP, шаблон) лише пишемо в лог,
+    інакше адмін бачив би 500 на дію, яка насправді відбулась.
+    """
+    from app.services.email_service import EmailService
+    try:
+        EmailService.send_trainer_proposal_status(proposal)
+    except Exception:
+        logger.exception('Failed to notify trainer about proposal %s (%s)',
+                         proposal.id, proposal.status)
+
+
 @admin_bp.route('/trainers/proposals/<int:proposal_id>/accept', methods=['POST'])
 @permission_required('trainers.manage')
 def trainer_proposal_accept(proposal_id):
@@ -69,6 +84,7 @@ def trainer_proposal_accept(proposal_id):
         svc.accept_proposal(proposal)
         db.session.commit()
         audit_logger.info('Admin %s accepted trainer proposal %s', current_user.email, proposal.id)
+        _notify_trainer(proposal)
         flash('Пропозицію прийнято', 'success')
     except svc.ProposalTransitionError:
         flash('Неможливо прийняти: пропозиція не на розгляді', 'error')
@@ -107,6 +123,7 @@ def trainer_proposal_return(proposal_id):
             svc.return_proposal(proposal, form.comment.data)
             db.session.commit()
             audit_logger.info('Admin %s returned trainer proposal %s', current_user.email, proposal.id)
+            _notify_trainer(proposal)
             flash('Пропозицію повернуто на доопрацювання', 'success')
         except svc.ProposalTransitionError:
             flash('Неможливо повернути: пропозиція не на розгляді', 'error')

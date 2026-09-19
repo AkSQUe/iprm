@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: IPRM VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-09-19 22:46+0300\n"
+"POT-Creation-Date: 2026-09-19 23:10+0300\n"
 "PO-Revision-Date: 2026-07-24 15:52+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -1285,6 +1285,14 @@ msgstr ""
 
 msgid "ПІБ у вашому акаунті змінено"
 msgstr "The name on your account has changed"
+
+#, python-format
+msgid "Пропозицію курсу прийнято: %(title)s"
+msgstr "Your course proposal has been accepted: %(title)s"
+
+#, python-format
+msgid "Пропозицію курсу повернуто на доопрацювання: %(title)s"
+msgstr "Your course proposal needs revision: %(title)s"
 
 #, python-format
 msgid "Тренер підтвердив матеріали: %(title)s"
@@ -3399,6 +3407,32 @@ msgstr "Details"
 
 msgid "Новий статус"
 msgstr "New status"
+
+msgid "Пропозицію курсу прийнято"
+msgstr "Your course proposal has been accepted"
+
+msgid "Пропозицію курсу повернуто на доопрацювання"
+msgstr "Your course proposal needs revision"
+
+msgid ""
+"Куратор розглянув вашу пропозицію курсу і прийняв її. Змінювати її більше не"
+" потрібно."
+msgstr ""
+"The curator has reviewed your course proposal and accepted it. No further "
+"changes are needed."
+
+msgid ""
+"Куратор розглянув вашу пропозицію курсу і просить її доопрацювати. Внесіть "
+"правки в кабінеті тренера й надішліть пропозицію ще раз."
+msgstr ""
+"The curator has reviewed your course proposal and asks you to revise it. "
+"Make the changes in the trainer cabinet and submit the proposal again."
+
+msgid "Коментар куратора"
+msgstr "Curator's comment"
+
+msgid "Відкрити пропозицію"
+msgstr "Open the proposal"
 
 msgid "Вашу реєстрацію перенесено"
 msgstr "Your registration has been moved"

@@ -138,6 +138,18 @@ def _trainer_proposal_key(proposal):
     return f'trainer-proposal-{proposal.id}-{stamp}'
 
 
+def _trainer_proposal_status_key(proposal):
+    """Ключ ідемпотентності листа тренеру про рішення куратора.
+
+    Статус + updated_at (мікросекунди) відрізняють два рішення по одній
+    пропозиції (повернули, тренер виправив, повернули знову) -- це різні
+    листи; повторний виклик для того самого коміту дає той самий ключ.
+    """
+    updated = proposal.updated_at
+    stamp = int(updated.timestamp() * 1_000_000) if updated else 0
+    return f'trainer-proposal-status-{proposal.id}-{proposal.status}-{stamp}'
+
+
 def _trainer_requisites_key(profile):
     """Ключ ідемпотентності листа про зміну реквізитів: одне збереження -- один лист.
 
@@ -1580,6 +1592,49 @@ class EmailService:
             trigger='trainer_proposal',
             idempotency_key=_trainer_proposal_key(proposal),
             lang='uk',
+        )
+
+    @staticmethod
+    def send_trainer_proposal_status(proposal):
+        """Куратор прийняв або повернув пропозицію -- лист тренеру.
+
+        Адреса -- акаунт тренера (саме з нього він заходить у кабінет, і за
+        ним береться мова листа); без прив'язаного акаунта -- публічний email
+        тренера. Лист перекладний: тренер може читати сайт не українською.
+        Тригер той самий 'trainer_proposal' -- окремий коштував би міграції
+        CHECK заради тієї ж події в житті пропозиції.
+        """
+        trainer = proposal.trainer
+        user = trainer.user if trainer is not None else None
+        to = ((user.email if user is not None else '') or
+              (trainer.email if trainer is not None else '') or '').strip()
+        if not to:
+            logger.warning('Trainer proposal %s status %s: no recipient (trainer has no '
+                           'account and no email), trainer not notified',
+                           proposal.id, proposal.status)
+            return None
+        base = EmailService._site_base_url()
+        path = f'/trainer/proposals/{proposal.id}'
+        # Сирий \r\n у Subject -- вставка заголовка, тож title нормалізуємо
+        # і тут, хоч форма це вже робить (див. send_trainer_proposal_notification).
+        title = normalize_whitespace(proposal.title)
+        if proposal.status == proposal.ACCEPTED:
+            subject = lambda: _('Пропозицію курсу прийнято: %(title)s', title=title)  # noqa: E731
+        else:
+            subject = lambda: _('Пропозицію курсу повернуто на доопрацювання: %(title)s',  # noqa: E731
+                                title=title)
+        return EmailService.send_email(
+            to=to,
+            subject=subject,
+            template_name='trainer_proposal_status',
+            context={
+                'user': user,
+                'trainer': trainer,
+                'proposal': proposal,
+                'proposal_url': f'{base}{path}' if base else path,
+            },
+            trigger='trainer_proposal',
+            idempotency_key=_trainer_proposal_status_key(proposal),
         )
 
     @staticmethod
