@@ -41,8 +41,10 @@
 
     <div class="form-section reg-form-section">
       <h3 class="form-section__title reg-form-section__title">{{ _('Фотографія для сайту') }}</h3>
-      {% if record and record.photo_src %}
-      <p class="account-card__text"><a href="{{ record.photo_src }}" class="account-course__link" target="_blank" rel="noopener">{{ _('Поточне фото') }}</a></p>
+      {# href лише для http(s)/шляху сайту -- див. фільтр safe_href. #}
+      {% set photo_href = record.photo_src | safe_href if record else '' %}
+      {% if photo_href %}
+      <p class="account-card__text"><a href="{{ photo_href }}" class="account-course__link" target="_blank" rel="noopener">{{ _('Поточне фото') }}</a></p>
       {% endif %}
       <div class="form-section__grid">
         {{ field(form.photo) }}

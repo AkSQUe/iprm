@@ -210,6 +210,30 @@ def sanitize_rich_text(raw):
     return Markup(cleaned)
 
 
+# Посилання, введене користувачем, яке потім стає href. Перевіряємо саме
+# схему: `javascript://host/%0aalert(1)` синтаксично валідний URL (WTForms
+# URL() його пропускає), але в href виконується як код.
+HTTP_URL_PATTERN = r'^https?://'
+_HTTP_URL_RE = re.compile(HTTP_URL_PATTERN, re.IGNORECASE)
+
+
+def safe_href(value):
+    """`value`, якщо його безпечно ставити в href, інакше ''.
+
+    Безпечне -- http(s)-адреса або шлях цього сайту (`/media/...`, так
+    виглядає URL завантаженого фото). `//host` -- протокол-відносна адреса на
+    чужий домен, її як шлях сайту не приймаємо. Порожній результат шаблон
+    трактує як "показати текстом, без посилання".
+    """
+    if not value or not isinstance(value, str):
+        return ''
+    if _HTTP_URL_RE.match(value):
+        return value
+    if value.startswith('/') and not value.startswith('//'):
+        return value
+    return ''
+
+
 def uk_plural(n, one, few, many, fraction=None):
     """Українська плюралізація: uk_plural(2, 'блок', 'блоки', 'блоків') -> 'блоки'.
 

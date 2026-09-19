@@ -55,7 +55,10 @@
         <div class="form-group">
           <label>Фото</label>
           <div class="form-input admin-field-readonly">
-            {% if p.photo_src %}<a href="{{ p.photo_src }}" target="_blank" rel="noopener">Відкрити</a>{% else %}–{% endif %}
+            {# href лише для http(s)/шляху сайту: значення з бази могло потрапити
+               туди до перевірки схеми у формі (javascript: = XSS в адмінці). #}
+            {% set photo_href = p.photo_src | safe_href %}
+            {% if photo_href %}<a href="{{ photo_href }}" target="_blank" rel="noopener">Відкрити</a>{% else %}{{ p.photo_src or '–' }}{% endif %}
           </div>
         </div>
       </div>
@@ -97,7 +100,8 @@
           <div class="form-group">
             <label>Тестування</label>
             <div class="form-input admin-field-readonly">
-              {% if pr.quiz_url %}<a href="{{ pr.quiz_url }}" target="_blank" rel="noopener">{{ pr.quiz_url }}</a>{% else %}–{% endif %}
+              {% set quiz_href = pr.quiz_url | safe_href %}
+              {% if quiz_href %}<a href="{{ quiz_href }}" target="_blank" rel="noopener">{{ pr.quiz_url }}</a>{% else %}{{ pr.quiz_url or '–' }}{% endif %}
             </div>
           </div>
           {% if pr.curator_comment %}

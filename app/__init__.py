@@ -244,8 +244,10 @@ def create_app(config_name=None):
             version = get_assets_version(app.static_folder)
         return {'assets_version': version}
 
-    from app.utils import sanitize_rich_text, uk_plural
+    from app.utils import safe_href, sanitize_rich_text, uk_plural
     app.jinja_env.filters['sanitize_rich_text'] = sanitize_rich_text
+    # href із даних користувача: лише http(s) або шлях сайту, інакше ''.
+    app.jinja_env.filters['safe_href'] = safe_href
     app.jinja_env.filters['uk_plural'] = uk_plural
     # Локалізована плюралізація (uk/ru/en) для публічних сторінок; uk_plural
     # лишається для uk-only PDF-сертифікатів.

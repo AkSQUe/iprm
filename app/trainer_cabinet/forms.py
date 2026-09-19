@@ -1,11 +1,37 @@
 """Форми анкети тренера: профіль і пропозиція курсу/доповіді."""
+import re
+
 from flask_babel import lazy_gettext as _l
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed, FileField
 from wtforms import DateField, StringField, TextAreaField
-from wtforms.validators import DataRequired, Email, Length, Optional, URL, ValidationError
+from wtforms.validators import (
+    DataRequired, Email, Length, Optional, URL, ValidationError)
 
 from app.models.trainer_course_proposal import TrainerCourseProposal
+from app.utils import HTTP_URL_PATTERN
+
+
+class HttpUrl:
+    """Посилання, яке потім стає href в адмінці й кабінеті: лише http(s).
+
+    URL() перевіряє лише синтаксис і пропускає `javascript://host/%0aalert(1)`
+    (у href це виконуваний код). Схему перевіряємо першою і в тому ж
+    валідаторі, щоб на `abc` не з'являлось дві однакові помилки поспіль.
+    """
+
+    def __init__(self, message):
+        self.message = message
+        self._url = URL(message=message)
+
+    def __call__(self, form, field):
+        if not re.match(HTTP_URL_PATTERN, field.data or '', re.IGNORECASE):
+            raise ValidationError(self.message)
+        self._url(form, field)
+
+
+def _link_validators():
+    return [Optional(), HttpUrl(_l('Невалідне посилання')), Length(max=500)]
 
 
 class TrainerProfileForm(FlaskForm):
@@ -22,8 +48,8 @@ class TrainerProfileForm(FlaskForm):
     photo = FileField(_l('Фотографія для сайту'), validators=[
         Optional(), FileAllowed(['jpg', 'jpeg', 'png', 'webp', 'heic'],
                                 _l('Дозволені формати: JPG, PNG, WebP, HEIC'))])
-    photo_url = StringField(_l('Або посилання на фото (файлообмінник)'), validators=[
-        Optional(), URL(message=_l('Невалідне посилання')), Length(max=500)])
+    photo_url = StringField(_l('Або посилання на фото (файлообмінник)'),
+                            validators=_link_validators())
 
     # Реквізити ФОП
     fop_recipient = StringField(_l('Отримувач'), validators=[Optional(), Length(max=300)])
@@ -57,8 +83,8 @@ class ProposalForm(FlaskForm):
     target_specialties = TextAreaField(_l('Яким спеціальностям буде корисним'), validators=[Optional()])
     resources = TextAreaField(_l('Цікаві статті/ресурси по вашій темі'), validators=[Optional()])
     future_topics = TextAreaField(_l('Які теми в майбутньому ви могли б запропонувати'), validators=[Optional()])
-    quiz_url = StringField(_l('Посилання на тестування (Google-форма)'), validators=[
-        Optional(), URL(message=_l('Невалідне посилання')), Length(max=500)])
+    quiz_url = StringField(_l('Посилання на тестування (Google-форма)'),
+                           validators=_link_validators())
 
     def theses_list(self):
         return [line.strip() for line in (self.theses.data or '').splitlines() if line.strip()]
