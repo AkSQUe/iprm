@@ -66,6 +66,21 @@ def trainer_proposal_accept(proposal_id):
     return redirect(url_for('admin.trainer_questionnaire', trainer_id=proposal.trainer_id))
 
 
+@admin_bp.route('/trainers/proposals/<int:proposal_id>/unaccept', methods=['POST'])
+@permission_required('trainers.manage')
+def trainer_proposal_unaccept(proposal_id):
+    """Виправити помилкове «Прийнято»: пропозиція знову на розгляді."""
+    proposal = _proposal_or_404(proposal_id)
+    try:
+        svc.unaccept_proposal(proposal)
+        db.session.commit()
+        audit_logger.info('Admin %s unaccepted trainer proposal %s', current_user.email, proposal.id)
+        flash('Прийняття скасовано: пропозиція знову на розгляді', 'success')
+    except svc.ProposalTransitionError:
+        flash('Неможливо скасувати: пропозицію не прийнято', 'error')
+    return redirect(url_for('admin.trainer_questionnaire', trainer_id=proposal.trainer_id))
+
+
 @admin_bp.route('/trainers/proposals/<int:proposal_id>/return', methods=['POST'])
 @permission_required('trainers.manage')
 def trainer_proposal_return(proposal_id):

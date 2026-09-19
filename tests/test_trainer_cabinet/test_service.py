@@ -115,3 +115,80 @@ def test_get_or_create_profile(trainer):
     p1 = svc.get_or_create_profile(trainer)
     p2 = svc.get_or_create_profile(trainer)
     assert p1 is p2 and p1.trainer_id == trainer.id
+
+
+# --- B7: захід не зникає з кабінету в день проведення ---
+
+from datetime import datetime, timedelta, timezone  # noqa: E402
+
+from app.models.course_instance import CourseInstance  # noqa: E402
+
+# 12:00 UTC = 15:00 за Києвом (літній час): київська доба 19.09 почалась
+# 18.09 о 21:00 UTC.
+_NOW = datetime(2026, 9, 19, 12, 0, tzinfo=timezone.utc)
+
+
+def _dated(trainer, start, end=None):
+    course = make_course()
+    set_trainers(course, [trainer.id])
+    inst = CourseInstance(course_id=course.id, status='published',
+                          event_format='offline', start_date=start, end_date=end)
+    db.session.add(inst)
+    db.session.commit()
+    return inst
+
+
+def test_event_started_hour_ago_today_is_shown(trainer):
+    inst = _dated(trainer, _NOW - timedelta(hours=1))
+    assert _ids(svc.upcoming_instances(trainer, now=_NOW)) == [inst.id]
+
+
+def test_event_started_after_kyiv_midnight_is_shown(trainer):
+    """00:30 за Києвом -- це ще вчора за UTC, але вже сьогоднішній захід."""
+    inst = _dated(trainer, datetime(2026, 9, 18, 21, 30, tzinfo=timezone.utc))
+    assert _ids(svc.upcoming_instances(trainer, now=_NOW)) == [inst.id]
+
+
+def test_multi_day_event_ending_tomorrow_is_shown(trainer):
+    inst = _dated(trainer, _NOW - timedelta(days=2), _NOW + timedelta(days=1))
+    assert _ids(svc.upcoming_instances(trainer, now=_NOW)) == [inst.id]
+
+
+def test_event_ended_yesterday_is_hidden(trainer):
+    _dated(trainer, _NOW - timedelta(days=2), _NOW - timedelta(days=1))
+    # 23:30 за Києвом учора -- теж учора, хоч за UTC до півночі ще далеко.
+    _dated(trainer, datetime(2026, 9, 18, 20, 30, tzinfo=timezone.utc))
+    assert svc.upcoming_instances(trainer, now=_NOW) == []
+
+
+def test_event_without_date_still_listed(trainer):
+    inst = _dated(trainer, None)
+    assert _ids(svc.upcoming_instances(trainer, now=_NOW)) == [inst.id]
+
+
+def test_kyiv_day_start_utc():
+    from app.utils import kyiv_day_start_utc
+    assert kyiv_day_start_utc(_NOW) == datetime(2026, 9, 18, 21, 0, tzinfo=timezone.utc)
+    # Зимовий час: +2, доба починається о 22:00 UTC.
+    winter = datetime(2026, 1, 15, 10, 0, tzinfo=timezone.utc)
+    assert kyiv_day_start_utc(winter) == datetime(2026, 1, 14, 22, 0, tzinfo=timezone.utc)
+
+
+# --- B8: прийняття можна скасувати ---
+
+def test_unaccept_proposal(trainer):
+    p = TrainerCourseProposal(trainer_id=trainer.id, title='Т', theses=['a'],
+                              status=TrainerCourseProposal.ACCEPTED)
+    db.session.add(p)
+    db.session.commit()
+    svc.unaccept_proposal(p)
+    assert p.status == TrainerCourseProposal.SUBMITTED
+    with pytest.raises(svc.ProposalTransitionError):
+        svc.unaccept_proposal(p)
+
+
+def test_unaccept_rejects_draft(trainer):
+    p = TrainerCourseProposal(trainer_id=trainer.id, title='Т', theses=['a'],
+                              status=TrainerCourseProposal.DRAFT)
+    with pytest.raises(svc.ProposalTransitionError):
+        svc.unaccept_proposal(p)

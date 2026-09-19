@@ -226,6 +226,7 @@ login_required) і на сторінці замовлення (`order/<token>/re
 | POST | `/admin/trainers/<id>/delete` | Видалення тренера |
 | GET | `/admin/trainers/<id>/questionnaire` | Анкета тренера лише для читання (`trainers.view`); реквізити, дата народження, адреса реєстрації й ЄДРПОУ відкриті лише з `trainers.finance` (без нього реквізити маскуються, решта прихована) |
 | POST | `/admin/trainers/proposals/<id>/accept` | Прийняти пропозицію курсу |
+| POST | `/admin/trainers/proposals/<id>/unaccept` | Скасувати прийняття: пропозиція знову на розгляді (`trainers.manage`) |
 | POST | `/admin/trainers/proposals/<id>/return` | Повернути пропозицію на доопрацювання (з коментарем) |
 | POST | `/admin/registrations/<id>/status` | Зміна статусу реєстрації |
 | POST | `/admin/registrations/<id>/attendance` | Підтвердження присутності |

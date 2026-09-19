@@ -156,6 +156,17 @@ def to_kyiv(value):
     return ensure_utc(value).astimezone(KYIV)
 
 
+def kyiv_day_start_utc(now=None):
+    """Початок поточної київської доби, переведений в UTC.
+
+    «Сьогодні» для людей на сайті -- київська доба, а колонки лежать в UTC:
+    о 00:30 за Києвом UTC-дата ще вчорашня, і фільтр «від початку дня» по
+    UTC відрізав би або захоплював зайві три години.
+    """
+    local = to_kyiv(now or datetime.now(timezone.utc))
+    return local.replace(hour=0, minute=0, second=0, microsecond=0).astimezone(timezone.utc)
+
+
 def kyiv_dt(value, fmt='%d.%m.%Y %H:%M'):
     """Jinja-фільтр `| kyiv`: підпис часу в київській зоні.
 

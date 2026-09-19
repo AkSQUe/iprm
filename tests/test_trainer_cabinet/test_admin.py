@@ -248,3 +248,59 @@ def test_resave_keeps_existing_link_even_if_unconfirmed(client):
     saved = db.session.get(Trainer, trainer.id)
     assert saved.user_id == user.id
     assert saved.full_name == 'Нове імʼя'
+
+
+# --- B8: прийняття можна скасувати -----------------------------------------------
+
+import logging  # noqa: E402
+
+
+def _audit(caplog):
+    return [r.getMessage() for r in caplog.records if r.name == 'audit']
+
+
+def test_unaccept_returns_to_review(client, caplog):
+    _admin(client)
+    trainer = make_trainer(make_user())
+    p = _submitted(trainer)
+    p.status = 'accepted'
+    db.session.commit()
+    with caplog.at_level(logging.INFO, logger='audit'):
+        resp = client.post(f'/admin/trainers/proposals/{p.id}/unaccept')
+    assert resp.status_code == 302
+    db.session.expire_all()
+    assert p.status == 'submitted'
+    assert any('unaccepted trainer proposal' in m for m in _audit(caplog))
+    resp = client.post(f'/admin/trainers/proposals/{p.id}/unaccept', follow_redirects=True)
+    assert 'Неможливо' in resp.get_data(as_text=True)
+
+
+def test_unaccept_requires_manage(client):
+    viewer = _role_user('trainers.view')
+    trainer = make_trainer(make_user())
+    p = _submitted(trainer)
+    p.status = 'accepted'
+    db.session.commit()
+    login(client, viewer)
+    resp = client.post(f'/admin/trainers/proposals/{p.id}/unaccept')
+    assert resp.status_code in (302, 403)
+    db.session.expire_all()
+    assert p.status == 'accepted'
+
+
+def test_accept_and_unaccept_buttons_ask_confirmation(client):
+    _admin(client)
+    trainer = make_trainer(make_user())
+    p = _submitted(trainer)
+    html = client.get(f'/admin/trainers/{trainer.id}/questionnaire').get_data(as_text=True)
+    accept_action = f'/admin/trainers/proposals/{p.id}/accept'
+    form_tag = html[html.rindex('<form', 0, html.index(accept_action)):html.index(accept_action) + 200]
+    assert 'data-confirm=' in form_tag
+    p.status = 'accepted'
+    db.session.commit()
+    html = client.get(f'/admin/trainers/{trainer.id}/questionnaire').get_data(as_text=True)
+    unaccept_action = f'/admin/trainers/proposals/{p.id}/unaccept'
+    assert unaccept_action in html
+    form_tag = html[html.rindex('<form', 0, html.index(unaccept_action)):html.index(unaccept_action) + 200]
+    assert 'data-confirm=' in form_tag
+    assert 'Скасувати прийняття' in html

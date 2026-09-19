@@ -19,21 +19,33 @@ from app.models.registration import EventRegistration
 from app.models.trainer_course_proposal import TrainerCourseProposal
 from app.models.trainer_links import course_instance_trainers, course_trainers
 from app.models.trainer_profile import TrainerProfile
-from app.utils import sanitize_rich_text
+from app.utils import kyiv_day_start_utc, sanitize_rich_text
 
 
 class ProposalTransitionError(ValueError):
     """Недопустимий перехід статусу пропозиції курсу."""
 
 
+def _not_finished_before_today(now=None):
+    """Захід ще не закінчився до початку сьогоднішньої київської доби.
+
+    Порівнюємо кінець (для одноденного -- початок) з ПОЧАТКОМ дня, а не з
+    поточним моментом: інакше захід зникав би з кабінету, щойно почався, --
+    саме тоді, коли тренер на нього дивиться. Багатоденний тримається до
+    свого останнього дня. Дата без старту лишається в списку (її ще
+    призначать).
+    """
+    ends = func.coalesce(CourseInstance.end_date, CourseInstance.start_date)
+    return or_(CourseInstance.start_date.is_(None), ends >= kyiv_day_start_utc(now))
+
+
 def upcoming_instances(trainer, now=None):
-    """Майбутні published/active дати, де тренер серед effective_trainers.
+    """Сьогоднішні й майбутні published/active дати, де тренер серед effective_trainers.
 
     Повторює CourseInstance.effective_trainers у SQL: тренер призначений на
     саму дату, АБО на курс -- і тоді лише якщо в дати немає власних тренерів
     (власний список повністю перекриває курсовий).
     """
-    now = now or datetime.now(timezone.utc)
     cit = course_instance_trainers
     on_instance = exists().where(
         cit.c.instance_id == CourseInstance.id, cit.c.trainer_id == trainer.id)
@@ -46,7 +58,7 @@ def upcoming_instances(trainer, now=None):
         .options(joinedload(CourseInstance.course), joinedload(CourseInstance.city))
         .filter(
             CourseInstance.status.in_(('published', 'active')),
-            or_(CourseInstance.start_date.is_(None), CourseInstance.start_date >= now),
+            _not_finished_before_today(now),
             or_(on_instance, and_(~has_own, on_course)),
         )
         .order_by(CourseInstance.start_date.is_(None), CourseInstance.start_date)
@@ -123,6 +135,19 @@ def accept_proposal(proposal):
     if proposal.status != TrainerCourseProposal.SUBMITTED:
         raise ProposalTransitionError('Прийняти можна лише надіслану пропозицію')
     proposal.status = TrainerCourseProposal.ACCEPTED
+
+
+def unaccept_proposal(proposal):
+    """Скасувати прийняття: пропозиція знову на розгляді.
+
+    «Прийнято» натискають одним кліком, а тренер після нього вже не може
+    нічого змінити -- помилковий клік без цього переходу був би остаточним.
+    Повертаємо саме в submitted, а не в draft: тренер нічого не просив
+    змінювати, куратор лише передумав.
+    """
+    if proposal.status != TrainerCourseProposal.ACCEPTED:
+        raise ProposalTransitionError('Скасувати можна лише прийняту пропозицію')
+    proposal.status = TrainerCourseProposal.SUBMITTED
 
 
 def return_proposal(proposal, comment):

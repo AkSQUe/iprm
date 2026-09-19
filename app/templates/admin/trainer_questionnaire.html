@@ -116,7 +116,11 @@
         </div>
         {% if can_manage and pr.status == 'submitted' %}
         <div class="admin-table__actions">
-          <form method="POST" action="{{ url_for('admin.trainer_proposal_accept', proposal_id=pr.id) }}">
+          {# Після прийняття тренер уже не може правити пропозицію -- тож
+             підтвердження через спільний confirm-action.js (base.html). #}
+          <form method="POST" action="{{ url_for('admin.trainer_proposal_accept', proposal_id=pr.id) }}"
+                data-confirm="Прийняти пропозицію «{{ pr.title }}»? Тренер більше не зможе її змінити."
+                data-confirm-ok="Прийняти">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm">Прийнято</button>
           </form>
@@ -124,6 +128,15 @@
             {{ return_form.hidden_tag() }}
             {{ return_form.comment(class="form-input", rows=1, placeholder="Що доопрацювати") }}
             <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">Повернути на доопрацювання</button>
+          </form>
+        </div>
+        {% elif can_manage and pr.status == 'accepted' %}
+        <div class="admin-table__actions">
+          <form method="POST" action="{{ url_for('admin.trainer_proposal_unaccept', proposal_id=pr.id) }}"
+                data-confirm="Скасувати прийняття «{{ pr.title }}»? Пропозиція повернеться на розгляд."
+                data-confirm-ok="Скасувати прийняття">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">Скасувати прийняття</button>
           </form>
         </div>
         {% endif %}
