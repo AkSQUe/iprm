@@ -42,8 +42,11 @@
           <span class="admin-disclosure__title">Базовий курс плазмотерапії</span>
           <span class="admin-disclosure__metrics">
             <span class="admin-disclosure__metric">19 реєстр.</span>
+            <span class="badge badge--active" title="Підтверджено">14</span>
+            <span class="badge badge--pending" title="Очікує">4</span>
+            <span class="badge badge--cancelled" title="Скасовано">1</span>
             <span class="admin-disclosure__metric">81 000 &#8372;</span>
-            <span class="badge badge--pending">борг 11 000 &#8372;</span>
+            <span class="badge badge--pending" title="Борг">борг 11 000 &#8372;</span>
           </span>
         </button>
         <div class="admin-disclosure__panel" id="ds-disclosure-1">
@@ -54,6 +57,8 @@
                 <span class="admin-disclosure__title">15.03.2026 &middot; Київ</span>
                 <span class="admin-disclosure__metrics">
                   <span class="admin-disclosure__metric">12 реєстр.</span>
+                  <span class="badge badge--active" title="Підтверджено">9</span>
+                  <span class="badge badge--pending" title="Очікує">3</span>
                   <span class="admin-seats">9/12</span>
                 </span>
               </button>
@@ -64,7 +69,7 @@
         </div>
       </section>
     </div>
-    <p class="ds-hint">.admin-disclosure: заголовок із підсумками плюс панель; стан тримає aria-expanded на кнопці, --nested -- вкладений рівень. Панель може вантажитись лениво (реєстр «За заходами»). .admin-disclosure__bar/__action: посилання не вкладається в кнопку, тож заголовок вкладеного рівня -- кнопка-розгортач і сусідня іконка-дія.</p>
+    <p class="ds-hint">.admin-disclosure: заголовок із підсумками плюс панель; стан тримає aria-expanded на кнопці, --nested -- вкладений рівень. Панель може вантажитись лениво (реєстр «За заходами»). Бейдж-лічильник несе title з розшифровкою: саме число без кольору нічого не каже, а скрінрідер кольору не бачить. .admin-disclosure__bar/__action: посилання не вкладається в кнопку, тож заголовок вкладеного рівня -- кнопка-розгортач і сусідня іконка-дія.</p>
 
     <h3 class="ds-section-heading">Стани інлайн-селекта</h3>
     <div class="ds-demo">
