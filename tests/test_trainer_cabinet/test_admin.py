@@ -29,6 +29,19 @@ def test_link_account_by_email(client):
     assert db.session.get(Trainer, trainer.id).user_id == user.id
 
 
+def test_link_account_by_email_ignores_case(client):
+    """C18: users.email завжди в нижньому регістрі (User.__init__), тож
+    пошук -- прямою рівністю; регістр у введеній адміном адресі все одно
+    не має заважати знайти акаунт."""
+    _admin(client)
+    trainer = make_trainer()
+    user = make_user()
+    client.post(f'/admin/trainers/{trainer.id}/edit',
+               data=_form(trainer, account_email=user.email.upper()))
+    db.session.expire_all()
+    assert db.session.get(Trainer, trainer.id).user_id == user.id
+
+
 def test_link_unknown_email_rejected(client):
     _admin(client)
     trainer = make_trainer()

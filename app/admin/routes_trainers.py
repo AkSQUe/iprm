@@ -146,7 +146,14 @@ def _apply_account_link(trainer, email):
     if not email:
         trainer.user_id = None
         return None
-    user = User.query.filter(db.func.lower(User.email) == email).first()
+    # Пряма рівність, не func.lower(User.email): User.__init__ і
+    # create_with_oauth/create_with_password ЗАВЖДИ приводять email до
+    # нижнього регістру перед збереженням (перевірено -- жоден шлях
+    # створення User в базі це не обходить), тож users.email уже в
+    # нижньому регістрі. func.lower() на колонці з унікальним індексом не
+    # використовує його на PostgreSQL (потрібен окремий функціональний
+    # індекс) -- пошук тренера серед тисяч акаунтів ішов би повним сканом.
+    user = User.query.filter(User.email == email).first()
     if user is None:
         return 'Користувача з таким email не знайдено'
     taken = Trainer.query.filter(Trainer.user_id == user.id, Trainer.id != trainer.id).first()
