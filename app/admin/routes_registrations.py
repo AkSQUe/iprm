@@ -698,15 +698,23 @@ def registrations_all():
     page = _listing.page_arg()
     per_page = _listing.per_page_arg()
 
-    stats = db.session.query(
-        func.count().label('total'),
-        func.count(case((EventRegistration.status == 'confirmed', 1))).label('confirmed'),
-        func.count(case((EventRegistration.status == 'pending', 1))).label('pending'),
-        func.count(case((EventRegistration.status == 'cancelled', 1))).label('cancelled'),
-        func.coalesce(
-            func.sum(case((EventRegistration.payment_status == 'paid', EventRegistration.payment_amount))),
-            0,
-        ).label('total_paid'),
+    # Картки рахують той самий зріз, що й таблиця під ними. Поки вони
+    # рахували всю таблицю, зверху стояло «Всього 5000», а нижче -- дюжина
+    # рядків за фільтром, і звести одне з другим було нічим. select_from
+    # явний: фільтри джойнять User і CourseInstance, а в запиті з самих
+    # агрегатів немає явного FROM, від якого той JOIN міг би піти.
+    stats = _apply_registration_filters(
+        db.session.query(
+            func.count().label('total'),
+            func.count(case((EventRegistration.status == 'confirmed', 1))).label('confirmed'),
+            func.count(case((EventRegistration.status == 'pending', 1))).label('pending'),
+            func.count(case((EventRegistration.status == 'cancelled', 1))).label('cancelled'),
+            func.coalesce(
+                func.sum(case((EventRegistration.payment_status == 'paid', EventRegistration.payment_amount))),
+                0,
+            ).label('total_paid'),
+        ).select_from(EventRegistration),
+        filters,
     ).one()
 
     if filters['view'] == 'grouped':

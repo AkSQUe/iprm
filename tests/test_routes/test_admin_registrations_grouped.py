@@ -230,3 +230,44 @@ def test_grouped_page_does_not_grow_with_events(client, admin):
         f'12 заходів замість 2 дали +{many - few} SELECT ({few} -> {many}) -- '
         f'схоже, підсумки рахуються поштучно'
     )
+
+
+def _stat_cards(html):
+    """Картки-лічильники сторінки як {підпис: значення}."""
+    import re
+    return dict((label, value) for value, label in re.findall(
+        r'admin-stat-card__value">([^<]*)</span>\s*'
+        r'<span class="admin-stat-card__label">([^<]*)<', html))
+
+
+@pytest.mark.parametrize('view', ['list', 'grouped'])
+def test_stat_cards_follow_the_filter(client, admin, event_with_two_people, view):
+    """Картки рахують той самий зріз, що й таблиця під ними.
+
+    Раніше вони рахували ВСЮ таблицю реєстрацій: зверху «Всього 5000», а під
+    ними -- дюжина рядків за фільтром, і менеджер не мав як це звести.
+    """
+    _login(client, admin)
+
+    html = client.get(
+        f'/admin/registrations?view={view}&scope=all&status=pending'
+    ).get_data(as_text=True)
+
+    cards = _stat_cards(html)
+    assert cards['Всього'] == '1'
+    assert cards['Очікує'] == '1'
+    assert cards['Підтверджено'] == '0'
+
+
+def test_stat_cards_survive_search_and_scope_joins(client, admin, event_with_two_people):
+    """Пошук джойнить User, часовий зріз -- CourseInstance: картки мусять
+    пережити обидва джойни в одному запиті."""
+    _, _, regs = event_with_two_people
+    _login(client, admin)
+
+    email = db.session.get(User, regs[0].user_id).email
+    response = client.get(
+        f'/admin/registrations?scope=upcoming&q={quote(email)}')
+
+    assert response.status_code == 200
+    assert _stat_cards(response.get_data(as_text=True))['Всього'] == '1'
