@@ -84,6 +84,12 @@ class TrainerForm(FlaskForm):
         'Email (для admin-сповіщень)',
         validators=[Optional(), Email(message='Невалідний email'), Length(max=255)],
     )
+    account_email = StringField(
+        'Акаунт на сайті (email)',
+        validators=[Optional(), Email(message='Невалідний email'), Length(max=255)],
+        description='Email зареєстрованого користувача. Після прив\'язки тренер '
+                    'бачить «Кабінет тренера». Порожнє поле -- відв\'язати.',
+    )
     is_active = BooleanField('Активний', default=True)
     # Опційні регалії -- JSON із редактора (санітизація у trainer_service).
     certificates = HiddenField()
@@ -1322,3 +1328,8 @@ class RoleForm(FlaskForm):
     # 0 = не копіювати. Варіанти виставляє маршрут.
     copy_from = SelectField('Скопіювати права з', coerce=int, default=0,
                             validators=[Optional()])
+
+
+class ProposalReturnForm(FlaskForm):
+    """Повернення пропозиції курсу тренеру на доопрацювання -- з коментарем куратора."""
+    comment = TextAreaField('Коментар для тренера', validators=[Optional(), Length(max=2000)])

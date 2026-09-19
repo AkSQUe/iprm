@@ -9,6 +9,9 @@ from app.admin.routes_translations import apply_inline_translations
 from app.extensions import db
 from app.models.trainer import Trainer
 from app.models.media_file import MediaFile
+from app.models.trainer_course_proposal import TrainerCourseProposal
+from app.models.trainer_profile import TrainerProfile
+from app.models.user import User
 from app.services import trainer_service
 from app.utils import slugify
 
@@ -120,6 +123,22 @@ def _load_profile_into_form(trainer, form):
 _TRAINER_STATES = {'active': 'Активні', 'inactive': 'Приховані'}
 
 
+def _apply_account_link(trainer, email):
+    """Прив'язати/відв'язати акаунт. Повертає текст помилки або None."""
+    email = (email or '').strip().lower()
+    if not email:
+        trainer.user_id = None
+        return None
+    user = User.query.filter(db.func.lower(User.email) == email).first()
+    if user is None:
+        return 'Користувача з таким email не знайдено'
+    taken = Trainer.query.filter(Trainer.user_id == user.id, Trainer.id != trainer.id).first()
+    if taken is not None:
+        return f'Цей акаунт вже прив\'язано до тренера «{taken.full_name}»'
+    trainer.user_id = user.id
+    return None
+
+
 @admin_bp.route('/trainers')
 @permission_required('trainers.view')
 def trainers_list():
@@ -132,12 +151,28 @@ def trainers_list():
     ])
     if filters['state']:
         query = query.filter(Trainer.is_active.is_(filters['state'] == 'active'))
+    trainers = query.order_by(Trainer.full_name).all()
+    # Індикатори рахуються агрегатами по всій сторінці одразу -- N+1 по
+    # тренерах тут був би найгіршим випадком реєстру (десятки рядків).
+    ids = [t.id for t in trainers]
+    new_proposals = dict(
+        db.session.query(TrainerCourseProposal.trainer_id, db.func.count(TrainerCourseProposal.id))
+        .filter(TrainerCourseProposal.trainer_id.in_(ids),
+                TrainerCourseProposal.status == TrainerCourseProposal.SUBMITTED)
+        .group_by(TrainerCourseProposal.trainer_id).all()
+    ) if ids else {}
+    complete_profiles = {
+        p.trainer_id for p in TrainerProfile.query.filter(TrainerProfile.trainer_id.in_(ids)).all()
+        if p.is_complete
+    } if ids else set()
     return render_template(
         'admin/trainers.html',
-        trainers=query.order_by(Trainer.full_name).all(),
+        trainers=trainers,
         filters=filters,
         filter_args=_listing.filter_args(filters),
         state_options=list(_TRAINER_STATES.items()),
+        new_proposals=new_proposals,
+        complete_profiles=complete_profiles,
     )
 
 
@@ -165,6 +200,10 @@ def trainer_create():
         )
         _set_photo_media(trainer, form)
         _apply_profile_fields(trainer, form)
+        link_error = _apply_account_link(trainer, form.account_email.data)
+        if link_error:
+            form.account_email.errors.append(link_error)
+            return render_template('admin/trainer_edit.html', form=form, trainer=None)
         db.session.add(trainer)
         apply_inline_translations(trainer)
 
@@ -209,6 +248,7 @@ def trainer_edit(trainer_id):
     form = TrainerForm(obj=trainer)
     if request.method == 'GET':
         _load_profile_into_form(trainer, form)
+        form.account_email.data = trainer.user.email if trainer.user else ''
 
     if form.validate_on_submit():
         slug = form.slug.data.strip()
@@ -228,6 +268,11 @@ def trainer_edit(trainer_id):
         trainer.is_active = form.is_active.data
         _set_photo_media(trainer, form)
         _apply_profile_fields(trainer, form)
+        link_error = _apply_account_link(trainer, form.account_email.data)
+        if link_error:
+            form.account_email.errors.append(link_error)
+            db.session.rollback()
+            return render_template('admin/trainer_edit.html', form=form, trainer=trainer, referral_link=referral_link, referral_balance=referral_balance, referral_dashboard_url=referral_dashboard_url)
         apply_inline_translations(trainer)
 
         try:

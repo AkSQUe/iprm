@@ -33,6 +33,7 @@
       <a href="{{ url_for('admin.courses_list', trainer_id=trainer.id) }}" class="btn-admin btn-admin--secondary">
         {{ icon('menu_book') }} Курси
       </a>
+      <a href="{{ url_for('admin.trainer_questionnaire', trainer_id=trainer.id) }}" class="btn-admin btn-admin--secondary">Анкета тренера</a>
       <a href="{{ url_for('admin.translations_edit', entity='trainer', obj_id=trainer.id) }}" class="btn-admin btn-admin--secondary">Переклади</a>
       <a href="{{ url_for('admin.translations_export_object', entity='trainer', obj_id=trainer.id) }}" class="btn-admin btn-admin--secondary" title="Файл перекладів лише цього об'єкта">{{ icon('download') }} Переклади XLSX</a>
       {% endif %}
@@ -86,6 +87,13 @@
           <label for="email">Email <span class="admin-text-muted">(для admin-сповіщень про захід)</span></label>
           {{ form.email(class="form-input", id="email", placeholder="trainer@example.com") }}
           {% for e in form.email.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
+        </div>
+
+        <div class="form-group">
+          <label for="account_email">{{ form.account_email.label.text }}</label>
+          {{ form.account_email(class="form-input" + (" is-invalid" if form.account_email.errors else ""), id="account_email", placeholder="user@example.com") }}
+          <div class="form-hint">{{ form.account_email.description }}</div>
+          {% for e in form.account_email.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
         </div>
 
         <div class="form-group admin-form__full">

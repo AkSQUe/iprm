@@ -1,0 +1,133 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Анкета: {{ trainer.full_name }} | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+
+  <div class="admin-hero">
+    <div>
+      <div class="admin-breadcrumb">
+        <a href="{{ url_for('admin.trainers_list') }}" class="admin-breadcrumb__link">Тренери</a>
+        <span class="admin-breadcrumb__sep">/</span>
+        <span class="admin-breadcrumb__current">Анкета</span>
+      </div>
+      <h1 class="admin-hero__title">Анкета: {{ trainer.full_name }}</h1>
+      <p class="admin-hero__subtitle">
+        <a href="{{ url_for('admin.trainer_edit', trainer_id=trainer.id) }}">Редагувати картку тренера</a>
+      </p>
+    </div>
+  </div>
+
+  {% include 'partials/flash_messages.html' %}
+
+  {% set p = profile %}
+  <div class="admin-form">
+
+    <div class="form-section">
+      <h3 class="admin-form__section-title">Анкета тренера</h3>
+      {% if not p %}
+      <p class="form-hint">Тренер ще не заповнював анкету.</p>
+      {% else %}
+      <div class="admin-form__grid">
+        {% for label, value in [
+            ('ПІБ', p.full_name), ('Дата народження', p.birth_date.strftime('%d.%m.%Y') if p.birth_date else ''),
+            ('Освіта', p.education), ('Посада та регалії', p.position_titles),
+            ('Місце роботи', p.workplace), ('Телефон', p.phone), ('Ел. пошта', p.email),
+            ('Соцмережі', p.social_links), ('Отримувач (ФОП)', p.fop_recipient),
+            ('IBAN', secrets.fop_iban), ('РНОКПП', secrets.fop_rnokpp),
+            ('Призначення платежу', p.fop_payment_purpose), ('Номер картки', secrets.card_number),
+            ('Ідентифікаційний код', secrets.tax_id), ('Адреса реєстрації', p.registration_address),
+            ('ЄДРПОУ', p.edrpou),
+        ] %}
+        <div class="form-group">
+          <label>{{ label }}</label>
+          <div class="form-input admin-field-readonly">{{ value or '–' }}</div>
+        </div>
+        {% endfor %}
+        <div class="form-group">
+          <label>Фото</label>
+          <div class="form-input admin-field-readonly">
+            {% if p.photo_src %}<a href="{{ p.photo_src }}" target="_blank" rel="noopener">Відкрити</a>{% else %}–{% endif %}
+          </div>
+        </div>
+      </div>
+      {% if not can_manage %}
+      <p class="form-hint">Реквізити приховано: потрібне право «Тренери: керування».</p>
+      {% endif %}
+      {% endif %}
+    </div>
+
+    <div class="form-section">
+      <h3 class="admin-form__section-title">Інформація курсу</h3>
+      {% for pr in proposals %}
+      <div class="form-section" id="proposal-{{ pr.id }}">
+        <h3 class="admin-form__section-title">
+          {{ pr.title }} <span class="badge badge--{{ pr.status_badge }}">{{ pr.status_label }}</span>
+        </h3>
+        <ol>{% for t in pr.theses %}<li>{{ t }}</li>{% endfor %}</ol>
+        <div class="admin-form__grid">
+          <div class="form-group">
+            <label>Мова</label>
+            <div class="form-input admin-field-readonly">{{ pr.language or '–' }}</div>
+          </div>
+          <div class="form-group">
+            <label>Актуальність</label>
+            <div class="form-input admin-field-readonly">{{ pr.relevance or '–' }}</div>
+          </div>
+          <div class="form-group">
+            <label>Спеціальності</label>
+            <div class="form-input admin-field-readonly">{{ pr.target_specialties or '–' }}</div>
+          </div>
+          <div class="form-group">
+            <label>Статті/ресурси</label>
+            <div class="form-input admin-field-readonly">{{ pr.resources or '–' }}</div>
+          </div>
+          <div class="form-group">
+            <label>Теми на майбутнє</label>
+            <div class="form-input admin-field-readonly">{{ pr.future_topics or '–' }}</div>
+          </div>
+          <div class="form-group">
+            <label>Тестування</label>
+            <div class="form-input admin-field-readonly">
+              {% if pr.quiz_url %}<a href="{{ pr.quiz_url }}" target="_blank" rel="noopener">{{ pr.quiz_url }}</a>{% else %}–{% endif %}
+            </div>
+          </div>
+          {% if pr.curator_comment %}
+          <div class="form-group admin-form__full">
+            <label>Коментар куратора</label>
+            <div class="form-input admin-field-readonly">{{ pr.curator_comment }}</div>
+          </div>
+          {% endif %}
+        </div>
+        {% if can_manage and pr.status == 'submitted' %}
+        <div class="admin-table__actions">
+          <form method="POST" action="{{ url_for('admin.trainer_proposal_accept', proposal_id=pr.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm">Прийнято</button>
+          </form>
+          <form method="POST" action="{{ url_for('admin.trainer_proposal_return', proposal_id=pr.id) }}" class="admin-control-row">
+            {{ return_form.hidden_tag() }}
+            {{ return_form.comment(class="form-input", rows=1, placeholder="Що доопрацювати") }}
+            <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">Повернути на доопрацювання</button>
+          </form>
+        </div>
+        {% endif %}
+      </div>
+      {% else %}
+      <p class="form-hint">Пропозицій курсу немає.</p>
+      {% endfor %}
+    </div>
+
+  </div>
+
+  </div>
+</div>
+{% endblock %}
