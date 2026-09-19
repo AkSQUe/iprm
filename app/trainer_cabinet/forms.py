@@ -9,7 +9,7 @@ from wtforms.validators import (
     DataRequired, Email, Length, Optional, URL, ValidationError)
 
 from app.models.trainer_course_proposal import TrainerCourseProposal
-from app.utils import HTTP_URL_PATTERN
+from app.utils import HTTP_URL_PATTERN, normalize_whitespace
 
 
 class HttpUrl:
@@ -78,7 +78,10 @@ class TrainerProfileForm(FlaskForm):
 
 
 class ProposalForm(FlaskForm):
-    title = StringField(_l('Назва курсу/доповіді'), validators=[
+    # filters -- нормалізація ДО валідації: CR/LF з назви йде прямо в
+    # заголовок листа куратору (Subject), а сирий перенос рядка там -- це
+    # вставка нового заголовка, а не просто негарний вигляд.
+    title = StringField(_l('Назва курсу/доповіді'), filters=[normalize_whitespace], validators=[
         DataRequired(message=_l("Назва обов'язкова")),
         Length(max=TrainerCourseProposal.TITLE_MAX,
                message=_l('Не більше 50 символів'))])

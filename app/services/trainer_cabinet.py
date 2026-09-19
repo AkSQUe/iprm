@@ -130,6 +130,10 @@ def submit_proposal(proposal):
         raise ProposalTransitionError('Надіслати можна лише чернетку')
     proposal.status = TrainerCourseProposal.SUBMITTED
     proposal.submitted_at = datetime.now(timezone.utc)
+    # Коментар стосувався ПОПЕРЕДНЬОЇ версії (та, яку повернули); лишити
+    # його -- значить показувати куратору й тренеру зауваження, яке вже
+    # виправлене цим-таки надсиланням.
+    proposal.curator_comment = None
 
 
 def accept_proposal(proposal):

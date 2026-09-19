@@ -43,23 +43,37 @@ def test_submit_locks_editing(client):
     trainer = _setup(client)
     client.post('/trainer/proposals/new', data=DATA)
     p = TrainerCourseProposal.query.filter_by(trainer_id=trainer.id).one()
-    assert client.post(f'/trainer/proposals/{p.id}/submit').status_code == 302
+    view_url = f'/trainer/proposals/{p.id}'
+    resp = client.post(view_url, data={**DATA, 'action': 'submit'})
+    assert resp.status_code == 302
     db.session.expire_all()
     assert p.status == 'submitted'
     # Заблоковану пропозицію тренер не змінює: замість 409 (без шаблону,
     # з записом в ErrorLog) -- flash і повернення на перегляд.
-    view_url = f'/trainer/proposals/{p.id}'
     resp = client.post(view_url, data={**DATA, 'title': 'Інше'})
     assert resp.status_code == 302 and resp.headers['Location'].endswith(view_url)
     resp = client.post(f'/trainer/proposals/{p.id}/delete')
     assert resp.status_code == 302 and resp.headers['Location'].endswith(view_url)
-    resp = client.post(f'/trainer/proposals/{p.id}/submit')
+    # Повторна спроба надіслати вже надіслану пропозицію -- теж заблокована.
+    resp = client.post(view_url, data={**DATA, 'action': 'submit'})
     assert resp.status_code == 302 and resp.headers['Location'].endswith(view_url)
     db.session.expire_all()
     assert p.title == 'КОС крові: діагностика' and p.status == 'submitted'
     assert db.session.get(TrainerCourseProposal, p.id) is not None
     view = client.get(f'/trainer/proposals/{p.id}').get_data(as_text=True)
     assert 'КОС крові: діагностика' in view and 'name="title"' not in view
+
+
+def test_title_whitespace_is_normalized(client):
+    """CR/LF і подвійні пробіли в назві -- заголовок листа куратору
+    будується з неї підстановкою в один рядок; необроблений перенос рядка
+    там був би початком нового заголовка листа (header injection)."""
+    trainer = _setup(client)
+    resp = client.post('/trainer/proposals/new',
+                       data={**DATA, 'title': 'КОС  крові:\r\n діагностика'})
+    assert resp.status_code == 302
+    p = TrainerCourseProposal.query.filter_by(trainer_id=trainer.id).one()
+    assert p.title == 'КОС крові: діагностика'
 
 
 def test_delete_draft(client):
@@ -77,7 +91,7 @@ def test_foreign_proposal_is_404(client):
     db.session.commit()
     _setup(client)
     assert client.get(f'/trainer/proposals/{p.id}').status_code == 404
-    assert client.post(f'/trainer/proposals/{p.id}/submit').status_code == 404
+    assert client.post(f'/trainer/proposals/{p.id}', data=DATA).status_code == 404
     assert client.post(f'/trainer/proposals/{p.id}/delete').status_code == 404
 
 

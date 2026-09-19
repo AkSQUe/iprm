@@ -15,6 +15,7 @@ from app.models.trainer_profile import TrainerProfile
 from app.rbac import permission_required
 from app.rbac.access import has_permission
 from app.services import trainer_cabinet as svc
+from app.utils import truncate_filename
 
 audit_logger = logging.getLogger('audit')
 
@@ -129,7 +130,10 @@ def settings_trainers():
                 form.contract_pdf.errors.append(error)
                 return render_template('admin/settings_trainers.html', form=form, site=site)
             site.trainer_contract_pdf = data
-            site.trainer_contract_filename = upload.filename
+            # Ім'я -- від клієнта: старі браузери шлють повний шлях, а
+            # довжина не обмежена нічим, крім файлової системи відправника;
+            # колонка -- String(255).
+            site.trainer_contract_filename = truncate_filename(upload.filename)
             site.trainer_contract_uploaded_at = datetime.now(timezone.utc)
         elif form.remove_contract.data:
             site.trainer_contract_pdf = None

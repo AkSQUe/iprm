@@ -233,16 +233,21 @@ def safe_href(value):
 
     Безпечне -- http(s)-адреса або шлях цього сайту (`/media/...`, так
     виглядає URL завантаженого фото). `//host` -- протокол-відносна адреса на
-    чужий домен, її як шлях сайту не приймаємо. Порожній результат шаблон
-    трактує як "показати текстом, без посилання".
+    чужий домен, її як шлях сайту не приймаємо. Той самий трюк працює й через
+    зворотну похилу: браузер трактує `/\\host` так само, як `//host` (бекслеш
+    у HTML-атрибуті рівносильний прямій похилій), тому будь-яка `\\` у перших
+    двох символах теж відхиляється. Порожній результат шаблон трактує як
+    "показати текстом, без посилання".
     """
     if not value or not isinstance(value, str):
         return ''
     if _HTTP_URL_RE.match(value):
         return value
-    if value.startswith('/') and not value.startswith('//'):
-        return value
-    return ''
+    if not value.startswith('/'):
+        return ''
+    if value[1:2] in ('/', '\\') or '\\' in value[:2]:
+        return ''
+    return value
 
 
 def uk_plural(n, one, few, many, fraction=None):
@@ -265,6 +270,34 @@ def uk_plural(n, one, few, many, fraction=None):
     if 2 <= mod10 <= 4 and not 10 <= mod100 < 20:
         return few
     return many
+
+
+def normalize_whitespace(value):
+    """Схлопнути пробіли/переноси рядків у назві в один рядок з одинарними
+    пробілами. Значення потрапляє в заголовок листа (Subject) як є: сирий
+    `\\r\\n` там -- це вставка нового заголовка (header injection), а не
+    просто негарний перенос. None -> ''.
+    """
+    return ' '.join((value or '').split())
+
+
+def truncate_filename(filename, max_length=255):
+    """Обрізати ім'я файлу до `max_length`, зберігши розширення.
+
+    <input type=file> віддає рядок від клієнта як є: старі браузери й деякі
+    мобільні шлють повний шлях (`C:\\fakepath\\...`), а сама назва не
+    обмежена нічим, крім файлової системи відправника. Береться лише
+    останній сегмент шляху (обидва роздільники -- Windows теж міг бути на
+    тому кінці), а розширення НЕ зрізається серединою: без цього довге ім'я
+    втратило б '.pdf', і файл довелось би відкривати вручну.
+    """
+    name = (filename or '').replace('\\', '/').rsplit('/', 1)[-1]
+    if len(name) <= max_length:
+        return name
+    base, dot, ext = name.rpartition('.')
+    if dot and len(ext) < max_length:
+        return base[:max_length - len(ext) - 1] + dot + ext
+    return name[:max_length]
 
 
 def slugify(text):

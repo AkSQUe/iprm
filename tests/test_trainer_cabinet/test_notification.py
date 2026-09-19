@@ -23,7 +23,8 @@ def test_submit_sends_to_contract_email(client):
     p = _draft(trainer)
     login(client, user)
     with mock.patch.object(EmailService, 'send_email') as send:
-        client.post(f'/trainer/proposals/{p.id}/submit')
+        client.post(f'/trainer/proposals/{p.id}', data={'action': 'submit', 'title': p.title,
+                                                         'theses': '\n'.join(p.theses)})
     send.assert_called_once()
     args, kwargs = send.call_args
     to = kwargs.get('to', args[0] if args else None)
@@ -31,6 +32,23 @@ def test_submit_sends_to_contract_email(client):
     assert kwargs['template_name'] == 'trainer_proposal_submitted'
     assert kwargs['trigger'] == 'trainer_proposal'
     assert 'КОС' in kwargs['subject']
+
+
+def test_subject_has_no_raw_newline_even_if_title_does(client):
+    """Форма нормалізує title, але лист будує рядок з живого об'єкта -- САМ
+    сервіс не мусить довіряти цьому й пускати сирий title у Subject: рядок
+    міг потрапити в БД в обхід форми (адмінка, старий рядок, міграція)."""
+    s = SiteSettings.get()
+    s.trainer_contract_email = 'curator@test.com'
+    db.session.commit()
+    p = _draft(make_trainer(make_user()))
+    p.title = 'Курс\r\nBcc: attacker@evil.com'
+    db.session.commit()
+    with mock.patch.object(EmailService, 'send_email') as send:
+        EmailService.send_trainer_proposal_notification(p)
+    subject = send.call_args.kwargs['subject']
+    assert '\r' not in subject and '\n' not in subject
+    assert subject == 'Пропозиція курсу від тренера: Курс Bcc: attacker@evil.com'
 
 
 def test_fallback_to_site_email(client):
@@ -42,7 +60,8 @@ def test_fallback_to_site_email(client):
     p = _draft(make_trainer(user))
     login(client, user)
     with mock.patch.object(EmailService, 'send_email') as send:
-        client.post(f'/trainer/proposals/{p.id}/submit')
+        client.post(f'/trainer/proposals/{p.id}', data={'action': 'submit', 'title': p.title,
+                                                         'theses': '\n'.join(p.theses)})
     args, kwargs = send.call_args
     assert kwargs.get('to', args[0] if args else None) == 'office@test.com'
 

@@ -26,6 +26,7 @@ from flask_mail import Message
 from app.extensions import db
 from app.models.email_log import EmailLog, MAX_RETRIES, STALE_PENDING_MINUTES
 from app.services.money import format_amount
+from app.utils import normalize_whitespace
 
 logger = logging.getLogger(__name__)
 
@@ -1565,7 +1566,11 @@ class EmailService:
         path = f'/admin/trainers/{proposal.trainer_id}/questionnaire#proposal-{proposal.id}'
         return EmailService.send_email(
             to=to,
-            subject=f'Пропозиція курсу від тренера: {proposal.title}',
+            # Форма нормалізує title, але тут не довіряємо цьому: рядок міг
+            # потрапити в БД в обхід форми, а сирий \r\n у Subject -- це
+            # вставка нового заголовка листа (Bcc: тощо), а не просто
+            # негарний перенос.
+            subject=f'Пропозиція курсу від тренера: {normalize_whitespace(proposal.title)}',
             template_name='trainer_proposal_submitted',
             context={
                 'proposal': proposal,

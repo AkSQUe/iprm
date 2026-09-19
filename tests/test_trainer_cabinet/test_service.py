@@ -91,6 +91,22 @@ def test_proposal_transitions(trainer):
     assert p.status == 'accepted'
 
 
+# --- C10: повторне надсилання не тягне за собою старий коментар куратора ---
+
+def test_submit_clears_curator_comment(trainer):
+    """Коментар куратора стосується ПОПЕРЕДНЬОЇ (повернутої) версії. Якщо він
+    лишається після повторного надсилання, і адмінка, і сам тренер бачать
+    зауваження, що вже неактуальне -- вже виправлену чернетку."""
+    p = TrainerCourseProposal(trainer_id=trainer.id, title='Т', theses=['a'])
+    db.session.add(p)
+    db.session.commit()
+    svc.submit_proposal(p)
+    svc.return_proposal(p, 'Уточніть тези')
+    assert p.curator_comment == 'Уточніть тези'
+    svc.submit_proposal(p)
+    assert p.status == 'submitted' and p.curator_comment is None
+
+
 def test_faq_uses_default_and_email_fallback():
     s = SiteSettings.get()
     s.trainer_faq_html = ''

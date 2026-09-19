@@ -84,5 +84,10 @@ def test_safe_href():
     assert safe_href('HTTP://x.com') == 'HTTP://x.com'
     assert safe_href('/media/a.webp') == '/media/a.webp'
     for bad in (EVIL, 'JavaScript:alert(1)', 'data:text/html,x', '//evil.com/x',
-                ' javascript:alert(1)', '', None):
+                ' javascript:alert(1)', '', None,
+                # C12: '/\evil.com' і '\\evil.com' -- браузер трактує зворотну
+                # похилу так само, як другу пряму (протокол-відносна адреса
+                # на чужий домен), тож бекслеш у перших двох символах теж
+                # мусить відхилятись.
+                '/\\evil.com', '\\\\evil.com', '\\/evil.com'):
         assert safe_href(bad) == ''
