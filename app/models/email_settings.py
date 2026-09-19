@@ -1,21 +1,12 @@
-import base64
-import hashlib
 import logging
 
-from cryptography.fernet import Fernet, InvalidToken
-from flask import current_app
+from cryptography.fernet import InvalidToken
 
+from app.crypto import get_fernet as _get_fernet
 from app.extensions import db
 from app.models.mixins import TimestampMixin
 
 logger = logging.getLogger(__name__)
-
-
-def _get_fernet():
-    """Derive Fernet key from Flask SECRET_KEY."""
-    secret = current_app.config['SECRET_KEY']
-    key = hashlib.sha256(secret.encode()).digest()
-    return Fernet(base64.urlsafe_b64encode(key))
 
 
 class EmailSettings(TimestampMixin, db.Model):

@@ -1,12 +1,11 @@
-import base64
-import hashlib
 import logging
 import re
 from collections import namedtuple
 
-from cryptography.fernet import Fernet, InvalidToken
+from cryptography.fernet import InvalidToken
 from flask import current_app
 
+from app.crypto import get_fernet as _get_fernet
 from app.extensions import db
 from app.models.mixins import TimestampMixin, TranslatableMixin, utcnow
 
@@ -25,12 +24,6 @@ logger = logging.getLogger(__name__)
 # два, вони закладені в CHECK-констрейнт `registrations.payment_method`, і
 # третій з'явиться не раніше, ніж нова платіжна інтеграція.
 PaymentMethods = namedtuple('PaymentMethods', ('liqpay', 'invoice'))
-
-
-def _get_fernet():
-    secret = current_app.config['SECRET_KEY']
-    key = hashlib.sha256(secret.encode()).digest()
-    return Fernet(base64.urlsafe_b64encode(key))
 
 
 class SiteSettings(TranslatableMixin, TimestampMixin, db.Model):
