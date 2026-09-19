@@ -9,7 +9,9 @@ from flask_babel import refresh
 from app.i18n import DEFAULT_LANGUAGE, PREFIXED_LANGUAGES
 
 # Розділи, закриті від індексації (мають X-Robots-Tag у своїх __init__.py).
-PRIVATE_BLUEPRINTS = {'admin', 'auth', 'payments', 'quiz', 'registration'}
+PRIVATE_BLUEPRINTS = {
+    'admin', 'auth', 'payments', 'quiz', 'registration', 'trainer_cabinet',
+}
 
 # Службові ендпоінти: віддають не HTML, тож HTML-твердження до них не
 # застосовні. main.offer_pdf -- PDF (application/pdf), blog.feed -- RSS

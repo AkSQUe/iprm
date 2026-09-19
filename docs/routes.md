@@ -123,6 +123,23 @@ login_required) і на сторінці замовлення (`order/<token>/re
 | GET | `/trainers` | Список тренерів |
 | GET | `/trainers/<slug>` | Сторінка тренера |
 
+### Кабінет тренера
+
+Блюпринт `trainer_cabinet`, `/trainer`, `trainer_required` (акаунт з
+активною прив'язаною карткою `Trainer`, інакше 404).
+
+| Метод | URL | Опис |
+|-------|-----|------|
+| GET | `/trainer/` | Найближчі заходи з лічильниками реєстрацій, посилання на дочірні сторінки |
+| GET/POST | `/trainer/profile` | Анкета тренера: контакти, ФОП, договір, фото |
+| GET/POST | `/trainer/proposals/new` | Нова пропозиція курсу (чернетка) |
+| GET/POST | `/trainer/proposals/<id>` | Перегляд/редагування пропозиції (редагування -- лише чернетка) |
+| POST | `/trainer/proposals/<id>/submit` | Надіслати пропозицію куратору |
+| POST | `/trainer/proposals/<id>/delete` | Видалити чернетку |
+| GET | `/trainer/contract` | Договір: інструкція і кнопка завантаження |
+| GET | `/trainer/contract/download` | Завантажити PDF договору (лише тренерам; 404 без файлу) |
+| GET | `/trainer/faq` | Часті питання |
+
 ## Clinics
 
 | Метод | URL | Опис |
@@ -205,8 +222,11 @@ login_required) і на сторінці замовлення (`order/<token>/re
 | POST | `/admin/promo-codes/<id>/delete` | Видалення промокоду |
 | GET | `/admin/trainers` | Список тренерів |
 | GET/POST | `/admin/trainers/new` | Додавання тренера |
-| GET/POST | `/admin/trainers/<id>/edit` | Редагування тренера |
+| GET/POST | `/admin/trainers/<id>/edit` | Редагування тренера (прив'язка акаунта -- поле «Акаунт на сайті») |
 | POST | `/admin/trainers/<id>/delete` | Видалення тренера |
+| GET | `/admin/trainers/<id>/questionnaire` | Анкета тренера лише для читання (`trainers.view`); реквізити відкриті лише з `trainers.manage` |
+| POST | `/admin/trainers/proposals/<id>/accept` | Прийняти пропозицію курсу |
+| POST | `/admin/trainers/proposals/<id>/return` | Повернути пропозицію на доопрацювання (з коментарем) |
 | POST | `/admin/registrations/<id>/status` | Зміна статусу реєстрації |
 | POST | `/admin/registrations/<id>/attendance` | Підтвердження присутності |
 | POST | `/admin/registrations/<id>/certificate` | Видати сертифікат (+ email) |
@@ -245,6 +265,7 @@ login_required) і на сторінці замовлення (`order/<token>/re
 | POST | `/admin/meta-pixel/save` | Зберегти Pixel ID і прапорець |
 | GET | `/admin/meta-pixel/test` | Надіслати тестову подію IPRMTestEvent |
 | GET/POST | `/admin/settings` | Налаштування сайту |
+| GET/POST | `/admin/settings/trainers` | Налаштування «Для тренерів»: PDF договору, email для договорів, редактор FAQ (`settings.manage`) |
 | GET | `/admin/error-logs` | Журнал помилок |
 | GET | `/admin/error-logs/<id>` | Деталі помилки |
 | POST | `/admin/error-logs/<id>/resolve` | Позначити помилку вирішеною |

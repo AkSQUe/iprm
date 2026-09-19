@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: IPRM VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-09-16 21:45+0300\n"
+"POT-Creation-Date: 2026-09-19 19:55+0300\n"
 "PO-Revision-Date: 2026-07-24 15:52+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -5369,6 +5369,9 @@ msgstr "Trainers"
 msgid "Панель адміністратора"
 msgstr "Admin panel"
 
+msgid "Кабінет тренера"
+msgstr "Trainer cabinet"
+
 msgid "Заповнити дані для сертифіката"
 msgstr "Fill in certificate details"
 
@@ -6204,6 +6207,198 @@ msgstr ""
 msgid "Після оплати за рахунком повідомте менеджера для підтвердження участі."
 msgstr "After paying by invoice, notify your manager to confirm your participation."
 
+msgid "Розділи кабінету тренера"
+msgstr "Trainer cabinet sections"
+
+msgid "Анкета тренера"
+msgstr "Trainer questionnaire"
+
+msgid "Не заповнено"
+msgstr "Not filled in"
+
+msgid "Контакти, реквізити ФОП, дані для договору та інформація про ваші курси"
+msgstr ""
+"Contact details, sole proprietor details, contract information and your "
+"courses"
+
+msgid "Договір"
+msgstr "Contract"
+
+msgid "Примірник договору та порядок його оформлення"
+msgstr "A copy of the contract and how to complete it"
+
+msgid "Часті питання"
+msgstr "FAQ"
+
+msgid "Підготовка до заходу, розклад дня, гонорар"
+msgstr "Event preparation, daily schedule, fee"
+
+msgid "Договір | Кабінет тренера | ІПРМ"
+msgstr "Contract | Trainer cabinet | IPRM"
+
+msgid "Завантажте примірник договору."
+msgstr "Download a copy of the contract."
+
+msgid ""
+"Заповніть Договір, Додаток №1 та Декларацію. У Додатку №1 вкажіть тему "
+"першого заходу, який ви будете проводити."
+msgstr ""
+"Fill in the Contract, Appendix No. 1 and the Declaration. In Appendix No. 1,"
+" specify the topic of the first event you will be conducting."
+
+#, python-format
+msgid "Додайте своє прізвище в назву файлу та надішліть договір на %(email)s."
+msgstr "Add your surname to the file name and send the contract to %(email)s."
+
+msgid ""
+"Вкажіть у листі, куди надіслати підписані керівництвом ІПРМ примірники "
+"(бажано Нова Пошта)."
+msgstr ""
+"Indicate in the email where to send the copies signed by IPRM management "
+"(preferably via Nova Poshta)."
+
+msgid "Завантажити договір (PDF)"
+msgstr "Download contract (PDF)"
+
+msgid "Договір буде додано найближчим часом."
+msgstr "The contract will be added soon."
+
+msgid "Часті питання | Кабінет тренера | ІПРМ"
+msgstr "FAQ | Trainer cabinet | IPRM"
+
+msgid "Кабінет тренера | ІПРМ"
+msgstr "Trainer cabinet | IPRM"
+
+msgid "Дата уточнюється"
+msgstr "Date to be confirmed"
+
+msgid "Зареєстровано"
+msgstr "Registered"
+
+msgid "Очно"
+msgstr "In-person"
+
+msgid "Місць"
+msgstr "Seats"
+
+msgid "Найближчих заходів з вашою участю поки немає."
+msgstr "There are no upcoming events with your participation yet."
+
+msgid "Анкета тренера | ІПРМ"
+msgstr "Trainer questionnaire | IPRM"
+
+msgid "Контактна інформація"
+msgstr "Contact information"
+
+msgid "Фотографія для сайту"
+msgstr "Photo for the website"
+
+msgid "Поточне фото"
+msgstr "Current photo"
+
+msgid "Реквізити ФОП"
+msgstr "Sole proprietor (FOP) details"
+
+msgid ""
+"У зв'язку з обмеженнями банківської системи гонорар перераховується лише на "
+"рахунок ФОП."
+msgstr ""
+"Due to banking system restrictions, the fee is transferred only to a sole "
+"proprietor (FOP) account."
+
+msgid "Дані для підписання договору"
+msgstr "Details for signing the contract"
+
+msgid "Зберегти анкету"
+msgstr "Save questionnaire"
+
+msgid "Інформація курсу"
+msgstr "Course information"
+
+msgid "Чернетка"
+msgstr "Draft"
+
+msgid "Надіслано куратору"
+msgstr "Sent to curator"
+
+msgid "Прийнято"
+msgstr "Accepted"
+
+msgid "Ви ще не додали жодного курсу чи доповіді."
+msgstr "You haven't added any course or talk yet."
+
+msgid "Додати курс / доповідь"
+msgstr "Add course / talk"
+
+msgid "Інформація курсу | Кабінет тренера | ІПРМ"
+msgstr "Course information | Trainer cabinet | IPRM"
+
+msgid "Коментар куратора:"
+msgstr "Curator's comment:"
+
+msgid "Лаконічно та чітко сформульована; до 50 символів"
+msgstr "Concise and clearly worded; up to 50 characters"
+
+msgid "Одна теза на рядок, 5-10 головних тез доповіді"
+msgstr "One point per line, 5-10 key points of the talk"
+
+msgid "+ теза"
+msgstr "+ point"
+
+msgid "Видалити"
+msgstr "Remove"
+
+msgid ""
+"Лікарю важливо це знати, тому що...; до чого може призвести незнання цієї "
+"інформації; у яких випадках/станах знадобляться ці знання; з якими "
+"хворобами, симптомами, ситуаціями лікар знатиме, як діяти"
+msgstr ""
+"It's important for the doctor to know this because...; what not knowing this"
+" information can lead to; in which cases/conditions this knowledge will be "
+"needed; with which diseases, symptoms, situations the doctor will know how "
+"to act"
+
+msgid ""
+"Обов'язково для онлайн-навчання: перевірка знань слухачів у день заходу "
+"(Постанова КМУ № 725)"
+msgstr ""
+"Required for online training: knowledge check of attendees on the day of the"
+" event (CMU Resolution No. 725)"
+
+msgid "Зберегти чернетку"
+msgstr "Save draft"
+
+msgid "Надіслати куратору"
+msgstr "Send to curator"
+
+msgid "Видалити чернетку"
+msgstr "Delete draft"
+
+msgid ""
+"Пропозиція на розгляді куратора. Щоб внести зміни, зверніться до куратора "
+"курсу."
+msgstr ""
+"The proposal is under the curator's review. To make changes, contact the "
+"course curator."
+
+msgid "Програма виступу"
+msgstr "Talk outline"
+
+msgid "Мова доповіді"
+msgstr "Talk language"
+
+msgid "Актуальність"
+msgstr "Relevance"
+
+msgid "Яким спеціальностям буде корисним"
+msgstr "Which specialties will find it useful"
+
+msgid "Цікаві статті/ресурси"
+msgstr "Interesting articles/resources"
+
+msgid "Теми на майбутнє"
+msgstr "Future topics"
+
 msgid "Тренер Інституту Плазмотерапії та Регенеративної Медицини."
 msgstr "Trainer at the Institute of Plasma Therapy and Regenerative Medicine."
 
@@ -6313,6 +6508,93 @@ msgid "Супровід кожного слухача від початку до
 msgstr ""
 "Guidance for each participant from the start through receiving the "
 "certificate."
+
+msgid "Освіта (рівень освіти та навчальні заклади)"
+msgstr "Education (level of education and institutions)"
+
+msgid "Посада та регалії"
+msgstr "Position and credentials"
+
+msgid "Місце роботи, місто"
+msgstr "Workplace, city"
+
+msgid "Ел. пошта"
+msgstr "Email"
+
+msgid "Посилання на соцмережі"
+msgstr "Social media links"
+
+msgid "Дозволені формати: JPG, PNG, WebP, HEIC"
+msgstr "Allowed formats: JPG, PNG, WebP, HEIC"
+
+msgid "Або посилання на фото (файлообмінник)"
+msgstr "Or a photo link (file sharing service)"
+
+msgid "Невалідне посилання"
+msgstr "Invalid link"
+
+msgid "РНОКПП"
+msgstr "RNOKPP"
+
+msgid "Призначення платежу згідно ваших КВЕД"
+msgstr "Payment purpose according to your KVED codes"
+
+msgid "Номер картки"
+msgstr "Card number"
+
+msgid "Ідентифікаційний код"
+msgstr "Tax ID"
+
+msgid "Адреса реєстрації (проживання)"
+msgstr "Registration (residential) address"
+
+msgid "ЄДРПОУ"
+msgstr "EDRPOU"
+
+msgid "Назва курсу/доповіді"
+msgstr "Course/talk title"
+
+msgid "Назва обов'язкова"
+msgstr "Title is required"
+
+msgid "Не більше 50 символів"
+msgstr "No more than 50 characters"
+
+msgid "Програма виступу (5-10 головних тез)"
+msgstr "Talk outline (5-10 key points)"
+
+msgid "Актуальність вебінару/лекції/курсу"
+msgstr "Relevance of the webinar/lecture/course"
+
+msgid "Цікаві статті/ресурси по вашій темі"
+msgstr "Interesting articles/resources on your topic"
+
+msgid "Які теми в майбутньому ви могли б запропонувати"
+msgstr "What topics could you propose in the future"
+
+msgid "Посилання на тестування (Google-форма)"
+msgstr "Link to the quiz (Google Form)"
+
+msgid "Додайте хоча б одну тезу"
+msgstr "Add at least one point"
+
+msgid "Не більше 10 тез"
+msgstr "No more than 10 points"
+
+msgid "Анкету збережено"
+msgstr "Questionnaire saved"
+
+msgid "Помилка при збереженні"
+msgstr "Error while saving"
+
+msgid "Чернетку збережено"
+msgstr "Draft saved"
+
+msgid "Пропозицію надіслано куратору"
+msgstr "Proposal sent to curator"
+
+msgid "Чернетку видалено"
+msgstr "Draft deleted"
 
 #~ msgid "Неможливо використати цей email"
 #~ msgstr "This email cannot be used"

@@ -34,7 +34,7 @@
               {% if inst.event_format == 'online' %}{{ _('Онлайн') }}{% else %}{{ inst.city.name if inst.city else (inst.location or '') }}{% endif %}
             </p>
             <h3 class="iprm-block-title">
-              <a href="{{ url_for('courses.course_by_slug', slug=inst.course.slug) }}" class="account-course__link">{{ inst.topic or inst.course.title }}</a>
+              <a href="{{ url_for('courses.course_by_slug', slug=inst.course.slug) }}" class="account-course__link">{{ inst.effective_title }}</a>
             </h3>
           </div>
           <div class="iprm-stat-grid trainer-events__counts">
