@@ -123,6 +123,23 @@ def _load_profile_into_form(trainer, form):
 _TRAINER_STATES = {'active': 'Активні', 'inactive': 'Приховані'}
 
 
+def _audit_account_link(trainer, previous_user_id):
+    """Аудит зміни прив'язки акаунта -- лише коли вона справді змінилась.
+
+    Прив'язка відкриває людині кабінет з анкетою й реквізитами, тож хто,
+    кого і замість кого прив'язав, має лишатись у журналі. Викликається
+    ПІСЛЯ commit: невдале збереження не повинно лишати хибного запису.
+    """
+    if trainer.user_id == previous_user_id:
+        return
+    if trainer.user_id is None:
+        audit_logger.info('Admin %s unlinked user %s from trainer %s',
+                          current_user.email, previous_user_id, trainer.id)
+    else:
+        audit_logger.info('Admin %s linked user %s to trainer %s (was %s)',
+                          current_user.email, trainer.user_id, trainer.id, previous_user_id)
+
+
 def _apply_account_link(trainer, email):
     """Прив'язати/відв'язати акаунт. Повертає текст помилки або None."""
     email = (email or '').strip().lower()
@@ -215,6 +232,7 @@ def trainer_create():
 
         try:
             db.session.commit()
+            _audit_account_link(trainer, None)
             _attach_trainer_media(trainer)
             audit_logger.info('Admin %s created trainer %s (%s)', current_user.email, trainer.id, trainer.full_name)
             flash('Тренера додано', 'success')
@@ -263,6 +281,7 @@ def trainer_edit(trainer_id):
             flash('Тренер з таким slug вже існує', 'error')
             return render_template('admin/trainer_edit.html', form=form, trainer=trainer, referral_link=referral_link, referral_balance=referral_balance, referral_dashboard_url=referral_dashboard_url)
 
+        previous_user_id = trainer.user_id
         trainer.full_name = form.full_name.data.strip()
         trainer.full_name_dative = (form.full_name_dative.data or '').strip() or None
         trainer.slug = slug
@@ -283,6 +302,7 @@ def trainer_edit(trainer_id):
 
         try:
             db.session.commit()
+            _audit_account_link(trainer, previous_user_id)
             _attach_trainer_media(trainer)
             audit_logger.info('Admin %s updated trainer %s (%s)', current_user.email, trainer_id, trainer.full_name)
             flash('Тренера оновлено', 'success')

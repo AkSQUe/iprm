@@ -250,7 +250,7 @@ def test_resave_keeps_existing_link_even_if_unconfirmed(client):
     assert saved.full_name == 'Нове імʼя'
 
 
-# --- B8: прийняття можна скасувати -----------------------------------------------
+# --- B5: прив'язка й відв'язка акаунта -- в аудит ------------------------------
 
 import logging  # noqa: E402
 
@@ -258,6 +258,65 @@ import logging  # noqa: E402
 def _audit(caplog):
     return [r.getMessage() for r in caplog.records if r.name == 'audit']
 
+
+def test_link_is_audited(client, caplog):
+    admin = _admin(client)
+    trainer = make_trainer()
+    user = make_user()
+    with caplog.at_level(logging.INFO, logger='audit'):
+        client.post(f'/admin/trainers/{trainer.id}/edit',
+                    data=_form(trainer, account_email=user.email))
+    assert (f'Admin {admin.email} linked user {user.id} to trainer {trainer.id} (was None)'
+            in _audit(caplog))
+
+
+def test_relink_is_audited_with_previous_user(client, caplog):
+    admin = _admin(client)
+    old = make_user()
+    trainer = make_trainer(old)
+    new = make_user()
+    with caplog.at_level(logging.INFO, logger='audit'):
+        client.post(f'/admin/trainers/{trainer.id}/edit',
+                    data=_form(trainer, account_email=new.email))
+    assert (f'Admin {admin.email} linked user {new.id} to trainer {trainer.id} (was {old.id})'
+            in _audit(caplog))
+
+
+def test_unlink_is_audited(client, caplog):
+    admin = _admin(client)
+    user = make_user()
+    trainer = make_trainer(user)
+    with caplog.at_level(logging.INFO, logger='audit'):
+        client.post(f'/admin/trainers/{trainer.id}/edit', data=_form(trainer))
+    assert (f'Admin {admin.email} unlinked user {user.id} from trainer {trainer.id}'
+            in _audit(caplog))
+
+
+def test_unchanged_link_not_audited(client, caplog):
+    _admin(client)
+    user = make_user()
+    trainer = make_trainer(user)
+    with caplog.at_level(logging.INFO, logger='audit'):
+        client.post(f'/admin/trainers/{trainer.id}/edit',
+                    data=_form(trainer, account_email=user.email))
+    assert not [m for m in _audit(caplog) if 'linked user' in m]
+
+
+def test_create_with_link_is_audited(client, caplog):
+    admin = _admin(client)
+    user = make_user()
+    from uuid import uuid4
+    slug = f'tc-{uuid4().hex[:10]}'
+    with caplog.at_level(logging.INFO, logger='audit'):
+        client.post('/admin/trainers/new', data={
+            'full_name': 'Новий Т.', 'slug': slug, 'is_active': 'y',
+            'account_email': user.email})
+    trainer = Trainer.query.filter_by(slug=slug).one()
+    assert (f'Admin {admin.email} linked user {user.id} to trainer {trainer.id} (was None)'
+            in _audit(caplog))
+
+
+# --- B8: прийняття можна скасувати -----------------------------------------------
 
 def test_unaccept_returns_to_review(client, caplog):
     _admin(client)
