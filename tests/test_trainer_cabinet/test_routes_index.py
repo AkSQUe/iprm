@@ -76,3 +76,13 @@ def test_header_link_only_for_trainer(client):
     make_trainer(user)
     db.session.expire(user)
     assert '/trainer/' in client.get('/auth/account').get_data(as_text=True)
+
+
+def test_unconfirmed_email_gets_404_and_no_header_link(client):
+    user = make_user()
+    make_trainer(user)
+    user.email_confirmed = False
+    db.session.commit()
+    login(client, user)
+    assert client.get('/trainer/').status_code == 404
+    assert '/trainer/' not in client.get('/auth/account').get_data(as_text=True)

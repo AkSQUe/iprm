@@ -217,3 +217,34 @@ def test_content_editor_can_still_curate_without_finance(client):
     client.post(f'/admin/trainers/proposals/{p.id}/accept')
     db.session.expire_all()
     assert p.status == 'accepted'
+
+
+# --- A2: неперевірений email не прив'язується ---------------------------------
+
+def test_link_unconfirmed_account_rejected(client):
+    _admin(client)
+    trainer = make_trainer()
+    user = make_user()
+    user.email_confirmed = False
+    db.session.commit()
+    resp = client.post(f'/admin/trainers/{trainer.id}/edit',
+                       data=_form(trainer, account_email=user.email))
+    assert 'ще не підтвердив email' in resp.get_data(as_text=True)
+    db.session.expire_all()
+    assert db.session.get(Trainer, trainer.id).user_id is None
+
+
+def test_resave_keeps_existing_link_even_if_unconfirmed(client):
+    """Правка картки з тим самим акаунтом не має блокуватися: прив'язку
+    зроблено раніше, а доступ до кабінету все одно закриває декоратор."""
+    _admin(client)
+    user = make_user()
+    trainer = make_trainer(user)
+    user.email_confirmed = False
+    db.session.commit()
+    client.post(f'/admin/trainers/{trainer.id}/edit',
+                data=_form(trainer, account_email=user.email, full_name='Нове імʼя'))
+    db.session.expire_all()
+    saved = db.session.get(Trainer, trainer.id)
+    assert saved.user_id == user.id
+    assert saved.full_name == 'Нове імʼя'

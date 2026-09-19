@@ -135,6 +135,12 @@ def _apply_account_link(trainer, email):
     taken = Trainer.query.filter(Trainer.user_id == user.id, Trainer.id != trainer.id).first()
     if taken is not None:
         return f'Цей акаунт вже прив\'язано до тренера «{taken.full_name}»'
+    # Неперевірений email -- не доказ, що акаунт належить тренеру: будь-хто
+    # міг зареєструватись на чужу адресу й отримати кабінет з анкетою.
+    # Наявну прив'язку того самого акаунта не чіпаємо, інакше картку тренера
+    # не можна було б зберегти; доступ тоді однаково закриває trainer_required.
+    if not user.email_confirmed and trainer.user_id != user.id:
+        return 'Акаунт ще не підтвердив email -- попросіть тренера підтвердити адресу'
     trainer.user_id = user.id
     return None
 
