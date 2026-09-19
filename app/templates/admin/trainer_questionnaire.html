@@ -36,20 +36,23 @@
       {% if not p %}
       <p class="form-hint">Тренер ще не заповнював анкету.</p>
       {% else %}
+      {# None -- поле приховане (немає права trainers.finance); '' -- порожнє. #}
+      {% set f = finance %}
       <div class="admin-form__grid">
         {% for label, value in [
-            ('ПІБ', p.full_name), ('Дата народження', p.birth_date.strftime('%d.%m.%Y') if p.birth_date else ''),
+            ('ПІБ', p.full_name),
+            ('Дата народження', none if f.birth_date is none else (f.birth_date.strftime('%d.%m.%Y') if f.birth_date else '')),
             ('Освіта', p.education), ('Посада та регалії', p.position_titles),
             ('Місце роботи', p.workplace), ('Телефон', p.phone), ('Ел. пошта', p.email),
             ('Соцмережі', p.social_links), ('Отримувач (ФОП)', p.fop_recipient),
-            ('IBAN', secrets.fop_iban), ('РНОКПП', secrets.fop_rnokpp),
-            ('Призначення платежу', p.fop_payment_purpose), ('Номер картки', secrets.card_number),
-            ('Ідентифікаційний код', secrets.tax_id), ('Адреса реєстрації', p.registration_address),
-            ('ЄДРПОУ', p.edrpou),
+            ('IBAN', f.fop_iban), ('РНОКПП', f.fop_rnokpp),
+            ('Призначення платежу', p.fop_payment_purpose), ('Номер картки', f.card_number),
+            ('Ідентифікаційний код', f.tax_id), ('Адреса реєстрації', f.registration_address),
+            ('ЄДРПОУ', f.edrpou),
         ] %}
         <div class="form-group">
           <label>{{ label }}</label>
-          <div class="form-input admin-field-readonly">{{ value or '–' }}</div>
+          <div class="form-input admin-field-readonly">{% if value is none %}приховано{% else %}{{ value or '–' }}{% endif %}</div>
         </div>
         {% endfor %}
         <div class="form-group">
@@ -62,8 +65,8 @@
           </div>
         </div>
       </div>
-      {% if not can_manage %}
-      <p class="form-hint">Реквізити приховано: потрібне право «Тренери: керування».</p>
+      {% if not can_finance %}
+      <p class="form-hint">Реквізити, дату народження, адресу реєстрації й ЄДРПОУ приховано: потрібне право «Тренери: Фінансові реквізити».</p>
       {% endif %}
       {% endif %}
     </div>

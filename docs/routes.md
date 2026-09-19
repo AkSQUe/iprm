@@ -224,7 +224,7 @@ login_required) і на сторінці замовлення (`order/<token>/re
 | GET/POST | `/admin/trainers/new` | Додавання тренера |
 | GET/POST | `/admin/trainers/<id>/edit` | Редагування тренера (прив'язка акаунта -- поле «Акаунт на сайті») |
 | POST | `/admin/trainers/<id>/delete` | Видалення тренера |
-| GET | `/admin/trainers/<id>/questionnaire` | Анкета тренера лише для читання (`trainers.view`); реквізити відкриті лише з `trainers.manage` |
+| GET | `/admin/trainers/<id>/questionnaire` | Анкета тренера лише для читання (`trainers.view`); реквізити, дата народження, адреса реєстрації й ЄДРПОУ відкриті лише з `trainers.finance` (без нього реквізити маскуються, решта прихована) |
 | POST | `/admin/trainers/proposals/<id>/accept` | Прийняти пропозицію курсу |
 | POST | `/admin/trainers/proposals/<id>/return` | Повернути пропозицію на доопрацювання (з коментарем) |
 | POST | `/admin/registrations/<id>/status` | Зміна статусу реєстрації |

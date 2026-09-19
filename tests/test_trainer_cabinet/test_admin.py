@@ -117,3 +117,103 @@ def test_list_indicators(client):
     html = client.get('/admin/trainers').get_data(as_text=True)
     assert 'data-trainer-linked="' + str(trainer.id) + '"' in html
     assert 'data-trainer-new-proposals="' + str(trainer.id) + '">1<' in html
+
+
+# --- A1: фінансові й персональні дані лише з trainers.finance ---------------
+
+_IBAN = 'UA213052990000026003006239637'
+
+
+def _full_profile(trainer):
+    from datetime import date
+    p = TrainerProfile(trainer_id=trainer.id, full_name='Іваненко Петро',
+                       phone='+380671112233', birth_date=date(1980, 5, 17),
+                       registration_address='вул. Секретна, 7, Київ',
+                       edrpou='31234567')
+    p.fop_iban = _IBAN
+    p.tax_id = '3123456789'
+    db.session.add(p)
+    db.session.commit()
+    return p
+
+
+def _role_user(*perms):
+    """Користувач зі своєю роллю з рівно цими правами (не системною)."""
+    from uuid import uuid4
+
+    from app.models.rbac import Permission, Role
+    role = Role(name=f'tc_fin_{uuid4().hex[:6]}', display_name='T')
+    db.session.add(role)
+    for name in perms:
+        role.permissions.append(Permission.query.filter_by(name=name).one())
+    db.session.flush()
+    user = make_user_with_role(role.name, email=f'tc-fin-{uuid4().hex[:6]}@test.com')
+    db.session.commit()
+    return user
+
+
+def _questionnaire_as(client, user):
+    login(client, user)
+    trainer = make_trainer(make_user())
+    _full_profile(trainer)
+    resp = client.get(f'/admin/trainers/{trainer.id}/questionnaire')
+    assert resp.status_code == 200
+    return resp.get_data(as_text=True)
+
+
+def _assert_finance_hidden(html):
+    assert _IBAN not in html
+    assert '3123456789' not in html
+    assert '•••• 9637' in html
+    assert '17.05.1980' not in html
+    assert 'вул. Секретна' not in html
+    assert '31234567' not in html
+    # Контакти куратору потрібні -- їх видно й без finance.
+    assert 'Іваненко Петро' in html
+    assert '+380671112233' in html
+    assert 'Тренери: Фінансові реквізити' in html
+
+
+def _assert_finance_shown(html):
+    assert _IBAN in html
+    assert '3123456789' in html
+    assert '17.05.1980' in html
+    assert 'вул. Секретна' in html
+    assert '31234567' in html
+
+
+def test_questionnaire_content_editor_sees_no_finance(client):
+    editor = make_user_with_role('content_editor', email='tc-editor@test.com')
+    db.session.commit()
+    _assert_finance_hidden(_questionnaire_as(client, editor))
+
+
+def test_questionnaire_manage_alone_does_not_reveal(client):
+    _assert_finance_hidden(_questionnaire_as(client, _role_user('trainers.view', 'trainers.manage')))
+
+
+def test_questionnaire_viewer_sees_no_finance(client):
+    viewer = make_user_with_role('viewer', email='tc-viewer2@test.com')
+    db.session.commit()
+    _assert_finance_hidden(_questionnaire_as(client, viewer))
+
+
+def test_questionnaire_finance_role_sees_everything(client):
+    _assert_finance_shown(_questionnaire_as(client, _role_user('trainers.view', 'trainers.finance')))
+
+
+def test_questionnaire_super_admin_sees_everything(client):
+    admin = make_super_admin(email='tc-sa2@test.com')
+    db.session.commit()
+    _assert_finance_shown(_questionnaire_as(client, admin))
+
+
+def test_content_editor_can_still_curate_without_finance(client):
+    editor = make_user_with_role('content_editor', email='tc-editor2@test.com')
+    db.session.commit()
+    login(client, editor)
+    trainer = make_trainer(make_user())
+    p = _submitted(trainer)
+    client.post(f'/admin/trainers/proposals/{p.id}/accept')
+    db.session.expire_all()
+    assert p.status == 'accepted'

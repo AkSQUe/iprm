@@ -22,6 +22,7 @@ ACTIONS = {
     'keys': 'Ключі й секрети',
     'receive': 'Службові листи',
     'assign': 'Призначення ролей',
+    'finance': 'Фінансові реквізити',
 }
 
 GROUPS = (
@@ -73,7 +74,10 @@ MODULES = (
            endpoint='admin.online_courses_list'),
     Module('quizzes', 'Тестування', 'learning', _VMD,
            endpoint='admin.quizzes_list'),
-    Module('trainers', 'Тренери', 'learning', _VMD,
+    # finance -- реквізити ФОП, РНОКПП, номер картки, дата народження й адреса
+    # реєстрації з анкети тренера. Окремо від manage: курування пропозицій --
+    # контентна робота, а персональні й платіжні дані потрібні бухгалтерії.
+    Module('trainers', 'Тренери', 'learning', ('view', 'manage', 'delete', 'finance'),
            endpoint='admin.trainers_list'),
     Module('course_requests', 'Запити на курси', 'requests', ('view', 'manage', 'delete', 'export'),
            endpoint='admin.course_requests_list'),
@@ -226,10 +230,13 @@ ROLES = (
              'Повний доступ і керування ролями. Перевірки прав не читає.',
              'red', 0, frozenset()),
     RoleSpec('admin', 'Адміністратор',
-             'Усе, крім ролей, системних налаштувань і секретів інтеграцій.',
+             'Усе, крім ролей, системних налаштувань, секретів інтеграцій '
+             'і фінансових реквізитів тренерів.',
              'orange', 10,
+             # trainers.finance -- персональні дані фізосіб (РНОКПП, картка,
+             # адреса): як і ключі інтеграцій, видаються лише свідомо.
              _all_except('access.*', 'settings.*', 'integrations.keys',
-                         'backup.delete')),
+                         'backup.delete', 'trainers.finance')),
     RoleSpec('manager', 'Менеджер',
              'Продажі: реєстрації, замовлення, повернення, сертифікати, заявки.',
              'green', 20,
@@ -245,7 +252,10 @@ ROLES = (
              'Курси, розклад, тренери, блог, медіа, відгуки, тести, переклади.',
              'blue', 30,
              _expand('courses.*', 'instances.*', 'online_courses.*', 'cities.*',
-                     'quizzes.*', 'trainers.*', 'blog.*', 'media.*', 'reviews.*',
+                     # Явний перелік замість 'trainers.*': інакше редактор
+                     # контенту отримав би й trainers.finance.
+                     'quizzes.*', 'trainers.view', 'trainers.manage',
+                     'trainers.delete', 'blog.*', 'media.*', 'reviews.*',
                      'translations.*', 'registrations.view', 'dashboard.view')),
     RoleSpec('marketer', 'Маркетолог',
              'Ліди Meta, маркетинг, промокоди, реферали, відгуки.',

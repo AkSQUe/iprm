@@ -25,6 +25,7 @@ def test_sensitive_actions_live_only_where_spec_says():
         'refund': {'registrations'}, 'settings': {'meta_leads'},
         'keys': {'integrations'},
         'receive': {'notifications'}, 'assign': {'access'},
+        'finance': {'trainers'},
     }
     for action, expected in owners.items():
         actual = {m.name for m in registry.MODULES if action in m.actions}
@@ -45,6 +46,15 @@ def test_admin_defaults_exclude_access_settings_and_keys():
         assert forbidden not in admin.defaults
     assert 'courses.manage' in admin.defaults
     assert 'registrations.refund' in admin.defaults
+
+
+def test_trainer_finance_is_granted_by_no_default_role():
+    """Реквізити ФОП і паспортні дані тренера -- не контент і не загальне
+    адміністрування: право видається лише свідомо в матриці /admin/access."""
+    for role in registry.ROLES:
+        assert 'trainers.finance' not in role.defaults, role.name
+    editor = next(r for r in registry.ROLES if r.name == 'content_editor')
+    assert {'trainers.view', 'trainers.manage', 'trainers.delete'} <= editor.defaults
 
 
 def test_viewer_gets_only_views_outside_system():

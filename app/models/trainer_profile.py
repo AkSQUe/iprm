@@ -17,6 +17,10 @@ class TrainerProfile(TimestampMixin, db.Model):
     __tablename__ = 'trainer_profiles'
 
     SENSITIVE_FIELDS = ('fop_iban', 'fop_rnokpp', 'card_number', 'tax_id')
+    # Персональні дані для договору: не шифруються, але в адмінці їх видно
+    # лише з правом trainers.finance -- без нього поле приховане повністю
+    # (маска з 4 символів адреси чи дати нічого корисного не дає).
+    PRIVATE_FIELDS = ('birth_date', 'registration_address', 'edrpou')
     REQUIRED_FOR_COMPLETE = (
         'full_name', 'phone', 'email', 'fop_iban', 'fop_rnokpp', 'tax_id',
         'registration_address',

@@ -26,19 +26,25 @@ CONTRACT_MAX_BYTES = 10 * 1024 * 1024
 def trainer_questionnaire(trainer_id):
     trainer = db.session.get(Trainer, trainer_id) or abort(404)
     profile = trainer.profile
-    # Реквізити (IBAN, РНОКПП, номер картки, ідентифікаційний код) видно у
-    # відкритому вигляді лише тому, у кого є trainers.manage -- перегляд
-    # (trainers.view) бачить лише маску з останніх 4 символів.
-    reveal = has_permission(current_user, 'trainers.manage')
-    secrets = {}
+    # Реквізити (IBAN, РНОКПП, номер картки, ідентифікаційний код), дата
+    # народження, адреса реєстрації й ЄДРПОУ -- лише з trainers.finance.
+    # trainers.manage (курування пропозицій) їх НЕ відкриває: це право має
+    # редактор контенту. Без finance секрети маскуються, а персональні поля
+    # приховуються (None -> шаблон пише «приховано»). Контакти видно всім,
+    # хто має trainers.view: куратору вони потрібні для роботи.
+    can_finance = has_permission(current_user, 'trainers.finance')
+    finance = {}
     if profile is not None:
         for name in TrainerProfile.SENSITIVE_FIELDS:
             value = getattr(profile, name)
-            secrets[name] = value if reveal else TrainerProfile.mask(value)
+            finance[name] = value if can_finance else TrainerProfile.mask(value)
+        for name in TrainerProfile.PRIVATE_FIELDS:
+            finance[name] = getattr(profile, name) if can_finance else None
     return render_template(
         'admin/trainer_questionnaire.html', trainer=trainer, profile=profile,
-        secrets=secrets, can_manage=reveal, proposals=trainer.proposals.all(),
-        return_form=ProposalReturnForm(),
+        finance=finance, can_finance=can_finance,
+        can_manage=has_permission(current_user, 'trainers.manage'),
+        proposals=trainer.proposals.all(), return_form=ProposalReturnForm(),
     )
 
 
