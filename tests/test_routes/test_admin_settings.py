@@ -184,33 +184,36 @@ def test_settings_post_saves_transfer_after_days(client, admin, app):
     assert SiteSettings.get().transfer_after_days == 90
 
 
-# --- C16: website_url рендериться як href на публічних сторінках і в листах,
-# тож форма мусить приймати лише http(s), а не будь-який синтаксично
-# валідний URL (WTForms URL() пропускає javascript://host/%0aalert(1)).
+# --- fix round 1: website_url лишається без схема-валідатора -----------
+#
+# HttpUrl на цьому полі був поза узгодженим об'ємом C16 і ніс ризик деплою:
+# форма /admin/settings пересилає ЗБЕРЕЖЕНЕ значення website_url при
+# кожному збереженні будь-якого налаштування (SiteSettingsForm.website_url
+# завжди в payload), а прод міг містити значення без схеми (напр.
+# 'iprm.space'). З HttpUrl це ламало б збереження геть усіх налаштувань,
+# доки хтось не виправить це одне поле вручну.
 
-def test_settings_rejects_javascript_website_url(client, admin, app):
+def test_settings_saves_with_schemeless_website_url(client, admin, app):
+    """Збережене website_url без http(s):// не повинно блокувати збереження
+    жодного іншого налаштування на цій сторінці.
+
+    Перевіряємо не лише 200 (шаблон з помилкою валідації теж віддає 200) --
+    а що ІНШЕ поле форми справді змінилось, тобто форма пройшла валідацію
+    і закомітилась, а не просто перерендерилась з тим самим станом."""
     from app.models.site_settings import SiteSettings
 
     _login(client, admin)
     site = SiteSettings.get()
+    site.website_url = 'iprm.space'
+    db.session.commit()
+
     payload = _form_payload(app, site)
-    payload['website_url'] = 'javascript://x.com/%0aalert(1)'
-
-    r = client.post('/admin/settings', data=payload)
-
-    assert r.status_code == 200
-    assert SiteSettings.get().website_url != payload['website_url']
-
-
-def test_settings_accepts_https_website_url(client, admin, app):
-    from app.models.site_settings import SiteSettings
-
-    _login(client, admin)
-    site = SiteSettings.get()
-    payload = _form_payload(app, site)
-    payload['website_url'] = 'https://example.org'
+    assert payload['website_url'] == 'iprm.space'
+    payload['business_hours'] = 'Пн-Пт 9:00-18:00'
 
     r = client.post('/admin/settings', data=payload, follow_redirects=True)
 
     assert r.status_code == 200
-    assert SiteSettings.get().website_url == 'https://example.org'
+    saved = SiteSettings.get()
+    assert saved.website_url == 'iprm.space'
+    assert saved.business_hours == 'Пн-Пт 9:00-18:00'
