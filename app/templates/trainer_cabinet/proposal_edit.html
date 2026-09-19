@@ -44,17 +44,19 @@
       {{ field(form.future_topics) }}
       {{ field(form.quiz_url, _("Обов'язково для онлайн-навчання: перевірка знань слухачів у день заходу (Постанова КМУ № 725)")) }}
     </div>
+    {# "Надіслати куратору" -- кнопка ЦІЄЇ форми: окрема форма надсилала
+       останню збережену версію, і незбережені правки губились. action
+       дублюється у formaction: form-single-submit.js вимикає кнопки на
+       submit, а name/value вимкненої кнопки браузер у дані не кладе. #}
     <div class="trainer-proposal__actions">
       <button type="submit" class="apple-btn apple-btn--secondary">{{ _('Зберегти чернетку') }}</button>
+      <button type="submit" name="action" value="submit" class="apple-btn apple-btn--primary"
+              formaction="{{ url_for('trainer_cabinet.proposal_edit', proposal_id=proposal.id, action='submit') if proposal else url_for('trainer_cabinet.proposal_new', action='submit') }}">{{ _('Надіслати куратору') }}</button>
     </div>
   </form>
 
   {% if proposal %}
   <div class="trainer-proposal__actions">
-    <form method="POST" action="{{ url_for('trainer_cabinet.proposal_submit', proposal_id=proposal.id) }}" data-single-submit>
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <button type="submit" class="apple-btn apple-btn--primary">{{ _('Надіслати куратору') }}</button>
-    </form>
     <form method="POST" action="{{ url_for('trainer_cabinet.proposal_delete', proposal_id=proposal.id) }}" data-single-submit>
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button type="submit" class="apple-btn apple-btn--secondary">{{ _('Видалити чернетку') }}</button>

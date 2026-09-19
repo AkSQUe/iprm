@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: IPRM VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-09-19 19:55+0300\n"
+"POT-Creation-Date: 2026-09-19 20:38+0300\n"
 "PO-Revision-Date: 2026-07-24 15:52+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -6381,6 +6381,11 @@ msgstr ""
 "The proposal is under the curator's review. To make changes, contact the "
 "course curator."
 
+msgid "Куратор прийняв пропозицію. Щоб внести зміни, зверніться до куратора курсу."
+msgstr ""
+"The curator has accepted the proposal. To make changes, contact the course "
+"curator."
+
 msgid "Програма виступу"
 msgstr "Talk outline"
 
@@ -6509,6 +6514,9 @@ msgstr ""
 "Guidance for each participant from the start through receiving the "
 "certificate."
 
+msgid "Невалідне посилання"
+msgstr "Invalid link"
+
 msgid "Освіта (рівень освіти та навчальні заклади)"
 msgstr "Education (level of education and institutions)"
 
@@ -6529,9 +6537,6 @@ msgstr "Allowed formats: JPG, PNG, WebP, HEIC"
 
 msgid "Або посилання на фото (файлообмінник)"
 msgstr "Or a photo link (file sharing service)"
-
-msgid "Невалідне посилання"
-msgstr "Invalid link"
 
 msgid "РНОКПП"
 msgstr "RNOKPP"
@@ -6586,6 +6591,11 @@ msgstr "Questionnaire saved"
 
 msgid "Помилка при збереженні"
 msgstr "Error while saving"
+
+msgid "Пропозицію вже надіслано куратору -- змінити її не можна"
+msgstr ""
+"The proposal has already been sent to the curator and can no longer be "
+"changed"
 
 msgid "Чернетку збережено"
 msgstr "Draft saved"

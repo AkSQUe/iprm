@@ -14,7 +14,11 @@
       <p><a href="{{ url_for('trainer_cabinet.profile') }}" class="account-course__link">{{ _('Анкета тренера') }}</a></p>
       <h1 class="iprm-section__title">{{ proposal.title }}</h1>
       <p><span class="badge badge--{{ proposal.status_badge }}">{% if proposal.status == 'submitted' %}{{ _('Надіслано куратору') }}{% else %}{{ _('Прийнято') }}{% endif %}</span></p>
+      {% if proposal.status == 'submitted' %}
       <p class="account-card__text">{{ _('Пропозиція на розгляді куратора. Щоб внести зміни, зверніться до куратора курсу.') }}</p>
+      {% else %}
+      <p class="account-card__text">{{ _('Куратор прийняв пропозицію. Щоб внести зміни, зверніться до куратора курсу.') }}</p>
+      {% endif %}
 
       <h3 class="iprm-block-title">{{ _('Програма виступу') }}</h3>
       <ol>{% for t in proposal.theses %}<li>{{ t }}</li>{% endfor %}</ol>

@@ -136,17 +136,54 @@ def _apply_proposal(form, proposal):
     proposal.theses = form.theses_list()
 
 
+def _wants_submit():
+    """Натиснуто "Надіслати куратору", а не "Зберегти чернетку".
+
+    Дивимось і в форму, і в рядок запиту: form-single-submit.js вимикає
+    кнопки на submit, і name/value вимкненої кнопки браузер у дані форми не
+    кладе -- тому кнопка несе action ще й у formaction (?action=submit).
+    """
+    return request.values.get('action') == 'submit'
+
+
+def _locked(proposal):
+    """Тренер намагається змінити пропозицію, яку вже не можна чіпати.
+
+    Не 409: для нього немає шаблону помилки, а кожен такий запит писав би
+    ErrorLog. Звичайна ситуація (друга вкладка, повторний клік) -- flash і
+    сторінка перегляду з актуальним статусом.
+    """
+    flash(_('Пропозицію вже надіслано куратору -- змінити її не можна'), 'warning')
+    return redirect(url_for('trainer_cabinet.proposal_edit', proposal_id=proposal.id))
+
+
+def _save_proposal(form, proposal):
+    """Зберігає форму; для "Надіслати куратору" -- ще й надсилає тим самим
+    комітом. Раніше надсилання йшло окремою формою і брало ОСТАННЮ збережену
+    версію: незбережені правки мовчки губились."""
+    _apply_proposal(form, proposal)
+    db.session.add(proposal)
+    if not _wants_submit():
+        db.session.commit()
+        flash(_('Чернетку збережено'), 'success')
+        return redirect(url_for('trainer_cabinet.proposal_edit', proposal_id=proposal.id))
+    svc.submit_proposal(proposal)
+    db.session.commit()
+    _after_submit(proposal)
+    flash(_('Пропозицію надіслано куратору'), 'success')
+    return redirect(url_for('trainer_cabinet.profile'))
+
+
 @trainer_cabinet_bp.route('/proposals/new', methods=['GET', 'POST'])
 @trainer_required
 def proposal_new():
     form = ProposalForm()
     if form.validate_on_submit():
-        proposal = TrainerCourseProposal(trainer_id=g.trainer.id)
-        _apply_proposal(form, proposal)
-        db.session.add(proposal)
-        db.session.commit()
-        flash(_('Чернетку збережено'), 'success')
-        return redirect(url_for('trainer_cabinet.proposal_edit', proposal_id=proposal.id))
+        # Статус явно: колонковий default підставляється лише на INSERT, а
+        # "Надіслати куратору" перевіряє статус ще до flush.
+        proposal = TrainerCourseProposal(
+            trainer_id=g.trainer.id, status=TrainerCourseProposal.DRAFT)
+        return _save_proposal(form, proposal)
     return render_template('trainer_cabinet/proposal_edit.html', form=form, proposal=None)
 
 
@@ -156,16 +193,13 @@ def proposal_edit(proposal_id):
     proposal = _own_proposal(proposal_id)
     if not proposal.is_editable:
         if request.method == 'POST':
-            abort(409)
+            return _locked(proposal)
         return render_template('trainer_cabinet/proposal_view.html', proposal=proposal)
     form = ProposalForm(obj=proposal) if request.method == 'GET' else ProposalForm()
     if request.method == 'GET':
         form.theses.data = '\n'.join(proposal.theses or [])
     if form.validate_on_submit():
-        _apply_proposal(form, proposal)
-        db.session.commit()
-        flash(_('Чернетку збережено'), 'success')
-        return redirect(url_for('trainer_cabinet.proposal_edit', proposal_id=proposal.id))
+        return _save_proposal(form, proposal)
     return render_template('trainer_cabinet/proposal_edit.html', form=form, proposal=proposal)
 
 
@@ -181,11 +215,14 @@ def _after_submit(proposal):
 @trainer_cabinet_bp.route('/proposals/<int:proposal_id>/submit', methods=['POST'])
 @trainer_required
 def proposal_submit(proposal_id):
+    """Надсилання збереженої версії без форми (кнопка тепер у самій формі
+    редагування, але маршрут лишається: на нього посилаються тести й
+    документація)."""
     proposal = _own_proposal(proposal_id)
     try:
         svc.submit_proposal(proposal)
     except svc.ProposalTransitionError:
-        abort(409)
+        return _locked(proposal)
     db.session.commit()
     _after_submit(proposal)
     flash(_('Пропозицію надіслано куратору'), 'success')
@@ -197,7 +234,7 @@ def proposal_submit(proposal_id):
 def proposal_delete(proposal_id):
     proposal = _own_proposal(proposal_id)
     if not proposal.is_editable:
-        abort(409)
+        return _locked(proposal)
     db.session.delete(proposal)
     db.session.commit()
     flash(_('Чернетку видалено'), 'success')
