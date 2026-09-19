@@ -1,0 +1,69 @@
+{# Блок «Реферальна програма»: баланс, посилання з копіюванням, QR і кнопки
+   поширення, історія нарахувань. Один на кабінет учасника (/auth/account) і
+   кабінет тренера (/trainer/) -- правка розмітки доходить до обох.
+
+   Імпорт -- `with context`: макросам потрібні url_for і assets_version.
+   Стилі й скрипти -- окремими макросами, бо сторінка підключає їх у свої
+   блоки extra_css / extra_scripts, а не всередині контенту. apple-reveal.js
+   сюди не входить: кабінет учасника вантажить його й для інших секцій, а
+   двічі підключений скрипт двічі спостерігав би ті самі елементи. #}
+
+{% macro referral_program_css() -%}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/referral-share.css') }}?v={{ assets_version }}">
+{%- endmacro %}
+
+{% macro referral_program_scripts() -%}
+<script src="{{ url_for('static', filename='js/copy-to-clipboard.js') }}?v={{ assets_version }}" defer></script>
+<script src="{{ url_for('static', filename='js/select-on-focus.js') }}?v={{ assets_version }}" defer></script>
+<script src="{{ url_for('static', filename='js/referral-share-tools.js') }}?v={{ assets_version }}" defer></script>
+{%- endmacro %}
+
+{% macro referral_program(link, qr=None, balance=0, pending=0, rewards=()) %}
+  <section class="iprm-section apple-section-gray" aria-labelledby="referral-title">
+    <div class="iprm-section__inner">
+      <h2 id="referral-title" class="iprm-section__title">{{ _('Реферальна програма') }}</h2>
+      <p class="referral-share__lead">
+        {{ _('Поділіться персональним посиланням. За кожну оплачену реєстрацію на курс за вашим посиланням ви отримуєте бонусні бали лояльності.') }}
+      </p>
+      <div class="referral-share__balance apple-reveal">
+        <span class="referral-share__balance-value">{{ balance }}</span>
+        <span class="referral-share__balance-label">{{ balance | plural('bonus_points') }}</span>
+        {% if pending %}
+        <span class="referral-share__balance-pending">+{{ pending }} {{ _('очікують дозрівання') }}</span>
+        {% endif %}
+      </div>
+      <div class="referral-share apple-reveal">
+        <label class="referral-share__label" for="referral-link">{{ _('Ваше посилання') }}</label>
+        <div class="referral-share__row">
+          <input type="text" id="referral-link" class="referral-share__input"
+                 value="{{ link }}" readonly
+                 data-select-on-focus aria-label="{{ _('Реферальне посилання') }}">
+          <button type="button" class="apple-btn apple-btn--primary referral-share__copy"
+                  data-copy="{{ link }}">{{ _('Копіювати') }}</button>
+        </div>
+      </div>
+
+      {% include 'partials/_referral_share_tools.html' %}
+
+      {% if rewards %}
+      <div class="referral-history apple-reveal">
+        <h3 class="referral-history__title">{{ _('Історія нарахувань') }}</h3>
+        <div class="referral-history__list">
+          {% for rw in rewards %}
+          {% set instance = rw.registration.instance if rw.registration else None %}
+          <div class="referral-history__item{% if rw.status == 'voided' %} referral-history__item--voided{% endif %}">
+            <div class="referral-history__info">
+              <span class="referral-history__course">{{ (instance.effective_title if instance else None) or _('Захід') }}</span>
+              <span class="referral-history__date">{{ rw.created_at.strftime('%d.%m.%Y') if rw.created_at else '' }}</span>
+            </div>
+            <span class="referral-history__points">
+              {% if rw.status == 'voided' %}{{ _('анульовано') }}{% elif rw.status == 'pending' %}{{ _('очікує') }}{% else %}+{{ rw.points }}{% endif %}
+            </span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </section>
+{% endmacro %}

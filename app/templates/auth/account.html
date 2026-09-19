@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% from 'partials/_money.html' import money %}
 {% from 'partials/_bpr_points.html' import points_range %}
+{% from 'partials/_referral_program.html' import referral_program, referral_program_css, referral_program_scripts with context %}
 {% block recaptcha %}{% include 'partials/_recaptcha.html' %}{% endblock %}
 
 {% block title %}{{ _('Обліковий запис | ІПРМ') }}{% endblock %}
@@ -9,7 +10,7 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}?v={{ assets_version }}">
-{% if referral_link %}<link rel="stylesheet" href="{{ url_for('static', filename='css/referral-share.css') }}?v={{ assets_version }}">{% endif %}
+{% if referral_link %}{{ referral_program_css() }}{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -246,54 +247,7 @@
 
   <!-- ===== REFERRAL PROGRAM ===== -->
   {% if referral_link %}
-  <section class="iprm-section apple-section-gray" aria-labelledby="referral-title">
-    <div class="iprm-section__inner">
-      <h2 id="referral-title" class="iprm-section__title">{{ _('Реферальна програма') }}</h2>
-      <p class="referral-share__lead">
-        {{ _('Поділіться персональним посиланням. За кожну оплачену реєстрацію на курс за вашим посиланням ви отримуєте бонусні бали лояльності.') }}
-      </p>
-      <div class="referral-share__balance apple-reveal">
-        <span class="referral-share__balance-value">{{ referral_balance }}</span>
-        <span class="referral-share__balance-label">{{ referral_balance | plural('bonus_points') }}</span>
-        {% if referral_pending %}
-        <span class="referral-share__balance-pending">+{{ referral_pending }} {{ _('очікують дозрівання') }}</span>
-        {% endif %}
-      </div>
-      <div class="referral-share apple-reveal">
-        <label class="referral-share__label" for="referral-link">{{ _('Ваше посилання') }}</label>
-        <div class="referral-share__row">
-          <input type="text" id="referral-link" class="referral-share__input"
-                 value="{{ referral_link }}" readonly
-                 data-select-on-focus aria-label="{{ _('Реферальне посилання') }}">
-          <button type="button" class="apple-btn apple-btn--primary referral-share__copy"
-                  data-copy="{{ referral_link }}">{{ _('Копіювати') }}</button>
-        </div>
-      </div>
-
-      {% set link = referral_link %}{% set qr = referral_qr %}
-      {% include 'partials/_referral_share_tools.html' %}
-
-      {% if referral_rewards %}
-      <div class="referral-history apple-reveal">
-        <h3 class="referral-history__title">{{ _('Історія нарахувань') }}</h3>
-        <div class="referral-history__list">
-          {% for rw in referral_rewards %}
-          {% set instance = rw.registration.instance if rw.registration else None %}
-          <div class="referral-history__item{% if rw.status == 'voided' %} referral-history__item--voided{% endif %}">
-            <div class="referral-history__info">
-              <span class="referral-history__course">{{ (instance.effective_title if instance else None) or _('Захід') }}</span>
-              <span class="referral-history__date">{{ rw.created_at.strftime('%d.%m.%Y') if rw.created_at else '' }}</span>
-            </div>
-            <span class="referral-history__points">
-              {% if rw.status == 'voided' %}{{ _('анульовано') }}{% elif rw.status == 'pending' %}{{ _('очікує') }}{% else %}+{{ rw.points }}{% endif %}
-            </span>
-          </div>
-          {% endfor %}
-        </div>
-      </div>
-      {% endif %}
-    </div>
-  </section>
+  {{ referral_program(referral_link, referral_qr, referral_balance, referral_pending, referral_rewards) }}
   {% endif %}
 
   <!-- ===== ACCOUNT CARDS ===== -->
@@ -340,8 +294,6 @@
 <script src="{{ url_for('static', filename='js/apple-reveal.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/registration-pay.js') }}?v={{ assets_version }}" defer></script>
 {% if referral_link %}
-<script src="{{ url_for('static', filename='js/copy-to-clipboard.js') }}?v={{ assets_version }}" defer></script>
-<script src="{{ url_for('static', filename='js/select-on-focus.js') }}?v={{ assets_version }}" defer></script>
-<script src="{{ url_for('static', filename='js/referral-share-tools.js') }}?v={{ assets_version }}" defer></script>
+{{ referral_program_scripts() }}
 {% endif %}
 {% endblock %}

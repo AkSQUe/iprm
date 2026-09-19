@@ -22,10 +22,37 @@ PROPOSAL_FIELDS = (
 )
 
 
+def _referral_context(trainer, settings):
+    """Реферальний блок кабінету: посилання, QR, баланс, історія.
+
+    Лише коли програма увімкнена. Код генерується ліниво (як в адмінці
+    тренера й кабінеті учасника) і мусить бути закомічений одразу, інакше
+    наступний запит видав би тренеру інше посилання. Це єдиний коміт у
+    GET: він фіксує лише щойно згенерований код, бо до нього маршрут у
+    сесії нічого не змінює.
+    """
+    if not settings.referral_enabled:
+        return {}
+    from app.services import referral_service
+    had_code = bool(trainer.referral_code)
+    link = referral_service.trainer_referral_link(trainer)
+    if not had_code:
+        db.session.commit()
+    return {
+        'referral_link': link,
+        'referral_qr': referral_service.qr_svg(link),
+        'referral_balance': referral_service.get_balance('trainer', trainer.id),
+        'referral_pending': referral_service.get_pending_balance('trainer', trainer.id),
+        'referral_rewards': referral_service.list_referrer_rewards('trainer', trainer.id),
+    }
+
+
 @trainer_cabinet_bp.route('/')
 @trainer_required
 def index():
     trainer = g.trainer
+    settings = SiteSettings.get()
+    referral = _referral_context(trainer, settings)
     upcoming = svc.upcoming_instances(trainer)
     return render_template(
         'trainer_cabinet/index.html',
@@ -34,7 +61,8 @@ def index():
         counts=svc.registration_counts([i.id for i in upcoming]),
         courses=svc.trainer_courses(trainer),
         profile_complete=bool(trainer.profile and trainer.profile.is_complete),
-        attention=svc.attention_items(trainer, SiteSettings.get()),
+        attention=svc.attention_items(trainer, settings),
+        **referral,
     )
 
 

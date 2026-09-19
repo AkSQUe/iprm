@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from 'partials/_location_badge.html' import location_badge %}
+{% from 'partials/_referral_program.html' import referral_program, referral_program_css, referral_program_scripts with context %}
 
 {% block title %}{{ _('Кабінет тренера | ІПРМ') }}{% endblock %}
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
@@ -7,6 +8,7 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/page-trainer-home.css') }}?v={{ assets_version }}">
+{% if referral_link %}{{ referral_program_css() }}{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -143,5 +145,17 @@
     </div>
   </section>
   {% endif %}
+
+  {# Реферальний блок -- той самий партіал, що в кабінеті учасника. #}
+  {% if referral_link %}
+  {{ referral_program(referral_link, referral_qr, referral_balance, referral_pending, referral_rewards) }}
+  {% endif %}
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+{% if referral_link %}
+<script src="{{ url_for('static', filename='js/apple-reveal.js') }}" defer></script>
+{{ referral_program_scripts() }}
+{% endif %}
 {% endblock %}
