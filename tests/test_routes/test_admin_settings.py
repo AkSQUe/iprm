@@ -182,3 +182,35 @@ def test_settings_post_saves_transfer_after_days(client, admin, app):
     r = client.post('/admin/settings', data=payload_back, follow_redirects=True)
     assert r.status_code == 200
     assert SiteSettings.get().transfer_after_days == 90
+
+
+# --- C16: website_url рендериться як href на публічних сторінках і в листах,
+# тож форма мусить приймати лише http(s), а не будь-який синтаксично
+# валідний URL (WTForms URL() пропускає javascript://host/%0aalert(1)).
+
+def test_settings_rejects_javascript_website_url(client, admin, app):
+    from app.models.site_settings import SiteSettings
+
+    _login(client, admin)
+    site = SiteSettings.get()
+    payload = _form_payload(app, site)
+    payload['website_url'] = 'javascript://x.com/%0aalert(1)'
+
+    r = client.post('/admin/settings', data=payload)
+
+    assert r.status_code == 200
+    assert SiteSettings.get().website_url != payload['website_url']
+
+
+def test_settings_accepts_https_website_url(client, admin, app):
+    from app.models.site_settings import SiteSettings
+
+    _login(client, admin)
+    site = SiteSettings.get()
+    payload = _form_payload(app, site)
+    payload['website_url'] = 'https://example.org'
+
+    r = client.post('/admin/settings', data=payload, follow_redirects=True)
+
+    assert r.status_code == 200
+    assert SiteSettings.get().website_url == 'https://example.org'

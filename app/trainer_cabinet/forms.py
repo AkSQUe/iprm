@@ -1,33 +1,14 @@
 """Форми анкети тренера: профіль і пропозиція курсу/доповіді."""
-import re
-
 from flask_babel import lazy_gettext as _l
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed, FileField
 from wtforms import BooleanField, DateField, StringField, TextAreaField
 from wtforms.validators import (
-    DataRequired, Email, Length, Optional, URL, ValidationError)
+    DataRequired, Email, Length, Optional, ValidationError)
 
+from app.forms_validators import HttpUrl
 from app.models.trainer_course_proposal import TrainerCourseProposal
-from app.utils import HTTP_URL_PATTERN, normalize_whitespace
-
-
-class HttpUrl:
-    """Посилання, яке потім стає href в адмінці й кабінеті: лише http(s).
-
-    URL() перевіряє лише синтаксис і пропускає `javascript://host/%0aalert(1)`
-    (у href це виконуваний код). Схему перевіряємо першою і в тому ж
-    валідаторі, щоб на `abc` не з'являлось дві однакові помилки поспіль.
-    """
-
-    def __init__(self, message):
-        self.message = message
-        self._url = URL(message=message)
-
-    def __call__(self, form, field):
-        if not re.match(HTTP_URL_PATTERN, field.data or '', re.IGNORECASE):
-            raise ValidationError(self.message)
-        self._url(form, field)
+from app.utils import normalize_whitespace
 
 
 def _link_validators():

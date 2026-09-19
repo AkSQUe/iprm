@@ -15,6 +15,7 @@ from app.utils import (
     normalize_name, normalize_phone, UA_PHONE_RE, CYRILLIC_NAME_RE,
 )
 from app.admin.fields import PointsField, TrainerSelectField
+from app.forms_validators import HttpUrl
 from app.models.course import Course
 from app.models.course_instance import CourseInstance
 from app.models.course_request import CourseRequest
@@ -276,7 +277,10 @@ class SiteSettingsForm(FlaskForm):
     )
     website_url = StringField(
         'Вебсайт',
-        validators=[Optional(), Length(max=500)],
+        # Значення рендериться як href на купі публічних сторінок (оферта,
+        # політики) і в кожному листі -- звичайний URL() пропустив би
+        # javascript://host/%0aalert(1) (виконуваний код у href).
+        validators=[Optional(), Length(max=500), HttpUrl('Невалідне посилання')],
     )
     founding_year = IntegerField(
         'Рік заснування',
