@@ -84,7 +84,10 @@ class ProposalForm(FlaskForm):
     title = StringField(_l('Назва курсу/доповіді'), filters=[normalize_whitespace], validators=[
         DataRequired(message=_l("Назва обов'язкова")),
         Length(max=TrainerCourseProposal.TITLE_MAX,
-               message=_l('Не більше 50 символів'))])
+               # Length() сам підставляє %(max)d зі свого значення max=:
+               # текст і межа беруться з однієї константи, розсинхрон
+               # неможливий за конструкцією.
+               message=_l('Не більше %(max)d символів'))])
     theses = TextAreaField(_l('Програма виступу (5-10 головних тез)'))
     language = StringField(_l('Мова доповіді'), validators=[Optional(), Length(max=50)])
     relevance = TextAreaField(_l('Актуальність вебінару/лекції/курсу'), validators=[Optional()])
@@ -102,4 +105,5 @@ class ProposalForm(FlaskForm):
         if not items:
             raise ValidationError(_l('Додайте хоча б одну тезу'))
         if len(items) > TrainerCourseProposal.THESES_MAX:
-            raise ValidationError(_l('Не більше 10 тез'))
+            raise ValidationError(
+                _l('Не більше %(max)d тез', max=TrainerCourseProposal.THESES_MAX))

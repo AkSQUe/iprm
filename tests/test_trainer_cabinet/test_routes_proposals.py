@@ -31,10 +31,19 @@ def test_create_draft(client):
 def test_title_limit_and_theses_limit(client):
     _setup(client)
     resp = client.post('/trainer/proposals/new', data={**DATA, 'title': 'x' * 51})
-    assert resp.status_code == 200 and 'form-error' in resp.get_data(as_text=True)
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert 'form-error' in html
+    # C13: межа -- з TrainerCourseProposal.TITLE_MAX/THESES_MAX через
+    # %(max)d, а не окремий рядок "50": розсинхрон між повідомленням і
+    # реальним обмеженням тут неможливий за конструкцією.
+    assert 'Не більше 50 символів' in html
+    assert f'maxlength="{TrainerCourseProposal.TITLE_MAX}"' in html
     resp = client.post('/trainer/proposals/new',
                        data={**DATA, 'theses': '\n'.join(str(i) for i in range(11))})
-    assert resp.status_code == 200 and 'form-error' in resp.get_data(as_text=True)
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert 'form-error' in html and 'Не більше 10 тез' in html
     resp = client.post('/trainer/proposals/new', data={**DATA, 'theses': '  \n '})
     assert resp.status_code == 200 and 'form-error' in resp.get_data(as_text=True)
 
@@ -74,6 +83,14 @@ def test_title_whitespace_is_normalized(client):
     assert resp.status_code == 302
     p = TrainerCourseProposal.query.filter_by(trainer_id=trainer.id).one()
     assert p.title == 'КОС крові: діагностика'
+
+
+def test_theses_field_carries_max_for_js(client):
+    """trainer-theses.js читає ліміт з data-max, а не з константи 10,
+    зашитої в самому скрипті окремо від моделі."""
+    _setup(client)
+    html = client.get('/trainer/proposals/new').get_data(as_text=True)
+    assert f'data-max="{TrainerCourseProposal.THESES_MAX}"' in html
 
 
 def test_delete_draft(client):

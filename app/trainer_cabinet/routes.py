@@ -210,6 +210,16 @@ def _save_proposal(form, proposal):
     return redirect(url_for('trainer_cabinet.profile'))
 
 
+def _proposal_edit_context(form, proposal):
+    """Спільний контекст шаблону редагування: межі -- з моделі, не окремим
+    числом у шаблоні/JS, щоб зміна константи доходила скрізь одразу."""
+    return dict(
+        form=form, proposal=proposal,
+        title_max=TrainerCourseProposal.TITLE_MAX,
+        theses_max=TrainerCourseProposal.THESES_MAX,
+    )
+
+
 @trainer_cabinet_bp.route('/proposals/new', methods=['GET', 'POST'])
 @trainer_required
 def proposal_new():
@@ -220,7 +230,8 @@ def proposal_new():
         proposal = TrainerCourseProposal(
             trainer_id=g.trainer.id, status=TrainerCourseProposal.DRAFT)
         return _save_proposal(form, proposal)
-    return render_template('trainer_cabinet/proposal_edit.html', form=form, proposal=None)
+    return render_template('trainer_cabinet/proposal_edit.html',
+                           **_proposal_edit_context(form, None))
 
 
 @trainer_cabinet_bp.route('/proposals/<int:proposal_id>', methods=['GET', 'POST'])
@@ -236,7 +247,8 @@ def proposal_edit(proposal_id):
         form.theses.data = '\n'.join(proposal.theses or [])
     if form.validate_on_submit():
         return _save_proposal(form, proposal)
-    return render_template('trainer_cabinet/proposal_edit.html', form=form, proposal=proposal)
+    return render_template('trainer_cabinet/proposal_edit.html',
+                           **_proposal_edit_context(form, proposal))
 
 
 def _after_submit(proposal):

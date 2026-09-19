@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: IPRM VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-09-19 21:58+0300\n"
+"POT-Creation-Date: 2026-09-19 22:31+0300\n"
 "PO-Revision-Date: 2026-07-24 15:52+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -6367,8 +6367,9 @@ msgstr "Course information | Trainer cabinet | IPRM"
 msgid "Коментар куратора:"
 msgstr "Curator's comment:"
 
-msgid "Лаконічно та чітко сформульована; до 50 символів"
-msgstr "Concise and clearly worded; up to 50 characters"
+#, python-format
+msgid "Лаконічно та чітко сформульована; до %(max)d символів"
+msgstr "Concise and clearly worded; up to %(max)d characters"
 
 msgid "Одна теза на рядок, 5-10 головних тез доповіді"
 msgstr "One point per line, 5-10 key points of the talk"
@@ -6602,8 +6603,9 @@ msgstr "Course/talk title"
 msgid "Назва обов'язкова"
 msgstr "Title is required"
 
-msgid "Не більше 50 символів"
-msgstr "No more than 50 characters"
+#, python-format
+msgid "Не більше %(max)d символів"
+msgstr "No more than %(max)d characters"
 
 msgid "Програма виступу (5-10 головних тез)"
 msgstr "Talk outline (5-10 key points)"
@@ -6623,17 +6625,18 @@ msgstr "Link to the quiz (Google Form)"
 msgid "Додайте хоча б одну тезу"
 msgstr "Add at least one point"
 
-msgid "Не більше 10 тез"
-msgstr "No more than 10 points"
+#, python-format
+msgid "Не більше %(max)d тез"
+msgstr "No more than %(max)d points"
 
 msgid "Не вдалося обробити фото. Спробуйте інший файл: JPG, PNG, WebP або HEIC."
 msgstr "Could not process the photo. Try another file: JPG, PNG, WebP or HEIC."
 
-msgid "Анкету збережено"
-msgstr "Questionnaire saved"
-
 msgid "Помилка при збереженні"
 msgstr "Error while saving"
+
+msgid "Анкету збережено"
+msgstr "Questionnaire saved"
 
 msgid "Пропозицію вже надіслано куратору -- змінити її не можна"
 msgstr ""

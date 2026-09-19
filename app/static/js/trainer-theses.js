@@ -5,9 +5,11 @@
 (function () {
   'use strict';
 
-  var MAX = 10;
-
   function init(textarea) {
+    /* Межа -- з data-max (шаблон бере її з TrainerCourseProposal.THESES_MAX),
+       а не окреме число тут: інакше зміна константи в моделі не доходила б
+       до цього скрипта. */
+    var MAX = parseInt(textarea.getAttribute('data-max'), 10) || 10;
     var list = document.createElement('ol');
     list.className = 'trainer-theses';
     var add = document.createElement('button');
