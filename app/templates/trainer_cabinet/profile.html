@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/registration.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-trainer-profile.css') }}?v={{ assets_version }}">
 {% endblock %}
 
 {% block content %}
@@ -73,13 +74,15 @@
       </div>
     </div>
 
-    <button type="submit" class="apple-btn apple-btn--primary">{{ _('Зберегти анкету') }}</button>
+    <div class="reg-actions trainer-profile__actions">
+      <button type="submit" class="apple-btn apple-btn--primary">{{ _('Зберегти анкету') }}</button>
+    </div>
   </form>
 
   <section class="form-section reg-form-section">
     <h3 class="form-section__title reg-form-section__title">{{ _('Інформація курсу') }}</h3>
     {% if proposals %}
-    <ul class="account-grid">
+    <ul class="account-grid trainer-profile__proposals">
       {% for p in proposals %}
       <li class="account-card">
         <a href="{{ url_for('trainer_cabinet.proposal_edit', proposal_id=p.id) }}" class="account-course__link">{{ p.title }}</a>

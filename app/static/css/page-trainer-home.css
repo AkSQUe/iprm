@@ -22,7 +22,10 @@
   align-items: center;
 }
 
-.trainer-events__counts {
+/* .apple-page -- не декор, а вага селектора: лічильники сидять у
+   .iprm-stat-grid, і `.apple-page .iprm-stat-grid` (apple-pages.css) з
+   auto-fit перебивав одиночний клас -- сітка на 5/3 колонки не діяла. */
+.apple-page .trainer-events__counts {
   grid-template-columns: repeat(5, minmax(96px, auto));
   text-align: center;
 }
@@ -32,7 +35,16 @@
     grid-template-columns: 1fr;
   }
 
-  .trainer-events__counts {
+  .apple-page .trainer-events__counts {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Вузькі телефони: у три колонки картка вужча за найдовший підпис
+   ("Зарегистрировано" в ru, "Зареєстровано" в uk) -- текст вилазив за
+   межі картки. Перевірено на 390/440/480 px у uk/ru/en. */
+@media (max-width: 520px) {
+  .apple-page .trainer-events__counts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

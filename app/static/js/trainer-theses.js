@@ -15,9 +15,19 @@
     add.className = 'apple-btn apple-btn--secondary apple-btn--sm';
     add.textContent = textarea.getAttribute('data-add-label') || '+';
 
+    /* Поля створюються скриптом і не мають <label>: без aria-label
+       скрінрідер озвучує лише "текстове поле". Номер перераховується при
+       кожній зміні списку, бо видалення зсуває нумерацію. */
+    var itemLabel = textarea.getAttribute('data-item-label') || '';
+    var removeLabel = textarea.getAttribute('data-remove-label') || '-';
+
     function sync() {
       var values = [];
-      list.querySelectorAll('input').forEach(function (input) {
+      list.querySelectorAll('li').forEach(function (li, index) {
+        var input = li.querySelector('input');
+        var name = (itemLabel + ' ' + (index + 1)).trim();
+        input.setAttribute('aria-label', name);
+        li.querySelector('button').setAttribute('aria-label', removeLabel + ': ' + name);
         if (input.value.trim()) { values.push(input.value.trim()); }
       });
       textarea.value = values.join('\n');
@@ -35,7 +45,7 @@
       var remove = document.createElement('button');
       remove.type = 'button';
       remove.className = 'apple-btn apple-btn--secondary apple-btn--sm';
-      remove.textContent = textarea.getAttribute('data-remove-label') || '-';
+      remove.textContent = removeLabel;
       remove.addEventListener('click', function () {
         li.remove();
         if (!list.children.length) { list.appendChild(row('')); }

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: IPRM VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-09-19 20:38+0300\n"
+"POT-Creation-Date: 2026-09-19 20:43+0300\n"
 "PO-Revision-Date: 2026-07-24 15:52+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -6348,6 +6348,9 @@ msgstr "+ point"
 msgid "Видалити"
 msgstr "Remove"
 
+msgid "Теза"
+msgstr "Point"
+
 msgid ""
 "Лікарю важливо це знати, тому що...; до чого може призвести незнання цієї "
 "інформації; у яких випадках/станах знадобляться ці знання; з якими "
@@ -6585,6 +6588,9 @@ msgstr "Add at least one point"
 
 msgid "Не більше 10 тез"
 msgstr "No more than 10 points"
+
+msgid "Не вдалося обробити фото. Спробуйте інший файл: JPG, PNG, WebP або HEIC."
+msgstr "Could not process the photo. Try another file: JPG, PNG, WebP or HEIC."
 
 msgid "Анкету збережено"
 msgstr "Questionnaire saved"

@@ -36,7 +36,7 @@
     {{ form.hidden_tag() }}
     <div class="form-section reg-form-section">
       {{ field(form.title, _('Лаконічно та чітко сформульована; до 50 символів'), maxlength=50) }}
-      {{ field(form.theses, _('Одна теза на рядок, 5-10 головних тез доповіді'), rows=8, **{'data-theses': '', 'data-add-label': _('+ теза'), 'data-remove-label': _('Видалити')}) }}
+      {{ field(form.theses, _('Одна теза на рядок, 5-10 головних тез доповіді'), rows=8, **{'data-theses': '', 'data-add-label': _('+ теза'), 'data-remove-label': _('Видалити'), 'data-item-label': _('Теза')}) }}
       {{ field(form.language) }}
       {{ field(form.relevance, _('Лікарю важливо це знати, тому що...; до чого може призвести незнання цієї інформації; у яких випадках/станах знадобляться ці знання; з якими хворобами, симптомами, ситуаціями лікар знатиме, як діяти'), rows=8) }}
       {{ field(form.target_specialties) }}

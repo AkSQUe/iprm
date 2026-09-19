@@ -47,7 +47,11 @@ def _save_photo(form, profile):
         usage_type='photo', uploader_id=current_user.id,
     )
     if error:
-        return error
+        # Тексти media_service -- українські й не обгорнуті в _(): кабінет
+        # перекладений, тож тренер бачить перекладене загальне повідомлення,
+        # а конкретна причина йде в лог.
+        logger.warning('Trainer %s photo upload rejected: %s', g.trainer.id, error)
+        return _('Не вдалося обробити фото. Спробуйте інший файл: JPG, PNG, WebP або HEIC.')
     profile.photo_media_id = media.id
     return None
 

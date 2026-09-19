@@ -1,0 +1,16 @@
+/* page-trainer-profile.css -- Анкета тренера (кабінет тренера): лише
+   розкладка. Декор -- з auth.css, registration.css і account.css.
+   Завантажується після account.css. */
+
+/* Кнопка збереження стоїть між формою і секцією пропозицій: без відступу
+   вона прилипала до секції нижче. */
+.trainer-profile__actions {
+  margin-bottom: 24px;
+}
+
+/* Список пропозицій -- <ul> для семантики, але маркер біля картки зайвий
+   (.account-grid розрахований на div). */
+.trainer-profile__proposals {
+  list-style: none;
+  padding: 0;
+}
