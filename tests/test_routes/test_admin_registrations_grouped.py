@@ -271,3 +271,35 @@ def test_stat_cards_survive_search_and_scope_joins(client, admin, event_with_two
 
     assert response.status_code == 200
     assert _stat_cards(response.get_data(as_text=True))['Всього'] == '1'
+
+
+def test_grouped_mode_survives_reset_export_and_presets(client, admin, event_with_two_people):
+    """Панель керування спільна для обох режимів, але в групах кожне її
+    посилання мусить лишати менеджера в групах."""
+    import re
+    _login(client, admin)
+
+    html = client.get(
+        '/admin/registrations?view=grouped&scope=all&status=pending'
+    ).get_data(as_text=True)
+
+    reset = re.search(r'class="admin-filters__reset" href="([^"]*)"', html)
+    assert reset and 'view=grouped' in reset.group(1)
+    export = re.search(r'href="(/admin/registrations/export[^"]*)"', html)
+    assert export and 'view=grouped' in export.group(1)
+    presets = re.search(
+        r'<div class="admin-pills admin-pills--presets">(.*?)</div>', html, re.S)
+    hrefs = re.findall(r'href="([^"]*)"', presets.group(1))
+    assert hrefs and all('view=grouped' in h for h in hrefs)
+
+
+def test_list_mode_urls_stay_free_of_view(client, admin, event_with_two_people):
+    """Типовий список обходиться без режиму в адресах скидання й пресетів --
+    вони лишились такими, як були до появи режимів."""
+    import re
+    _login(client, admin)
+
+    html = client.get('/admin/registrations?scope=all&status=pending').get_data(as_text=True)
+
+    reset = re.search(r'class="admin-filters__reset" href="([^"]*)"', html)
+    assert reset and 'view=' not in reset.group(1)

@@ -1,0 +1,82 @@
+{# Панель керування реєстром реєстрацій -- ОДНА на обидва режими: плаский
+   список (`registrations.html`) і групи за заходами
+   (`registrations_grouped.html`). Поки панель жила двома копіями, новий
+   фільтр реєстру неминуче зʼявлявся б в одному режимі й забувався в другому.
+
+   Підключається через include і бере з контексту сторінки: stats, filters,
+   filter_args, presets, active_preset і довідники *_options.
+
+   extra_filter_fields -- поля фільтр-бара, яких немає в іншому режимі.
+   Сторінка задає його сама (`{% set extra_filter_fields = [...] %}`)
+   перед include. Саме так живе поле per_page: воно має сенс лише в
+   плаcкому списку, а сторож tests/test_routes/test_admin_per_page_narrowing_guard.py
+   шукає його в тому самому файлі, що й виняток narrow_args для порожнього
+   стану -- тобто на сторінці, а не тут. #}
+{% from 'admin/partials/_filter_bar.html' import filter_bar, stat_cards %}
+{% from 'admin/partials/_registrations_view_switch.html' import view_switch %}
+{% from 'partials/_money.html' import money %}
+
+{# Режим в адресі несемо лише для груп: типовий список обходиться без нього,
+   і його посилання (скидання, експорт, пресети) лишаються такими, як були
+   до появи режимів -- на це дивляться сторожі реєстру. #}
+{% set view_args = {'view': 'grouped'} if filters.view == 'grouped' else {} %}
+
+{{ stat_cards([{'value': stats.total, 'label': 'Всього'},
+               {'value': stats.confirmed, 'label': 'Підтверджено', 'mod': 'success'},
+               {'value': stats.pending, 'label': 'Очікує', 'mod': 'warning'},
+               {'value': stats.cancelled, 'label': 'Скасовано', 'mod': 'danger'},
+               {'value': money(stats.total_paid), 'label': 'Оплачено', 'mod': 'accent'}]) }}
+
+{{ view_switch(filters, filter_args) }}
+
+{# Швидкий фільтр за часом заходу. #}
+<div class="admin-pills">
+  {% for value, label, ico in [
+       ('upcoming', 'Майбутні заходи', 'event_upcoming'),
+       ('past', 'Минулі', 'history'),
+       ('all', 'Усі', 'format_list_bulleted')] %}
+  <a href="{{ url_for('admin.registrations_all', **dict(filter_args, scope=value)) }}"
+     class="admin-pill{% if filters.scope == value %} admin-pill--active{% endif %}">
+    {{ icon(ico) }} {{ label }}
+  </a>
+  {% endfor %}
+</div>
+
+{# Пресети: щоденні зрізи в один клік. Кожен -- звичайний набір фільтрів,
+   тож панель і чіпси одразу показують, що саме увімкнено. Режим пресет не
+   скидає: клік у групах лишає менеджера в групах. #}
+<div class="admin-pills admin-pills--presets">
+  {% for key, label, ico, args in presets %}
+  <a href="{{ url_for('admin.registrations_all', scope=filters.scope, **dict(args, **view_args)) }}"
+     class="admin-pill{% if active_preset == key %} admin-pill--active{% endif %}">
+    {{ icon(ico) }} {{ label }}
+  </a>
+  {% endfor %}
+</div>
+
+{# user_id у base_args -- лише перехід із картки користувача (поля в панелі
+   нема), але без нього тут «Застосувати», «Скинути все» й Експорт зібрали
+   б URL БЕЗ user_id: перше двоє тихо повернули б менеджера на повний
+   реєстр, а Експорт вивантажив би всі реєстрації замість картки цієї
+   людини. scope, user_id і view -- те, що переживає скидання. #}
+{{ filter_bar(
+     endpoint='admin.registrations_all',
+     values=filters,
+     search={'name': 'q', 'placeholder': 'Пошук за іменем, email або телефоном'},
+     fields=[
+       {'name': 'status', 'label': 'Статус', 'placeholder': 'Всі статуси', 'options': status_options},
+       {'name': 'payment', 'label': 'Оплата', 'placeholder': 'Всі оплати', 'options': payment_options},
+       {'name': 'payment_method', 'label': 'Спосіб оплати', 'placeholder': 'Всі способи', 'options': method_options},
+       {'name': 'course_id', 'label': 'Курс', 'placeholder': 'Всі курси', 'options': course_options},
+       {'name': 'trainer_id', 'label': 'Тренер', 'placeholder': 'Всі тренери', 'options': trainer_options},
+       {'name': 'instance_id', 'label': 'Захід', 'placeholder': 'Всі заходи', 'options': instance_options},
+       {'name': 'date_from', 'label': 'Реєстрації з', 'type': 'date'},
+       {'name': 'date_to', 'label': 'Реєстрації по', 'type': 'date'},
+       {'name': 'no_certificate', 'label': 'Сертифікат',
+        'placeholder': 'Будь-який', 'options': [('1', 'Ще не виданий')]},
+       {'name': 'surcharge', 'label': 'Доплата',
+        'placeholder': 'Будь-яка', 'options': [('due', 'Не надійшла')]},
+     ] + (extra_filter_fields if extra_filter_fields is defined else []),
+     base_args=dict({'scope': filters.scope, 'user_id': filters.user_id}, **view_args),
+     export_endpoint='admin.registrations_export',
+   ) }}

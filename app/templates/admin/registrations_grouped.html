@@ -10,8 +10,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-registrations.css') }}?v={{ assets_version }}">
 {% endblock %}
 
-{% from 'admin/partials/_filter_bar.html' import filter_bar, pager, empty_state, stat_cards %}
-{% from 'admin/partials/_registrations_view_switch.html' import view_switch %}
+{% from 'admin/partials/_filter_bar.html' import pager, empty_state %}
 {% from 'partials/_money.html' import money %}
 
 {% block content %}
@@ -40,56 +39,7 @@
 
     {% include 'partials/flash_messages.html' %}
 
-    {{ stat_cards([{'value': stats.total, 'label': 'Всього'},
-                   {'value': stats.confirmed, 'label': 'Підтверджено', 'mod': 'success'},
-                   {'value': stats.pending, 'label': 'Очікує', 'mod': 'warning'},
-                   {'value': stats.cancelled, 'label': 'Скасовано', 'mod': 'danger'},
-                   {'value': money(stats.total_paid), 'label': 'Оплачено', 'mod': 'accent'}]) }}
-
-    {{ view_switch(filters, filter_args) }}
-
-    <div class="admin-pills">
-      {% for value, label, ico in [
-           ('upcoming', 'Майбутні заходи', 'event_upcoming'),
-           ('past', 'Минулі', 'history'),
-           ('all', 'Усі', 'format_list_bulleted')] %}
-      <a href="{{ url_for('admin.registrations_all', **dict(filter_args, scope=value)) }}"
-         class="admin-pill{% if filters.scope == value %} admin-pill--active{% endif %}">
-        {{ icon(ico) }} {{ label }}
-      </a>
-      {% endfor %}
-    </div>
-
-    <div class="admin-pills admin-pills--presets">
-      {% for key, label, ico, args in presets %}
-      <a href="{{ url_for('admin.registrations_all', scope=filters.scope, view='grouped', **args) }}"
-         class="admin-pill{% if active_preset == key %} admin-pill--active{% endif %}">
-        {{ icon(ico) }} {{ label }}
-      </a>
-      {% endfor %}
-    </div>
-
-    {{ filter_bar(
-         endpoint='admin.registrations_all',
-         values=filters,
-         search={'name': 'q', 'placeholder': 'Пошук за іменем, email або телефоном'},
-         fields=[
-           {'name': 'status', 'label': 'Статус', 'placeholder': 'Всі статуси', 'options': status_options},
-           {'name': 'payment', 'label': 'Оплата', 'placeholder': 'Всі оплати', 'options': payment_options},
-           {'name': 'payment_method', 'label': 'Спосіб оплати', 'placeholder': 'Всі способи', 'options': method_options},
-           {'name': 'course_id', 'label': 'Курс', 'placeholder': 'Всі курси', 'options': course_options},
-           {'name': 'trainer_id', 'label': 'Тренер', 'placeholder': 'Всі тренери', 'options': trainer_options},
-           {'name': 'instance_id', 'label': 'Захід', 'placeholder': 'Всі заходи', 'options': instance_options},
-           {'name': 'date_from', 'label': 'Реєстрації з', 'type': 'date'},
-           {'name': 'date_to', 'label': 'Реєстрації по', 'type': 'date'},
-           {'name': 'no_certificate', 'label': 'Сертифікат',
-            'placeholder': 'Будь-який', 'options': [('1', 'Ще не виданий')]},
-           {'name': 'surcharge', 'label': 'Доплата',
-            'placeholder': 'Будь-яка', 'options': [('due', 'Не надійшла')]},
-         ],
-         base_args={'scope': filters.scope, 'user_id': filters.user_id, 'view': 'grouped'},
-         export_endpoint='admin.registrations_export',
-       ) }}
+    {% include 'admin/partials/_registrations_controls.html' %}
 
     {% if groups %}
     <div class="registrations-groups">
