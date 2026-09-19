@@ -32,6 +32,40 @@
     </div>
   </section>
 
+  {# «Потребує уваги»: те, що раніше ховалось на інших сторінках кабінету.
+     Банери -- .alert дизайн-системи: попередження для дій тренера,
+     інформаційний -- для договору, де від тренера нічого не залежить. #}
+  {% if attention %}
+  <section class="iprm-section iprm-section--compact" aria-labelledby="trainer-attention-title">
+    <div class="iprm-section__inner">
+      <h2 id="trainer-attention-title" class="iprm-section__title">{{ _('Потребує уваги') }}</h2>
+      <ul class="trainer-attention">
+        {% for item in attention %}
+        {% if item.kind == 'returned' %}
+        <li class="alert alert--warning">
+          <strong class="alert__title">{{ _('Пропозицію повернуто на доопрацювання: %(title)s', title=item.title) }}</strong>
+          <p class="trainer-attention__text">{{ _('Коментар куратора:') }} {{ item.comment }}</p>
+          <a href="{{ url_for('trainer_cabinet.proposal_edit', proposal_id=item.proposal_id) }}">{{ _('Доопрацювати пропозицію') }}</a>
+        </li>
+        {% elif item.kind == 'profile_incomplete' %}
+        <li class="alert alert--warning">
+          <strong class="alert__title">{{ _('Анкету не заповнено') }}</strong>
+          <p class="trainer-attention__text">{{ _('Без контактів і реквізитів ми не зможемо оформити договір і виплатити гонорар.') }}</p>
+          <a href="{{ url_for('trainer_cabinet.profile') }}">{{ _('Заповнити анкету') }}</a>
+        </li>
+        {% elif item.kind == 'contract_missing' %}
+        <li class="alert alert--info">
+          <strong class="alert__title">{{ _('Примірник договору ще не опубліковано') }}</strong>
+          <p class="trainer-attention__text">{{ _('Щойно куратор його додасть, він з’явиться на сторінці «Договір». Від вас зараз нічого не потрібно.') }}</p>
+          <a href="{{ url_for('trainer_cabinet.contract') }}">{{ _('Сторінка договору') }}</a>
+        </li>
+        {% endif %}
+        {% endfor %}
+      </ul>
+    </div>
+  </section>
+  {% endif %}
+
   <section class="iprm-section" aria-labelledby="trainer-events-title">
     <div class="iprm-section__inner">
       <h2 id="trainer-events-title" class="iprm-section__title">{{ _('Найближчі заходи') }}</h2>

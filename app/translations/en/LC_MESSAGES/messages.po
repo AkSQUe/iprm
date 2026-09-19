@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: IPRM VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-09-19 23:10+0300\n"
+"POT-Creation-Date: 2026-09-19 23:15+0300\n"
 "PO-Revision-Date: 2026-07-24 15:52+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -6325,6 +6325,42 @@ msgstr "FAQ | Trainer cabinet | IPRM"
 msgid "Кабінет тренера | ІПРМ"
 msgstr "Trainer cabinet | IPRM"
 
+msgid "Потребує уваги"
+msgstr "Needs your attention"
+
+#, python-format
+msgid "Пропозицію повернуто на доопрацювання: %(title)s"
+msgstr "Proposal returned for revision: %(title)s"
+
+msgid "Коментар куратора:"
+msgstr "Curator's comment:"
+
+msgid "Доопрацювати пропозицію"
+msgstr "Revise the proposal"
+
+msgid "Анкету не заповнено"
+msgstr "Your questionnaire is incomplete"
+
+msgid ""
+"Без контактів і реквізитів ми не зможемо оформити договір і виплатити "
+"гонорар."
+msgstr ""
+"Without your contact and payment details we cannot prepare the contract or "
+"pay your fee."
+
+msgid "Примірник договору ще не опубліковано"
+msgstr "A copy of the contract has not been published yet"
+
+msgid ""
+"Щойно куратор його додасть, він з’явиться на сторінці «Договір». Від вас "
+"зараз нічого не потрібно."
+msgstr ""
+"As soon as the curator adds it, it will appear on the Contract page. Nothing"
+" is needed from you right now."
+
+msgid "Сторінка договору"
+msgstr "Contract page"
+
 msgid "Дата уточнюється"
 msgstr "Date to be confirmed"
 
@@ -6400,9 +6436,6 @@ msgstr "Add course / talk"
 
 msgid "Інформація курсу | Кабінет тренера | ІПРМ"
 msgstr "Course information | Trainer cabinet | IPRM"
-
-msgid "Коментар куратора:"
-msgstr "Curator's comment:"
 
 #, python-format
 msgid "Лаконічно та чітко сформульована; до %(max)d символів"

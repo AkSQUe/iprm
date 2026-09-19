@@ -169,6 +169,39 @@ def return_proposal(proposal, comment):
     proposal.curator_comment = (comment or '').strip() or None
 
 
+def attention_items(trainer, settings):
+    """Що тренеру варто зробити зараз: список простих dict для /trainer/.
+
+    kind:
+    - 'returned' -- пропозиція повернута на доопрацювання (чернетка з
+      непорожнім коментарем куратора; submit_proposal коментар стирає, тож
+      звичайна чернетка його не має);
+    - 'profile_incomplete' -- анкета не заповнена (без неї немає договору й
+      гонорару);
+    - 'contract_missing' -- PDF договору ще не завантажено адміном, лише
+      інформація: тренер нічого не мусить робити.
+
+    Без коміту: функція викликається з GET-маршруту.
+    """
+    items = []
+    returned = (
+        trainer.proposals
+        .filter(TrainerCourseProposal.status == TrainerCourseProposal.DRAFT,
+                TrainerCourseProposal.curator_comment.isnot(None))
+        .all()
+    )
+    for proposal in returned:
+        comment = (proposal.curator_comment or '').strip()
+        if comment:
+            items.append({'kind': 'returned', 'proposal_id': proposal.id,
+                          'title': proposal.title, 'comment': comment})
+    if not (trainer.profile and trainer.profile.is_complete):
+        items.append({'kind': 'profile_incomplete'})
+    if not settings.has_trainer_contract:
+        items.append({'kind': 'contract_missing'})
+    return items
+
+
 def contract_email(settings):
     """Куди тренер надсилає договір: окремий email або загальний email сайту."""
     return (settings.trainer_contract_email or '').strip() or (settings.email or '')

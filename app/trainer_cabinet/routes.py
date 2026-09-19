@@ -34,6 +34,7 @@ def index():
         counts=svc.registration_counts([i.id for i in upcoming]),
         courses=svc.trainer_courses(trainer),
         profile_complete=bool(trainer.profile and trainer.profile.is_complete),
+        attention=svc.attention_items(trainer, SiteSettings.get()),
     )
 
 

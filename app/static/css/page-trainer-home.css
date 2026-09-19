@@ -17,6 +17,22 @@
   }
 }
 
+/* «Потребує уваги»: стовпчик банерів .alert. Відступ між ними дає сам
+   .alert (margin-bottom); останній не додає його до падінга секції.
+   Скидання маркерів -- спільним правилом зі списками нижче. */
+.trainer-attention {
+  margin: 0;
+}
+
+.trainer-attention > :last-child {
+  margin-bottom: 0;
+}
+
+.trainer-attention__text {
+  margin: 0 0 8px;
+}
+
+.trainer-attention,
 .trainer-events,
 .trainer-courses {
   list-style: none;
