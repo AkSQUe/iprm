@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}{{ instance.effective_title }} | {{ _('Матеріали | Кабінет тренера | ІПРМ') }}{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/registration.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-trainer-materials.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="apple-page reg-layout">
+  <p><a href="{{ url_for('trainer_cabinet.materials') }}" class="account-course__link">{{ _('Матеріали до заходу') }}</a></p>
+  <h1 class="reg-confirmation__title">{{ instance.effective_title }}</h1>
+  <p class="account-card__text">
+    {% if instance.start_date %}{{ instance.start_date | kyiv('%d.%m.%Y') }}{% else %}{{ _('Дата уточнюється') }}{% endif %}
+    {%- if instance.city %} &middot; {{ instance.city.t('name') }}{% elif instance.location %} &middot; {{ instance.location | localize_location }}{% endif %}
+  </p>
+
+  {% if reservation and reservation.review_comment %}
+  <div class="alert alert--warning">
+    <strong class="alert__title">{{ _('Заявку повернуто') }}</strong>
+    <p>{{ reservation.review_comment }}</p>
+  </div>
+  {% endif %}
+
+  {% if not editable %}
+  <p class="alert alert--info" role="note">
+    {{ _('Заявку надіслано на перевірку. Редагувати її можна буде, якщо її повернуть.') }}
+  </p>
+  {% endif %}
+
+  <form method="post" class="trainer-materials-form"
+        data-catalog-url="{{ url_for('trainer_cabinet.materials_catalog', instance_id=instance.id) }}">
+    {{ form.hidden_tag() }}
+
+    <ul class="trainer-materials-rows" data-rows-body>
+      {% for row in rows %}
+      <li class="account-card trainer-materials-row" data-row>
+        {% if row.image_url %}<img src="{{ row.image_url }}" alt="" class="trainer-materials-row__thumb">{% endif %}
+        <span class="trainer-materials-row__name">{{ row.name or row.sku }}</span>
+        <input type="hidden" name="sku" value="{{ row.sku }}">
+        <input type="hidden" name="name" value="{{ row.name or '' }}">
+        <input type="hidden" name="image_url" value="{{ row.image_url or '' }}">
+        <input type="number" name="quantity" class="form-input trainer-materials-row__qty" min="1" step="1"
+               value="{{ row.quantity }}"{% if not editable %} readonly{% endif %}
+               aria-label="{{ _('Кількість: %(name)s', name=row.name or row.sku) }}">
+        {% if editable %}
+        <button type="button" class="apple-btn apple-btn--secondary apple-btn--sm" data-remove-row
+                aria-label="{{ _('Прибрати: %(name)s', name=row.name or row.sku) }}">{{ _('Прибрати') }}</button>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+
+    {% if editable %}
+      {% if catalog_unavailable %}
+      <p class="alert alert--warning">
+        {{ _('Каталог складу зараз недоступний. Заявку можна надіслати з наявного переліку, а додати нові позиції -- пізніше.') }}
+      </p>
+      {% else %}
+      <div class="trainer-materials-add">
+        <label for="materialsAdd">{{ _('Додати позицію') }}</label>
+        <input type="search" id="materialsAdd" class="form-input"
+               placeholder="{{ _('Пошук по каталогу') }}" autocomplete="off"
+               data-catalog-search>
+        <ul class="account-card trainer-materials-suggest" data-suggest hidden></ul>
+      </div>
+      {% endif %}
+
+      <div class="form-group">
+        <label for="{{ form.comment.id }}">{{ form.comment.label.text }}</label>
+        {{ form.comment(class="form-input", id=form.comment.id, rows=3) }}
+      </div>
+
+      <div class="trainer-materials-actions">
+        <button type="submit" name="action" value="draft" class="apple-btn apple-btn--secondary">{{ _('Зберегти чернетку') }}</button>
+        <button type="submit" name="action" value="submit" class="apple-btn apple-btn--primary">{{ _('Відправити') }}</button>
+      </div>
+    {% endif %}
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/trainer-materials.js') }}?v={{ assets_version }}" defer></script>
+{% endblock %}

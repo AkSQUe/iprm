@@ -88,3 +88,12 @@ class ProposalForm(FlaskForm):
         if len(items) > TrainerCourseProposal.THESES_MAX:
             raise ValidationError(
                 _l('Не більше %(max)d тез', max=TrainerCourseProposal.THESES_MAX))
+
+
+class MaterialRequestForm(FlaskForm):
+    """Заявка на матеріали. Рядки приходять паралельними списками
+    `sku[]`/`quantity[]`, тож полів під них тут немає -- WTForms не вміє
+    динамічну кількість рядків без FieldList, а FieldList тут дав би
+    складність без користі. Форма потрібна заради CSRF і коментаря.
+    """
+    comment = TextAreaField(_l('Коментар до заявки'), validators=[Optional()])

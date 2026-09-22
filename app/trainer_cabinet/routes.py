@@ -1,17 +1,22 @@
 import io
 import logging
 
-from flask import abort, flash, g, redirect, render_template, request, send_file, url_for
+from flask import (
+    abort, flash, g, jsonify, redirect, render_template, request, send_file,
+    url_for,
+)
 from flask_babel import gettext as _
 from flask_login import current_user
 
-from app.extensions import db
+from app.extensions import db, limiter
+from app.models.course_instance import CourseInstance
 from app.models.site_settings import SiteSettings
 from app.models.trainer_course_proposal import TrainerCourseProposal
+from app.services import material_request_service as mrq
 from app.services import trainer_cabinet as svc
 from app.trainer_cabinet import trainer_cabinet_bp
 from app.trainer_cabinet.decorators import trainer_required
-from app.trainer_cabinet.forms import ProposalForm, TrainerProfileForm
+from app.trainer_cabinet.forms import MaterialRequestForm, ProposalForm, TrainerProfileForm
 
 logger = logging.getLogger(__name__)
 audit_logger = logging.getLogger('audit')
@@ -315,3 +320,136 @@ def proposal_delete(proposal_id):
         return redirect(url_for('trainer_cabinet.proposal_edit', proposal_id=proposal_id))
     flash(_('Чернетку видалено'), 'success')
     return redirect(url_for('trainer_cabinet.profile'))
+
+
+def _own_instance(instance_id):
+    """Захід цього тренера або 404.
+
+    404, а не 403: стороннього не стосується навіть факт існування заявки.
+    Той самий висновок, що в `_own_proposal` вище.
+    """
+    instance = db.session.get(CourseInstance, instance_id)
+    if instance is None:
+        abort(404)
+    if g.trainer.id not in {t.id for t in instance.effective_trainers}:
+        abort(404)
+    return instance
+
+
+def _form_rows():
+    """Рядки з POST'а: паралельні списки sku[] і quantity[].
+
+    Невалідні (порожній sku, нечислова або недодатна кількість) мовчки
+    відкидаються: це не помилка введення, а вилучений рядок -- саме так
+    працює кнопка «прибрати» у формі.
+    """
+    skus = request.form.getlist('sku')
+    quantities = request.form.getlist('quantity')
+    names = request.form.getlist('name')
+    images = request.form.getlist('image_url')
+    rows = []
+    for index, sku in enumerate(skus):
+        sku = (sku or '').strip()
+        if not sku:
+            continue
+        try:
+            quantity = int(quantities[index])
+        except (IndexError, TypeError, ValueError):
+            continue
+        if quantity <= 0:
+            continue
+        rows.append({
+            'sku': sku,
+            'name': names[index] if index < len(names) else None,
+            'image_url': images[index] if index < len(images) else None,
+            'quantity': quantity,
+        })
+    return rows
+
+
+@trainer_cabinet_bp.route('/materials')
+@trainer_required
+def materials():
+    instances = svc.upcoming_instances(g.trainer)
+    reservations = {
+        inst.id: mrq.mrs.get_reservation(inst.id) for inst in instances
+    }
+    return render_template('trainer_cabinet/materials.html',
+                           trainer=g.trainer,
+                           instances=instances,
+                           reservations=reservations)
+
+
+@trainer_cabinet_bp.route('/materials/<int:instance_id>', methods=['GET', 'POST'])
+@trainer_required
+def materials_request(instance_id):
+    instance = _own_instance(instance_id)
+    reservation = mrq.mrs.get_reservation(instance_id)
+    editable = mrq.is_editable_by_trainer(reservation)
+    form = MaterialRequestForm()
+
+    if request.method == 'POST':
+        if not editable:
+            flash(_('Заявку вже надіслано на перевірку, редагувати її не можна.'),
+                  'warning')
+            return redirect(url_for('trainer_cabinet.materials_request',
+                                    instance_id=instance_id))
+        if form.validate_on_submit():
+            reservation = mrq.get_or_create_draft(instance, current_user)
+            mrq.save_items(reservation, _form_rows())
+            reservation.trainer_comment = (form.comment.data or '').strip() or None
+            if request.form.get('action') == 'submit':
+                try:
+                    mrq.submit(reservation, current_user)
+                except mrq.RequestTransitionError as exc:
+                    db.session.commit()
+                    flash(str(exc), 'error')
+                    return redirect(url_for('trainer_cabinet.materials_request',
+                                            instance_id=instance_id))
+                _notify_material_request(reservation, instance)
+                flash(_('Заявку надіслано на перевірку.'), 'success')
+            else:
+                db.session.commit()
+                flash(_('Чернетку збережено.'), 'success')
+            return redirect(url_for('trainer_cabinet.materials_request',
+                                    instance_id=instance_id))
+
+    if request.method == 'GET':
+        form.comment.data = reservation.trainer_comment if reservation else None
+    catalog, catalog_unavailable = mrq.catalog_for_trainer()
+    return render_template(
+        'trainer_cabinet/materials_request.html',
+        form=form,
+        instance=instance,
+        reservation=reservation,
+        editable=editable,
+        rows=mrq.rows_for_form(instance, reservation),
+        catalog=catalog,
+        catalog_unavailable=catalog_unavailable,
+    )
+
+
+def _notify_material_request(reservation, instance):
+    """Лист відповідальним. Збій пошти не скасовує надсилання -- заявка вже
+    збережена (той самий патерн, що `_after_submit` для пропозицій)."""
+    from app.services.email_service import EmailService
+    try:
+        EmailService.send_material_request_submitted(reservation, instance)
+    except Exception:
+        logger.exception('Не вдалося сповістити про заявку %s',
+                         reservation.external_ref)
+
+
+@trainer_cabinet_bp.route('/materials/<int:instance_id>/catalog')
+@trainer_required
+@limiter.limit('30 per minute')
+def materials_catalog(instance_id):
+    """Пошук по каталогу для випадайки «додати позицію».
+
+    Ліміт не декоративний: КОЖЕН запит із непорожнім `q` -- живий HTTP у
+    MM Medic (кешується лише нефільтрований каталог, див. `get_catalog`).
+    """
+    _own_instance(instance_id)
+    query = (request.args.get('q') or '').strip()
+    items, unavailable = mrq.catalog_for_trainer(search=query or None)
+    return jsonify({'items': items[:50], 'unavailable': unavailable})

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Матеріали до заходу | Кабінет тренера | ІПРМ') }}{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="apple-page">
+  <section class="iprm-section" aria-labelledby="trainer-materials-title">
+    <div class="iprm-section__inner">
+      <p><a href="{{ url_for('trainer_cabinet.index') }}" class="account-course__link">{{ _('Кабінет тренера') }}</a></p>
+      <h1 id="trainer-materials-title" class="iprm-section__title">{{ _('Матеріали до заходу') }}</h1>
+
+      {% if not instances %}
+      <div class="iprm-empty-state">
+        <p>{{ _('У вас немає найближчих заходів.') }}</p>
+      </div>
+      {% else %}
+      <ul class="trainer-materials-list">
+        {% for instance in instances %}
+        {% set reservation = reservations.get(instance.id) %}
+        <li class="account-card trainer-materials-list__item">
+          <div class="trainer-materials-list__main">
+            <h3 class="iprm-block-title">
+              <a href="{{ url_for('trainer_cabinet.materials_request', instance_id=instance.id) }}" class="account-course__link">{{ instance.effective_title }}</a>
+            </h3>
+            <p class="account-card__text">
+              {% if instance.start_date %}{{ instance.start_date | kyiv('%d.%m.%Y') }}{% else %}{{ _('Дата уточнюється') }}{% endif %}
+            </p>
+          </div>
+          <span class="badge badge--{{ reservation.status_badge if reservation else 'draft' }}">
+            {{ reservation.status_label if reservation else _('Не подано') }}
+          </span>
+        </li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </div>
+  </section>
+</div>
+{% endblock %}

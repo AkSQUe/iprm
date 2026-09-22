@@ -209,3 +209,55 @@ def pending_review_count() -> int:
             .filter(MaterialReservation.status
                     == MaterialReservationStatus.PENDING_REVIEW)
             .count())
+
+
+def catalog_for_trainer(search=None):
+    """Каталог MM Medic у вигляді, придатному для очей тренера.
+
+    Повертає (items, unavailable). `items` -- лише sku, назва й зображення:
+    залишки, ціни й min_stock не ховаються стилями, а НЕ НАДСИЛАЮТЬСЯ. Ціни
+    MM Medic -- закупівельні, і зовнішній людині їх знати не треба.
+
+    `unavailable=True` -- партнер мовчить. Це не помилка сторінки: форма
+    відкривається з локального комплекту й працює на відправку, недоступним
+    стає лише пошук.
+    """
+    items, error, _stale = mrs.get_catalog(search=search)
+    if error:
+        return [], True
+    return [
+        {'sku': raw.get('sku'),
+         'name': raw.get('name'),
+         'image_url': raw.get('image_url')}
+        for raw in (items or [])
+        if raw.get('sku')
+    ], False
+
+
+def prefill_rows(instance):
+    """Рядки, якими відкривається порожня заявка: стандартний комплект курсу.
+
+    `kits_for_instance` віддає курсові комплекти І універсальні
+    (`course_id IS NULL`). Беремо позиції з усіх активних, складаючи
+    кількості на однаковий sku: два комплекти, що обидва містять серветки,
+    мають дати одну позицію, а не дві.
+    """
+    merged = {}
+    for kit in mrs.kits_for_instance(instance):
+        for item in kit.items:
+            row = merged.setdefault(item.sku, {
+                'sku': item.sku, 'name': item.name_snapshot,
+                'image_url': None, 'quantity': 0,
+            })
+            row['quantity'] += item.quantity or 0
+    return [row for row in merged.values() if row['quantity'] > 0]
+
+
+def rows_for_form(instance, reservation):
+    """Що показати у формі: збережена заявка, якщо вона є, інакше префіл."""
+    if reservation is not None and reservation.items:
+        return [{'sku': item.sku, 'name': item.name,
+                 'image_url': item.image_url,
+                 'quantity': item.quantity_requested or 0}
+                for item in reservation.items]
+    return prefill_rows(instance)
