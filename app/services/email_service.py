@@ -1896,6 +1896,29 @@ class EmailService:
         )
 
     @staticmethod
+    def notify_lecturer_certificate_failed(instance, reason):
+        """Адмінам: захід завершено, а сертифікати тренерам не видались.
+
+        Тренер документа не побачить і листа не отримає, доки хтось не
+        виправить причину, тож збій має дійти до людини, а не лише в лог.
+        """
+        from app.models.site_settings import SiteSettings
+
+        base = (SiteSettings.get().website_url or '').rstrip('/')
+        tail = f'/admin/instances/{instance.id}/edit'
+        return EmailService.notify_admins_with_template(
+            event_type='certificate',
+            subject=('Сертифікати тренерам не видано: '
+                     f'{instance.effective_title_for("uk") or instance.id}'),
+            template_name='admin_lecturer_certificate_failed',
+            context={
+                'instance': instance,
+                'reason': reason,
+                'admin_url': f'{base}{tail}' if base else tail,
+            },
+        )
+
+    @staticmethod
     def send_meta_leads_alert(reasons, stats=None):
         """Сповістити менеджерів про збій приймання лідів з Meta Lead Ads.
 

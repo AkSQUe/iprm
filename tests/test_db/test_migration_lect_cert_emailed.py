@@ -75,7 +75,7 @@ def test_backfill_sql_sets_emailed_at_from_issued_at(app, migration):
     assert cert.emailed_at is None
     issued_at_value = cert.issued_at
 
-    # Виконаємо той самий бекфіл, що й у升級.
+    # Виконаємо той самий бекфіл, що й у upgrade().
     db.session.execute(text(migration.BACKFILL_SQL))
     db.session.commit()
 
