@@ -23,6 +23,8 @@ from app.extensions import db
 from app.models.course import Course
 from app.models.course_instance import CourseInstance
 from app.models.material_kit import MaterialKit, MaterialKitItem
+from app.models.material_reservation import (
+    MaterialReservationStatus as S, MaterialReservationOrigin as O)
 from app.models.user import User
 from app.services import material_reservation_service as mrs
 from app.services import xlsx_io
@@ -485,3 +487,228 @@ def test_pending_review_is_not_treated_as_mm_document():
 
     res.status = MaterialReservationStatus.SUBMITTED
     assert res.is_mm_document is True
+
+
+# --------------------- material_request_service (Task 2) ---------------------
+
+@pytest.fixture
+def instance(db_session):
+    """Захід, на який тренер подає заявку на матеріали."""
+    return _instance(_course('Захід для заявки на матеріали'))
+
+
+@pytest.fixture
+def trainer_user(app):
+    # Бриф пропонував User(...) + set_password('x'), але User.set_password()
+    # вимагає вже persisted юзера (пароль живе в AuthIdentity, не в User) --
+    # той самий шаблон, що create_with_password() у _admin() нижче.
+    user = User.create_with_password(
+        'trainer-mat@example.com', 'password123', email_confirmed=True,
+    )
+    db.session.commit()
+    yield user
+    db.session.delete(user)
+    db.session.commit()
+
+
+@pytest.fixture
+def admin_user(app):
+    user = _admin()
+    yield user
+    db.session.delete(user)
+    db.session.commit()
+
+
+def _draft(app_ctx_instance, user):
+    """Чернетка з двома рядками -- спільна заготовка для тестів переходів."""
+    from app.services import material_request_service as mrq
+    res = mrq.get_or_create_draft(app_ctx_instance, user)
+    mrq.save_items(res, [
+        {'sku': 'NEEDLE-30G', 'name': 'Голки 30G', 'image_url': None,
+         'quantity': 12},
+        {'sku': 'TUBE-VAC', 'name': 'Пробірки', 'image_url': None,
+         'quantity': 24},
+    ])
+    return res
+
+
+def test_submit_moves_draft_to_pending_review(app, instance, trainer_user):
+    from app.services import material_request_service as mrq
+
+    res = _draft(instance, trainer_user)
+    assert res.status == S.DRAFT
+
+    mrq.submit(res, trainer_user)
+
+    assert res.status == S.PENDING_REVIEW
+    assert res.trainer_submitted_at is not None
+    assert res.origin == O.TRAINER_CABINET
+    assert res.created_by_id == trainer_user.id
+    # Кількості тренера лягають у quantity_requested; утримання ще немає.
+    assert {i.sku: i.quantity_requested for i in res.items} == {
+        'NEEDLE-30G': 12, 'TUBE-VAC': 24}
+    assert all(i.quantity_reserved == 0 for i in res.items)
+
+
+def test_return_to_trainer_stores_comment_and_reopens_form(app, instance,
+                                                           trainer_user, admin_user):
+    from app.services import material_request_service as mrq
+
+    res = _draft(instance, trainer_user)
+    mrq.submit(res, trainer_user)
+    assert mrq.is_editable_by_trainer(res) is False
+
+    mrq.return_to_trainer(res, '  Забули серветки  ', admin_user)
+
+    assert res.status == S.RETURNED
+    assert res.review_comment == 'Забули серветки'
+    assert res.reviewed_by_id == admin_user.id
+    assert res.reviewed_at is not None
+    assert mrq.is_editable_by_trainer(res) is True
+
+
+def test_resubmit_after_return_clears_the_stale_comment(app, instance,
+                                                        trainer_user, admin_user):
+    """Коментар стосувався ПОПЕРЕДНЬОЇ версії. Лишити його -- показувати
+    тренеру зауваження, яке він щойно виправив цим-таки надсиланням.
+    Той самий висновок, що в trainer_cabinet.submit_proposal."""
+    from app.services import material_request_service as mrq
+
+    res = _draft(instance, trainer_user)
+    mrq.submit(res, trainer_user)
+    mrq.return_to_trainer(res, 'Забули серветки', admin_user)
+
+    mrq.submit(res, trainer_user)
+
+    assert res.status == S.PENDING_REVIEW
+    assert res.review_comment is None
+
+
+def test_return_requires_a_reason(app, instance, trainer_user, admin_user):
+    from app.services import material_request_service as mrq
+
+    res = _draft(instance, trainer_user)
+    mrq.submit(res, trainer_user)
+
+    with pytest.raises(mrq.RequestTransitionError):
+        mrq.return_to_trainer(res, '   ', admin_user)
+    assert res.status == S.PENDING_REVIEW
+
+
+def test_reject_closes_the_request_with_a_reason(app, instance, trainer_user,
+                                                 admin_user):
+    from app.services import material_request_service as mrq
+
+    res = _draft(instance, trainer_user)
+    mrq.submit(res, trainer_user)
+
+    mrq.reject(res, 'Захід не потребує матеріалів', admin_user)
+
+    assert res.status == S.REJECTED
+    assert res.review_comment == 'Захід не потребує матеріалів'
+    assert mrq.is_editable_by_trainer(res) is False
+
+
+def test_submit_refuses_anything_but_draft_or_returned(app, instance,
+                                                       trainer_user):
+    from app.services import material_request_service as mrq
+
+    res = _draft(instance, trainer_user)
+    res.status = S.RESERVED
+
+    with pytest.raises(mrq.RequestTransitionError):
+        mrq.submit(res, trainer_user)
+
+
+def test_submit_refuses_an_empty_request(app, instance, trainer_user):
+    """Порожня заявка -- це не заявка: відповідальний отримав би лист ні про що."""
+    from app.services import material_request_service as mrq
+
+    res = mrq.get_or_create_draft(instance, trainer_user)
+    mrq.save_items(res, [])
+
+    with pytest.raises(mrq.RequestTransitionError):
+        mrq.submit(res, trainer_user)
+
+
+def test_approve_delegates_to_submit_request_and_advances(app, instance,
+                                                          trainer_user, monkeypatch):
+    from app.services import material_request_service as mrq
+
+    res = _draft(instance, trainer_user)
+    mrq.submit(res, trainer_user)
+    sent = {}
+
+    class _Ok:
+        ok = True
+        data = {'reservation': {'items': [
+            {'sku': 'NEEDLE-30G', 'name': 'Голки 30G', 'quantity_requested': 12},
+            {'sku': 'TUBE-VAC', 'name': 'Пробірки', 'quantity_requested': 24},
+        ]}}
+
+    def _fake_submit_request(inst, items):
+        sent['items'] = items
+        res.status = S.SUBMITTED
+        return True, _Ok(), res
+
+    monkeypatch.setattr(mrq.mrs, 'submit_request', _fake_submit_request)
+
+    ok, _result = mrq.approve(instance, res)
+
+    assert ok is True
+    assert res.status == S.SUBMITTED
+    assert sorted(sent['items'], key=lambda i: i['sku']) == [
+        {'sku': 'NEEDLE-30G', 'quantity': 12},
+        {'sku': 'TUBE-VAC', 'quantity': 24},
+    ]
+
+
+def test_approve_keeps_pending_review_when_partner_fails(app, instance,
+                                                         trainer_user, monkeypatch):
+    """Найважливіший тест задачі: стан «начебто погодили, а не пішло» має
+    бути неможливим."""
+    from app.services import material_request_service as mrq
+
+    res = _draft(instance, trainer_user)
+    mrq.submit(res, trainer_user)
+
+    class _Fail:
+        ok = False
+        data = {'status': 'stock_shortfall'}
+
+    monkeypatch.setattr(mrq.mrs, 'submit_request',
+                        lambda inst, items: (False, _Fail(), None))
+
+    ok, _result = mrq.approve(instance, res)
+
+    assert ok is False
+    assert res.status == S.PENDING_REVIEW
+
+
+def test_second_approval_loses_the_race_instead_of_double_sending(app, instance,
+                                                                  trainer_user,
+                                                                  monkeypatch):
+    """Двоє відповідальних тиснуть «Погодити». Другий мусить отримати відмову,
+    а не створити другий документ."""
+    from app.services import material_request_service as mrq
+
+    res = _draft(instance, trainer_user)
+    mrq.submit(res, trainer_user)
+    calls = []
+
+    class _Ok:
+        ok = True
+        data = {'reservation': {'items': []}}
+
+    def _fake_submit_request(inst, items):
+        calls.append(items)
+        res.status = S.SUBMITTED
+        return True, _Ok(), res
+
+    monkeypatch.setattr(mrq.mrs, 'submit_request', _fake_submit_request)
+
+    mrq.approve(instance, res)
+    with pytest.raises(mrq.RequestTransitionError):
+        mrq.approve(instance, res)
+
+    assert len(calls) == 1
