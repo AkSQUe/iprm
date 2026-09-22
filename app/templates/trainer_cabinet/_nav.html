@@ -10,6 +10,10 @@
     </h3>
     <p class="account-card__text">{{ _('Контакти, реквізити ФОП, дані для договору та інформація про ваші курси') }}</p>
   </a>
+  <a href="{{ url_for('trainer_cabinet.certificates') }}" class="account-card account-card--link">
+    <h3 class="iprm-block-title">{{ _('Сертифікати') }}</h3>
+    <p class="account-card__text">{{ _('Документи за проведені заходи та ваші власні сертифікати') }}</p>
+  </a>
   <a href="{{ url_for('trainer_cabinet.materials') }}" class="account-card account-card--link">
     <h3 class="iprm-block-title">{{ _('Матеріали до заходу') }}</h3>
     <p class="account-card__text">{{ _('Заявка на витратні матеріали: перелік, кількості, стан перевірки') }}</p>

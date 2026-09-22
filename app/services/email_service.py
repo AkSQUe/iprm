@@ -1979,6 +1979,24 @@ class EmailService:
         )
 
     @staticmethod
+    def send_lecturer_certificate_complaint(lecturer_cert, message):
+        """Куратору: тренер повідомляє про помилку у своєму сертифікаті."""
+        from app.models.site_settings import SiteSettings
+
+        base = (SiteSettings.get().website_url or '').rstrip('/')
+        tail = f'/admin/instances/{lecturer_cert.instance_id}/edit'
+        return EmailService.notify_admins_with_template(
+            event_type='certificate',
+            subject=f'Тренер повідомляє про помилку в сертифікаті {lecturer_cert.number}',
+            template_name='admin_lecturer_certificate_complaint',
+            context={
+                'certificate': lecturer_cert,
+                'message': message,
+                'admin_url': f'{base}{tail}' if base else tail,
+            },
+        )
+
+    @staticmethod
     def send_meta_leads_alert(reasons, stats=None):
         """Сповістити менеджерів про збій приймання лідів з Meta Lead Ads.
 

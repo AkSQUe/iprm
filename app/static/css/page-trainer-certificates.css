@@ -1,0 +1,61 @@
+/* Розділ сертифікатів кабінету тренера -- ЛИШЕ layout цієї сторінки.
+   Декор (колір, шрифт, межа, тінь) береться з дизайн-системи: картка --
+   .account-card, кнопки -- .apple-btn, поля -- .form-input, порожній
+   стан -- .iprm-empty-state. Жоден із цих класів тут не перевизначається.
+   Завантажується після account.css. У проєкті немає токенів --space-*,
+   тому відступи -- прямі px, як і в інших page-*.css. */
+
+.cabinet-certs-list {
+  display: grid;
+  gap: 12px;
+  list-style: none;
+  margin: 0 0 24px;
+  padding: 0;
+}
+
+.cabinet-certs-list__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.cabinet-certs-list__main {
+  min-width: 0;
+  flex: 1 1 260px;
+}
+
+.cabinet-certs-list__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.cabinet-certs-report {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.cabinet-certs-report .form-input {
+  width: 12rem;
+}
+
+@media (max-width: 640px) {
+  .cabinet-certs-list__item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .cabinet-certs-list__actions {
+    width: 100%;
+  }
+
+  .cabinet-certs-report .form-input {
+    width: 100%;
+  }
+}

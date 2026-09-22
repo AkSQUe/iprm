@@ -453,3 +453,79 @@ def materials_catalog(instance_id):
     query = (request.args.get('q') or '').strip()
     items, unavailable = mrq.catalog_for_trainer(search=query or None)
     return jsonify({'items': items[:50], 'unavailable': unavailable})
+
+
+@trainer_cabinet_bp.route('/certificates')
+@trainer_required
+def certificates():
+    """Сертифікати тренера: видані за заходи (читання) і власні регалії."""
+    from app.models.lecturer_certificate import LecturerCertificate
+
+    issued = (
+        LecturerCertificate.query
+        .filter_by(trainer_id=g.trainer.id)
+        .order_by(LecturerCertificate.issued_at.desc())
+        .all()
+    )
+    return render_template(
+        'trainer_cabinet/certificates.html', trainer=g.trainer, issued=issued,
+    )
+
+
+@trainer_cabinet_bp.route('/certificates/<int:cert_id>/download')
+@trainer_required
+def certificate_download(cert_id):
+    """Завантажити власний сертифікат лектора (перевірка володіння).
+
+    404, а не 403: чужий номер не має підтверджувати сам факт існування
+    документа -- та сама межа, що й у trainer_required.
+    """
+    from app.models.lecturer_certificate import LecturerCertificate
+    from app.services.certificate_service import render_lecturer_pdf
+
+    cert = LecturerCertificate.query.filter_by(
+        id=cert_id, trainer_id=g.trainer.id).first()
+    if cert is None:
+        abort(404)
+    try:
+        pdf = render_lecturer_pdf(cert)
+    except Exception:
+        logger.exception('Failed to render lecturer certificate %s', cert.number)
+        flash(_('Не вдалося підготувати PDF. Спробуйте пізніше або '
+                'зверніться до підтримки.'), 'error')
+        return redirect(url_for('trainer_cabinet.certificates'))
+    response = send_file(
+        io.BytesIO(pdf), mimetype='application/pdf', as_attachment=True,
+        download_name=f'lecturer-{cert.number}.pdf',
+    )
+    response.headers['Cache-Control'] = 'no-store, private'
+    return response
+
+
+@trainer_cabinet_bp.route('/certificates/<int:cert_id>/report', methods=['POST'])
+@trainer_required
+def certificate_report(cert_id):
+    """Повідомити куратора про помилку у виданому сертифікаті.
+
+    Сам документ тренер виправити не може -- це незмінний знімок із номером.
+    Перевидати його вміє лише адмінка, тож єдине, що тут можна зробити, --
+    донести проблему до людини, яка має таке право.
+    """
+    from app.models.lecturer_certificate import LecturerCertificate
+    from app.services.email_service import EmailService
+
+    cert = LecturerCertificate.query.filter_by(
+        id=cert_id, trainer_id=g.trainer.id).first()
+    if cert is None:
+        abort(404)
+    message = (request.form.get('message') or '').strip()[:2000]
+    try:
+        EmailService.send_lecturer_certificate_complaint(cert, message)
+    except Exception:
+        logger.exception('Failed to report lecturer certificate %s', cert.number)
+        flash(_('Не вдалося надіслати повідомлення. Спробуйте пізніше.'), 'error')
+        return redirect(url_for('trainer_cabinet.certificates'))
+    audit_logger.info('Trainer %s reported lecturer cert %s',
+                      g.trainer.id, cert.number)
+    flash(_('Повідомлення надіслано куратору'), 'success')
+    return redirect(url_for('trainer_cabinet.certificates'))

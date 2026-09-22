@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Сертифікати | Кабінет тренера | ІПРМ') }}{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-trainer-certificates.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="apple-page">
+  {# Заголовок -- той самий hero-блок, що на index.html кабінету тренера. #}
+  <div class="iprm-hero-wrap">
+    <section class="iprm-hero" aria-labelledby="trainer-certs-title">
+      <div class="iprm-hero__content">
+        <span class="iprm-eyebrow">{{ _('Кабінет тренера') }}</span>
+        <h1 id="trainer-certs-title" class="iprm-hero__title">{{ _('Сертифікати') }}</h1>
+      </div>
+    </section>
+  </div>
+
+  <section class="iprm-section" aria-labelledby="issued-title">
+    <div class="iprm-section__inner">
+      <p><a href="{{ url_for('trainer_cabinet.index') }}" class="account-course__link">{{ _('Кабінет тренера') }}</a></p>
+      <h2 id="issued-title" class="iprm-section__title">{{ _('За проведені заходи') }}</h2>
+      <p class="account-card__text">
+        {{ _('Ці документи видає ІПРМ після завершення заходу і надсилає вам листом. Змінити їх не можна: номер і дані зафіксовані на момент видачі.') }}
+      </p>
+
+      {% if issued %}
+      <ul class="cabinet-certs-list">
+        {% for cert in issued %}
+        <li class="account-card cabinet-certs-list__item">
+          <div class="cabinet-certs-list__main">
+            <h3 class="iprm-block-title">{{ cert.event_title }}</h3>
+            <p class="account-card__text">
+              № {{ cert.number }}
+              {%- if cert.event_date %} &middot; {{ cert.event_date.strftime('%d.%m.%Y') }}{% endif %}
+              {%- if cert.cpd_points %} &middot; {{ cert.cpd_points | points }} {{ cert.cpd_points | plural('bpr_points') }}{% endif %}
+            </p>
+          </div>
+          <div class="cabinet-certs-list__actions">
+            <a class="apple-btn apple-btn--secondary apple-btn--sm"
+               href="{{ url_for('trainer_cabinet.certificate_download', cert_id=cert.id) }}">
+              {{ _('Завантажити PDF') }}
+            </a>
+            <form method="post" class="cabinet-certs-report"
+                  action="{{ url_for('trainer_cabinet.certificate_report', cert_id=cert.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="text" name="message" class="form-input form-input--sm"
+                     placeholder="{{ _('Що не так?') }}" maxlength="2000">
+              <button type="submit" class="apple-btn apple-btn--outline apple-btn--sm">{{ _('Повідомити про помилку') }}</button>
+            </form>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <div class="iprm-empty-state"><p>{{ _('Сертифікатів поки немає. Вони зʼявляться тут після завершення заходу.') }}</p></div>
+      {% endif %}
+    </div>
+  </section>
+</div>
+{% endblock %}
