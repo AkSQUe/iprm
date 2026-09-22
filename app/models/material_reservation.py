@@ -24,6 +24,10 @@ class MaterialReservationStatus:
     must never do.
     """
     DRAFT = 'draft'          # built locally, not yet sent
+    # Заявка тренера з кабінету ІПРМ. Локальні стани: документа на MM Medic
+    # ще НЕМАЄ, і поки заявка в них, жоден штовх статусу її не стосується.
+    PENDING_REVIEW = 'pending_review'  # тренер подав, чекає перевірки
+    RETURNED = 'returned'              # повернуто тренеру на доопрацювання
     SUBMITTED = 'submitted'  # sent to MM Medic, awaiting approval (no hold yet)
     RESERVED = 'reserved'    # approved by MM Medic (holds active)
     ISSUED = 'issued'        # handed over to the trainer, stock written off
@@ -32,8 +36,14 @@ class MaterialReservationStatus:
     CANCELLED = 'cancelled'  # released before the event
     EXPIRED = 'expired'      # holds lapsed on MM Medic (event passed, no actuals)
 
-    ALL = (DRAFT, SUBMITTED, RESERVED, ISSUED, CONSUMED,
-           REJECTED, CANCELLED, EXPIRED)
+    ALL = (DRAFT, PENDING_REVIEW, RETURNED, SUBMITTED, RESERVED, ISSUED,
+           CONSUMED, REJECTED, CANCELLED, EXPIRED)
+
+    # Стани, що живуть ЛИШЕ тут. Жодного документа на MM Medic їм не
+    # відповідає, тож вхідний штовх статусу не має права їх перезаписати
+    # (app/api/mm_status.py). Кортеж, а не множина: порядок = порядок циклу,
+    # і він читається в тестах.
+    LOCAL_STATES = (DRAFT, PENDING_REVIEW, RETURNED)
 
     # Модифікатор .badge--* дизайн-системи на кожен стан. Власного бейджа в
     # матеріалів більше немає: `.materials-status-badge` дублював `.badge`
@@ -49,6 +59,8 @@ class MaterialReservationStatus:
     #   draft/cancelled  -- сірий: нічого не сталось і не станеться.
     BADGES = {
         DRAFT: 'draft',
+        PENDING_REVIEW: 'warning',
+        RETURNED: 'cancelled',
         SUBMITTED: 'warning',
         RESERVED: 'published',
         ISSUED: 'completed',
@@ -59,6 +71,8 @@ class MaterialReservationStatus:
     }
     LABELS = {
         DRAFT: 'Чернетка',
+        PENDING_REVIEW: 'На перевірці',
+        RETURNED: 'Повернуто тренеру',
         SUBMITTED: 'На погодженні',
         RESERVED: 'Зарезервовано',
         ISSUED: 'Відвантажено',
@@ -74,11 +88,15 @@ class MaterialReservationOrigin:
     same document on MM Medic, keyed by the same external_ref."""
     IPRM = 'iprm'          # created here, in the IPRM admin
     TRAINER = 'trainer'    # created by a trainer in the MM Medic admin
+    # Заявка з кабінету тренера на цьому сайті. Окремо від TRAINER: це два
+    # різні канали, і в огляді матеріалів вони не мають виглядати однаково.
+    TRAINER_CABINET = 'trainer_cabinet'
 
-    ALL = (IPRM, TRAINER)
+    ALL = (IPRM, TRAINER, TRAINER_CABINET)
     LABELS = {
         IPRM: 'Адміністратор ІПРМ',
         TRAINER: 'Тренер (MM Medic)',
+        TRAINER_CABINET: 'Тренер (кабінет ІПРМ)',
     }
 
 
@@ -129,6 +147,17 @@ class MaterialReservation(TimestampMixin, db.Model):
     # treated as a duplicate submission.
     trainer_confirmed_at = db.Column(db.DateTime(timezone=True), nullable=True)
     trainer_comment = db.Column(db.Text, nullable=True)
+    # Заявка з кабінету тренера (спека від 2026-09-22). `created_by_id` нижче
+    # тримає того, ХТО ПОДАВ (тренера-користувача), ці чотири -- того, хто
+    # ухвалив рішення, і саме рішення.
+    trainer_submitted_at = db.Column(db.DateTime(timezone=True), nullable=True)
+    reviewed_at = db.Column(db.DateTime(timezone=True), nullable=True)
+    reviewed_by_id = db.Column(
+        db.BigInteger,
+        db.ForeignKey('users.id', ondelete='SET NULL'),
+        nullable=True,
+    )
+    review_comment = db.Column(db.Text, nullable=True)
     # Who filed the request in the IPRM admin; kept alongside RBAC roles as
     # the accountability trail (see plan 5.3).
     created_by_id = db.Column(
@@ -141,6 +170,7 @@ class MaterialReservation(TimestampMixin, db.Model):
         'material_reservations', lazy='selectin', cascade='all, delete-orphan',
     ))
     created_by = db.relationship('User', foreign_keys=[created_by_id])
+    reviewed_by = db.relationship('User', foreign_keys=[reviewed_by_id])
     items = db.relationship(
         'MaterialReservationItem',
         backref='reservation',
@@ -179,7 +209,14 @@ class MaterialReservation(TimestampMixin, db.Model):
         самого статусу вже досить. MM Medic про всяк випадок відмовляє й на
         своєму боці (``actuals_unsupported_for_document``) -- тут гейт для
         того, щоб людина не бачила кнопки, яка все одно не спрацює.
+
+        Локальний стан -- документа на MM Medic ще не існує, хай навіть
+        quantity_requested уже заповнений заявкою тренера. Без цієї гілки
+        властивість стверджувала б наявність документа до того, як його
+        створено, і адмінка ховала б дії, які насправді доступні.
         """
+        if self.status in MaterialReservationStatus.LOCAL_STATES:
+            return False
         if self.status in (MaterialReservationStatus.SUBMITTED,
                            MaterialReservationStatus.ISSUED):
             return True

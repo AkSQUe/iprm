@@ -432,3 +432,56 @@ def test_apply_template_valid_kit_prefills_selected_items(client, monkeypatch):
     match = re.search(r'name="sku" value="SKU-OWN">.*?value="(\d+)"', html, re.S)
     assert match is not None, 'рядок SKU-OWN не знайдено на сторінці матеріалів'
     assert match.group(1) == '6'  # 3 (у комплекті) * 2 (множник)
+
+
+def test_local_states_are_declared_and_badged():
+    """Нові локальні стани мають бути в ALL, і кожен -- з бейджем і міткою.
+
+    BADGES/LABELS -- словники з .get(): пропущений ключ не падає, а тихо
+    малює сирий рядок статусу в інтерфейсі. Тому звіряємо повний обхід ALL,
+    а не наявність двох конкретних ключів.
+    """
+    from app.models.material_reservation import MaterialReservationStatus as S
+
+    assert S.PENDING_REVIEW == 'pending_review'
+    assert S.RETURNED == 'returned'
+    assert S.PENDING_REVIEW in S.ALL
+    assert S.RETURNED in S.ALL
+    assert S.LOCAL_STATES == (S.DRAFT, S.PENDING_REVIEW, S.RETURNED)
+    for status in S.ALL:
+        assert status in S.BADGES, f'немає бейджа для {status}'
+        assert status in S.LABELS, f'немає мітки для {status}'
+
+
+def test_trainer_cabinet_origin_is_distinct_from_mm_medic_one():
+    """Два різні канали тренера не мають виглядати однаково в огляді."""
+    from app.models.material_reservation import MaterialReservationOrigin as O
+
+    assert O.TRAINER_CABINET == 'trainer_cabinet'
+    assert O.TRAINER_CABINET in O.ALL
+    assert O.LABELS[O.TRAINER_CABINET] != O.LABELS[O.TRAINER]
+
+
+def test_material_request_trigger_and_event_type_registered():
+    """Тригер листа й тип події мусять бути в моделях -- інакше CHECK у базі
+    відкине INSERT, і лист загубиться тихо."""
+    from app.models.email_log import EmailLog
+    from app.models.notification_rule import NotificationRule
+
+    assert 'material_request' in dict(EmailLog.TRIGGERS)
+    assert 'material_request' in dict(NotificationRule.EVENT_TYPES)
+
+
+def test_pending_review_is_not_treated_as_mm_document():
+    """`is_mm_document` вирішує, які кнопки показати. Заявка тренера заповнює
+    quantity_requested ЩЕ ДО відправлення на MM Medic, тож без перевірки
+    статусу властивість збрехала б, що документ уже існує."""
+    from app.models.material_reservation import (
+        MaterialReservation, MaterialReservationItem, MaterialReservationStatus)
+
+    res = MaterialReservation(status=MaterialReservationStatus.PENDING_REVIEW)
+    res.items.append(MaterialReservationItem(sku='A', quantity_requested=3))
+    assert res.is_mm_document is False
+
+    res.status = MaterialReservationStatus.SUBMITTED
+    assert res.is_mm_document is True

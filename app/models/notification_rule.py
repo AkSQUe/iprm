@@ -23,6 +23,9 @@ EVENT_TYPES = [
     ('course_request', 'Запит на курс'),
     ('status_change', 'Скасування реєстрації'),
     ('materials', 'Матеріали заходу (нагадування)'),
+    # Тренер подав заявку на витратні матеріали. Одержувачі -- відповідальні,
+    # що перевіряють заявку перед відправленням на склад.
+    ('material_request', 'Заявка тренера на матеріали'),
     # Не «новий лід»: листа на кожну заявку ми свідомо не шлемо
     # (рішення Q9). Подія одна на обидва випадки моніторингу --
     # тиша при активних формах і накопичення помилок у черзі, -- бо
@@ -41,6 +44,11 @@ DEFAULT_TRIGGER_STATUSES = ['cancelled']
 
 class NotificationRule(TimestampMixin, db.Model):
     __tablename__ = 'notification_rules'
+
+    # Аліас на модульний EVENT_TYPES: за аналогією з EmailLog.TRIGGERS код,
+    # що звіряє реєстрацію типу події (див. tests/test_mm_medic_materials.py),
+    # читає його як атрибут класу, а не як окрему модульну змінну.
+    EVENT_TYPES = EVENT_TYPES
 
     # event_type сам є PK -- одне правило на тип події.
     event_type = db.Column(db.String(40), primary_key=True)

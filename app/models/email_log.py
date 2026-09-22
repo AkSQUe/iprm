@@ -61,7 +61,7 @@ class EmailLog(TimestampMixin, db.Model):
             "'email_confirm', 'course_request', 'certificate', 'blog_comment', "
             "'password_reset', 'backup_failure', 'backup_report', 'materials', "
             "'referral', 'meta_lead', 'transfer', 'quiz', 'trainer_proposal', "
-            "'trainer_requisites', 'test')",
+            "'trainer_requisites', 'material_request', 'test')",
             name='ck_email_logs_trigger',
         ),
         db.Index('ix_email_logs_created_at', 'created_at'),
@@ -109,6 +109,12 @@ class EmailLog(TimestampMixin, db.Model):
         # Лист куратору: тренер змінив реквізити для гонорару. Окремий тригер,
         # щоб не зливався в dedup з пропозиціями на ту саму адресу.
         ('trainer_requisites', 'Зміна реквізитів тренера'),
+        # Заявка тренера на витратні матеріали: подання, повернення,
+        # погодження, відхилення. Окремо від 'materials' (це нагадування
+        # внести фактичні): дедуп ключується парою адреса+тригер за 60 с, і
+        # на спільному тригері нагадування з'їдало б заявку, що прийшла в ту
+        # саму хвилину на ту саму адресу.
+        ('material_request', 'Заявка на матеріали'),
         ('test', 'Тест'),
     ]
 
