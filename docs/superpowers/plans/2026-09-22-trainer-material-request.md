@@ -28,7 +28,12 @@
   `python 1-instruments/design-system/layer_check.py`.
 - `id` alembic-ревізії — НЕ ДОВШЕ 32 символів (колонка `varchar(32)`).
 - Кількість alembic-голів питати ЛИШЕ у `flask db heads`, не regex-ом.
-  Поточна голова на момент написання плану: `email_trainer_reqs_20260919`.
+  Поточна голова, перевірена САМЕ `flask db heads`:
+  `lect_cert_emailed_20260922`. (Перший запис у плані був хибний --
+  `email_trainer_reqs_20260919`, отриманий regex-скриптом по файлах; regex
+  не бачить частини ревізій, і це вже відома пастка проєкту. Перед
+  написанням міграції звірити ще раз: у дереві паралельно працює ІНША
+  сесія, і голова може зрушити знову.)
 - Тести, що створюють користувачів, ЗОБОВ'ЯЗАНІ прибирати за собою в
   teardown — інакше валять `test_api_v1_clients`.
 - Зміна користувача всередині тесту — лише через `switch_user`; присвоєння
@@ -283,15 +288,17 @@ Expected: PASS, усі, включно з наявними десятьма.
 Створити `migrations/versions/mat_request_20260922.py`. Id — 19 символів,
 вкладається в `varchar(32)`.
 
-Перед написанням звірити голову: `venv/Scripts/flask db heads` має дати
-`email_trainer_reqs_20260919`. Якщо дає інше — підставити фактичне значення
-в `down_revision` і не покладатися на записане в плані.
+Перед написанням ОБОВ'ЯЗКОВО звірити голову: `venv/Scripts/flask db heads`.
+На момент старту вона `lect_cert_emailed_20260922`. Якщо дає інше —
+підставити фактичне значення в `down_revision` і НЕ покладатися на записане
+тут: у цьому ж дереві паралельно працює інша сесія, і вона додає міграції.
+Дві голови кладуть прод-деплой.
 
 ```python
 """Заявка тренера на матеріали: колонки рішення + тригер і тип події
 
 Revision ID: mat_request_20260922
-Revises: email_trainer_reqs_20260919
+Revises: lect_cert_emailed_20260922
 Create Date: 2026-09-22 00:00:00.000000
 
 Чотири колонки в material_reservations під рішення відповідального і дві
@@ -308,7 +315,7 @@ import sqlalchemy as sa
 
 
 revision = 'mat_request_20260922'
-down_revision = 'email_trainer_reqs_20260919'
+down_revision = 'lect_cert_emailed_20260922'
 branch_labels = None
 depends_on = None
 
