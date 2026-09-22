@@ -5,10 +5,16 @@
   * підписи/назви -- екрануємо (bleach, без HTML);
   * URL зображень сертифікатів -- лише локальні (/static/images/trainers/...).
 """
+import logging
 import re
 from urllib.parse import urlparse
 
 import bleach
+
+from app.extensions import db
+from app.models.media_file import MediaFile
+
+logger = logging.getLogger(__name__)
 
 _LOCAL_IMG_RE = re.compile(r'^/static/images/trainers/(?!.*\.\.)[\w./-]+\.(?:webp|jpe?g|png)$')
 # Зображення з медіа-реєстру (поза static, через /media/...). Лише WebP.
@@ -175,3 +181,67 @@ def collect_media_ids(trainer):
         if mid:
             out.setdefault(mid, 'patent')
     return out
+
+
+def _remap_refs(items, mapping, keys):
+    """Замінити URL у dict-елементах JSON-списку за mapping {old: new}."""
+    if not isinstance(items, list) or not mapping:
+        return items
+    out = []
+    for it in items:
+        if isinstance(it, dict):
+            it = dict(it)
+            for k in keys:
+                if it.get(k) in mapping:
+                    it[k] = mapping[it[k]]
+        out.append(it)
+    return out
+
+
+def attach_trainer_media(trainer):
+    """Прив'язати MediaFile (фото/сертифікати/патенти) до тренера після збереження.
+
+    Виставляє entity_type/entity_id/usage_type, перейменовує файли у читабельну
+    схему ({slug}-photo, {slug}-certificate-N, ...) і оновлює URL у JSON-полях.
+    Відв'язані не видаляємо автоматично. Ідемпотентно.
+
+    Спільна для адмінки й кабінету тренера: обидва шляхи зберігають
+    Trainer.certificates через один і той самий sanitize_certificates, і
+    прив'язка медіа мусить бути так само одна -- інакше адмінка перейменовує
+    файли й знімає їх з-під `media-prune-orphans`, а кабінет тренера ні, і
+    сертифікати, завантажені тренером самостійно, лишаються без
+    entity_type/entity_id назавжди -- CLI-очищення осиротілих файлів рано чи
+    пізно фізично прибере їх із диска, хоча вони й далі показані на сайті.
+    """
+    from app.services import media_service
+
+    assignments = collect_media_ids(trainer)
+    if not assignments:
+        return
+    rows = {m.id: m for m in MediaFile.query.filter(MediaFile.id.in_(list(assignments))).all()}
+    # 1-based індекси в межах кожного usage (для імен -certificate-N / -patent-N).
+    cert_idx = {c['media_id']: i for i, c in enumerate(
+        [c for c in (trainer.certificates or []) if isinstance(c, dict) and c.get('media_id')], 1)}
+    pat_idx = {p['media_id']: i for i, p in enumerate(
+        [p for p in (trainer.patents or []) if isinstance(p, dict) and p.get('media_id')], 1)}
+
+    mapping = {}
+    for mid, usage in assignments.items():
+        m = rows.get(mid)
+        if not m:
+            continue
+        m.entity_type = 'trainer'
+        m.entity_id = trainer.id
+        m.usage_type = usage
+        idx = cert_idx.get(mid) if usage == 'certificate' else (
+            pat_idx.get(mid) if usage == 'patent' else None)
+        mapping.update(media_service.rename_for_entity(m, trainer.slug, idx))
+
+    if mapping:
+        trainer.certificates = _remap_refs(trainer.certificates, mapping, ('url', 'thumb', 'card'))
+        trainer.patents = _remap_refs(trainer.patents, mapping, ('image', 'thumb', 'card'))
+    try:
+        db.session.commit()
+    except Exception:
+        logger.exception('Failed to attach media to trainer %s', trainer.id)
+        db.session.rollback()

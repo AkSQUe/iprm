@@ -1,17 +1,36 @@
 """Розділ сертифікатів у кабінеті тренера."""
 import io
 import json
+import tempfile
 from itertools import count
 
 import pytest
+from PIL import Image
 
 from app.extensions import db
+from app.models.media_file import MediaFile
 from app.models.site_settings import SiteSettings
 from app.services import lecturer_certificates as lc_svc
 from app.services.trainer_links import set_trainers
 from tests.test_trainer_cabinet._factories import (
     login, make_course, make_instance, make_trainer, make_user,
 )
+
+
+@pytest.fixture
+def media_root(app):
+    """Тимчасова тека для файлів медіа-реєстру -- як у test_trainer_media.py."""
+    prev = app.config.get('MEDIA_FOLDER')
+    app.config['MEDIA_FOLDER'] = tempfile.mkdtemp()
+    yield app.config['MEDIA_FOLDER']
+    app.config['MEDIA_FOLDER'] = prev
+
+
+def _png():
+    buf = io.BytesIO()
+    Image.new('RGB', (700, 500), (60, 120, 90)).save(buf, 'PNG')
+    buf.seek(0)
+    return buf
 
 # Власний лічильник номерів заходів БПР, як у test_lecturer_certificates.py:
 # issue_for_instance комітить сам, а деякі тести тут викликають фабрику
@@ -149,6 +168,48 @@ def test_upload_requires_trainer_card(client):
     resp = client.post('/trainer/certificates/upload', data={
         'file': (io.BytesIO(b'x'), 'a.png')})
     assert resp.status_code == 404
+
+
+def test_upload_returns_media_id(client, media_root):
+    """Happy path завантаження -- досі був перевірений лише 404 без картки."""
+    user = make_user()
+    make_trainer(user, name='Завантажувач Т.')
+    login(client, user)
+    resp = client.post('/trainer/certificates/upload',
+                       data={'file': (_png(), 'c.png')},
+                       content_type='multipart/form-data')
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data['url'].startswith('/media/')
+    assert data['media_id']
+
+
+def test_saving_certificate_attaches_media_to_trainer(client, media_root):
+    """Запобіжник проти втрати даних (рецензія задачі 10).
+
+    Без trainer_service.attach_trainer_media файл, завантажений тренером,
+    лишається без entity_type/entity_id і рано чи пізно фізично зникає під
+    CLI media-prune-orphans (`app/cli.py`: вибирає MediaFile.entity_type
+    IS NULL старші за --days і видаляє з диска), хоча сторінка тренера й
+    далі показує його як наявний.
+    """
+    user = make_user()
+    trainer = make_trainer(user, name='Привʼязаний Т.')
+    login(client, user)
+    uploaded = client.post('/trainer/certificates/upload',
+                           data={'file': (_png(), 'c.png')},
+                           content_type='multipart/form-data').get_json()
+    payload = json.dumps([{
+        'url': uploaded['url'], 'thumb': uploaded['thumb'],
+        'media_id': uploaded['media_id'], 'caption': 'Диплом',
+    }])
+    resp = client.post('/trainer/certificates', data={'certificates': payload},
+                       follow_redirects=True)
+    assert resp.status_code == 200
+    media = db.session.get(MediaFile, uploaded['media_id'])
+    assert media.entity_type == 'trainer'
+    assert media.entity_id == trainer.id
+    assert media.usage_type == 'certificate'
 
 
 def test_removing_item_clears_it_from_public_page(client):

@@ -498,6 +498,11 @@ def certificates_save():
         db.session.rollback()
         flash(_('Помилка при збереженні'), 'error')
         return redirect(url_for('trainer_cabinet.certificates'))
+    # Той самий крок, що й в адмінці ПІСЛЯ commit (routes_trainers.py):
+    # без нього щойно завантажені файли лишаються без entity_type/entity_id
+    # і рано чи пізно фізично зникають під CLI media-prune-orphans, хоча
+    # сторінка тренера й далі показує їх як наявні.
+    trainer_service.attach_trainer_media(g.trainer)
     audit_logger.info('Trainer %s updated own certificates (%d items)',
                       g.trainer.id, len(g.trainer.certificates))
     flash(_('Сертифікати збережено'), 'success')
