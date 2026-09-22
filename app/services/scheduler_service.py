@@ -11,6 +11,9 @@ Jobs:
   'pending' (a callback that never arrived leaves the order hanging forever).
 - lecturer_certificates_send: every 5 min, шле сертифікати лектора, що ще не
   пішли листом (emailed_at IS NULL).
+- lecturer_certificates_daily: daily at 06:00, добирає пропущені сертифікати
+  лектора (бали/тренера додали вже після завершення заходу) і шле адмінам
+  звіт про застряглі записи.
 
 Multi-worker захист: gunicorn запускає N воркерів, у кожного власний
 BackgroundScheduler. Без координації job виконається N разів -- це і є
@@ -270,6 +273,14 @@ def init_scheduler(app):
         name='Розсилка сертифікатів лектора',
     )
 
+    scheduler.add_job(
+        lecturer_certificates_maintenance,
+        trigger=CronTrigger(hour=6, minute=0),  # daily at 6:00 AM
+        id='lecturer_certificates_daily',
+        replace_existing=True,
+        name='Добір сертифікатів лектора і звіт',
+    )
+
     scheduler.start()
     _initialized = True
     logger.info('APScheduler started with SQLAlchemy jobstore')
@@ -488,6 +499,26 @@ def send_lecturer_certificates():
                 logger.info(
                     'Сертифікати лектора: надіслано %d, без адреси %d',
                     sent, skipped)
+
+
+def lecturer_certificates_maintenance():
+    """Daily job: добір пропущених сертифікатів лектора + звіт адмінам."""
+    app = scheduler._app
+    with app.app_context():
+        with _job_lock('lecturer_certificates_daily') as got:
+            if not got:
+                logger.debug('lecturer_certificates_daily: locked, skipping')
+                return
+            from app.extensions import db
+            from app.services import lecturer_certificates as lc_svc
+            try:
+                stats = lc_svc.daily_maintenance()
+            except Exception:
+                db.session.rollback()
+                logger.exception('lecturer_certificates_maintenance failed')
+                return
+            if any(stats.values()):
+                logger.info('Сертифікати лектора (добір): %s', stats)
 
 
 def email_queue_maintenance():

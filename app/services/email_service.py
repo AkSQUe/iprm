@@ -1960,6 +1960,25 @@ class EmailService:
         )
 
     @staticmethod
+    def notify_lecturer_certificate_report(stuck, blocked):
+        """Щоденний звіт адмінам: що застрягло в сертифікатах лектора.
+
+        `stuck` -- видані документи, які добу не можуть піти листом (немає
+        жодної адреси тренера або пошта стабільно падає). `blocked` -- завершені
+        заходи, де видачі не було через відсутні бали БПР.
+        """
+        from app.models.site_settings import SiteSettings
+
+        base = (SiteSettings.get().website_url or '').rstrip('/')
+        return EmailService.notify_admins_with_template(
+            event_type='certificate',
+            subject=(f'Сертифікати лектора: {len(stuck)} не надіслано, '
+                     f'{len(blocked)} заходів без балів'),
+            template_name='admin_lecturer_certificate_report',
+            context={'stuck': stuck, 'blocked': blocked, 'base_url': base},
+        )
+
+    @staticmethod
     def send_meta_leads_alert(reasons, stats=None):
         """Сповістити менеджерів про збій приймання лідів з Meta Lead Ads.
 

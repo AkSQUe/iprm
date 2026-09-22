@@ -319,3 +319,55 @@ def test_failure_on_one_record_does_not_stop_the_rest(app):
     assert certs[0].emailed_at is not None
     assert certs[1].emailed_at is None
     assert certs[2].emailed_at is not None
+
+
+# ---------------------------------------------------------------------------
+# issue_missing / daily_maintenance: страхувальна сітка на два реальні
+# сценарії, де тригер видачі (рівно один раз, на переході в completed) не
+# встигає видати документ.
+# ---------------------------------------------------------------------------
+def test_issue_missing_picks_up_instance_after_points_added(app):
+    inst, _ = _completed_instance(points=None, trainers=1)
+    with patch('app.services.email_service.EmailService'
+               '.notify_lecturer_certificate_failed'):
+        assert lc_svc.issue_for_instance(inst) == []
+    inst.course.bpr_lecturer_points = 4
+    db.session.commit()
+    assert lc_svc.issue_missing() == 1
+    assert LecturerCertificate.query.filter_by(instance_id=inst.id).count() == 1
+
+
+def test_issue_missing_picks_up_trainer_added_later(app):
+    inst, _ = _completed_instance(trainers=1)
+    lc_svc.issue_for_instance(inst)
+    extra = make_trainer(name='Пізній Т.')
+    set_trainers(inst.course, [t.id for t in inst.course.trainers] + [extra.id])
+    db.session.commit()
+    lc_svc.issue_missing()
+    assert LecturerCertificate.query.filter_by(
+        instance_id=inst.id, trainer_id=extra.id).count() == 1
+
+
+def test_blocked_report_covers_all_three_preconditions(app):
+    """Звіт мусить ловити не лише відсутні бали.
+
+    Передумов три, і захід без номера провайдера БПР так само не видасть
+    жодного сертифіката, як і захід без балів -- тільки мовчки.
+    """
+    from app.models.site_settings import SiteSettings
+
+    inst, _ = _completed_instance(trainers=1)
+    # Колонка NOT NULL (default '') -- порожній рядок, а не None, як і в
+    # test_missing_provider_number_issues_nothing_and_notifies_admins вище.
+    SiteSettings.get().bpr_provider_number = ''
+    db.session.commit()
+    reason = lc_svc.blocking_reason(inst)
+    assert reason is not None
+    assert 'провайдера' in reason
+
+
+def test_daily_maintenance_sends_no_report_when_clean(app):
+    with patch('app.services.email_service.EmailService'
+               '.notify_lecturer_certificate_report') as report:
+        lc_svc.daily_maintenance()
+    assert not report.called

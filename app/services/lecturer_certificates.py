@@ -16,6 +16,11 @@ from app.models.mixins import utcnow
 
 logger = logging.getLogger(__name__)
 
+# Через скільки годин виданий, але не надісланий сертифікат вважається
+# "застряглим" і потрапляє у щоденний звіт адміну (а не в звичайний тік
+# розсилки -- той намагається знову щоп'ять хвилин сам).
+STUCK_AFTER_HOURS = 24
+
 
 def issue_for_instance(instance, issued_by=None):
     """Видати сертифікати всім тренерам заходу. Повертає список записів.
@@ -151,3 +156,95 @@ def _notify_failed(instance, reason):
         logger.exception(
             'Failed to notify admins about lecturer cert failure: instance=%s',
             instance.id)
+
+
+def blocking_reason(instance):
+    """Чому видача на цей захід неможлива -- текстом, або None, якщо можлива.
+
+    Передумов три (бали БПР тренеру, номер провайдера БПР, номер заходу
+    БПР), і кожна вже несе точне пояснення у своєму ValueError. Питаємо саме
+    `certificate_service`, а не повторюємо перевірки тут: дві копії однієї
+    умови розходяться, і тоді звіт адміну каже одне, а видача падає з іншого.
+    """
+    from app.services import certificate_service as cs
+
+    try:
+        cs._bpr_number_inputs(instance)
+        cs._lecturer_points(instance)
+    except ValueError as exc:
+        return str(exc)
+    return None
+
+
+def issue_missing():
+    """Добрати сертифікати завершеним заходам. Повертає кількість виданих.
+
+    Покриває два реальні сценарії: бали БПР внесли вже після завершення
+    заходу; тренера додали до складу після завершення. Обидва лишали б
+    тренера без документа назавжди, бо тригер спрацьовує рівно один раз.
+    """
+    from app.models.course_instance import CourseInstance
+    from app.models.lecturer_certificate import LecturerCertificate
+
+    instances = CourseInstance.query.filter_by(status='completed').all()
+    if not instances:
+        return 0
+
+    # Один запит на всі завершені заходи заздалегідь, а не по одному на
+    # ітерацію циклу: джоба щоденна й ходить по всіх завершених заходах,
+    # яких з часом стає багато, а сам запит -- одна пара колонок.
+    rows = (
+        db.session.query(LecturerCertificate.instance_id,
+                          LecturerCertificate.trainer_id)
+        .filter(LecturerCertificate.instance_id.in_(
+            [inst.id for inst in instances]))
+        .all()
+    )
+    issued_by_instance = {}
+    for instance_id, trainer_id in rows:
+        issued_by_instance.setdefault(instance_id, set()).add(trainer_id)
+
+    issued = 0
+    for instance in instances:
+        trainers = instance.effective_trainers
+        if not trainers:
+            continue
+        have = issued_by_instance.get(instance.id, set())
+        if all(t.id in have for t in trainers):
+            continue
+        issued += len(issue_for_instance(instance))
+    return issued
+
+
+def daily_maintenance():
+    """Добір пропущених + звіт адмінам про те, що застрягло.
+
+    Звіт іде ЛИШЕ коли є про що казати: щоденний лист «усе гаразд» перестають
+    читати, і разом із ним перестають помічати справжні.
+    """
+    from datetime import timedelta
+
+    from app.models.course_instance import CourseInstance
+    from app.models.lecturer_certificate import LecturerCertificate
+    from app.services.email_service import EmailService
+
+    issued = issue_missing()
+
+    cutoff = utcnow() - timedelta(hours=STUCK_AFTER_HOURS)
+    stuck = (
+        LecturerCertificate.query
+        .filter(LecturerCertificate.emailed_at.is_(None),
+                LecturerCertificate.issued_at < cutoff)
+        .all()
+    )
+    blocked = [
+        inst for inst in CourseInstance.query.filter_by(status='completed').all()
+        if inst.effective_trainers and blocking_reason(inst) is not None
+    ]
+    if stuck or blocked:
+        try:
+            EmailService.notify_lecturer_certificate_report(stuck, blocked)
+        except Exception:
+            db.session.rollback()
+            logger.exception('Failed to send lecturer certificate report')
+    return {'issued': issued, 'stuck': len(stuck), 'blocked': len(blocked)}

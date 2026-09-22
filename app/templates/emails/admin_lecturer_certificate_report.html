@@ -1,0 +1,43 @@
+{% extends "emails/base.html" %}
+{% from "emails/_macros.html" import section_title, spacer %}
+
+{#- Щоденний звіт. Шлеться лише коли є що показати: порожній лист «усе
+    гаразд» перестають читати, а разом із ним і справжні. -#}
+
+{% block title %}Сертифікати лектора: потрібна увага{% endblock %}
+
+{% block preview_text %}Документи, які не пішли тренерам{% endblock %}
+
+{% block content %}
+    <h1 class="mobile-h1" style="margin: 0 0 24px 0; font-size: 26px; font-weight: 700; color: #17131D; line-height: 1.25;">
+        Сертифікати лектора: потрібна увага
+    </h1>
+
+    {% if stuck %}
+    {{ section_title('Видано, але не надіслано') }}
+    <p class="mobile-text" style="margin: 0 0 12px 0; font-size: 15px; color: #625A6D; line-height: 1.5;">
+        У цих тренерів немає жодної адреси в анкеті, акаунті чи довіднику —
+        або пошта на неї стабільно не доходить.
+    </p>
+    <ul style="margin: 0 0 24px 0; padding-left: 20px; font-size: 15px; color: #17131D; line-height: 1.6;">
+        {% for cert in stuck %}
+        <li>{{ cert.number }} — {{ cert.recipient_name }} ({{ cert.event_title }})</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if blocked %}
+    {{ section_title('Заходи без балів БПР тренеру') }}
+    <p class="mobile-text" style="margin: 0 0 12px 0; font-size: 15px; color: #625A6D; line-height: 1.5;">
+        Захід завершено, але видати сертифікати неможливо. Щойно бали внесуть,
+        система видасть їх сама.
+    </p>
+    <ul style="margin: 0 0 24px 0; padding-left: 20px; font-size: 15px; color: #17131D; line-height: 1.6;">
+        {% for inst in blocked %}
+        <li><a href="{{ base_url }}/admin/instances/{{ inst.id }}/edit" style="color: #6B3FA0;">{{ inst.effective_title_for('uk') }}</a></li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    {{ spacer(16) }}
+{% endblock %}
