@@ -47,6 +47,28 @@ def test_birth_date_hidden_without_finance_permission(app):
     assert 'birth_date' not in {c.key for c in rs.available_columns(plain)}
 
 
+def test_normalize_keys_drops_forbidden_column_even_if_requested(app):
+    """Право перевіряється і на шляху нормалізації, не лише при побудові діалогу.
+
+    Саме сюди приходять ключі з форми користувача, тож обхід тут був би
+    видачею персональних даних тому, кому їх не показує навіть анкета.
+    """
+    plain = make_user_with_role('content_editor', email='tc-res-bypass@test.com')
+    db.session.commit()
+    assert rs.normalize_keys(['birth_date', 'full_name'], plain) == ['full_name']
+
+
+def test_normalize_keys_keeps_allowed_column_for_finance(app):
+    """Дзеркало попереднього тесту: право є -- колонка не зникає.
+
+    Без цієї пари попередній тест міг би проходити з хибної причини --
+    наприклад, якби 'birth_date' відкидався як нібито невідомий ключ.
+    """
+    admin = make_super_admin(email='tc-res-finance@test.com')
+    db.session.commit()
+    assert 'birth_date' in rs.normalize_keys(['birth_date', 'full_name'], admin)
+
+
 def test_trainer_without_profile_still_yields_row(app):
     trainer = make_trainer(name='Безанкетний Т.')
     db.session.commit()
