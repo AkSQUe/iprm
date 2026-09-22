@@ -933,6 +933,22 @@ def test_issue_missing_picks_up_trainer_added_later(app):
         instance_id=inst.id, trainer_id=extra.id).count() == 1
 
 
+def test_blocked_report_covers_all_three_preconditions(app):
+    """Звіт мусить ловити не лише відсутні бали.
+
+    Передумов три, і захід без номера провайдера БПР так само не видасть
+    жодного сертифіката, як і захід без балів -- тільки мовчки.
+    """
+    from app.models.site_settings import SiteSettings
+
+    inst, _ = _completed_instance(trainers=1)
+    SiteSettings.get().bpr_provider_number = None
+    db.session.commit()
+    reason = lc_svc.blocking_reason(inst)
+    assert reason is not None
+    assert 'провайдера' in reason
+
+
 def test_daily_maintenance_sends_no_report_when_clean(app):
     with patch('app.services.email_service.EmailService'
                '.notify_lecturer_certificate_report') as report:
@@ -951,6 +967,24 @@ Expected: FAIL — `AttributeError`.
 
 ```python
 STUCK_AFTER_HOURS = 24
+
+
+def blocking_reason(instance):
+    """Чому видача на цей захід неможлива -- текстом, або None, якщо можлива.
+
+    Передумов три (бали БПР тренеру, номер провайдера БПР, номер заходу БПР),
+    і кожна вже несе точне пояснення у своєму ValueError. Питаємо саме
+    `certificate_service`, а не повторюємо перевірки тут: дві копії однієї
+    умови розходяться, і тоді звіт адміну каже одне, а видача падає з іншого.
+    """
+    from app.services import certificate_service as cs
+
+    try:
+        cs._bpr_number_inputs(instance)
+        cs._lecturer_points(instance)
+    except ValueError as exc:
+        return str(exc)
+    return None
 
 
 def issue_missing():
@@ -1006,7 +1040,7 @@ def daily_maintenance():
     )
     blocked = [
         inst for inst in CourseInstance.query.filter_by(status='completed').all()
-        if inst.effective_trainers and inst.effective_lecturer_points is None
+        if inst.effective_trainers and blocking_reason(inst) is not None
     ]
     if stuck or blocked:
         try:
