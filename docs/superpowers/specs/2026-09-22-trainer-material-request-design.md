@@ -121,12 +121,15 @@ pending_review -> submitted -> reserved -> issued -> consumed
 
 ### CHECK-обмеження в тій самій міграції
 
-Чотири перезаливки, усі обов'язкові:
+Перевірено в `migrations/versions/`: на `material_reservations.status` і
+`.origin` CHECK у базі НЕМАЄ — `mm_material_resv_20260706` створює лише
+індекс по статусу, а допустимі значення живуть тільки в Python. Тож нові
+статуси й походження міграції не потребують.
 
-1. `material_reservations.status` — додано `pending_review`, `returned`.
-2. `material_reservations.origin` — додано `trainer_cabinet`.
-3. `email_logs.trigger` — додано `material_request` (див. розділ 4).
-4. `notification_rules.event_type` — додано `material_request`.
+Дві перезаливки, обидві обов'язкові:
+
+1. `ck_email_logs_trigger` — додано `material_request` (див. розділ 4).
+2. `ck_notification_rules_event_type` — додано `material_request`.
 
 Додати значення в код і забути про CHECK — збій, що вже траплявся з поштою:
 локально зелено (тести звіряють модель, а не базу), падає на проді при
