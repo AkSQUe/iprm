@@ -983,6 +983,12 @@ def reissue_lecturer_certificate(instance, trainer, issued_by=None):
         lc.number = number
 
     _apply_lecturer_snapshot(lc, instance, trainer, points, issued_at, issued_by)
+
+    # Перевидача означає, що документ змінився: у тренера на руках застаріла
+    # версія. Скидання прапорця ставить сертифікат назад у чергу розсилки, і
+    # виправлений PDF долітає автоматично.
+    lc.emailed_at = None
+
     db.session.commit()
     logger.info(
         'Lecturer certificate %s reissued (was %s) for instance=%s trainer=%s by=%s',

@@ -200,3 +200,18 @@ def test_participant_certificate_still_signed_by_the_first(no_pdf):
     assert cert.lecturer_name != b.full_name
     assert cert.lecturer_name != c.full_name
     assert cert.lecturer_signature == a.signature
+
+
+def test_reissue_resets_emailed_at(app):
+    """Виправлений документ мусить долетіти тренеру повторно."""
+    from app.services import certificate_service as cs
+    from app.models.mixins import utcnow
+
+    a, b = _trainer('Тренер А'), _trainer('Тренер Б')
+    instance = _instance_with_trainers([a.id, b.id])
+    cert = cs.issue_lecturer_certificate(instance, a)
+    cert.emailed_at = utcnow()
+    db.session.commit()
+
+    again = cs.reissue_lecturer_certificate(instance, a)
+    assert again.emailed_at is None
