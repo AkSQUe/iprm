@@ -217,3 +217,68 @@ def test_same_certificate_twice_is_deduplicated(app, enabled_mail):
 
     logs = EmailLog.query.filter_by(to_email='trainer-once@test.com').all()
     assert len(logs) == 1
+
+
+# ---------------------------------------------------------------------------
+# send_pending: черга розсилки (emailed_at IS NULL). Планувальник у TESTING
+# вимкнено, тож тут тестується сама функція, а не обгортку scheduler_service.
+# ---------------------------------------------------------------------------
+def test_send_pending_marks_emailed_at(app):
+    inst, _ = _completed_instance(trainers=1)
+    cert = lc_svc.issue_for_instance(inst)[0]
+    cert.trainer.email = 'tc-lect@test.com'
+    db.session.commit()
+    with patch('app.services.email_service.EmailService'
+               '.send_lecturer_certificate') as send:
+        sent, skipped = lc_svc.send_pending()
+    assert (sent, skipped) == (1, 0)
+    assert send.call_count == 1
+    db.session.refresh(cert)
+    assert cert.emailed_at is not None
+
+
+def test_send_pending_does_not_send_twice(app):
+    inst, _ = _completed_instance(trainers=1)
+    cert = lc_svc.issue_for_instance(inst)[0]
+    cert.trainer.email = 'tc-lect2@test.com'
+    db.session.commit()
+    with patch('app.services.email_service.EmailService'
+               '.send_lecturer_certificate'):
+        lc_svc.send_pending()
+        sent, _ = lc_svc.send_pending()
+    assert sent == 0
+
+
+def test_two_certificates_for_one_trainer_give_two_letters(app):
+    """60-секундне вікно дедуплікації не має зʼїдати другий сертифікат."""
+    course = make_course()
+    course.bpr_event_number = str(next(_event_numbers))
+    trainer = make_trainer(name='Двозахідний Т.')
+    trainer.email = 'tc-two@test.com'
+    set_trainers(course, [trainer.id])
+    course.bpr_lecturer_points = 3
+    first = make_instance(course, days=-5, status='completed')
+    second = make_instance(course, days=-4, status='completed')
+    db.session.commit()
+    lc_svc.issue_for_instance(first)
+    lc_svc.issue_for_instance(second)
+    with patch('app.services.email_service.EmailService'
+               '.send_lecturer_certificate') as send:
+        sent, _ = lc_svc.send_pending()
+    assert sent == 2
+    keys = {c.kwargs.get('to_email') or c.args[1] for c in send.call_args_list}
+    assert keys == {'tc-two@test.com'}
+
+
+def test_trainer_without_email_is_skipped_but_others_proceed(app):
+    inst, made = _completed_instance(trainers=2)
+    certs = lc_svc.issue_for_instance(inst)
+    certs[0].trainer.email = 'tc-has@test.com'
+    certs[1].trainer.email = None
+    db.session.commit()
+    with patch('app.services.email_service.EmailService'
+               '.send_lecturer_certificate'):
+        sent, skipped = lc_svc.send_pending()
+    assert (sent, skipped) == (1, 1)
+    db.session.refresh(certs[1])
+    assert certs[1].emailed_at is None

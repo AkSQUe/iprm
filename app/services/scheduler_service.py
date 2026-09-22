@@ -9,6 +9,8 @@ Jobs:
 - webhook_queue_worker: every minute, dispatches partner webhooks.
 - payment_reconcile: every 15 min, re-asks LiqPay about payments stuck in
   'pending' (a callback that never arrived leaves the order hanging forever).
+- lecturer_certificates_send: every 5 min, шле сертифікати лектора, що ще не
+  пішли листом (emailed_at IS NULL).
 
 Multi-worker захист: gunicorn запускає N воркерів, у кожного власний
 BackgroundScheduler. Без координації job виконається N разів -- це і є
@@ -260,6 +262,14 @@ def init_scheduler(app):
         name='Стан токена й моніторинг лідів Meta',
     )
 
+    scheduler.add_job(
+        send_lecturer_certificates,
+        trigger=CronTrigger(minute='*/5'),
+        id='lecturer_certificates_send',
+        replace_existing=True,
+        name='Розсилка сертифікатів лектора',
+    )
+
     scheduler.start()
     _initialized = True
     logger.info('APScheduler started with SQLAlchemy jobstore')
@@ -452,6 +462,32 @@ def send_quiz_invites():
                     'Запрошення на тестування: надіслано %d, позначено без листа %d',
                     sent, marked,
                 )
+
+
+def send_lecturer_certificates():
+    """Periodic job: розсилка сертифікатів лектора, що ще не пішли листом.
+
+    Вибірка й правила -- у lecturer_certificates.send_pending; тут лише
+    контекст застосунку й advisory lock проти дублювання між воркерами.
+    """
+    app = scheduler._app
+    with app.app_context():
+        with _job_lock('lecturer_certificates_send') as got:
+            if not got:
+                logger.debug('lecturer_certificates_send: locked, skipping')
+                return
+            from app.extensions import db
+            from app.services import lecturer_certificates as lc_svc
+            try:
+                sent, skipped = lc_svc.send_pending()
+            except Exception:
+                db.session.rollback()
+                logger.exception('send_lecturer_certificates failed')
+                return
+            if sent or skipped:
+                logger.info(
+                    'Сертифікати лектора: надіслано %d, без адреси %d',
+                    sent, skipped)
 
 
 def email_queue_maintenance():

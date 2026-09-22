@@ -12,6 +12,7 @@
 import logging
 
 from app.extensions import db
+from app.models.mixins import utcnow
 
 logger = logging.getLogger(__name__)
 
@@ -83,6 +84,54 @@ def recipient_email(trainer):
         if value:
             return value
     return None
+
+
+def send_pending(limit=50):
+    """Розіслати сертифікати, які ще не пішли листом.
+
+    Повертає (надіслано, пропущено_без_адреси). Черга -- `emailed_at IS NULL`.
+    Збій на одному записі не ставить `emailed_at` і не зупиняє решту:
+    наступний тік спробує знову. Ліміт -- щоб один тік не рендерив сотню PDF
+    поспіль після довгого простою пошти.
+    """
+    from app.models.lecturer_certificate import LecturerCertificate
+    from app.services.email_service import EmailService
+
+    pending = (
+        LecturerCertificate.query
+        .filter(LecturerCertificate.emailed_at.is_(None))
+        .order_by(LecturerCertificate.issued_at)
+        .limit(limit)
+        .all()
+    )
+    sent = skipped = 0
+    for cert in pending:
+        if cert.trainer is None:
+            skipped += 1
+            continue
+        to_email = recipient_email(cert.trainer)
+        if not to_email:
+            # Свідомо НЕ ставимо emailed_at: запис лишається видимим як
+            # «видано, не надіслано» і потрапляє в щоденний звіт адміну.
+            skipped += 1
+            continue
+        try:
+            EmailService.send_lecturer_certificate(cert, to_email)
+        except Exception:
+            db.session.rollback()
+            logger.exception(
+                'Failed to email lecturer certificate %s', cert.number)
+            continue
+        cert.emailed_at = utcnow()
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            logger.exception(
+                'Failed to mark lecturer certificate %s as emailed', cert.number)
+            continue
+        sent += 1
+    return sent, skipped
 
 
 def _notify_failed(instance, reason):
