@@ -223,3 +223,36 @@ def test_remove_checkbox_shown_only_with_uploaded_photo(client):
     html = client.get('/trainer/profile').get_data(as_text=True)
     assert 'name="remove_photo"' in html
     assert 'Зараз використовується завантажений файл' in html
+
+
+def test_professional_certificates_is_saved(client):
+    user = make_user()
+    trainer = make_trainer(user)
+    login(client, user)
+    text = 'Сертифікат A, 2024\nСертифікат B, 2025'
+    resp = client.post('/trainer/profile', data=_data(professional_certificates=text), follow_redirects=True)
+    assert resp.status_code == 200
+    db.session.refresh(trainer)
+    assert trainer.profile.professional_certificates == text
+
+
+def test_empty_professional_certificates_does_not_break_completeness(app):
+    """Анкета без нового поля лишається повною.
+
+    Перевіряємо саме поведінку `is_complete`, а не членство в кортежі
+    REQUIRED_FOR_COMPLETE: тест про кортеж стверджував би про оголошення й
+    мовчки пройшов би, якби повнота рахувалась деінде.
+    """
+    from app.models.trainer_profile import TrainerProfile
+
+    trainer = make_trainer(name='Повний Т.')
+    profile = TrainerProfile(
+        trainer_id=trainer.id, full_name='Повний Т.', phone='+380671234567',
+        email='tc-complete@test.com', fop_iban='UA000000000000000000000000000',
+        fop_rnokpp='1234567890', tax_id='1234567890',
+        registration_address='м. Київ',
+        professional_certificates=None,
+    )
+    db.session.add(profile)
+    db.session.commit()
+    assert profile.is_complete is True

@@ -22,6 +22,9 @@ class TrainerProfileForm(FlaskForm):
     education = TextAreaField(_l('Освіта (рівень освіти та навчальні заклади)'), validators=[Optional()])
     position_titles = TextAreaField(_l('Посада та регалії'), validators=[Optional()])
     workplace = TextAreaField(_l('Місце роботи, місто'), validators=[Optional()])
+    professional_certificates = TextAreaField(
+        _l('Професійні сертифікати (по одному в рядку)'),
+        validators=[Optional()])
     phone = StringField(_l('Телефон'), validators=[Optional(), Length(max=30)])
     email = StringField(_l('Ел. пошта'), validators=[
         Optional(), Email(message=_l('Невалідний email')), Length(max=255)])
@@ -52,6 +55,7 @@ class TrainerProfileForm(FlaskForm):
     # Поля, що копіюються в модель як є (фото обробляє маршрут окремо).
     MODEL_FIELDS = (
         'full_name', 'birth_date', 'education', 'position_titles', 'workplace',
+        'professional_certificates',
         'phone', 'email', 'social_links', 'photo_url', 'fop_recipient', 'fop_iban',
         'fop_rnokpp', 'fop_payment_purpose', 'card_number', 'tax_id',
         'registration_address', 'edrpou',
