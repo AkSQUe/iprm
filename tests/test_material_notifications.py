@@ -1215,6 +1215,28 @@ def test_nan_and_infinity_are_refused(app):
     assert _as_decimal('0.00') == Decimal('0.00')
 
 
+def test_status_push_does_not_overwrite_a_local_state(app, client):
+    """Пізній штовх зі старого циклу не має з'їсти заявку, яку тренер щойно
+    подав: локальним станам документа на MM Medic не відповідає взагалі."""
+    from app.models.material_reservation import MaterialReservationStatus as S
+    from app.services import material_reservation_service as mrs
+
+    _enable_mm()
+    inst = _make_instance(slug_suffix='locstate')
+    ref = mrs.external_ref_for(inst.id)
+    reservation = MaterialReservation(
+        instance_id=inst.id, external_ref=ref, status=S.PENDING_REVIEW)
+    db.session.add(reservation)
+    db.session.commit()
+
+    response = _post_status(client, {'external_ref': ref, 'status': 'cancelled'})
+
+    assert response.status_code == 200
+    assert response.get_json()['status'] == 'local_state'
+    db.session.refresh(reservation)
+    assert reservation.status == S.PENDING_REVIEW
+
+
 def test_mm_status_webhook_old_payload_keeps_existing_cost(app, client):
     """Старий MM Medic полів вартості не шле. Це не привід стирати вже відоме.
 

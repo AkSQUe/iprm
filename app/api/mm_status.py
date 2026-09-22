@@ -213,6 +213,21 @@ def reservation_status():
                 raise
             logger.info('MM Medic status webhook lost the create race ref=%s',
                         external_ref)
+    else:
+        # Локальний стан -- документа на MM Medic для цього ref ще не існує
+        # (заявка тренера в кабінеті ІПРМ, чернетка). `external_ref` живе
+        # довше за один цикл заходу, тож сюди може прилетіти ПІЗНІЙ штовх зі
+        # старого, уже закритого циклу -- і без цієї гілки він перезаписав би
+        # свіжу заявку тренера чужим статусом.
+        #
+        # 200, а не 4xx: для відправника це не помилка, і ретраїв у нього
+        # немає. Логуємо, бо мовчазне ігнорування штовха має лишати слід.
+        if reservation.status in MaterialReservationStatus.LOCAL_STATES:
+            logger.info(
+                'MM Medic status push ignored: ref=%s is in local state %s '
+                '(remote status=%r)',
+                external_ref, reservation.status, remote_status)
+            return jsonify({'status': 'local_state'}), 200
 
     remote_updated_at = _parse_dt(payload.get('updated_at'))
     stored_updated_at = _as_utc(reservation.remote_updated_at)
