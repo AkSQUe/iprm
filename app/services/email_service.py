@@ -2130,15 +2130,16 @@ class EmailService:
             idempotency_key=f'matreq:{reservation.external_ref}:submitted',
         )
 
-    # Рішення -> (шаблон, тема). Словник, а не три майже однакові методи:
-    # відрізняються лише ці два рядки, решта тіла спільна.
-    _MATERIAL_REQUEST_DECISIONS = {
-        'returned': ('material_request_returned',
-                     'Заявку на матеріали повернуто: %(title)s'),
-        'approved': ('material_request_approved',
-                     'Заявку на матеріали прийнято: %(title)s'),
-        'rejected': ('material_request_rejected',
-                     'Заявку на матеріали відхилено: %(title)s'),
+    # Рішення -> шаблон. Лише мапінг на назву шаблону -- тему свідомо НЕ
+    # тримаємо тут рядком-заготовкою: `_()` екстрактує рядки для перекладу
+    # лише коли бачить літерал прямо у виклику (pybabel читає джерело
+    # статично і мовчки пропускає `_(some_variable)`). Тому нижче -- три
+    # окремі виклики `_()` з литералом, а не один спільний із підставленим
+    # з словника рядком.
+    _MATERIAL_REQUEST_TEMPLATES = {
+        'returned': 'material_request_returned',
+        'approved': 'material_request_approved',
+        'rejected': 'material_request_rejected',
     }
 
     @staticmethod
@@ -2154,8 +2155,7 @@ class EmailService:
         created_by_id, користувача видалили, або в нього немає пошти. Це
         звичайний випадок, а не збій -- ні винятку, ні тривожного рядка в лог.
         """
-        template_name, subject_tpl = (
-            EmailService._MATERIAL_REQUEST_DECISIONS.get(decision, (None, None)))
+        template_name = EmailService._MATERIAL_REQUEST_TEMPLATES.get(decision)
         if template_name is None:
             logger.warning('невідоме рішення по заявці на матеріали: %r', decision)
             return None
@@ -2168,9 +2168,23 @@ class EmailService:
         ctx['trainer_url'] = EmailService._trainer_materials_url(
             instance.id if instance else reservation.instance_id)
         event_title = ctx['event_title']
+
+        # Літерали прямо у виклику `_()`, як у send_materials_trainer_confirmed
+        # поруч -- інакше pybabel extract мовчки пропускає тему (див.
+        # коментар при _MATERIAL_REQUEST_TEMPLATES вище).
+        if decision == 'returned':
+            subject = lambda: _('Заявку на матеріали повернуто: %(title)s',
+                                title=event_title)
+        elif decision == 'approved':
+            subject = lambda: _('Заявку на матеріали прийнято: %(title)s',
+                                title=event_title)
+        else:  # 'rejected'
+            subject = lambda: _('Заявку на матеріали відхилено: %(title)s',
+                                title=event_title)
+
         return EmailService.send_email(
             to=user.email,
-            subject=lambda: _(subject_tpl, title=event_title),
+            subject=subject,
             template_name=template_name,
             context=ctx,
             trigger='material_request',
