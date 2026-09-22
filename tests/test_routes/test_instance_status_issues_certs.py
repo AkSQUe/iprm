@@ -56,3 +56,41 @@ def test_failed_transition_issues_nothing(client):
     inst, _ = _setup(client)
     client.post(f'/admin/instances/{inst.id}/status', data={'status': 'bogus'})
     assert LecturerCertificate.query.filter_by(instance_id=inst.id).count() == 0
+
+
+def test_second_transition_does_not_duplicate(client):
+    """Повторний POST 'completed' -- старий status не змінюється (маршрут
+    виходить раніше, ще до коміту), тож видача не повторюється. Тест тримає
+    цю властивість руками, а не покладається на структуру коду."""
+    inst, trainer = _setup(client)
+    client.post(f'/admin/instances/{inst.id}/status', data={'status': 'completed'})
+    client.post(f'/admin/instances/{inst.id}/status', data={'status': 'completed'})
+    assert LecturerCertificate.query.filter_by(
+        instance_id=inst.id, trainer_id=trainer.id).count() == 1
+
+
+def test_forbidden_transition_issues_nothing(client):
+    """На відміну від 'bogus' (невідомий статус узагалі), тут статус
+    існує, але перехід із поточного заборонений STATUS_TRANSITIONS -- інша
+    гілка `course_service.change_instance_status`."""
+    inst, _ = _setup(client)
+    assert not inst.can_transition_to('draft')  # 'active' -> 'draft' заборонено
+    client.post(f'/admin/instances/{inst.id}/status', data={'status': 'draft'})
+    assert LecturerCertificate.query.filter_by(instance_id=inst.id).count() == 0
+
+
+def test_json_response_also_issues(client):
+    """`_wants_json` перемикає лише формат відповіді; виклик видачі стоїть
+    до розгалуження, тож JSON-гілка мусить видавати сертифікат так само."""
+    inst, trainer = _setup(client)
+    resp = client.post(
+        f'/admin/instances/{inst.id}/status',
+        data={'status': 'completed'},
+        headers={'X-Requested-With': 'XMLHttpRequest'},
+    )
+    assert resp.status_code == 200
+    assert resp.is_json
+    assert resp.get_json()['ok'] is True
+    cert = LecturerCertificate.query.filter_by(
+        instance_id=inst.id, trainer_id=trainer.id).one()
+    assert cert.emailed_at is None
