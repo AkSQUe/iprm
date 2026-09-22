@@ -1,0 +1,34 @@
+{% extends "emails/base.html" %}
+{% from "emails/_macros.html" import button_primary, detail_row, spacer %}
+
+{% block title %}{{ _('Ваш сертифікат тренера') }}{% endblock %}
+
+{% block preview_text %}{% trans title=certificate.event_title %}Сертифікат за проведення заходу {{ title }}{% endtrans %}{% endblock %}
+
+{% block content %}
+    <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #17131D; line-height: 1.25;">
+        {{ _('Ваш сертифікат тренера') }}
+    </h1>
+
+    <p class="mobile-text" style="margin: 0 0 32px 0; font-size: 15px; color: #625A6D; line-height: 1.5;">
+        {{ _('Дякуємо за проведений захід. Сертифікат додано до цього листа у форматі PDF, а також він завжди доступний у вашому кабінеті.') }}
+    </p>
+
+    <table role="presentation" style="width: 100%; margin-bottom: 24px; background-color: #F7F4FB; border: 1px solid #E9E4EF; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td style="padding: 20px 24px;">
+                <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #17131D; line-height: 1.3;">{{ certificate.event_title }}</p>
+                {{ detail_row(_('Номер'), certificate.number) }}
+                {% if certificate.event_date %}
+                {{ detail_row(_('Дата заходу'), certificate.event_date.strftime('%d.%m.%Y')) }}
+                {% endif %}
+                {% if certificate.cpd_points %}
+                {{ detail_row(_('Бали БПР'), certificate.cpd_points) }}
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+
+    {{ button_primary(_('Мої сертифікати'), cabinet_url) }}
+    {{ spacer(16) }}
+{% endblock %}

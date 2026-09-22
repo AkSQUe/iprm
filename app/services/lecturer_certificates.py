@@ -66,6 +66,25 @@ def issue_for_instance(instance, issued_by=None):
     return issued
 
 
+def recipient_email(trainer):
+    """Куди слати сертифікат: анкета -> акаунт -> довідник.
+
+    Анкета першою: цю адресу тренер вказав сам і сам підтримує. Довідникова
+    остання -- її заповнює адмін, і вона найчастіше застаріває.
+    """
+    profile = trainer.profile
+    candidates = (
+        (profile.email if profile is not None else None),
+        (trainer.user.email if trainer.user is not None else None),
+        trainer.email,
+    )
+    for value in candidates:
+        value = (value or '').strip()
+        if value:
+            return value
+    return None
+
+
 def _notify_failed(instance, reason):
     """Лист адмінам. Best-effort: збій сповіщення нічого не відкочує."""
     from app.services.email_service import EmailService

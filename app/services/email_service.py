@@ -1342,6 +1342,47 @@ class EmailService:
         return f'{base}/auth/account' if base else '/auth/account'
 
     @staticmethod
+    def send_lecturer_certificate(lecturer_cert, to_email):
+        """Лист тренеру з PDF-сертифікатом лектора у вкладенні.
+
+        Тригер 'certificate' (наявний, транзакційний) з idempotency_key на id
+        сертифіката. Ключ обовʼязковий: без нього дедуплікація ключується на
+        адресу+тригер у вікні 60 с, і тренер, якому в одному тіку джоби йдуть
+        сертифікати за ДВА заходи, отримав би лише один лист.
+        """
+        from app.services.certificate_service import render_lecturer_pdf
+
+        pdf_bytes = render_lecturer_pdf(lecturer_cert)
+        filename = f'lecturer-{lecturer_cert.number}.pdf'
+        return EmailService.send_email(
+            to=to_email,
+            subject=lambda: _('Ваш сертифікат тренера: %(title)s',
+                              title=lecturer_cert.event_title),
+            template_name='lecturer_certificate_issued',
+            context={
+                'certificate': lecturer_cert,
+                'trainer': lecturer_cert.trainer,
+                'cabinet_url': EmailService._trainer_cabinet_url(),
+            },
+            trigger='certificate',
+            idempotency_key=f'lecturer-cert-{lecturer_cert.id}',
+            attachments=[(filename, 'application/pdf', pdf_bytes)],
+        )
+
+    @staticmethod
+    def _trainer_cabinet_url():
+        """Абсолютне посилання на розділ сертифікатів кабінету тренера.
+
+        Як і _account_url: з SiteSettings.website_url, а не url_for(_external),
+        бо листи рендеряться і поза request-контекстом (фонові розсилки).
+        """
+        from app.models.site_settings import SiteSettings
+
+        base = (SiteSettings.get().website_url or '').rstrip('/')
+        tail = '/trainer/certificates'
+        return f'{base}{tail}' if base else tail
+
+    @staticmethod
     def send_course_request_notification(course_request):
         """Повідомити адмінів про новий CourseRequest (клієнт залишив запит).
 

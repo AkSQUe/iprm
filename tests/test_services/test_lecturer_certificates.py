@@ -102,3 +102,40 @@ def test_missing_event_number_issues_nothing_and_notifies_admins(app):
     assert notify.called
     reason = notify.call_args.args[1]
     assert 'заходу' in reason
+
+
+def test_recipient_email_falls_back_to_directory(app):
+    trainer = make_trainer(name='Довідниковий Т.')
+    trainer.email = 'tc-directory@test.com'
+    db.session.commit()
+    assert lc_svc.recipient_email(trainer) == 'tc-directory@test.com'
+
+
+def test_recipient_email_prefers_account_over_directory(app):
+    from tests.test_trainer_cabinet._factories import make_user
+
+    user = make_user()
+    trainer = make_trainer(user, name='Акаунтний Т.')
+    trainer.email = 'tc-directory@test.com'
+    db.session.commit()
+    assert lc_svc.recipient_email(trainer) == user.email
+
+
+def test_recipient_email_prefers_profile_over_all(app):
+    from app.models.trainer_profile import TrainerProfile
+    from tests.test_trainer_cabinet._factories import make_user
+
+    user = make_user()
+    trainer = make_trainer(user, name='Анкетний Т.')
+    trainer.email = 'tc-directory@test.com'
+    db.session.add(TrainerProfile(trainer_id=trainer.id,
+                                  email='tc-profile@test.com'))
+    db.session.commit()
+    db.session.refresh(trainer)
+    assert lc_svc.recipient_email(trainer) == 'tc-profile@test.com'
+
+
+def test_recipient_email_none_when_nothing_filled(app):
+    trainer = make_trainer(name='Безадресний Т.')
+    db.session.commit()
+    assert lc_svc.recipient_email(trainer) is None
