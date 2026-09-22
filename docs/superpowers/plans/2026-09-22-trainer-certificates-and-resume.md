@@ -217,7 +217,7 @@ def _completed_instance(points=5, trainers=2):
     course = make_course()
     made = [make_trainer(name=f'Тренер {i}') for i in range(trainers)]
     set_trainers(course, [t.id for t in made])
-    course.lecturer_cpd_points = points
+    course.bpr_lecturer_points = points
     inst = make_instance(course, days=-3, status='completed')
     db.session.commit()
     return inst, made
@@ -255,7 +255,7 @@ def test_issued_certificates_start_unsent(app):
     assert issued[0].emailed_at is None
 ```
 
-Примітка виконавцю: якщо поле курсу для балів лектора зветься інакше, ніж `lecturer_cpd_points`, підставити фактичне — воно те, яке читає `CourseInstance.effective_lecturer_points`. Перевірити: `grep -n "effective_lecturer_points" -A 12 app/models/course_instance.py`.
+Примітка виконавцю: якщо поле курсу для балів лектора зветься інакше, ніж `bpr_lecturer_points`, підставити фактичне — воно те, яке читає `CourseInstance.effective_lecturer_points`. Перевірити: `grep -n "effective_lecturer_points" -A 12 app/models/course_instance.py`.
 
 - [ ] **Step 2: Запустити тести, переконатись що падають**
 
@@ -445,7 +445,7 @@ def _setup(client, points=5):
     course = make_course()
     trainer = make_trainer(name='Лектор Л.')
     set_trainers(course, [trainer.id])
-    course.lecturer_cpd_points = points
+    course.bpr_lecturer_points = points
     inst = make_instance(course, days=-2, status='active')
     db.session.commit()
     return inst, trainer
@@ -474,7 +474,9 @@ Expected: FAIL — `NoResultFound` на першому тесті.
 
 - [ ] **Step 3: Вставити виклик у маршрут**
 
-У `app/admin/routes_instances.py`, у `instance_status_update`, ПІСЛЯ успішної зміни статусу й ПЕРЕД відповіддю (там, де вже стоїть коміт), додати:
+У `app/admin/routes_instances.py`, у `instance_status_update`, ПІСЛЯ вдалого `db.session.commit()` зміни статусу (не перед ним) і ПЕРЕД формуванням відповіді, додати:
+
+Саме після коміту: `certificate_service.issue_lecturer_certificate` комітить усередині себе, тож виклик до коміту статусу закомітив би зміну статусу передчасно — разом із чим завгодно ще, що лежало в сесії.
 
 ```python
         # Сертифікати тренерам — рівно на переході в 'completed'. Лише INSERT:
@@ -739,7 +741,7 @@ def test_two_certificates_for_one_trainer_give_two_letters(app):
     trainer = make_trainer(name='Двозахідний Т.')
     trainer.email = 'tc-two@test.com'
     set_trainers(course, [trainer.id])
-    course.lecturer_cpd_points = 3
+    course.bpr_lecturer_points = 3
     first = make_instance(course, days=-5, status='completed')
     second = make_instance(course, days=-4, status='completed')
     db.session.commit()
@@ -914,7 +916,7 @@ def test_issue_missing_picks_up_instance_after_points_added(app):
     with patch('app.services.email_service.EmailService'
                '.notify_lecturer_certificate_failed'):
         assert lc_svc.issue_for_instance(inst) == []
-    inst.course.lecturer_cpd_points = 4
+    inst.course.bpr_lecturer_points = 4
     db.session.commit()
     assert lc_svc.issue_missing() == 1
     assert LecturerCertificate.query.filter_by(instance_id=inst.id).count() == 1
@@ -1220,7 +1222,7 @@ def _trainer_with_certificate():
     trainer = make_trainer(user, name='Сертифікований Т.')
     course = make_course('Курс із сертифікатом')
     set_trainers(course, [trainer.id])
-    course.lecturer_cpd_points = 6
+    course.bpr_lecturer_points = 6
     inst = make_instance(course, days=-3, status='completed')
     db.session.commit()
     cert = lc_svc.issue_for_instance(inst)[0]
@@ -1522,7 +1524,7 @@ def certificate_report(cert_id):
 ```html
 <form method="post" class="inline-form"
       action="{{ url_for('trainer_cabinet.certificate_report', cert_id=cert.id) }}">
-  {{ csrf_field() }}
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <input type="text" name="message" class="form-input"
          placeholder="{{ _('Що не так?') }}" maxlength="2000">
   <button type="submit" class="btn btn--tertiary btn--sm">{{ _('Повідомити про помилку') }}</button>
@@ -1932,7 +1934,7 @@ grep -n "Сертифікати (зображення)\|Патенти\|---- " a
       {{ _('Дипломи й посвідчення, які показуються на вашій публічній сторінці тренера. Це не те саме, що поле «Професійні сертифікати» в анкеті: те поле -- текстовий перелік для резюме до реєстру БПР.') }}
     </p>
     <form method="post" action="{{ url_for('trainer_cabinet.certificates_save') }}">
-      {{ csrf_field() }}
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="hidden" name="certificates" id="regalia-cert-field"
              value="{{ trainer.certificates | tojson }}"
              data-upload-url="{{ url_for('trainer_cabinet.certificate_upload') }}">
@@ -2042,7 +2044,9 @@ def test_requisite_fields_are_not_in_registry(app):
 
 
 def test_birth_date_hidden_without_finance_permission(app):
-    plain = make_user_with_role('tc-res-plain@test.com', 'trainers.view')
+    # content_editor має trainers.view/manage/delete, але НЕ trainers.finance
+    # (явний перелік у rbac/registry.py саме заради цього).
+    plain = make_user_with_role('content_editor', email='tc-res-plain@test.com')
     db.session.commit()
     assert 'birth_date' not in {c.key for c in rs.available_columns(plain)}
 
@@ -2064,7 +2068,7 @@ def test_profile_name_wins_over_directory_name(app):
     assert rows == [['Анкетний Т.']]
 ```
 
-Примітка виконавцю: хелпер `make_user_with_role` звірити з наявними в `tests/support/rbac.py` — `grep -n "^def " tests/support/rbac.py`. Якщо такого немає, зібрати користувача з роллю тим способом, яким це роблять тести в `tests/test_rbac/`.
+Сигнатура хелпера — `make_user_with_role(role_name, email=None, **kwargs)` (`tests/support/rbac.py:18`): першим іде ІМʼЯ РОЛІ, не код права.
 
 - [ ] **Step 2: Запустити, переконатись що падає**
 
@@ -2459,7 +2463,7 @@ Expected: FAIL на `test_instance_page_offers_export` — кнопки ще н�
 <dialog id="resume-columns-dialog" class="iprm-dialog">
   <form method="post" action="{{ url_for('admin.trainers_resume_pdf') }}"
         id="resume-columns-form">
-    {{ csrf_field() }}
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <h2 class="iprm-block-title">Колонки резюме</h2>
     <p class="account-card__text">Оберіть, які поля анкети увійдуть у таблицю.</p>
     <div class="resume-columns__list">
