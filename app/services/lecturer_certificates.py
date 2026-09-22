@@ -176,23 +176,27 @@ def blocking_reason(instance):
     return None
 
 
-def issue_missing():
-    """Добрати сертифікати завершеним заходам. Повертає кількість виданих.
-
-    Покриває два реальні сценарії: бали БПР внесли вже після завершення
-    заходу; тренера додали до складу після завершення. Обидва лишали б
-    тренера без документа назавжди, бо тригер спрацьовує рівно один раз.
-    """
+def _completed_instances():
     from app.models.course_instance import CourseInstance
+    return CourseInstance.query.filter_by(status='completed').all()
+
+
+def _missing_trainers_by_instance(instances):
+    """{instance.id: [тренери БЕЗ сертифіката]} для переданих заходів.
+
+    Спільна вибірка для `issue_missing` (кого добирати) і `daily_maintenance`
+    (кого рахувати заблокованим): один запит пар (instance_id, trainer_id)
+    наперед для ВСІХ переданих заходів, а не по одному на ітерацію циклу --
+    джоба щоденна й ходить по всіх завершених заходах, яких з часом стає
+    багато. Захід, де всі тренери вже мають сертифікат, у результат не
+    потрапляє взагалі -- саме це відрізняє «немає що добирати» від
+    «заблоковано».
+    """
     from app.models.lecturer_certificate import LecturerCertificate
 
-    instances = CourseInstance.query.filter_by(status='completed').all()
     if not instances:
-        return 0
+        return {}
 
-    # Один запит на всі завершені заходи заздалегідь, а не по одному на
-    # ітерацію циклу: джоба щоденна й ходить по всіх завершених заходах,
-    # яких з часом стає багато, а сам запит -- одна пара колонок.
     rows = (
         db.session.query(LecturerCertificate.instance_id,
                           LecturerCertificate.trainer_id)
@@ -204,16 +208,38 @@ def issue_missing():
     for instance_id, trainer_id in rows:
         issued_by_instance.setdefault(instance_id, set()).add(trainer_id)
 
-    issued = 0
+    missing = {}
     for instance in instances:
         trainers = instance.effective_trainers
         if not trainers:
             continue
         have = issued_by_instance.get(instance.id, set())
-        if all(t.id in have for t in trainers):
+        gap = [t for t in trainers if t.id not in have]
+        if gap:
+            missing[instance.id] = gap
+    return missing
+
+
+def _issue_for_missing(instances, missing):
+    """Добрати сертифікати заходам із `missing`. Повертає кількість виданих."""
+    issued = 0
+    for instance in instances:
+        if instance.id not in missing:
             continue
         issued += len(issue_for_instance(instance))
     return issued
+
+
+def issue_missing():
+    """Добрати сертифікати завершеним заходам. Повертає кількість виданих.
+
+    Покриває два реальні сценарії: бали БПР внесли вже після завершення
+    заходу; тренера додали до складу після завершення. Обидва лишали б
+    тренера без документа назавжди, бо тригер спрацьовує рівно один раз.
+    """
+    instances = _completed_instances()
+    missing = _missing_trainers_by_instance(instances)
+    return _issue_for_missing(instances, missing)
 
 
 def daily_maintenance():
@@ -224,11 +250,12 @@ def daily_maintenance():
     """
     from datetime import timedelta
 
-    from app.models.course_instance import CourseInstance
     from app.models.lecturer_certificate import LecturerCertificate
     from app.services.email_service import EmailService
 
-    issued = issue_missing()
+    instances = _completed_instances()
+    missing = _missing_trainers_by_instance(instances)
+    issued = _issue_for_missing(instances, missing)
 
     cutoff = utcnow() - timedelta(hours=STUCK_AFTER_HOURS)
     stuck = (
@@ -237,9 +264,14 @@ def daily_maintenance():
                 LecturerCertificate.issued_at < cutoff)
         .all()
     )
+    # `missing` порахований ДО спроби видачі вище, і саме тому його можна
+    # перевикористати тут: захід, де сертифікати вже видані ВСІМ тренерам, у
+    # ньому відсутній -- навіть якщо налаштування (номер провайдера)
+    # спорожніли ПІСЛЯ видачі. Добирати там нічого, і щоденний звіт не має
+    # нагадувати про такий захід знову й знову.
     blocked = [
-        inst for inst in CourseInstance.query.filter_by(status='completed').all()
-        if inst.effective_trainers and blocking_reason(inst) is not None
+        inst for inst in instances
+        if inst.id in missing and blocking_reason(inst) is not None
     ]
     if stuck or blocked:
         try:

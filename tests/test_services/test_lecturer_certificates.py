@@ -8,6 +8,7 @@ import pytest
 from app.extensions import db
 from app.models.email_log import EmailLog
 from app.models.lecturer_certificate import LecturerCertificate
+from app.models.mixins import utcnow
 from app.models.site_settings import SiteSettings
 from app.services import certificate_service, email_service
 from app.services import lecturer_certificates as lc_svc
@@ -352,11 +353,16 @@ def test_blocked_report_covers_all_three_preconditions(app):
     """Звіт мусить ловити не лише відсутні бали.
 
     Передумов три, і захід без номера провайдера БПР так само не видасть
-    жодного сертифіката, як і захід без балів -- тільки мовчки.
+    жодного сертифіката, як і захід без балів -- тільки мовчки. Тест
+    перевіряє всі три, а не лише провайдера: `blocking_reason` питає
+    `certificate_service` двома окремими викликами
+    (`_bpr_number_inputs`, `_lecturer_points`), і кожен мусить дійти до
+    свого власного тексту причини.
     """
     from app.models.site_settings import SiteSettings
 
     inst, _ = _completed_instance(trainers=1)
+
     # Колонка NOT NULL (default '') -- порожній рядок, а не None, як і в
     # test_missing_provider_number_issues_nothing_and_notifies_admins вище.
     SiteSettings.get().bpr_provider_number = ''
@@ -365,9 +371,106 @@ def test_blocked_report_covers_all_three_preconditions(app):
     assert reason is not None
     assert 'провайдера' in reason
 
+    SiteSettings.get().bpr_provider_number = '2738'
+    inst.course.bpr_event_number = ''
+    db.session.commit()
+    reason = lc_svc.blocking_reason(inst)
+    assert reason is not None
+    assert 'заходу' in reason
+
+    inst.course.bpr_event_number = '4999999'
+    inst.course.bpr_lecturer_points = None
+    db.session.commit()
+    reason = lc_svc.blocking_reason(inst)
+    assert reason is not None
+    assert 'бали' in reason
+
 
 def test_daily_maintenance_sends_no_report_when_clean(app):
     with patch('app.services.email_service.EmailService'
                '.notify_lecturer_certificate_report') as report:
         lc_svc.daily_maintenance()
+    assert not report.called
+
+
+def test_daily_maintenance_flags_certificate_stuck_after_24_hours(app):
+    """Сертифікат, виданий понад добу тому й досі `emailed_at IS NULL`,
+    потрапляє у `stuck` -- саме ці записи задача 5 свідомо лишає
+    непозначеними, щоб їх підхопив щоденний звіт."""
+    inst, _ = _completed_instance(trainers=1)
+    cert = lc_svc.issue_for_instance(inst)[0]
+    cert.issued_at = utcnow() - timedelta(hours=25)
+    db.session.commit()
+
+    with patch('app.services.email_service.EmailService'
+               '.notify_lecturer_certificate_report') as report:
+        stats = lc_svc.daily_maintenance()
+
+    assert stats['stuck'] == 1
+    assert report.called
+    stuck_arg = report.call_args.args[0]
+    assert [c.id for c in stuck_arg] == [cert.id]
+
+
+def test_daily_maintenance_does_not_flag_certificate_within_24_hours(app):
+    """Межа STUCK_AFTER_HOURS: сертифікат, виданий менш ніж добу тому, ще
+    НЕ вважається застряглим -- йому лишається шанс на звичайний
+    5-хвилинний тік розсилки. Без цього теста регресія `<` на `<=`
+    (чи навпаки) або загублений фільтр `emailed_at IS NULL` пройшли б
+    непомітно."""
+    inst, _ = _completed_instance(trainers=1)
+    cert = lc_svc.issue_for_instance(inst)[0]
+    cert.issued_at = utcnow() - timedelta(hours=23)
+    db.session.commit()
+
+    with patch('app.services.email_service.EmailService'
+               '.notify_lecturer_certificate_report') as report:
+        stats = lc_svc.daily_maintenance()
+
+    assert stats['stuck'] == 0
+    assert not report.called
+
+
+def test_daily_maintenance_sends_report_with_actual_stuck_and_blocked_records(app):
+    """Звіт шлеться не лише «коли брудно» -- а й несе САМЕ ці записи, а не
+    порожні списки чи самі лічильники."""
+    stuck_inst, _ = _completed_instance(trainers=1)
+    cert = lc_svc.issue_for_instance(stuck_inst)[0]
+    cert.issued_at = utcnow() - timedelta(hours=25)
+
+    blocked_inst, _ = _completed_instance(points=None, trainers=1)
+    db.session.commit()
+
+    with patch('app.services.email_service.EmailService'
+               '.notify_lecturer_certificate_failed'), \
+         patch('app.services.email_service.EmailService'
+               '.notify_lecturer_certificate_report') as report:
+        stats = lc_svc.daily_maintenance()
+
+    assert stats == {'issued': 0, 'stuck': 1, 'blocked': 1}
+    report.assert_called_once()
+    stuck_arg, blocked_arg = report.call_args.args
+    assert [c.id for c in stuck_arg] == [cert.id]
+    assert [i.id for i in blocked_arg] == [blocked_inst.id]
+
+
+def test_daily_maintenance_excludes_fully_issued_instance_from_blocked(app):
+    """Захід, де сертифікати вже видані ВСІМ тренерам, не має щодня влучати
+    у звіт як «потребує уваги», навіть якщо номер провайдера спорожнів уже
+    ПІСЛЯ видачі -- добирати там нічого, а постійний шум привчає не читати
+    звіт узагалі."""
+    from app.models.site_settings import SiteSettings
+
+    inst, _ = _completed_instance(trainers=1)
+    lc_svc.issue_for_instance(inst)
+    SiteSettings.get().bpr_provider_number = ''
+    db.session.commit()
+
+    assert lc_svc.blocking_reason(inst) is not None  # передумова й справді порушена
+
+    with patch('app.services.email_service.EmailService'
+               '.notify_lecturer_certificate_report') as report:
+        stats = lc_svc.daily_maintenance()
+
+    assert stats['blocked'] == 0
     assert not report.called
