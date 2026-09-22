@@ -5,9 +5,12 @@ from unittest.mock import patch
 import pytest
 
 from app.extensions import db
+from app.models.email_log import EmailLog
 from app.models.lecturer_certificate import LecturerCertificate
 from app.models.site_settings import SiteSettings
+from app.services import certificate_service, email_service
 from app.services import lecturer_certificates as lc_svc
+from app.services.email_service import EmailService
 from app.services.trainer_links import set_trainers
 from tests.test_trainer_cabinet._factories import (
     make_course, make_instance, make_trainer,
@@ -139,3 +142,78 @@ def test_recipient_email_none_when_nothing_filled(app):
     trainer = make_trainer(name='Безадресний Т.')
     db.session.commit()
     assert lc_svc.recipient_email(trainer) is None
+
+
+def test_recipient_email_skips_blank_profile_email(app):
+    """Анкета існує, але email у ній не заповнений (порожній рядок, не NULL)
+    -- ланцюжок має провалитись до акаунта/довідника, а не зупинитись на
+    порожньому значенні й повернути ''."""
+    from app.models.trainer_profile import TrainerProfile
+
+    trainer = make_trainer(name='Порожньоанкетний Т.')
+    trainer.email = 'tc-directory@test.com'
+    db.session.add(TrainerProfile(trainer_id=trainer.id, email=''))
+    db.session.commit()
+    db.session.refresh(trainer)
+    assert lc_svc.recipient_email(trainer) == 'tc-directory@test.com'
+
+
+# ---------------------------------------------------------------------------
+# send_lecturer_certificate: ключ ідемпотентності на id сертифіката, а не на
+# щось спільне для кількох подій (напр. trainer_id) -- див. брифи задачі 4.
+# ---------------------------------------------------------------------------
+@pytest.fixture
+def enabled_mail(monkeypatch):
+    """Імітувати увімкнену пошту без мережі -- як однойменна фікстура в
+    test_email_service.py: мокаємо SMTP-конфіг і фонову відправку, щоб
+    перевіряти сам журнал EmailLog, а не лізти в мережу чи мокати
+    send_lecturer_certificate (це довело б лише факт виклику, не ключ)."""
+    cfg = {
+        'server': 'smtp.example.com', 'port': 587, 'use_ssl': False, 'use_tls': True,
+        'username': 'u@example.com', 'password': 'x', 'is_enabled': True,
+        'has_password': True, 'sender': 'u@example.com',
+    }
+    monkeypatch.setattr(email_service, '_get_smtp_config', lambda app: cfg)
+    monkeypatch.setattr(EmailService, '_send_in_thread', staticmethod(lambda *a, **k: None))
+    monkeypatch.setattr(EmailService, '_check_circuit_breaker', staticmethod(lambda: False))
+
+
+@pytest.fixture(autouse=True)
+def _fake_pdf(monkeypatch):
+    """PDF тут не тестуємо (WeasyPrint) -- лише те, що дійшло до журналу."""
+    monkeypatch.setattr(certificate_service, 'render_lecturer_pdf', lambda lc: b'%PDF-fake%')
+
+
+def _issued_certificate():
+    """Один виданий сертифікат лектора на свіжому заході -- окремий курс і
+    тренер на кожен виклик, щоб два виклики давали два РІЗНІ сертифікати
+    (різні id -> різні idempotency_key)."""
+    inst, _made = _completed_instance(trainers=1)
+    return lc_svc.issue_for_instance(inst)[0]
+
+
+def test_two_certificates_to_same_address_are_not_deduplicated(app, enabled_mail):
+    """Якби ключ ідемпотентності був не на lecturer_cert.id, а на щось спільне
+    для двох різних заходів (наприклад, trainer_id), _idempotency_seen з'їв би
+    другий лист тому самому тренеру -- саме цього ключ і має не допускати."""
+    cert_a = _issued_certificate()
+    cert_b = _issued_certificate()
+
+    EmailService.send_lecturer_certificate(cert_a, 'trainer-dup@test.com')
+    EmailService.send_lecturer_certificate(cert_b, 'trainer-dup@test.com')
+
+    logs = EmailLog.query.filter_by(to_email='trainer-dup@test.com').all()
+    assert len(logs) == 2
+    assert logs[0].idempotency_key != logs[1].idempotency_key
+
+
+def test_same_certificate_twice_is_deduplicated(app, enabled_mail):
+    """Зворотний бік: повторний виклик на ОДИН і той самий сертифікат (напр.
+    якщо джоба пройде по ньому ще раз) не плодить другого листа."""
+    cert = _issued_certificate()
+
+    EmailService.send_lecturer_certificate(cert, 'trainer-once@test.com')
+    EmailService.send_lecturer_certificate(cert, 'trainer-once@test.com')
+
+    logs = EmailLog.query.filter_by(to_email='trainer-once@test.com').all()
+    assert len(logs) == 1
