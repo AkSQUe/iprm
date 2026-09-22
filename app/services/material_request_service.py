@@ -96,8 +96,15 @@ def save_items(reservation, items) -> None:
         if item is None:
             item = MaterialReservationItem(sku=sku, quantity_reserved=0)
             reservation.items.append(item)
-        item.name = mrs.trim(raw.get('name'), 255)
-        item.image_url = mrs.trim(raw.get('image_url'), 500)
+        # `or item.*` -- не перезаписувати порожнім. Той самий фолбек, що
+        # `apply_items()` у material_reservation_service.py: викликач може
+        # надіслати лише {sku, quantity} (саме так робить погодження в
+        # адмінці -- форма таблиці кількостей не несе ні назви, ні фото),
+        # і без фолбека другий-третій виклик `save_items` на той самий
+        # рядок стирав би снапшот назви/зображення, який існує рівно на
+        # випадок, якщо товар потім зникне з каталогу MM Medic.
+        item.name = mrs.trim(raw.get('name'), 255) or item.name
+        item.image_url = mrs.trim(raw.get('image_url'), 500) or item.image_url
         item.quantity_requested = raw['quantity']
 
     db.session.commit()

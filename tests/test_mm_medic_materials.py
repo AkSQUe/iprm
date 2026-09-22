@@ -895,6 +895,48 @@ def test_approve_route_saves_edited_quantities_before_approving(client, admin_us
     ]
 
 
+def test_approve_route_keeps_the_name_and_image_snapshot(client, admin_user,
+                                                          instance,
+                                                          pending_request,
+                                                          monkeypatch):
+    """Регресія: таблиця кількостей на сторінці (mode='review') несе форму
+    лише зі `sku`/`quantity` -- без `name`/`image_url`. `save_items()` без
+    фолбека на вже збережене значення стирала б снапшот на КОЖНОМУ звичайному
+    погодженні, навіть без жодної ручної правки. Снапшот існує рівно на
+    випадок, якщо товар потім зникне з каталогу MM Medic -- саме тоді, коли
+    він мав би врятувати пікінг-лист і історію."""
+    from app.models.material_reservation import MaterialReservationStatus as S
+    from app.services import material_request_service as mrq
+
+    item = next(i for i in pending_request.items if i.sku == 'NEEDLE-30G')
+    item.name = 'Голки 30G оригінальні'
+    item.image_url = 'https://mm-medic.example/needle-30g.jpg'
+    db.session.commit()
+
+    class _Ok:
+        ok = True
+        data = {'reservation': {'items': []}}
+
+    def _fake_submit_request(inst, items):
+        pending_request.status = S.SUBMITTED
+        return True, _Ok(), pending_request
+
+    monkeypatch.setattr(mrq.mrs, 'submit_request', _fake_submit_request)
+    _login(client, admin_user)
+
+    client.post(
+        f'/admin/instances/{instance.id}/materials/approve',
+        data={'csrf_token': _admin_csrf(client),
+              'sku': ['NEEDLE-30G', 'TUBE-VAC'],
+              'quantity': ['12', '24']},
+        follow_redirects=True,
+    )
+
+    db.session.refresh(item)
+    assert item.name == 'Голки 30G оригінальні'
+    assert item.image_url == 'https://mm-medic.example/needle-30g.jpg'
+
+
 def test_approve_route_keeps_pending_review_when_partner_fails(client, admin_user,
                                                                 instance,
                                                                 pending_request,
