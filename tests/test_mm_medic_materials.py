@@ -685,11 +685,18 @@ def test_approve_keeps_pending_review_when_partner_fails(app, instance,
     assert res.status == S.PENDING_REVIEW
 
 
-def test_second_approval_loses_the_race_instead_of_double_sending(app, instance,
-                                                                  trainer_user,
-                                                                  monkeypatch):
-    """Двоє відповідальних тиснуть «Погодити». Другий мусить отримати відмову,
-    а не створити другий документ."""
+def test_repeat_approval_of_the_same_request_sends_once(app, instance,
+                                                         trainer_user,
+                                                         monkeypatch):
+    """Повторне `approve()` на ТОМУ Ж обʼєкті (наприклад, повторний клік по
+    вже погодженій заявці) мусить отримати відмову, а не піти на MM Medic
+    удруге.
+
+    Це НЕ тест на гонку двох паралельних запитів: гейт статусу читає й
+    перевіряє в межах одного процесу й одного обʼєкта в памʼяті, тож двох
+    окремих сесій БД тут немає й TOCTOU він не відтворює. Захист від
+    справжньої гонки -- ідемпотентність MM Medic за `external_ref`, а не
+    цей гейт (див. докстрінг `approve()`)."""
     from app.services import material_request_service as mrq
 
     res = _draft(instance, trainer_user)
