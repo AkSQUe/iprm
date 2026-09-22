@@ -1839,7 +1839,8 @@ class EmailService:
 
     @staticmethod
     def _send_to_recipients(recipients, *, subject, template_name,
-                            context, trigger, registration_id):
+                            context, trigger, registration_id,
+                            idempotency_key=None):
         """Циклічно шле send_email кожному адресату з ізоляцією помилок.
 
         send_email самостійно ловить шаблонні помилки, але INSERT
@@ -1847,6 +1848,11 @@ class EmailService:
         сесію у failed-state -- наступний send_email впав би
         PendingRollbackError. Огортаємо кожну ітерацію у try з
         rollback, щоб провал на одній адресі не блокував решту.
+
+        idempotency_key -- необов'язковий, прокидається як є у кожен
+        send_email. Без нього дедуп send_email тримається на парі
+        адреса+тригер за 60 секунд; наявні виклики його не передають і
+        працюють так само, як і раніше.
         """
         results = []
         for to in recipients:
@@ -1858,6 +1864,7 @@ class EmailService:
                     context=context,
                     trigger=trigger,
                     registration_id=registration_id,
+                    idempotency_key=idempotency_key,
                 )
                 results.append(entry)
             except Exception:
@@ -2064,6 +2071,111 @@ class EmailService:
             context=ctx,
             trigger='materials',
             registration_id=None,
+        )
+
+    # ---- Trainer material request (кабінет тренера -> перевірка -> рішення) ----
+
+    @staticmethod
+    def _trainer_materials_url(instance_id):
+        """Deep-link у кабінет тренера на конкретну заявку.
+
+        Як і `_materials_admin_url`/`_trainer_cabinet_url` вище: адреса
+        будується з SiteSettings.website_url, а не url_for(_external=True) --
+        рішення по заявці (`send_material_request_decision`) може прийти з
+        адмінки поза активним request-контекстом, і url_for там впав би.
+        """
+        from app.models.site_settings import SiteSettings
+        base = (SiteSettings.get().website_url or '').rstrip('/')
+        tail = f'/trainer/materials/{instance_id}'
+        return f'{base}{tail}' if base else tail
+
+    @staticmethod
+    def _material_request_context(reservation, instance):
+        """Спільний контекст усіх чотирьох листів заявки на матеріали."""
+        return {
+            'reservation': reservation,
+            'instance': instance,
+            'event_title': ((instance.effective_title if instance else None)
+                            or 'Захід'),
+            'event_date': instance.start_date if instance else None,
+            'items': [item for item in reservation.items
+                      if (item.quantity_requested or 0) > 0],
+            'admin_url': EmailService._materials_admin_url(
+                instance.id if instance else reservation.instance_id),
+        }
+
+    @staticmethod
+    def send_material_request_submitted(reservation, instance):
+        """Тренер подав заявку -> лист відповідальним.
+
+        Одержувачі -- через `notification_recipients.resolve`, а не список
+        адрес у коді: склад відповідальних змінюється без деплою.
+
+        `idempotency_key` обходить 60-секундний дедуп (адреса+тригер). Без
+        нього дві заявки, розведені поспіль на ту саму адресу, злилися б в
+        один лист замість двох.
+        """
+        from app.services.notification_recipients import resolve
+        recipients = resolve('material_request', instance=instance)
+        if not recipients:
+            return []
+        ctx = EmailService._material_request_context(reservation, instance)
+        return EmailService._send_to_recipients(
+            recipients,
+            subject=f'Заявка на матеріали: {ctx["event_title"]}',
+            template_name='material_request_submitted',
+            context=ctx,
+            trigger='material_request',
+            registration_id=None,
+            idempotency_key=f'matreq:{reservation.external_ref}:submitted',
+        )
+
+    # Рішення -> (шаблон, тема). Словник, а не три майже однакові методи:
+    # відрізняються лише ці два рядки, решта тіла спільна.
+    _MATERIAL_REQUEST_DECISIONS = {
+        'returned': ('material_request_returned',
+                     'Заявку на матеріали повернуто: %(title)s'),
+        'approved': ('material_request_approved',
+                     'Заявку на матеріали прийнято: %(title)s'),
+        'rejected': ('material_request_rejected',
+                     'Заявку на матеріали відхилено: %(title)s'),
+    }
+
+    @staticmethod
+    def send_material_request_decision(reservation, instance, decision):
+        """Рішення відповідального -> лист тренеру, що подав заявку.
+
+        Адресат -- `reservation.created_by` (той, хто натиснув
+        «Відправити»), а не rule-based список: тренер може не бути ні
+        адміном, ні менеджером, і resolve() його не дістане. Той самий
+        висновок, що в `send_materials_trainer_confirmed`.
+
+        Повертає None, коли писати нікому: заявка старіша за колонку
+        created_by_id, користувача видалили, або в нього немає пошти. Це
+        звичайний випадок, а не збій -- ні винятку, ні тривожного рядка в лог.
+        """
+        template_name, subject_tpl = (
+            EmailService._MATERIAL_REQUEST_DECISIONS.get(decision, (None, None)))
+        if template_name is None:
+            logger.warning('невідоме рішення по заявці на матеріали: %r', decision)
+            return None
+        user = reservation.created_by
+        if user is None or not user.email:
+            return None
+
+        ctx = EmailService._material_request_context(reservation, instance)
+        ctx['comment'] = reservation.review_comment
+        ctx['trainer_url'] = EmailService._trainer_materials_url(
+            instance.id if instance else reservation.instance_id)
+        event_title = ctx['event_title']
+        return EmailService.send_email(
+            to=user.email,
+            subject=lambda: _(subject_tpl, title=event_title),
+            template_name=template_name,
+            context=ctx,
+            trigger='material_request',
+            registration_id=None,
+            idempotency_key=f'matreq:{reservation.external_ref}:{decision}',
         )
 
     @staticmethod

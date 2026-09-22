@@ -1,0 +1,33 @@
+{% extends "emails/base.html" %}
+{% from "emails/_macros.html" import button_primary, detail_row, alert_warning %}
+
+{% block title %}{{ _('Заявку на матеріали повернуто') }}{% endblock %}
+
+{% block preview_text %}{% trans %}Заявку на матеріали повернули на доопрацювання{% endtrans %}{% endblock %}
+
+{% block content %}
+    <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #17131D; line-height: 1.25;">
+        {{ _('Заявку на матеріали повернуто на доопрацювання') }}
+    </h1>
+
+    <p class="mobile-text" style="margin: 0 0 24px 0; font-size: 15px; color: #625A6D; line-height: 1.5;">
+        {{ _('Заявку на витратні матеріали повернуто вам на доопрацювання. Внесіть правки й надішліть її знову.') }}
+    </p>
+
+    <table role="presentation" style="width: 100%; margin-bottom: 24px; background-color: #F7F4FB; border: 1px solid #E9E4EF; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td style="padding: 20px 24px;">
+                <p style="margin: 0; font-size: 18px; font-weight: 600; color: #17131D; line-height: 1.3;">{{ event_title }}</p>
+                {% if event_date %}{{ detail_row(_('Дата'), event_date.strftime('%d.%m.%Y')) }}{% endif %}
+            </td>
+        </tr>
+    </table>
+
+    {% if comment %}
+    {{ alert_warning(_('Що треба виправити'), comment) }}
+    {% endif %}
+
+    {% if trainer_url %}
+    {{ button_primary(_('Відкрити заявку'), trainer_url) }}
+    {% endif %}
+{% endblock %}

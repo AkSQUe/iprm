@@ -1237,6 +1237,119 @@ def test_status_push_does_not_overwrite_a_local_state(app, client):
     assert reservation.status == S.PENDING_REVIEW
 
 
+# --------------- trainer material request: чотири листи (Task 4) ---------------
+
+@pytest.fixture
+def instance(app):
+    """Свій CourseInstance на кожен тест -- зайвого спільного стану з рештою
+    файлу не хочемо: external_ref заявки унікальний саме per instance."""
+    return _make_instance(slug_suffix='matreq')
+
+
+@pytest.fixture
+def trainer_user(app):
+    """Користувач, що нібито подав заявку (reservation.created_by).
+
+    Прибираємо за собою в teardown (feedback_test_user_cap): тестова
+    in-memory SQLite спільна на весь прогін, і зайві користувачі валять
+    test_api_v1_clients::TestParticipants далеко звідси.
+    """
+    from app.models.user import User
+
+    user = User(email='trainer-matreq@example.com')
+    db.session.add(user)
+    db.session.commit()
+
+    yield user
+
+    db.session.delete(user)
+    db.session.commit()
+
+
+def _reservation_with_items(instance):
+    from app.services import material_reservation_service as mrs
+
+    reservation = MaterialReservation(
+        instance_id=instance.id,
+        external_ref=mrs.external_ref_for(instance.id),
+        status=MaterialReservationStatus.PENDING_REVIEW)
+    reservation.items.append(MaterialReservationItem(
+        sku='NEEDLE-30G', name='Голки 30G', quantity_requested=12,
+        quantity_reserved=0))
+    db.session.add(reservation)
+    db.session.commit()
+    return reservation
+
+
+def test_submitted_letter_goes_to_the_configured_recipients(app, instance,
+                                                            monkeypatch):
+    from app.services.email_service import EmailService
+
+    sent = []
+    monkeypatch.setattr(
+        'app.services.notification_recipients.resolve',
+        lambda event_type, instance=None, new_status=None: (
+            ['a@example.com', 'b@example.com']
+            if event_type == 'material_request' else []))
+    monkeypatch.setattr(EmailService, 'send_email',
+                        staticmethod(lambda **kw: sent.append(kw) or object()))
+
+    reservation = _reservation_with_items(instance)
+    EmailService.send_material_request_submitted(reservation, instance)
+
+    assert [kw['to'] for kw in sent] == ['a@example.com', 'b@example.com']
+    assert all(kw['trigger'] == 'material_request' for kw in sent)
+    assert all(kw['idempotency_key'] ==
+               f'matreq:{reservation.external_ref}:submitted' for kw in sent)
+
+
+def test_decision_letters_render_for_every_decision(app, instance, trainer_user):
+    """Рендер усіх чотирьох листів -- шаблон, якого немає, падає лише тут."""
+    from app.services.email_service import EmailService
+
+    reservation = _reservation_with_items(instance)
+    reservation.created_by_id = trainer_user.id
+    reservation.review_comment = 'Забули серветки'
+
+    for decision in ('returned', 'approved', 'rejected'):
+        entry = EmailService.send_material_request_decision(
+            reservation, instance, decision)
+        assert entry is not None, decision
+
+
+def test_decision_letter_is_skipped_when_nobody_to_write_to(app, instance):
+    from app.services.email_service import EmailService
+
+    reservation = _reservation_with_items(instance)
+    reservation.created_by_id = None
+
+    assert EmailService.send_material_request_decision(
+        reservation, instance, 'approved') is None
+
+
+def test_idempotency_key_differs_per_decision(app, instance, trainer_user,
+                                              monkeypatch):
+    """Дві заявки одного тренера, розведені поспіль, не мають злитись у
+    60-секундному вікні дедупу."""
+    from app.services.email_service import EmailService
+
+    sent = []
+    monkeypatch.setattr(EmailService, 'send_email',
+                        staticmethod(lambda **kw: sent.append(kw) or object()))
+
+    reservation = _reservation_with_items(instance)
+    reservation.created_by_id = trainer_user.id
+    reservation.review_comment = 'Причина'
+
+    EmailService.send_material_request_decision(reservation, instance, 'returned')
+    EmailService.send_material_request_decision(reservation, instance, 'approved')
+
+    keys = [kw['idempotency_key'] for kw in sent]
+    assert keys == [f'matreq:{reservation.external_ref}:returned',
+                    f'matreq:{reservation.external_ref}:approved']
+    assert len(set(keys)) == 2
+
+
 def test_mm_status_webhook_old_payload_keeps_existing_cost(app, client):
     """Старий MM Medic полів вартості не шле. Це не привід стирати вже відоме.
 
