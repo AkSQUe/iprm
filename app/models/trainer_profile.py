@@ -43,6 +43,11 @@ class TrainerProfile(TimestampMixin, db.Model):
     education = db.Column(db.Text)
     position_titles = db.Column(db.Text)
     workplace = db.Column(db.Text)
+    # Професійні сертифікати для резюме, яке подають до реєстру БПР. Один
+    # рядок = один сертифікат: саме з рядків PDF-експорт робить перелік у
+    # клітинці таблиці. НЕ те саме, що Trainer.certificates -- там зображення
+    # дипломів для публічної сторінки тренера.
+    professional_certificates = db.Column(db.Text)
     phone = db.Column(db.String(30))
     email = db.Column(db.String(255))
     social_links = db.Column(db.Text)

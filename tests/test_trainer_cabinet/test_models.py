@@ -57,6 +57,26 @@ def test_profile_is_complete():
     assert profile.is_complete
 
 
+def test_empty_professional_certificates_does_not_break_completeness():
+    """Анкета без нового поля лишається повною.
+
+    Перевіряємо саме поведінку `is_complete`, а не членство в кортежі
+    REQUIRED_FOR_COMPLETE: тест про кортеж стверджував би про оголошення й
+    мовчки пройшов би, якби повнота рахувалась деінде.
+    """
+    trainer = make_trainer(name='Повний Т.')
+    profile = TrainerProfile(
+        trainer_id=trainer.id, full_name='Повний Т.', phone='+380671234567',
+        email='tc-complete@test.com', fop_iban='UA000000000000000000000000000',
+        fop_rnokpp='1234567890', tax_id='1234567890',
+        registration_address='м. Київ',
+        professional_certificates=None,
+    )
+    db.session.add(profile)
+    db.session.commit()
+    assert profile.is_complete is True
+
+
 def test_mask():
     assert TrainerProfile.mask('') == ''
     assert TrainerProfile.mask('1234567890') == '•••• 7890'
