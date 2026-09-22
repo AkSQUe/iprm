@@ -5,6 +5,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/regalia.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/page-trainer-certificates.css') }}?v={{ assets_version }}">
 {% endblock %}
 
@@ -61,5 +62,31 @@
       {% endif %}
     </div>
   </section>
+
+  <section class="iprm-section" aria-labelledby="own-title">
+    <div class="iprm-section__inner">
+      <h2 id="own-title" class="iprm-section__title">{{ _('Власні сертифікати') }}</h2>
+      <p class="account-card__text">
+        {{ _('Дипломи й посвідчення, які показуються на вашій публічній сторінці тренера. Це не те саме, що поле «Професійні сертифікати» в анкеті: те поле -- текстовий перелік для резюме до реєстру БПР.') }}
+      </p>
+      <form method="post" action="{{ url_for('trainer_cabinet.certificates_save') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="certificates" id="regalia-cert-field"
+               value="{{ trainer.certificates | tojson }}"
+               data-upload-url="{{ url_for('trainer_cabinet.certificate_upload') }}">
+        <div class="regalia-certs__grid" id="regalia-certs-grid"></div>
+        <input type="file" id="regalia-cert-file"
+               accept="image/png,image/jpeg,image/webp,.heic,.heif" multiple hidden>
+        <div class="cabinet-certs-report">
+          <button type="button" id="regalia-cert-add" class="apple-btn apple-btn--outline apple-btn--sm">{{ _('Додати сертифікат') }}</button>
+          <button type="submit" class="apple-btn apple-btn--primary apple-btn--sm">{{ _('Зберегти') }}</button>
+        </div>
+      </form>
+    </div>
+  </section>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/trainer-certificates-editor.js') }}?v={{ assets_version }}" defer></script>
 {% endblock %}

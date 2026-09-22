@@ -472,6 +472,69 @@ def certificates():
     )
 
 
+@trainer_cabinet_bp.route('/certificates', methods=['POST'])
+@trainer_required
+def certificates_save():
+    """Зберегти власні сертифікати-зображення тренера.
+
+    Санітизація -- тим самим trainer_service.sanitize_certificates, що й в
+    адмінці: один санітизатор на обидва входи, тож тренер не може покласти в
+    поле те, чого не може покласти адмін.
+    """
+    import json
+
+    from app.services import trainer_service
+
+    raw = request.form.get('certificates') or '[]'
+    try:
+        items = json.loads(raw)
+    except ValueError:
+        items = []
+    g.trainer.certificates = trainer_service.sanitize_certificates(items)
+    try:
+        db.session.commit()
+    except Exception:
+        logger.exception('Failed to save trainer %s certificates', g.trainer.id)
+        db.session.rollback()
+        flash(_('Помилка при збереженні'), 'error')
+        return redirect(url_for('trainer_cabinet.certificates'))
+    audit_logger.info('Trainer %s updated own certificates (%d items)',
+                      g.trainer.id, len(g.trainer.certificates))
+    flash(_('Сертифікати збережено'), 'success')
+    return redirect(url_for('trainer_cabinet.certificates'))
+
+
+@trainer_cabinet_bp.route('/certificates/upload', methods=['POST'])
+@trainer_required
+def certificate_upload():
+    """Завантажити зображення сертифіката в медіа-реєстр.
+
+    Дзеркало admin.upload_trainer_certificate: той самий виклик і та сама
+    відповідь, інша лише перевірка доступу.
+    """
+    from app.services import media_service
+
+    media, error = media_service.create_from_upload(
+        request.files.get('file'), entity_type=None, entity_id=None,
+        usage_type='certificate', uploader_id=current_user.id,
+    )
+    if error:
+        return jsonify({'error': error}), 400
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        logger.exception('Failed to persist trainer certificate upload')
+        return jsonify({'error': 'Помилка збереження'}), 500
+    audit_logger.info('Trainer %s uploaded certificate (media %s)',
+                      g.trainer.id, media.id)
+    return jsonify({
+        'url': media.url, 'thumb': media.variant_url('thumb'),
+        'card': media.variant_url('card'), 'media_id': media.id,
+        'width': media.width, 'height': media.height,
+    }), 200
+
+
 @trainer_cabinet_bp.route('/certificates/<int:cert_id>/download')
 @trainer_required
 def certificate_download(cert_id):

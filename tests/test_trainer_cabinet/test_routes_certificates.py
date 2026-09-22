@@ -1,4 +1,6 @@
 """Розділ сертифікатів у кабінеті тренера."""
+import io
+import json
 from itertools import count
 
 import pytest
@@ -110,3 +112,72 @@ def test_report_error_on_foreign_certificate_is_404(client):
     resp = client.post(f'/trainer/certificates/{foreign.id}/report',
                        data={'message': 'X'})
     assert resp.status_code == 404
+
+
+# --- власні сертифікати (редагування тренером) --------------------------
+
+
+def test_trainer_saves_own_regalia(client):
+    user = make_user()
+    trainer = make_trainer(user, name='Регалійний Т.')
+    login(client, user)
+    payload = json.dumps([
+        {'url': '/media/2026/06/a.webp', 'thumb': '/media/2026/06/a.webp',
+         'caption': 'Диплом'},
+    ])
+    resp = client.post('/trainer/certificates',
+                       data={'certificates': payload}, follow_redirects=True)
+    assert resp.status_code == 200
+    db.session.refresh(trainer)
+    assert len(trainer.certificates) == 1
+    assert trainer.certificates[0]['caption'] == 'Диплом'
+
+
+def test_save_rejects_invalid_url(client):
+    user = make_user()
+    trainer = make_trainer(user, name='Невалідний Т.')
+    login(client, user)
+    payload = json.dumps([{'url': 'javascript:alert(1)', 'caption': 'X'}])
+    client.post('/trainer/certificates', data={'certificates': payload},
+                follow_redirects=True)
+    db.session.refresh(trainer)
+    assert trainer.certificates == []
+
+
+def test_upload_requires_trainer_card(client):
+    login(client, make_user())
+    resp = client.post('/trainer/certificates/upload', data={
+        'file': (io.BytesIO(b'x'), 'a.png')})
+    assert resp.status_code == 404
+
+
+def test_removing_item_clears_it_from_public_page(client):
+    """Кабінет і публічна сторінка читають одне сховище, не два."""
+    user = make_user()
+    trainer = make_trainer(user, name='Прибиральний Т.')
+    trainer.certificates = [
+        {'url': '/media/2026/06/a.webp', 'thumb': '/media/2026/06/a.webp',
+         'caption': 'Диплом'},
+    ]
+    db.session.commit()
+    login(client, user)
+    client.post('/trainer/certificates', data={'certificates': '[]'},
+                follow_redirects=True)
+    db.session.refresh(trainer)
+    assert trainer.certificates == []
+
+
+def test_trainer_cannot_write_foreign_certificates(client):
+    user = make_user()
+    make_trainer(user, name='Свій Т.')
+    foreign = make_trainer(name='Чужий Т. 4')
+    foreign.certificates = [
+        {'url': '/media/2026/06/b.webp', 'thumb': '/media/2026/06/b.webp',
+         'caption': 'Чуже'},
+    ]
+    db.session.commit()
+    login(client, user)
+    client.post('/trainer/certificates', data={'certificates': '[]'},
+                follow_redirects=True)
+    db.session.refresh(foreign)
+    assert len(foreign.certificates) == 1

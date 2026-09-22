@@ -1,6 +1,10 @@
-/* Редактор регалій тренера (admin): сертифікати-зображення + повторювані
-   списки посилань (патенти, статті). Серіалізує у приховані JSON-поля.
-   Сервер усе одно санітизує -- тут лише зручність. Без зовнішніх залежностей. */
+/* Редактор регалій тренера (admin): повторювані списки посилань (патенти,
+   статті), опційно зі сканами зображень (патенти). Серіалізує у приховані
+   JSON-поля. Сервер усе одно санітизує -- тут лише зручність. Без зовнішніх
+   залежностей.
+   Блок сертифікатів-зображень (той самий регістр .regalia-cert*) винесено в
+   trainer-certificates-editor.js -- його бере і ця сторінка, і кабінет
+   тренера, тож копії тут більше нема: правка редактора доходить до обох. */
 (function() {
   'use strict';
 
@@ -26,72 +30,6 @@
     var nameEl = document.getElementById('full_name');
     function getSlug() {
       return (slugEl && slugEl.value.trim()) || (nameEl && nameEl.value.trim()) || 'trainer';
-    }
-
-    // ---- Сертифікати (зображення) ----
-    var certField = document.getElementById('regalia-cert-field');
-    var grid = document.getElementById('regalia-certs-grid');
-    var fileInput = document.getElementById('regalia-cert-file');
-    var addBtn = document.getElementById('regalia-cert-add');
-    if (certField && grid && fileInput && addBtn) {
-      var certs = parse(certField.value);
-      var dragFrom = null;
-      var sync = function() { certField.value = JSON.stringify(certs); };
-      var render = function() {
-        grid.innerHTML = '';
-        certs.forEach(function(c, i) {
-          var img = el('img', {'class': 'iprm-img-cover', src: c.thumb || c.url, alt: '', draggable: 'false'});
-          var rm = el('button', {type: 'button', 'class': 'regalia-cert__remove', title: 'Видалити'}, [icon('close')]);
-          rm.addEventListener('click', function() { certs.splice(i, 1); render(); sync(); });
-          var cap = el('input', {'class': 'form-input regalia-cert__cap', type: 'text', placeholder: 'Підпис (необовʼязково)'});
-          cap.value = c.caption || '';
-          cap.addEventListener('input', function() { c.caption = cap.value; sync(); });
-          // Перетягуємо за мініатюру (поле підпису лишається редагованим).
-          var thumb = el('div', {'class': 'regalia-cert__thumb', draggable: 'true', title: 'Перетягніть, щоб змінити порядок'}, [img, rm]);
-          thumb.addEventListener('dragstart', function(e) {
-            dragFrom = i; thumb.classList.add('regalia-cert__thumb--drag');
-            if (e.dataTransfer) { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', String(i)); }
-          });
-          thumb.addEventListener('dragend', function() { thumb.classList.remove('regalia-cert__thumb--drag'); dragFrom = null; });
-          thumb.addEventListener('dragover', function(e) { e.preventDefault(); if (e.dataTransfer) e.dataTransfer.dropEffect = 'move'; });
-          thumb.addEventListener('drop', function(e) {
-            e.preventDefault();
-            if (dragFrom === null || dragFrom === i) return;
-            var moved = certs.splice(dragFrom, 1)[0];
-            certs.splice(i, 0, moved);
-            render(); sync();
-          });
-          grid.appendChild(el('div', {'class': 'regalia-cert'}, [thumb, cap]));
-        });
-      };
-      render();
-      addBtn.addEventListener('click', function() { fileInput.click(); });
-      fileInput.addEventListener('change', function() {
-        Array.prototype.slice.call(fileInput.files).forEach(uploadCert);
-        fileInput.value = '';
-      });
-      var uploadCert = function(file) {
-        if (file.size > 25 * 1024 * 1024) { notify('Максимальний розмір: 25 MB'); return; }
-        var fd = new FormData();
-        fd.append('file', file);
-        fd.append('slug', getSlug());
-        if (csrf) fd.append('csrf_token', csrf);
-        addBtn.disabled = true;
-        fetch('/admin/upload/trainer-certificate', {method: 'POST', body: fd})
-          .then(function(r) {
-            if (r.status === 413) { notify('Файл завеликий (макс. 25 MB)'); return null; }
-            return r.json().then(function(d) { return {ok: r.ok, d: d}; }, function() {
-              notify('Неочікувана відповідь сервера (код ' + r.status + ')'); return null;
-            });
-          })
-          .then(function(res) {
-            if (!res) return;
-            if (res.ok) { certs.push({url: res.d.url, thumb: res.d.thumb, card: res.d.card, media_id: res.d.media_id, caption: ''}); render(); sync(); }
-            else notify(res.d.error || 'Помилка завантаження');
-          })
-          .catch(function() { notify('Помилка мережі'); })
-          .then(function() { addBtn.disabled = false; });
-      };
     }
 
     // ---- Повторювані списки посилань (патенти, статті) ----

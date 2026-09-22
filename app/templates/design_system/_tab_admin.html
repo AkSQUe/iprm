@@ -665,6 +665,33 @@
       </table>
     </div>
 
+    <h3 class="ds-section-heading">Регалії тренера (сертифікати, патенти)</h3>
+    <div class="ds-demo">
+      <div class="regalia-certs__grid">
+        <div class="regalia-cert">
+          <div class="regalia-cert__thumb">
+            <img class="iprm-img-cover" alt="">
+            <button type="button" class="regalia-cert__remove" title="Видалити">{{ icon('close') }}</button>
+          </div>
+          <input class="form-input regalia-cert__cap" type="text" placeholder="Підпис (необовʼязково)">
+        </div>
+      </div>
+      <div class="regalia-links__rows">
+        <div class="regalia-link regalia-link--img">
+          <div class="regalia-link__thumb">
+            <img class="regalia-link__thumb-img iprm-img-cover" alt="">
+            <button type="button" class="regalia-link__upload">{{ icon('add_photo_alternate') }}</button>
+          </div>
+          <input class="form-input regalia-link__label" type="text" placeholder="Назва" value="Патент на спосіб ін'єкції">
+          <input class="form-input regalia-link__url" type="url" placeholder="https://...">
+          <button type="button" class="regalia-link__move" title="Вгору">{{ icon('keyboard_arrow_up') }}</button>
+          <button type="button" class="regalia-link__move" title="Вниз">{{ icon('keyboard_arrow_down') }}</button>
+          <button type="button" class="regalia-link__remove" title="Видалити">{{ icon('close') }}</button>
+        </div>
+      </div>
+    </div>
+    <p class="ds-hint">regalia.css: .regalia-cert* -- сітка сертифікатів-зображень із перетягуванням і підписом, .regalia-link* -- рядок посилання з опційним сканом (патенти). JS -- trainer-certificates-editor.js (сертифікати; спільний з кабінетом тренера) і admin-trainer-regalia.js (патенти, статті).</p>
+
     <h3 class="ds-section-heading">Не показується</h3>
     <div class="ds-demo">
       <table class="admin-table">
