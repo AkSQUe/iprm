@@ -64,11 +64,18 @@
     qty.value = '1';
     row.appendChild(qty);
 
+    /* Серверні рядки мають і переклад, і aria-label ("Прибрати: <назва>") --
+       JS-додані мусять поводитись так само, а не давати голий символ без
+       доступного імені. Мітка -- з data-remove-label на полі пошуку
+       (проставлена шаблоном через `_()`), а не хардкод тут. */
+    var removeLabel = search.getAttribute('data-remove-label') || '×';
+    var itemName = item.name || item.sku;
     var remove = document.createElement('button');
     remove.type = 'button';
     remove.className = 'apple-btn apple-btn--secondary apple-btn--sm';
     remove.setAttribute('data-remove-row', '');
-    remove.textContent = search.getAttribute('data-remove-label') || '×';
+    remove.setAttribute('aria-label', removeLabel + ': ' + itemName);
+    remove.textContent = removeLabel;
     row.appendChild(remove);
 
     body.appendChild(row);
