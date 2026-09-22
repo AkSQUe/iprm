@@ -719,3 +719,205 @@ def test_repeat_approval_of_the_same_request_sends_once(app, instance,
         mrq.approve(instance, res)
 
     assert len(calls) == 1
+
+
+# --------------------- admin routes: approve/return/reject (Task 7) ---------------------
+
+def _admin_csrf(client):
+    """CSRF вимкнено в тестовій конфігурації (`TestingConfig.WTF_CSRF_ENABLED
+    = False`, config.py) -- токен не перевіряється. Поле лишаємо в POST-даних
+    для симетрії зі справжньою формою, а не тому, що без нього запит падає."""
+    return 'test-csrf-token'
+
+
+@pytest.fixture
+def viewer_user(app):
+    """Користувач із роллю, що має лише `materials.view` -- не `.manage`.
+
+    Роль 'viewer' сама матеріалів не бачить узагалі (реєстр модулів свідомо
+    виключає 'materials' з groups цієї ролі). 'manager' -- та роль, що дає
+    рівно перегляд заявок без керування ними (продажі: реєстрації, заявки,
+    матеріали лише подивитись).
+    """
+    user = User.create_with_password(
+        f'materials-viewer-{uuid4().hex[:8]}@test.com', 'password123',
+        first_name='V', last_name='R', email_confirmed=True,
+    )
+    grant_role(user, 'manager')
+    db.session.commit()
+    yield user
+    db.session.delete(user)
+    db.session.commit()
+
+
+@pytest.fixture
+def pending_request(app, instance, trainer_user):
+    """Заявка тренера на перевірці -- зібрана через material_request_service,
+    як чернетка з двома рядками (`_draft`), надіслана `mrq.submit`."""
+    from app.services import material_request_service as mrq
+
+    res = _draft(instance, trainer_user)
+    mrq.submit(res, trainer_user)
+    return res
+
+
+def test_approve_route_requires_materials_manage(client, viewer_user, instance,
+                                                  pending_request):
+    _login(client, viewer_user)  # має лише materials.view
+    response = client.post(f'/admin/instances/{instance.id}/materials/approve',
+                           data={'csrf_token': _admin_csrf(client)})
+    assert response.status_code in (302, 403)
+
+
+def test_return_route_requires_materials_manage(client, viewer_user, instance,
+                                                 pending_request):
+    _login(client, viewer_user)
+    response = client.post(f'/admin/instances/{instance.id}/materials/return',
+                           data={'csrf_token': _admin_csrf(client), 'comment': 'x'})
+    assert response.status_code in (302, 403)
+
+
+def test_reject_route_requires_materials_manage(client, viewer_user, instance,
+                                                 pending_request):
+    _login(client, viewer_user)
+    response = client.post(f'/admin/instances/{instance.id}/materials/reject',
+                           data={'csrf_token': _admin_csrf(client), 'comment': 'x'})
+    assert response.status_code in (302, 403)
+
+
+def test_return_route_refuses_an_empty_reason(client, admin_user, instance,
+                                              pending_request):
+    from app.models.material_reservation import MaterialReservationStatus as S
+
+    _login(client, admin_user)
+    client.post(f'/admin/instances/{instance.id}/materials/return',
+                data={'csrf_token': _admin_csrf(client), 'comment': '   '},
+                follow_redirects=True)
+
+    db.session.refresh(pending_request)
+    assert pending_request.status == S.PENDING_REVIEW
+
+
+def test_reject_route_refuses_an_empty_reason(client, admin_user, instance,
+                                              pending_request):
+    from app.models.material_reservation import MaterialReservationStatus as S
+
+    _login(client, admin_user)
+    client.post(f'/admin/instances/{instance.id}/materials/reject',
+                data={'csrf_token': _admin_csrf(client), 'comment': '   '},
+                follow_redirects=True)
+
+    db.session.refresh(pending_request)
+    assert pending_request.status == S.PENDING_REVIEW
+
+
+def test_return_route_mails_the_trainer(client, admin_user, instance,
+                                        pending_request, monkeypatch):
+    from app.models.material_reservation import MaterialReservationStatus as S
+    from app.services.email_service import EmailService
+
+    mailed = []
+    monkeypatch.setattr(
+        EmailService, 'send_material_request_decision',
+        staticmethod(lambda res, inst, decision: mailed.append(decision)))
+    _login(client, admin_user)
+
+    client.post(f'/admin/instances/{instance.id}/materials/return',
+                data={'csrf_token': _admin_csrf(client),
+                      'comment': 'Забули серветки'},
+                follow_redirects=True)
+
+    db.session.refresh(pending_request)
+    assert pending_request.status == S.RETURNED
+    assert mailed == ['returned']
+
+
+def test_reject_route_mails_the_trainer(client, admin_user, instance,
+                                        pending_request, monkeypatch):
+    from app.models.material_reservation import MaterialReservationStatus as S
+    from app.services.email_service import EmailService
+
+    mailed = []
+    monkeypatch.setattr(
+        EmailService, 'send_material_request_decision',
+        staticmethod(lambda res, inst, decision: mailed.append(decision)))
+    _login(client, admin_user)
+
+    client.post(f'/admin/instances/{instance.id}/materials/reject',
+                data={'csrf_token': _admin_csrf(client),
+                      'comment': 'Захід не потребує матеріалів'},
+                follow_redirects=True)
+
+    db.session.refresh(pending_request)
+    assert pending_request.status == S.REJECTED
+    assert mailed == ['rejected']
+
+
+def test_approve_route_saves_edited_quantities_before_approving(client, admin_user,
+                                                                 instance,
+                                                                 pending_request,
+                                                                 monkeypatch):
+    """Таблиця заявки лишається редагованою на `pending_review`: кнопка
+    "Погодити й надіслати" -- зовнішня кнопка ТІЄЇ Ж форми (`form=
+    "materialsForm"`), тож edit кількостей іде в ОДНОМУ POST разом із
+    рішенням. `approve()` будує items із `reservation.items`, тож правка
+    мусить лягти в БД ДО виклику approve()."""
+    from app.models.material_reservation import MaterialReservationStatus as S
+    from app.services import material_request_service as mrq
+
+    sent = {}
+
+    class _Ok:
+        ok = True
+        data = {'reservation': {'items': []}}
+
+    def _fake_submit_request(inst, items):
+        sent['items'] = items
+        pending_request.status = S.SUBMITTED
+        return True, _Ok(), pending_request
+
+    monkeypatch.setattr(mrq.mrs, 'submit_request', _fake_submit_request)
+    _login(client, admin_user)
+
+    client.post(
+        f'/admin/instances/{instance.id}/materials/approve',
+        data={'csrf_token': _admin_csrf(client),
+              'sku': ['NEEDLE-30G', 'TUBE-VAC'],
+              'quantity': ['20', '24']},
+        follow_redirects=True,
+    )
+
+    db.session.refresh(pending_request)
+    assert pending_request.status == S.SUBMITTED
+    assert sorted(sent['items'], key=lambda i: i['sku']) == [
+        {'sku': 'NEEDLE-30G', 'quantity': 20},
+        {'sku': 'TUBE-VAC', 'quantity': 24},
+    ]
+
+
+def test_approve_route_keeps_pending_review_when_partner_fails(client, admin_user,
+                                                                instance,
+                                                                pending_request,
+                                                                monkeypatch):
+    from app.models.material_reservation import MaterialReservationStatus as S
+    from app.services import material_request_service as mrq
+
+    class _Fail:
+        # `error` -- поле справжнього MMResult (mm_medic_client.py), яке
+        # `_flash_result_error` читає безумовно; на службовому рівні
+        # (test_approve_keeps_pending_review_when_partner_fails) до нього не
+        # доходить -- туди немає роуту, -- а тут доходить.
+        ok = False
+        data = {'status': 'stock_shortfall'}
+        error = None
+
+    monkeypatch.setattr(mrq.mrs, 'submit_request',
+                        lambda inst, items: (False, _Fail(), None))
+    _login(client, admin_user)
+
+    client.post(f'/admin/instances/{instance.id}/materials/approve',
+                data={'csrf_token': _admin_csrf(client)},
+                follow_redirects=True)
+
+    db.session.refresh(pending_request)
+    assert pending_request.status == S.PENDING_REVIEW

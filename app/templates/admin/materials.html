@@ -9,10 +9,13 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-materials.css') }}?v={{ assets_version }}">
 {% endblock %}
 
-{# Режими: reserve/update/edit -- у полі КІЛЬКІСТЬ до замовлення;
+{# Режими: reserve/update/edit/review -- у полі КІЛЬКІСТЬ до замовлення;
    actuals -- ФАКТ після заходу; view -- лише читання, документом керує
-   MM Medic (видача комірником, вона ж дає собівартість). #}
-{% set qty_mode = mode in ['reserve', 'edit', 'update'] %}
+   MM Medic (видача комірником, вона ж дає собівартість). `review` --
+   заявка тренера (pending_review/returned): документа на MM Medic ще
+   немає, кількості лишаються редагованими -- відповідальний править їх
+   прямо тут перед погодженням. #}
+{% set qty_mode = mode in ['reserve', 'edit', 'update', 'review'] %}
 {% set readonly = mode == 'view' %}
 {% set input_name = 'quantity' if qty_mode else 'actual' %}
 {# У readonly (view) немає ні кнопки сабміту, ні поля вводу всередині --
@@ -29,6 +32,12 @@
 {% elif mode == 'edit' %}
   {% set form_action = url_for('admin.instance_materials_edit', instance_id=instance.id) %}
   {% set submit_label = 'Зберегти зміни' %}
+{% elif mode == 'review' %}
+  {# Погодження живе в блоці рішення нижче (кнопка поза цією формою,
+     `form="materialsForm"`), а не тут -- саме тому нижній стандартний
+     submit-кнопки цей режим не показує (див. admin-form__actions). #}
+  {% set form_action = url_for('admin.instance_materials_approve', instance_id=instance.id) %}
+  {% set submit_label = 'Погодити й надіслати' %}
 {% elif is_consumed %}
   {% set form_action = url_for('admin.instance_materials_adjust', instance_id=instance.id) %}
   {% set submit_label = 'Зберегти коригування' %}
@@ -97,6 +106,61 @@
   </div>
   {% elif trainer_url and not reservation.trainer_confirmed_at %}
   <p class="materials-summary__hint">Тренер ще не підтвердив перелік.</p>
+  {% endif %}
+
+  {# Заявка з кабінету тренера чекає рішення (pending_review) або вже
+     повернута на доопрацювання (returned): статус і бейдж уже видно вище,
+     у `.materials-history`, тут -- лише те, чого там немає: коли подано,
+     ким, і, якщо заявку вже повертали, чому. Дії -- рівно для
+     pending_review: повернуту заявку доопрацьовує тренер, відповідальному
+     тут нема що натискати, доки вона не прийде знову. #}
+  {% if reservation.status in ['pending_review', 'returned'] %}
+  <section class="materials-request-review">
+    <h2 class="iprm-block-title">{{ _('Заявка тренера') }}</h2>
+    <p>
+      {{ _('Подано') }}:
+      {{ reservation.trainer_submitted_at.strftime('%d.%m.%Y %H:%M') if reservation.trainer_submitted_at else '—' }}
+      {%- if reservation.created_by %} &middot; {{ reservation.created_by.full_name or reservation.created_by.email }}{% endif %}
+    </p>
+    {% if reservation.review_comment %}
+    <div class="alert alert--warning">
+      {{ icon('error') }}
+      <strong class="alert__title">{{ _('Коментар при поверненні') }}:</strong>
+      {{ reservation.review_comment }}
+    </div>
+    {% endif %}
+
+    {% if reservation.status == 'pending_review' %}
+    <div class="materials-request-review__actions">
+      {# Не окрема форма: та сама таблиця нижче (id="materialsForm") --
+         відповідальний міг щойно доправити кількості, і вони мають піти
+         РАЗОМ із погодженням, а не загубитись. Патерн зовнішньої кнопки
+         (form="…") -- той самий, що в липкій панелі оплати на реєстрації
+         (form-single-submit.js його вже враховує). #}
+      <button type="submit" form="materialsForm"
+              formaction="{{ url_for('admin.instance_materials_approve', instance_id=instance.id) }}"
+              class="btn-admin btn-admin--primary">
+        {{ icon('send') }} {{ _('Погодити й надіслати') }}
+      </button>
+
+      <form method="post" class="materials-request-review__form"
+            action="{{ url_for('admin.instance_materials_return', instance_id=instance.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="text" name="comment" class="form-input" required
+               placeholder="{{ _('Що виправити') }}">
+        <button type="submit" class="btn-admin btn-admin--secondary">{{ _('Повернути тренеру') }}</button>
+      </form>
+
+      <form method="post" class="materials-request-review__form"
+            action="{{ url_for('admin.instance_materials_reject', instance_id=instance.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="text" name="comment" class="form-input" required
+               placeholder="{{ _('Причина відхилення') }}">
+        <button type="submit" class="btn-admin btn-admin--danger">{{ _('Відхилити') }}</button>
+      </form>
+    </div>
+    {% endif %}
+  </section>
   {% endif %}
   {% endif %}
 
@@ -284,7 +348,12 @@
 
     <div class="admin-form__actions">
       <a href="{{ url_for('admin.instances_list') }}" class="btn-admin btn-admin--secondary">Назад</a>
-      {% if qty_mode %}
+      {% if mode == 'review' %}
+      {# Кнопки рішення -- у блоці "Заявка тренера" вище; "Погодити й
+         надіслати" там -- зовнішня кнопка САМЕ цієї форми (form="materialsForm"),
+         тож другої, тут, не треба -- дві кнопки з однаковою дією заплутали б
+         більше, ніж допомогли. #}
+      {% elif qty_mode %}
       <button type="submit" class="btn-admin btn-admin--primary">{{ icon('send') }} {{ submit_label }}</button>
       {% elif readonly %}
       {# Списання документа -- це видача комірником на боці MM Medic: саме вона

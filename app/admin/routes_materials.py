@@ -22,6 +22,7 @@ from app.models.material_reservation import (
     MaterialReservation, MaterialReservationStatus,
 )
 from app.services import material_reservation_service as mrs
+from app.services import material_request_service as mrq
 from app.services import xlsx_io
 from app.services.mm_medic_client import MMConfigError
 
@@ -81,8 +82,8 @@ def _load_catalog(consumable=False, search=None):
 
 def _build_rows(catalog, reservation, prefill, mode):
     """Build display rows. `mode` chooses the input value:
-    reserve/edit -> quantity to reserve; update -> quantity asked for in the
-    still-unapproved request; actuals -> quantity actually used.
+    reserve/edit -> quantity to reserve; update/review -> quantity asked for
+    in the still-unapproved request; actuals -> quantity actually used.
 
     `view` -- читання документа, яким керує MM Medic: тут показуються ЛИШЕ
     рядки самої заявки. Каталог у сотню позицій без жодного поля вводу -- це
@@ -100,9 +101,12 @@ def _build_rows(catalog, reservation, prefill, mode):
             return prefill[sku]
         if mode == 'actuals':
             return actual.get(sku)
-        if mode == 'update':
+        if mode in ('update', 'review'):
             # Поданої заявки `quantity_reserved` не стосується (утримань ще
-            # немає), тому в полі стоїть саме запитане.
+            # немає), тому в полі стоїть саме запитане. `review` -- та сама
+            # заявка тренера, лише ДО відправлення на MM Medic (pending_review
+            # / returned): їй нема звідки взяти `quantity_reserved`, і читати
+            # звідти тут можна лише як фолбек, що ніколи не спрацює.
             value = requested.get(sku)
             return value if value is not None else reserved.get(sku)
         if mode == 'edit':
@@ -208,7 +212,17 @@ _OPEN_STATUSES = (
 )
 
 #: Режими, у яких у полі вводиться КІЛЬКІСТЬ до замовлення (а не факт).
-_QTY_MODES = ('reserve', 'edit', 'update')
+_QTY_MODES = ('reserve', 'edit', 'update', 'review')
+
+#: Локальні стани заявки тренера -- документа на MM Medic для них ще НЕМАЄ,
+#: тож дії тут не рухають нічого партнерського, лише local review-цикл
+#: (material_request_service). Дзеркалить `MaterialReservationStatus.LOCAL_STATES`
+#: мінус DRAFT: чернетка ще не подана й на цю сторінку відповідального не
+#: виводиться окремим режимом.
+_REVIEW_STATUSES = (
+    MaterialReservationStatus.PENDING_REVIEW,
+    MaterialReservationStatus.RETURNED,
+)
 
 #: Що ІПРМ каже, коли дію виконує MM Medic, а не ми.
 _DOCUMENT_OWNED = ('Цією заявкою керує документ MM Medic: видачу, повернення '
@@ -289,6 +303,7 @@ def instance_materials(instance_id):
     is_reserved = status == MaterialReservationStatus.RESERVED
     is_consumed = status == MaterialReservationStatus.CONSUMED
     is_mm_document = bool(reservation) and reservation.is_mm_document
+    is_review = status in _REVIEW_STATUSES
 
     # РЕЖИМ ОБИРАЄТЬСЯ ЗА ТИМ, ЩО З ДОКУМЕНТОМ МОЖНА ЗРОБИТИ, А НЕ ЗА ОДНИМ
     # СТАТУСОМ.
@@ -306,6 +321,15 @@ def instance_materials(instance_id):
     # Тепер: поданий документ ведеться правкою (`update_request_items`),
     # усе, чим керує MM Medic, показується лише для читання, а подання
     # доступне рівно тоді, коли відкритої заявки немає.
+    #
+    # `is_review` (pending_review/returned) -- ДОКУМЕНТА на MM Medic ще
+    # немає, тож без окремої гілки статус провалювався б у `else: mode =
+    # 'reserve'`: кількості показувались би ПОРОЖНІМИ (```_value()``` для
+    # reserve стартує з нуля, не з `quantity_requested` тренера), а кнопка
+    # "Подати на погодження" вела б на `/materials/reserve`, який шле заявку
+    # на MM Medic НАПРЯМУ, в обхід щойно доданого погодження. Гілка нижче
+    # тому стоїть ПЕРЕД `else`, окремо від `_OPEN_STATUSES` (ті -- живий
+    # документ на MM Medic, тут -- локальний стан, якого там ще нема).
     edit = bool(request.args.get('edit')) and is_reserved and not is_mm_document
     adjust = bool(request.args.get('adjust')) and is_consumed and not is_mm_document
     if is_submitted:
@@ -320,6 +344,8 @@ def instance_materials(instance_id):
         mode = 'actuals'
     elif status in _OPEN_STATUSES:
         mode = 'view'        # відкрита заявка, але не наша -- лише читання
+    elif is_review:
+        mode = 'review'      # заявка тренера чекає рішення відповідального
     else:
         mode = 'reserve'
 
@@ -383,6 +409,15 @@ def instance_materials_reserve(instance_id):
         return redirect(url_for('admin.instances_list'))
 
     reservation = mrs.get_reservation(instance_id)
+    # Заявку тренера (pending_review/returned) цей роут не приймає: вона ще
+    # локальна, документа на MM Medic під нею немає, і пряме подання звідси
+    # обійшло б щойно додане погодження -- сторінка більше на цей роут не
+    # веде (кнопка тепер `/materials/approve`), але прямий POST лишається
+    # технічно можливим, і без гейту тут він пройшов би.
+    if reservation and reservation.status in _REVIEW_STATUSES:
+        flash('Заявку тренера ще не погоджено. Скористайтесь кнопками нижче.',
+              'error')
+        return _redirect_page(instance_id)
     # Гейт за «відкрита заявка вже існує», а не за одним статусом. Подання на
     # живий документ MM Medic ідемпотентне: воно поверне його БЕЗ ЗМІН, і
     # єдиним наслідком буде повідомлення про успіх, якого не було. Для
@@ -617,6 +652,113 @@ def instance_materials_cancel(instance_id):
         flash('Резервування скасовано, залишки повернено на склад MM Medic', 'success')
     else:
         _flash_result_error(result)
+    return _redirect_page(instance_id)
+
+
+# ---------------------------------------------------------------------------
+# Trainer request review: approve / return / reject
+# ---------------------------------------------------------------------------
+
+def _decision_reservation(instance_id):
+    """Заявка цього заходу, придатна для рішення, або None (роут сам редіректить)."""
+    reservation = mrs.get_reservation(instance_id)
+    if reservation is None:
+        flash('Заявки на цей захід немає', 'warning')
+        return None
+    return reservation
+
+
+def _notify_decision(reservation, instance, decision):
+    """Лист тренеру. Best-effort: рішення вже збережене, і збій пошти його
+    не скасовує."""
+    from app.services.email_service import EmailService
+    try:
+        EmailService.send_material_request_decision(reservation, instance, decision)
+    except Exception:
+        logger.exception('Не вдалося сповістити тренера про рішення %s по %s',
+                         decision, reservation.external_ref)
+
+
+@admin_bp.route('/instances/<int:instance_id>/materials/approve', methods=['POST'])
+@permission_required('materials.manage')
+def instance_materials_approve(instance_id):
+    """Погодити заявку тренера й надіслати її на MM Medic.
+
+    Таблиця позицій на сторінці лишається редагованою, поки заявка на
+    перевірці (`mode == 'review'`): відповідальний може доправити кількості
+    прямо там, без кола через тренера. Кнопка "Погодити й надіслати" -- це
+    ЗОВНІШНЯ кнопка тієї ж форми (`form="materialsForm"`, той самий патерн,
+    що й липка панель оплати на реєстрації -- form-single-submit.js), тож
+    edit підуть разом із рішенням в ОДНОМУ POST. `_items_from_form` тут же
+    використовує решта режимів сторінки; `save_items` -- та сама функція,
+    що пише правки тренера (Task 2/6), лише викликана від імені
+    відповідального.
+
+    Далі працює наявний ланцюг: документ на MM Medic, лист комірнику з
+    пікінг-листом, погодження складом, видача, фактичні. Комірник отримує
+    лише перевірене -- у цьому й сенс кнопки.
+    """
+    instance = _get_instance(instance_id)
+    if not instance:
+        return redirect(url_for('admin.instances_list'))
+    reservation = _decision_reservation(instance_id)
+    if reservation is None:
+        return _redirect_page(instance_id)
+
+    items = _items_from_form('quantity')
+    if items:
+        mrq.save_items(reservation, items)
+
+    try:
+        ok, result = mrq.approve(instance, reservation)
+    except mrq.RequestTransitionError as exc:
+        flash(str(exc), 'warning')
+        return _redirect_page(instance_id)
+    if not ok:
+        _flash_result_error(result)
+        return _redirect_page(instance_id)
+    _notify_decision(reservation, instance, 'approved')
+    flash('Заявку погоджено й надіслано на склад', 'success')
+    return _redirect_page(instance_id)
+
+
+@admin_bp.route('/instances/<int:instance_id>/materials/return', methods=['POST'])
+@permission_required('materials.manage')
+def instance_materials_return(instance_id):
+    """Повернути заявку тренеру на доопрацювання з коментарем -- чому саме."""
+    instance = _get_instance(instance_id)
+    if not instance:
+        return redirect(url_for('admin.instances_list'))
+    reservation = _decision_reservation(instance_id)
+    if reservation is None:
+        return _redirect_page(instance_id)
+    try:
+        mrq.return_to_trainer(reservation, request.form.get('comment'), current_user)
+    except mrq.RequestTransitionError as exc:
+        flash(str(exc), 'warning')
+        return _redirect_page(instance_id)
+    _notify_decision(reservation, instance, 'returned')
+    flash('Заявку повернуто тренеру', 'success')
+    return _redirect_page(instance_id)
+
+
+@admin_bp.route('/instances/<int:instance_id>/materials/reject', methods=['POST'])
+@permission_required('materials.manage')
+def instance_materials_reject(instance_id):
+    """Відхилити заявку остаточно -- захід матеріалів не потребує."""
+    instance = _get_instance(instance_id)
+    if not instance:
+        return redirect(url_for('admin.instances_list'))
+    reservation = _decision_reservation(instance_id)
+    if reservation is None:
+        return _redirect_page(instance_id)
+    try:
+        mrq.reject(reservation, request.form.get('comment'), current_user)
+    except mrq.RequestTransitionError as exc:
+        flash(str(exc), 'warning')
+        return _redirect_page(instance_id)
+    _notify_decision(reservation, instance, 'rejected')
+    flash('Заявку відхилено', 'success')
     return _redirect_page(instance_id)
 
 

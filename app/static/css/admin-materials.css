@@ -161,6 +161,34 @@
   font-size: 0.85em;
 }
 
+/* Блок рішення відповідального над заявкою тренера (pending_review/
+   returned): погодити-й-надіслати, повернути, відхилити. Layout-обгортка
+   лише -- декор (плашка коментаря, кнопки, бейдж) бере `.alert`/
+   `.btn-admin`/`.badge` дизайн-системи, як і решта сторінки. */
+.materials-request-review {
+  margin-bottom: 16px;
+}
+
+.materials-request-review__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-top: 10px;
+}
+
+/* Форми "Повернути"/"Відхилити" -- поле коментаря впритул до кнопки, в один
+   рядок із кнопкою погодження. */
+.materials-request-review__form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.materials-request-review__form .form-input {
+  width: 220px;
+}
+
 /* ==========================================================================
    Тёмна тема: підказки
    ========================================================================== */
