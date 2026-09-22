@@ -70,3 +70,35 @@ def test_issued_certificates_start_unsent(app):
     inst, _ = _completed_instance(trainers=1)
     issued = lc_svc.issue_for_instance(inst)
     assert issued[0].emailed_at is None
+
+
+def test_missing_provider_number_issues_nothing_and_notifies_admins(app):
+    inst, _ = _completed_instance(trainers=2)
+    SiteSettings.get().bpr_provider_number = ''
+    db.session.commit()
+    with patch(
+        'app.services.email_service.EmailService'
+        '.notify_lecturer_certificate_failed'
+    ) as notify:
+        issued = lc_svc.issue_for_instance(inst)
+    assert issued == []
+    assert LecturerCertificate.query.filter_by(instance_id=inst.id).count() == 0
+    assert notify.called
+    reason = notify.call_args.args[1]
+    assert 'провайдера' in reason
+
+
+def test_missing_event_number_issues_nothing_and_notifies_admins(app):
+    inst, made = _completed_instance(trainers=2)
+    inst.course.bpr_event_number = ''
+    db.session.commit()
+    with patch(
+        'app.services.email_service.EmailService'
+        '.notify_lecturer_certificate_failed'
+    ) as notify:
+        issued = lc_svc.issue_for_instance(inst)
+    assert issued == []
+    assert LecturerCertificate.query.filter_by(instance_id=inst.id).count() == 0
+    assert notify.called
+    reason = notify.call_args.args[1]
+    assert 'заходу' in reason
