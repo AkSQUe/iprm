@@ -75,6 +75,12 @@ class LecturerCertificate(TimestampMixin, db.Model):
         db.BigInteger, db.ForeignKey('users.id', ondelete='SET NULL'),
     )
 
+    # Момент, коли сертифікат пішов тренеру листом. NULL = «видано, лист ще
+    # не пішов»: саме цей стан дає джобі чергу на розсилку й робить
+    # невідправлений лист видимим. Без колонки лист, що не пішов через
+    # недоступну пошту, зник би безслідно.
+    emailed_at = db.Column(db.DateTime(timezone=True), index=True)
+
     instance = db.relationship('CourseInstance', foreign_keys=[instance_id])
     trainer = db.relationship('Trainer', foreign_keys=[trainer_id])
     issued_by = db.relationship('User', foreign_keys=[issued_by_id])
