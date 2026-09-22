@@ -1,4 +1,5 @@
 """Автовидача сертифікатів лектора на захід."""
+from datetime import timedelta
 from itertools import count
 from unittest.mock import patch
 
@@ -282,3 +283,39 @@ def test_trainer_without_email_is_skipped_but_others_proceed(app):
     assert (sent, skipped) == (1, 1)
     db.session.refresh(certs[1])
     assert certs[1].emailed_at is None
+
+
+def test_failure_on_one_record_does_not_stop_the_rest(app):
+    """Збій на другому записі не має спиняти чергу -- третій має піти теж.
+
+    Без перевірки ТРЕТЬОГО запису цей тест пройшов би і на зламаній версії,
+    де `except Exception: continue` замінили на `return` (або прибрали
+    внутрішній try/except): цикл спинився б на другому записі, `sent`
+    все одно був би 2 менше очікуваного лише щодо цього факту -- але
+    `certs[2].emailed_at` лишився б None, і саме це видає різницю між
+    "пропустили один і пішли далі" та "спинились на першому ж збої".
+    """
+    inst, made = _completed_instance(trainers=3)
+    certs = lc_svc.issue_for_instance(inst)
+    for i, cert in enumerate(certs):
+        cert.trainer.email = f'tc-resilience-{i}@test.com'
+        # issued_at контролюємо явно: у тесті всі три сертифікати можуть
+        # видатись у ту саму мілісекунду, а send_pending сортує саме за
+        # issued_at -- без розбіжних значень порядок черги був би
+        # недетермінованим і side_effect міг би впасти не на тому записі.
+        cert.issued_at = certs[0].issued_at + timedelta(seconds=i)
+    db.session.commit()
+
+    with patch(
+        'app.services.email_service.EmailService.send_lecturer_certificate',
+        side_effect=[None, RuntimeError('smtp down'), None],
+    ):
+        sent, _ = lc_svc.send_pending()
+
+    assert sent == 2
+    db.session.refresh(certs[0])
+    db.session.refresh(certs[1])
+    db.session.refresh(certs[2])
+    assert certs[0].emailed_at is not None
+    assert certs[1].emailed_at is None
+    assert certs[2].emailed_at is not None
