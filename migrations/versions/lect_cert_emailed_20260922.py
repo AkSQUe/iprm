@@ -15,13 +15,15 @@ down_revision = 'email_trainer_reqs_20260919'
 branch_labels = None
 depends_on = None
 
+BACKFILL_SQL = 'UPDATE lecturer_certificates SET emailed_at = issued_at'
+
 
 def upgrade():
     with op.batch_alter_table('lecturer_certificates', schema=None) as batch_op:
         batch_op.add_column(sa.Column('emailed_at', sa.DateTime(timezone=True)))
         batch_op.create_index(
             'ix_lecturer_certificates_emailed_at', ['emailed_at'])
-    op.execute('UPDATE lecturer_certificates SET emailed_at = issued_at')
+    op.execute(BACKFILL_SQL)
 
 
 def downgrade():
