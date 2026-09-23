@@ -60,8 +60,24 @@
       e.preventDefault();
       e.returnValue = '';
     });
+    // Перестановка кнопками «вище/нижче» -- для клавіатури й скрінрідера,
+    // яким перетягування мишею недоступне. Після перерисовки фокус лишається
+    // на тій самій картці (на кнопці, що перемістила її, а біля краю -- на
+    // сусідній), інакше кожне натискання викидало б фокус на початок сторінки.
+    var moveButtons = [];
+    var move = function(from, dir) {
+      var to = from + dir;
+      if (to < 0 || to >= certs.length) return;
+      var moved = certs.splice(from, 1)[0];
+      certs.splice(to, 0, moved);
+      render(); sync();
+      var pair = moveButtons[to];
+      var target = dir < 0 ? pair.up : pair.down;
+      (target.disabled ? (dir < 0 ? pair.down : pair.up) : target).focus();
+    };
     var render = function() {
       grid.innerHTML = '';
+      moveButtons = [];
       certs.forEach(function(c, i) {
         var img = el('img', {'class': 'iprm-img-cover', src: c.thumb || c.url, alt: '', draggable: 'false'});
         var rm = el('button', {type: 'button', 'class': 'regalia-cert__remove', title: t('Видалити')}, [icon('close')]);
@@ -84,7 +100,21 @@
           certs.splice(i, 0, moved);
           render(); sync();
         });
-        grid.appendChild(el('div', {'class': 'regalia-cert'}, [thumb, cap]));
+        var up = el('button', {type: 'button', 'class': 'regalia-cert__move regalia-cert__move-up',
+                               'aria-label': t('Перемістити вище')});
+        var down = el('button', {type: 'button', 'class': 'regalia-cert__move regalia-cert__move-down',
+                                 'aria-label': t('Перемістити нижче')});
+        // Стрілки -- звичайні символи (не шрифт іконок), як і "×" у кнопці
+        // видалення: у кабінеті тренера адмінського шрифту іконок немає.
+        up.textContent = '↑';
+        down.textContent = '↓';
+        up.disabled = i === 0;
+        down.disabled = i === certs.length - 1;
+        up.addEventListener('click', function() { move(i, -1); });
+        down.addEventListener('click', function() { move(i, 1); });
+        moveButtons.push({up: up, down: down});
+        var order = el('div', {'class': 'regalia-cert__order'}, [up, down]);
+        grid.appendChild(el('div', {'class': 'regalia-cert'}, [thumb, cap, order]));
       });
     };
     render();

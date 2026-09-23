@@ -7315,3 +7315,9 @@ msgstr "Network error"
 
 msgid "Не вдалося обробити файл. Спробуйте інший: JPG, PNG, WebP або HEIC."
 msgstr "Could not process the file. Try another one: JPG, PNG, WebP or HEIC."
+
+msgid "Перемістити вище"
+msgstr "Move up"
+
+msgid "Перемістити нижче"
+msgstr "Move down"

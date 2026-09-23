@@ -114,6 +114,9 @@ if (scenario === 'dirty') {
     out.downLabel = down.attrs['aria-label'] || null;
     down.fire('click');
     out.afterDown = captions();
+    // Фокус -- на кнопці «нижче» тієї самої картки, що тепер друга.
+    const secondDown = findByClass(grid, 'regalia-cert__move-down')[1];
+    out.focusFollowsCard = focused.el === secondDown;
     const upOfLast = findByClass(grid, 'regalia-cert__move-up')[2];
     upOfLast.fire('click');
     out.afterUp = captions();
@@ -163,3 +166,16 @@ def test_visible_strings_go_through_public_dictionary(tmp_path):
     out = _run(tmp_path, 'i18n')
     assert out['removeTitle'] == 'T:Видалити'
     assert out['capPlaceholder'] == 'T:Підпис (необовʼязково)'
+
+
+def test_certificates_can_be_reordered_from_keyboard(tmp_path):
+    """Перетягування -- лише мишею; кнопки «вище/нижче» дають те саме
+    клавіатурі й скрінрідеру, а фокус не втрачається після перестановки."""
+    out = _run(tmp_path, 'keyboard')
+    assert out['hasButtons'] is True
+    assert out['downLabel'] == 'Перемістити нижче'
+    assert out['afterDown'] == ['B', 'A', 'C']
+    assert out['focusFollowsCard'] is True
+    assert out['afterUp'] == ['B', 'C', 'A']
+    assert out['firstUpDisabled'] is True
+    assert out['lastDownDisabled'] is True

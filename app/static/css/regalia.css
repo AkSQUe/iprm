@@ -19,3 +19,15 @@
 }
 .regalia-cert__remove .material-symbols-rounded { font-size: 16px; }
 .regalia-cert__cap { margin-top: 6px; font-size: 0.8125rem; padding: 6px 8px; }
+
+/* Перестановка з клавіатури: перетягування доступне лише мишею, тож без цих
+   кнопок порядок сертифікатів не змінити ні клавіатурою, ні скрінрідером. */
+.regalia-cert__order { display: flex; gap: 4px; margin-top: 4px; }
+.regalia-cert__move {
+  flex: 1; height: 26px; border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-sm); background: var(--iprm-btn-bg);
+  color: var(--iprm-dark); cursor: pointer; font-size: 0.875rem; line-height: 1;
+}
+.regalia-cert__move:hover:not(:disabled) { background: var(--iprm-btn-bg-hover); }
+.regalia-cert__move:focus-visible { outline: 2px solid var(--iprm-accent); outline-offset: 1px; }
+.regalia-cert__move:disabled { opacity: 0.4; cursor: default; }
