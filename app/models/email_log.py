@@ -7,8 +7,13 @@ STALE_PENDING_MINUTES = 5
 # Maximum retry attempts for transient SMTP failures.
 MAX_RETRIES = 3
 
+# Позначка в error_message: байти вкладень уже стерто (models/email_attachment.py),
+# і лист без файлу, про який він пише, не повторюємо.
+ATTACHMENTS_PURGED_MARKER = 'Attachments purged'
+
 # Errors that should NOT be retried (permanent failures).
 PERMANENT_ERROR_MARKERS = (
+    ATTACHMENTS_PURGED_MARKER,
     'disabled in settings',
     'Template render error',
     'Authentication',
@@ -49,6 +54,13 @@ class EmailLog(TimestampMixin, db.Model):
 
     registration = db.relationship(
         'EventRegistration', back_populates='email_logs',
+    )
+    # Вкладення для повторної відправки (див. models/email_attachment.py).
+    # passive_deletes: рядки прибирає ON DELETE CASCADE у БД, без
+    # попереднього SELECT при видаленні журналу.
+    attachments = db.relationship(
+        'EmailAttachment', order_by='EmailAttachment.id',
+        cascade='all, delete-orphan', passive_deletes=True,
     )
 
     __table_args__ = (

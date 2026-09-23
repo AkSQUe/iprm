@@ -544,6 +544,13 @@ def email_queue_maintenance():
             except Exception:
                 logger.exception('retry_failed_emails failed')
 
+            # ПІСЛЯ повтору: байти, щойно використані успішним повтором, він
+            # стирає сам, а тут прибираються ті, що вже нікому не знадобляться.
+            try:
+                EmailService.purge_stale_attachments()
+            except Exception:
+                logger.exception('purge_stale_attachments failed')
+
             bounce_count = 0
             try:
                 from app.services.bounce_service import poll_bounces

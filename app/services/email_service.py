@@ -25,7 +25,10 @@ from flask_babel import force_locale, gettext as _
 from flask_mail import Message
 
 from app.extensions import db
-from app.models.email_log import EmailLog, MAX_RETRIES, STALE_PENDING_MINUTES
+from app.models.email_attachment import EmailAttachment
+from app.models.email_log import (
+    ATTACHMENTS_PURGED_MARKER, EmailLog, MAX_RETRIES, STALE_PENDING_MINUTES,
+)
 from app.services.money import format_amount
 from app.utils import ensure_utc, normalize_whitespace
 
@@ -44,6 +47,12 @@ _INVISIBLE_RE = re.compile('[' + ''.join(map(chr, (0x00ad, 0x034f, 0x200b, 0x200
 _INLINE_WS_RE = re.compile('[ ' + chr(9) + chr(13) + chr(12) + chr(0xa0) + ']+')
 
 DEDUP_WINDOW_SECONDS = 60
+
+# Скільки тримати байти вкладень листа, що НЕ дійшов. Автоповтор ходить лише
+# в межах години, але кнопкою «переслати» адмін користується й наступного
+# дня. Далі байти стираються, а рядок лишається маркером (див.
+# models/email_attachment.py). Листам, що дійшли, байти стирають одразу.
+ATTACHMENT_FAILED_RETENTION_DAYS = 7
 
 # utm_source для посилань, які ведуть з листів назад на сайт.
 EMAIL_UTM_SOURCE = 'email'
@@ -471,6 +480,13 @@ class EmailService:
             html_body=html_body,
             idempotency_key=idempotency_key,
         )
+        # Разом із журналом, одним комітом: повтор після збою SMTP і кнопка
+        # «переслати» збирають лист зі збереженого, і без цих рядків лист
+        # ішов би без файлу, про який у ньому пише.
+        log_entry.attachments = [
+            EmailAttachment(filename=filename, mimetype=mimetype, data=data)
+            for filename, mimetype, data in (attachments or [])
+        ]
         db.session.add(log_entry)
         db.session.commit()
 
@@ -510,6 +526,7 @@ class EmailService:
                 _smtp_send(msg, smtp_cfg)
                 log_entry.status = 'sent'
                 log_entry.sent_at = datetime.now(timezone.utc)
+                EmailService._purge_attachment_bytes(log_id)
                 logger.info('Email sent to %s: %s', msg.recipients[0], msg.subject)
             except Exception as exc:
                 log_entry.status = 'failed'
@@ -2416,6 +2433,49 @@ class EmailService:
     # ---- Queue maintenance ----
 
     @staticmethod
+    def _attach_stored(msg, entry):
+        """Прикласти до msg збережені вкладення журналу entry.
+
+        False -- якщо хоч одне вже стерте: тоді лист не можна відтворити
+        таким, яким він пішов уперше, і слати його не варто.
+        """
+        for attachment in entry.attachments:
+            if attachment.is_purged:
+                return False
+            msg.attach(attachment.filename, attachment.mimetype, attachment.data)
+        return True
+
+    @staticmethod
+    def _purge_attachment_bytes(log_id):
+        """Стерти байти вкладень листа, лишивши рядки-маркери."""
+        EmailAttachment.query.filter(
+            EmailAttachment.email_log_id == log_id,
+            EmailAttachment.data.isnot(None),
+        ).update({EmailAttachment.data: None}, synchronize_session=False)
+
+    @staticmethod
+    def purge_stale_attachments():
+        """Стерти байти вкладень, які вже не знадобляться для повтору.
+
+        Лист дійшов -- одразу; не дійшов -- після
+        ATTACHMENT_FAILED_RETENTION_DAYS. 'pending' не чіпаємо: потік ще може
+        його відправляти. Повертає кількість очищених вкладень.
+        """
+        cutoff = datetime.now(timezone.utc) - timedelta(days=ATTACHMENT_FAILED_RETENTION_DAYS)
+        stale = db.select(EmailLog.id).where(db.or_(
+            EmailLog.status == 'sent',
+            db.and_(EmailLog.status != 'pending', EmailLog.created_at < cutoff),
+        ))
+        count = EmailAttachment.query.filter(
+            EmailAttachment.data.isnot(None),
+            EmailAttachment.email_log_id.in_(stale),
+        ).update({EmailAttachment.data: None}, synchronize_session=False)
+        if count:
+            db.session.commit()
+            logger.info('Purged bytes of %d stale email attachments', count)
+        return count
+
+    @staticmethod
     def cleanup_stale_pending():
         """Mark emails stuck in 'pending' longer than STALE_PENDING_MINUTES as failed.
 
@@ -2468,8 +2528,6 @@ class EmailService:
         for entry in failed:
             if not entry.is_retryable:
                 continue
-            entry.retry_count += 1
-            entry.status = 'pending'
             msg = Message(
                 subject=entry.subject,
                 recipients=[entry.to_email],
@@ -2478,9 +2536,21 @@ class EmailService:
                 sender=smtp_cfg['sender'],
                 reply_to=sender_addr,
             )
+            if not EmailService._attach_stored(msg, entry):
+                # Лист без файлу, про який він пише, гірший за невідправлений:
+                # людина вирішить, що рахунок чи сертифікат загубили. Маркер
+                # у помилці робить запис неповторюваним (PERMANENT_ERROR_MARKERS).
+                entry.error_message = (
+                    f'{ATTACHMENTS_PURGED_MARKER}: {entry.error_message or ""}')[:500]
+                continue
+            entry.retry_count += 1
+            entry.status = 'pending'
             prepared.append((entry, msg))
 
         if not prepared:
+            # Позначені вище маркером «вкладення стерто» мусять зберегтися,
+            # інакше кожен наступний цикл перебирав би їх знову.
+            db.session.commit()
             return 0
         db.session.flush()
 
@@ -2502,6 +2572,7 @@ class EmailService:
                 entry.status = 'sent'
                 entry.sent_at = datetime.now(timezone.utc)
                 entry.error_message = None
+                EmailService._purge_attachment_bytes(entry.id)
                 retried += 1
             else:
                 entry.status = 'failed'
@@ -2539,22 +2610,27 @@ class EmailService:
 
         smtp_cfg = _get_smtp_config(current_app._get_current_object())
 
+        msg = Message(
+            subject=entry.subject,
+            recipients=[entry.to_email],
+            html=entry.html_body,
+            body=_html_to_plaintext(entry.html_body),
+            sender=smtp_cfg['sender'],
+        )
+        if not EmailService._attach_stored(msg, entry):
+            return False, ('Вкладення цього листа вже стерто -- без файлу лист '
+                           'не надсилаємо. Надішліть документ заново з картки '
+                           '(рахунок чи сертифікат).')
+
         entry.retry_count = (entry.retry_count or 0) + 1
         entry.status = 'pending'
         db.session.flush()
 
         try:
-            plain_body = _html_to_plaintext(entry.html_body)
-            msg = Message(
-                subject=entry.subject,
-                recipients=[entry.to_email],
-                html=entry.html_body,
-                body=plain_body,
-                sender=smtp_cfg['sender'],
-            )
             _smtp_send(msg, smtp_cfg)
             entry.status = 'sent'
             entry.sent_at = datetime.now(timezone.utc)
+            EmailService._purge_attachment_bytes(entry.id)
             entry.error_message = (entry.error_message or '') + '\n[admin-resend OK]'
             db.session.commit()
             logger.info('Manual resend OK: id=%s to=%s', entry.id, entry.to_email)

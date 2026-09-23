@@ -598,7 +598,7 @@ def test_daily_maintenance_sends_report_with_actual_stuck_and_blocked_records(ap
                '.notify_lecturer_certificate_report') as report:
         stats = lc_svc.daily_maintenance()
 
-    assert stats == {'issued': 0, 'stuck': 1, 'blocked': 1}
+    assert stats == {'issued': 0, 'requeued': 0, 'stuck': 1, 'blocked': 1}
     report.assert_called_once()
     stuck_arg, blocked_arg = report.call_args.args
     assert [c.id for c in stuck_arg] == [cert.id]
@@ -784,3 +784,40 @@ def test_missing_trainers_lookup_does_not_grow_with_instances(app):
             lc_svc.blocking_reason(inst)
     assert len(missing) >= 6
     assert counter.count <= 8, counter.count
+
+
+def _emailed_certificate_with_log(status, retry_count, error):
+    inst, _ = _completed_instance(trainers=1)
+    cert = lc_svc.issue_for_instance(inst)[0]
+    cert.emailed_at = utcnow()
+    db.session.add(EmailLog(
+        to_email='tc-requeue@test.com', subject='Сертифікат',
+        template_name='lecturer_certificate_issued', status=status,
+        trigger='certificate', retry_count=retry_count, error_message=error,
+        idempotency_key=EmailService.lecturer_certificate_idempotency_key(cert),
+    ))
+    db.session.commit()
+    return cert
+
+
+def test_exhausted_transient_failure_is_requeued(app):
+    """Лист передали пошті, SMTP упав, автоповтори вичерпались -- сертифікат
+    мусить повернутись у чергу, а не лишитись «надісланим» назавжди."""
+    from app.models.email_log import MAX_RETRIES
+
+    cert = _emailed_certificate_with_log('failed', MAX_RETRIES, 'Connection reset')
+    assert lc_svc.requeue_undelivered() == 1
+    db.session.refresh(cert)
+    assert cert.emailed_at is None
+
+
+@pytest.mark.parametrize('status,retries,error', [
+    ('sent', 0, None),                       # дійшов
+    ('failed', 1, 'Connection reset'),       # пошта ще повторить сама
+    ('failed', 3, '550 No such user'),       # постійна помилка -- не щодня
+])
+def test_requeue_leaves_other_outcomes_alone(app, status, retries, error):
+    cert = _emailed_certificate_with_log(status, retries, error)
+    assert lc_svc.requeue_undelivered() == 0
+    db.session.refresh(cert)
+    assert cert.emailed_at is not None

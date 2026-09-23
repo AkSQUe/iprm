@@ -31,6 +31,11 @@ STUCK_AFTER_HOURS = 24
 # діє свідомо.
 LECTURER_AUTO_ISSUE_WINDOW_DAYS = 30
 
+# Скільки днів після позначки «надіслано» перевіряти, чи лист зрештою дійшов.
+# Автоповтор пошти ходить у межах години, тож остаточна доля листа відома
+# задовго до цього; запас -- на випадок, коли пошта лежала довше.
+REQUEUE_LOOKBACK_DAYS = 3
+
 
 def issue_for_instance(instance, issued_by=None):
     """Видати сертифікати всім тренерам заходу. Повертає список записів.
@@ -213,6 +218,59 @@ def _delivered(cert, log):
     return EmailService.is_already_queued(key)
 
 
+def requeue_undelivered():
+    """Повернути в чергу сертифікати, чий лист зрештою не дійшов.
+
+    `_delivered` зараховує лист у статусі 'pending' -- він уже переданий
+    пошті. Якщо потім відправка впала, а автоповтори вичерпались, журнал
+    лишається 'failed', а сертифікат -- позначеним як надісланий, і тренер
+    його так і не отримує. Скидаємо `emailed_at`, щоб наступний тік розсилки
+    зібрав лист заново. Лише після ТИМЧАСОВИХ збоїв: поки повтор ще можливий,
+    його робить сама пошта, а постійна помилка (нема такої скриньки)
+    повторилась би щодня. Повертає кількість повернених у чергу.
+    """
+    from datetime import timedelta
+
+    from app.models.email_log import EmailLog, MAX_RETRIES, PERMANENT_ERROR_MARKERS
+    from app.models.lecturer_certificate import LecturerCertificate
+    from app.services.email_service import EmailService
+
+    since = utcnow() - timedelta(days=REQUEUE_LOOKBACK_DAYS)
+    certs = (
+        LecturerCertificate.query
+        .filter(LecturerCertificate.emailed_at.isnot(None),
+                LecturerCertificate.emailed_at >= since)
+        .all()
+    )
+    by_key = {EmailService.lecturer_certificate_idempotency_key(c): c for c in certs}
+    if not by_key:
+        return 0
+    logs_by_key = {}
+    for log in EmailLog.query.filter(EmailLog.idempotency_key.in_(list(by_key))).all():
+        logs_by_key.setdefault(log.idempotency_key, []).append(log)
+
+    requeued = 0
+    for key, logs in logs_by_key.items():
+        if any(log.status in ('pending', 'sent') for log in logs):
+            continue
+        latest = max(logs, key=lambda log: log.id)
+        error = latest.error_message or ''
+        exhausted = (latest.retry_count or 0) >= MAX_RETRIES
+        permanent = any(marker in error for marker in PERMANENT_ERROR_MARKERS)
+        if latest.status == 'failed' and exhausted and not permanent:
+            by_key[key].emailed_at = None
+            requeued += 1
+    if requeued:
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            logger.exception('Failed to requeue undelivered lecturer certificates')
+            return 0
+        logger.info('Requeued %d lecturer certificates after failed delivery', requeued)
+    return requeued
+
+
 def _notify_failed(instance, reason):
     """Лист адмінам. Best-effort: збій сповіщення нічого не відкочує."""
     from app.services.email_service import EmailService
@@ -368,6 +426,7 @@ def daily_maintenance():
     instances = _completed_instances()
     missing = _missing_trainers_by_instance(instances)
     issued = _issue_for_missing(instances, missing)
+    requeued = requeue_undelivered()
 
     cutoff = utcnow() - timedelta(hours=STUCK_AFTER_HOURS)
     # Сироти (trainer_id IS NULL) -- поза звітом, як і поза чергою: тренера
@@ -399,4 +458,5 @@ def daily_maintenance():
         except Exception:
             db.session.rollback()
             logger.exception('Failed to send lecturer certificate report')
-    return {'issued': issued, 'stuck': len(stuck), 'blocked': len(blocked)}
+    return {'issued': issued, 'requeued': requeued, 'stuck': len(stuck),
+            'blocked': len(blocked)}

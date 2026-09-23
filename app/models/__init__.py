@@ -14,6 +14,7 @@ from app.models.certificate import Certificate
 from app.models.lecturer_certificate import LecturerCertificate
 from app.models.clinic import Clinic
 from app.models.email_log import EmailLog
+from app.models.email_attachment import EmailAttachment
 from app.models.email_settings import EmailSettings
 from app.models.email_suppression import EmailSuppression
 from app.models.notification_rule import NotificationRule
@@ -59,7 +60,7 @@ __all__ = [
     'ProgramBlock', 'EventRegistration',
     'RegistrationTransfer',
     'Certificate', 'LecturerCertificate',
-    'Clinic', 'EmailLog', 'EmailSettings', 'EmailSuppression', 'NotificationRule',
+    'Clinic', 'EmailLog', 'EmailAttachment', 'EmailSettings', 'EmailSuppression', 'NotificationRule',
     'PaymentTransaction', 'RefundRequest', 'SiteSettings', 'ErrorLog',
     'Course', 'CourseInstance', 'InstanceTariff', 'CourseTariff',
     'CourseRequest', 'CourseRequestAudit', 'B2BRequest',
