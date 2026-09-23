@@ -116,16 +116,16 @@
      тут нема що натискати, доки вона не прийде знову. #}
   {% if reservation.status in ['pending_review', 'returned'] %}
   <section class="materials-request-review">
-    <h2 class="iprm-block-title">{{ _('Заявка тренера') }}</h2>
+    <h2 class="iprm-block-title">Заявка тренера</h2>
     <p>
-      {{ _('Подано') }}:
+      Подано:
       {{ reservation.trainer_submitted_at.strftime('%d.%m.%Y %H:%M') if reservation.trainer_submitted_at else '—' }}
       {%- if reservation.created_by %} &middot; {{ reservation.created_by.full_name or reservation.created_by.email }}{% endif %}
     </p>
     {% if reservation.review_comment %}
     <div class="alert alert--warning">
       {{ icon('error') }}
-      <strong class="alert__title">{{ _('Коментар при поверненні') }}:</strong>
+      <strong class="alert__title">Коментар при поверненні:</strong>
       {{ reservation.review_comment }}
     </div>
     {% endif %}
@@ -140,23 +140,23 @@
       <button type="submit" form="materialsForm"
               formaction="{{ url_for('admin.instance_materials_approve', instance_id=instance.id) }}"
               class="btn-admin btn-admin--primary">
-        {{ icon('send') }} {{ _('Погодити й надіслати') }}
+        {{ icon('send') }} Погодити й надіслати
       </button>
 
       <form method="post" class="materials-request-review__form"
             action="{{ url_for('admin.instance_materials_return', instance_id=instance.id) }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="text" name="comment" class="form-input" required
-               placeholder="{{ _('Що виправити') }}">
-        <button type="submit" class="btn-admin btn-admin--secondary">{{ _('Повернути тренеру') }}</button>
+               placeholder="Що виправити">
+        <button type="submit" class="btn-admin btn-admin--secondary">Повернути тренеру</button>
       </form>
 
       <form method="post" class="materials-request-review__form"
             action="{{ url_for('admin.instance_materials_reject', instance_id=instance.id) }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="text" name="comment" class="form-input" required
-               placeholder="{{ _('Причина відхилення') }}">
-        <button type="submit" class="btn-admin btn-admin--danger">{{ _('Відхилити') }}</button>
+               placeholder="Причина відхилення">
+        <button type="submit" class="btn-admin btn-admin--danger">Відхилити</button>
       </form>
     </div>
     {% endif %}
