@@ -49,7 +49,8 @@
   {% endif %}
 
   <form method="post" class="trainer-materials-form"
-        data-catalog-url="{{ url_for('trainer_cabinet.materials_catalog', instance_id=instance.id) }}">
+        data-catalog-url="{{ url_for('trainer_cabinet.materials_catalog', instance_id=instance.id) }}"
+        data-max-quantity="{{ max_quantity }}">
     {{ form.hidden_tag() }}
 
     <ul class="trainer-materials-rows" data-rows-body>
@@ -57,10 +58,11 @@
       <li class="account-card trainer-materials-row" data-row>
         {% if row.image_url %}<img src="{{ row.image_url }}" alt="" class="trainer-materials-row__thumb">{% endif %}
         <span class="trainer-materials-row__name">{{ row.name or row.sku }}</span>
+        {# Лише артикул і кількість: назву й фото сервер бере сам, з каталогу
+           чи снапшоту (material_request_service.resolve_rows). #}
         <input type="hidden" name="sku" value="{{ row.sku }}">
-        <input type="hidden" name="name" value="{{ row.name or '' }}">
-        <input type="hidden" name="image_url" value="{{ row.image_url or '' }}">
-        <input type="number" name="quantity" class="form-input trainer-materials-row__qty" min="1" step="1"
+        <input type="number" name="quantity" class="form-input trainer-materials-row__qty"
+               min="1" max="{{ max_quantity }}" step="1"
                value="{{ row.quantity }}"{% if not editable %} readonly{% endif %}
                aria-label="{{ _('Кількість: %(name)s', name=row.name or row.sku) }}">
         {% if editable %}

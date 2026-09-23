@@ -34,6 +34,14 @@ _SUBMITTABLE = (MaterialReservationStatus.DRAFT,
 # Стани, у яких відповідальний ухвалює рішення.
 _REVIEWABLE = (MaterialReservationStatus.PENDING_REVIEW,)
 
+# Межі одного рядка форми заявки -- і в кабінеті тренера, і на погодженні в
+# адмінці. Кількість лягає в Integer (int4 на Postgres): без верхньої межі
+# 11-значне число давало DataError на commit і 500, а SQLite у тестах цього
+# не бачить. 10000 -- з великим запасом понад будь-який захід.
+MAX_QUANTITY = 10000
+MAX_ROWS = 200
+_SKU_MAX_LEN = 100  # material_reservation_items.sku -- String(100)
+
 
 class RequestTransitionError(Exception):
     """Перехід, якого поточний стан не дозволяє.
@@ -110,6 +118,101 @@ def save_items(reservation, items) -> None:
         item.quantity_requested = raw['quantity']
 
     db.session.commit()
+
+
+def parse_form_rows(skus, quantities):
+    """Паралельні списки sku[]/quantity[] з форми -> [{sku, quantity}].
+
+    Спільний для кабінету тренера й погодження в адмінці: обидва приймають ту
+    саму форму рядків, і правила не мають розходитись. Порожня, нечислова
+    чи нульова кількість -- це прибраний рядок, а не помилка (так працює
+    «Прибрати»). А от кількість понад MAX_QUANTITY і забагато рядків --
+    помилка введення, про яку треба сказати: мовчки обрізане число -- уже
+    інша заявка.
+    """
+    rows = []
+    for sku, raw in zip(skus, quantities):
+        sku = (sku or '').strip()
+        raw = (raw or '').strip()
+        if not sku or not raw or len(sku) > _SKU_MAX_LEN:
+            continue
+        try:
+            quantity = int(float(raw.replace(',', '.')))
+        except (ValueError, OverflowError):
+            continue
+        if quantity <= 0:
+            continue
+        if quantity > MAX_QUANTITY:
+            raise RequestTransitionError(
+                _('Кількість не може перевищувати %(max)s', max=MAX_QUANTITY))
+        rows.append({'sku': sku, 'quantity': quantity})
+    if len(rows) > MAX_ROWS:
+        raise RequestTransitionError(
+            _('Забагато позицій у заявці: не більше %(max)s', max=MAX_ROWS))
+    return rows
+
+
+def known_products(instance, reservation):
+    """Звідки сервер знає, що це за позиція: {sku: {'name', 'image_url'}}.
+
+    Назву й фото НЕ беремо з форми. Форму заповнює тренер, а бачать ці
+    підписи відповідальні -- в адмінці й у листі -- і саме за ними вирішують,
+    що погодити. Підпис із прихованого поля дозволяв показати рецензенту
+    «шприци» під артикулом голок: погодили б шприци, склад відвантажив би
+    голки.
+
+    Пріоритет -- від найсвіжішого джерела: каталог MM Medic, потім снапшот
+    у самій заявці, потім снапшот комплекту. Каталог, що мовчить, --
+    звичайний стан (див. `catalog_for_trainer`): тоді відомі лише комплект і
+    вже збережені рядки, і заявку з них усе одно можна подати.
+    """
+    known = {}
+    for kit in mrs.kits_for_instance(instance):
+        for item in kit.items:
+            known.setdefault(item.sku, {'name': item.name_snapshot,
+                                        'image_url': None})
+    for item in (reservation.items if reservation is not None else []):
+        known[item.sku] = {'name': item.name, 'image_url': item.image_url}
+    # Каталог тут -- лише збагачення й розширення відомого, не умова роботи:
+    # збої мережі `get_catalog` і так повертає як `error`, а несподіваний
+    # виняток не має блокувати погодження заявки, чиї рядки вже відомі.
+    try:
+        catalog, error, _stale = mrs.get_catalog()
+    except Exception:
+        logger.exception('Каталог MM Medic недоступний для перевірки заявки, захід %s',
+                         instance.id)
+        catalog, error = [], 'catalog failed'
+    if not error:
+        for raw in catalog or []:
+            sku = raw.get('sku')
+            if sku:
+                # Каталог віддає фото під ключем `image` (як і скрізь у
+                # material_reservation_service), а не `image_url`.
+                known[sku] = {'name': raw.get('name'),
+                              'image_url': raw.get('image')}
+    return known
+
+
+def resolve_rows(instance, reservation, rows):
+    """[{sku, quantity}] з форми -> ([рядки з назвою й фото від сервера], відкинуті).
+
+    Межа довіри стоїть тут, на вході: рядок, чий артикул сервер не знає, у
+    заявку не потрапляє. Відкинуті артикули повертаються, щоб роут сказав про
+    них людині, а не загубив мовчки.
+    """
+    known = known_products(instance, reservation)
+    items, dropped = [], []
+    for row in rows:
+        product = known.get(row['sku'])
+        if product is None:
+            dropped.append(row['sku'])
+            continue
+        items.append({'sku': row['sku'], 'quantity': row['quantity'],
+                      'name': product['name'], 'image_url': product['image_url']})
+    if dropped:
+        logger.warning('Заявка на матеріали, захід %s: відкинуто невідомі артикули %s',
+                       instance.id, dropped)
+    return items, dropped
 
 
 def is_editable_by_trainer(reservation) -> bool:
@@ -207,7 +310,16 @@ def approve(instance, reservation, edits=None):
     """
     if reservation.status not in _REVIEWABLE:
         raise RequestTransitionError('Погодити можна лише заявку на перевірці')
-    if edits:
+    if edits is not None:
+        # `is not None`, а не правдивість: порожній список -- це
+        # відповідальний, що очистив усі кількості, а не «правок немає». Доти
+        # `if edits:` пропускав його, і на склад мовчки йшов початковий
+        # перелік тренера. Відмова -- ДО запису: `save_items([])` устиг би
+        # стерти рядки заявки, а відмова прийшла б уже потім.
+        if not edits:
+            raise RequestTransitionError(
+                'Усі кількості порожні -- погоджувати нічого. '
+                'Якщо матеріали не потрібні, відхиліть заявку.')
         save_items(reservation, edits)
 
     items = [{'sku': item.sku, 'quantity': item.quantity_requested}
@@ -262,7 +374,10 @@ def catalog_for_trainer(search=None):
     return [
         {'sku': raw.get('sku'),
          'name': raw.get('name'),
-         'image_url': raw.get('image_url')}
+         # Каталог MM Medic віддає фото під `image`. Доти тут читався
+         # `image_url`, якого в каталозі немає, -- тренер ніколи не бачив
+         # фото товару, а тест мокав каталог тим самим хибним ключем.
+         'image_url': raw.get('image')}
         for raw in (items or [])
         if raw.get('sku')
     ], False

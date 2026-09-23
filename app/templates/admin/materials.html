@@ -331,6 +331,7 @@
             {% else %}
             <input type="hidden" name="sku" value="{{ row.sku }}">
             <input type="number" name="{{ input_name }}" min="0" step="1"
+                   {%- if mode == 'review' %} max="{{ max_quantity }}"{% endif %}
                    class="form-input materials-qty-input"
                    data-qty
                    data-available="{{ row.available if row.available is not none else '' }}"

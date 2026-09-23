@@ -1,4 +1,6 @@
 """Сторінка заявки на матеріали в кабінеті тренера."""
+import json
+import re
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
@@ -47,6 +49,19 @@ def _login(client, user):
     `switch_user`: у файлі кожен тест працює лише одним користувачем, але
     сам хелпер -- те, що проєкт вимагає для зміни користувача в тестах."""
     return switch_user(client, user)
+
+
+def _flashes(resp):
+    """Тексти flash-повідомлень зі сторінки. Flash рендериться JSON-блоком
+    для тосту, а |tojson екранує кирилицю у \\uXXXX -- шукати підрядок у
+    сирому HTML не можна (той самий хелпер, що в test_mm_medic_materials)."""
+    match = re.search(
+        r'<script type="application/json" id="iprm-flash-data">(.*?)</script>',
+        resp.get_data(as_text=True), re.S,
+    )
+    if not match:
+        return []
+    return [item['message'] for item in json.loads(match.group(1))]
 
 
 def _csrf(client, url):
@@ -139,18 +154,18 @@ def test_own_instance_opens_prefilled_with_the_course_kit(client, trainer_user,
     assert b'NEEDLE-30G' in response.data
 
 
-def test_submit_creates_a_pending_review_request(client, trainer_user, instance):
-    """Подання рухає заявку в pending_review. Лист -- окрема турбота
-    наступної задачі (там існує й `EmailService.send_material_request_submitted`,
-    якого зараз ще немає): тут перевіряється лише зміна статусу."""
+def test_submit_creates_a_pending_review_request(client, trainer_user, instance,
+                                                 kit):
+    """Подання рухає заявку в pending_review. Артикул -- з комплекту курсу:
+    невідомий сервер у заявку більше не приймає (див. тести resolve_rows)."""
     from app.services import material_request_service as mrq
 
     _login(client, trainer_user)
 
     response = client.post(f'/trainer/materials/{instance.id}', data={
         'csrf_token': _csrf(client, f'/trainer/materials/{instance.id}'),
-        'sku': ['NEEDLE-30G', 'TUBE-VAC'],
-        'quantity': ['12', '24'],
+        'sku': ['NEEDLE-30G'],
+        'quantity': ['12'],
         'action': 'submit',
     }, follow_redirects=True)
 
@@ -159,7 +174,7 @@ def test_submit_creates_a_pending_review_request(client, trainer_user, instance)
     assert reservation.status == S.PENDING_REVIEW
 
 
-def test_save_draft_keeps_the_request_a_draft(client, trainer_user, instance):
+def test_save_draft_keeps_the_request_a_draft(client, trainer_user, instance, kit):
     from app.services import material_request_service as mrq
 
     _login(client, trainer_user)
@@ -198,7 +213,8 @@ def test_catalog_projection_hides_stock_and_prices(app, monkeypatch):
     from app.services import material_request_service as mrq
 
     monkeypatch.setattr(mrq.mrs, 'get_catalog', lambda **kw: ([
-        {'sku': 'NEEDLE-30G', 'name': 'Голки 30G', 'image_url': 'http://x/i.png',
+        # Справжній каталог MM Medic віддає фото під `image` (не `image_url`).
+        {'sku': 'NEEDLE-30G', 'name': 'Голки 30G', 'image': 'http://x/i.png',
          'quantity_available': 140, 'price_uah': '12.50', 'min_stock': 20},
     ], None, False))
 
@@ -284,3 +300,94 @@ def test_list_badge_speaks_the_trainer_language(client, trainer_user, instance):
     assert 'На погодженні' not in uk
     assert 'Передано на склад' in ru
     assert 'Материалы к мероприятию' in ru
+
+
+# --- Межа довіри: назву, фото й артикул знає сервер, а не форма -------------
+
+def _catalog(monkeypatch, *products):
+    """Підмінити каталог MM Medic справжньою формою відповіді (ключ `image`)."""
+    from app.services import material_reservation_service as mrs
+    monkeypatch.setattr(mrs, 'get_catalog', lambda **kw: (list(products), None, False))
+
+
+def test_forged_name_and_image_do_not_reach_the_reviewers(client, trainer_user,
+                                                          instance, monkeypatch):
+    """Доти назву й фото сервер брав із прихованих полів форми, і тренер міг
+    підписати артикул голок як «шприци»: відповідальний погодив би шприци,
+    склад відвантажив би голки. Тепер ідентичність позиції -- з каталогу."""
+    from app.services import material_request_service as mrq
+
+    _catalog(monkeypatch, {'sku': 'NEEDLE-30G', 'name': 'Голки 30G',
+                           'image': 'https://mm-medic.example/needle.jpg'})
+    _login(client, trainer_user)
+
+    client.post(f'/trainer/materials/{instance.id}', data={
+        'csrf_token': _csrf(client, f'/trainer/materials/{instance.id}'),
+        'sku': ['NEEDLE-30G'], 'quantity': ['3'],
+        'name': ['Шприци 5 мл'], 'image_url': ['https://evil.example/pixel.gif'],
+        'action': 'draft',
+    })
+
+    item = mrq.mrs.get_reservation(instance.id).items[0]
+    assert item.name == 'Голки 30G'
+    assert item.image_url == 'https://mm-medic.example/needle.jpg'
+
+
+def test_unknown_sku_is_not_saved_and_the_trainer_is_told(client, trainer_user,
+                                                          instance, kit, monkeypatch):
+    """Артикул, якого немає ні в каталозі, ні в комплекті, ні в заявці, --
+    вигаданий. Доти він лягав у заявку й валив погодження на MM Medic."""
+    from app.services import material_request_service as mrq
+
+    _catalog(monkeypatch)  # каталог порожній: відомий лише комплект
+    _login(client, trainer_user)
+
+    response = client.post(f'/trainer/materials/{instance.id}', data={
+        'csrf_token': _csrf(client, f'/trainer/materials/{instance.id}'),
+        # Звичайної довжини: наддовгий артикул мовчки відсіює ще парсер
+        # (test_parse_form_rows_boundaries), тут перевіряється шлях resolve_rows.
+        'sku': ['NEEDLE-30G', 'FORGED-1'],
+        'quantity': ['3', '5'], 'action': 'draft',
+    }, follow_redirects=True)
+
+    skus = [i.sku for i in mrq.mrs.get_reservation(instance.id).items]
+    assert skus == ['NEEDLE-30G']
+    assert any('не збережено' in m for m in _flashes(response)), _flashes(response)
+
+
+def test_quantity_over_the_limit_is_refused_not_a_500(client, trainer_user,
+                                                      instance, kit):
+    """11-значне число переповнювало int4 на Postgres: DataError і 500.
+    SQLite цього не бачить, тому межа перевіряється явно."""
+    from app.services import material_request_service as mrq
+
+    _login(client, trainer_user)
+
+    response = client.post(f'/trainer/materials/{instance.id}', data={
+        'csrf_token': _csrf(client, f'/trainer/materials/{instance.id}'),
+        'sku': ['NEEDLE-30G'], 'quantity': ['99999999999'], 'action': 'draft',
+    }, follow_redirects=True)
+
+    assert response.status_code == 200
+    assert any('не може перевищувати' in m for m in _flashes(response)), _flashes(response)
+    assert mrq.mrs.get_reservation(instance.id) is None
+
+
+@pytest.mark.parametrize('skus, quantities, expected', [
+    (['A'], ['3'], [{'sku': 'A', 'quantity': 3}]),
+    (['A', 'B'], ['', '0'], []),                 # прибрані рядки
+    (['A'], ['abc'], []),                        # нечислове -- прибраний
+    (['A'], ['1e400'], []),                      # inf -> OverflowError, не 500
+    (['  A  '], ['2,0'], [{'sku': 'A', 'quantity': 2}]),
+    (['X' * 101], ['1'], []),                    # довший за колонку sku
+])
+def test_parse_form_rows_boundaries(app, skus, quantities, expected):
+    from app.services import material_request_service as mrq
+    assert mrq.parse_form_rows(skus, quantities) == expected
+
+
+def test_parse_form_rows_refuses_too_many_rows(app):
+    from app.services import material_request_service as mrq
+    skus = [f'S{i}' for i in range(mrq.MAX_ROWS + 1)]
+    with pytest.raises(mrq.RequestTransitionError):
+        mrq.parse_form_rows(skus, ['1'] * len(skus))

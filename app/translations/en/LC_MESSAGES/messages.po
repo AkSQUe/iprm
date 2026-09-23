@@ -7164,3 +7164,15 @@ msgstr "The request has been sent for review."
 
 msgid "Чернетку збережено."
 msgstr "Draft saved."
+
+#, python-format
+msgid "Кількість не може перевищувати %(max)s"
+msgstr "Quantity cannot exceed %(max)s"
+
+#, python-format
+msgid "Забагато позицій у заявці: не більше %(max)s"
+msgstr "Too many items in the request: no more than %(max)s"
+
+#, python-format
+msgid "Позиції, яких немає в каталозі складу, не збережено: %(count)s"
+msgstr "Items not found in the warehouse catalog were not saved: %(count)s"

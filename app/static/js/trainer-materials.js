@@ -47,19 +47,20 @@
     name.textContent = item.name || item.sku;
     row.appendChild(name);
 
-    ['sku', 'name', 'image_url'].forEach(function (field) {
-      var hidden = document.createElement('input');
-      hidden.type = 'hidden';
-      hidden.name = field;
-      hidden.value = item[field] || '';
-      row.appendChild(hidden);
-    });
+    /* Лише артикул: назву й фото сервер бере сам (resolve_rows), а не з
+       прихованих полів форми. */
+    var hidden = document.createElement('input');
+    hidden.type = 'hidden';
+    hidden.name = 'sku';
+    hidden.value = item.sku;
+    row.appendChild(hidden);
 
     var qty = document.createElement('input');
     qty.type = 'number';
     qty.name = 'quantity';
     qty.className = 'form-input trainer-materials-row__qty';
     qty.min = '1';
+    qty.max = form.getAttribute('data-max-quantity') || '';
     qty.step = '1';
     qty.value = '1';
     row.appendChild(qty);

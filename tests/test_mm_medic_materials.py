@@ -1186,3 +1186,71 @@ def test_sidebar_shows_pending_material_requests_badge(client, admin_user,
 
     assert response.status_code == 200
     assert 'badge--warning">1</span>' in body
+
+
+# --- Погодження: порожні правки й невідомий артикул --------------------------
+
+def _forbid_partner(monkeypatch):
+    """Будь-який виклик MM Medic у тесті -- провал: відмова мала стати ДО нього."""
+    from app.services import material_request_service as mrq
+
+    def _boom(*args, **kwargs):
+        raise AssertionError('submit_request не мав викликатись')
+
+    monkeypatch.setattr(mrq.mrs, 'submit_request', _boom)
+
+
+def test_approve_with_every_quantity_cleared_refuses_and_keeps_the_rows(
+        app, instance, pending_request, monkeypatch):
+    """Доти `if edits:` пропускав порожній список, і на склад мовчки йшов
+    початковий перелік тренера. І відмова мусить стати ДО запису:
+    `save_items([])` устиг би стерти рядки заявки."""
+    from app.services import material_request_service as mrq
+
+    _forbid_partner(monkeypatch)
+    before = sorted((i.sku, i.quantity_requested) for i in pending_request.items)
+
+    with pytest.raises(mrq.RequestTransitionError):
+        mrq.approve(instance, pending_request, edits=[])
+
+    db.session.refresh(pending_request)
+    assert pending_request.status == S.PENDING_REVIEW
+    assert sorted((i.sku, i.quantity_requested)
+                  for i in pending_request.items) == before
+
+
+def test_approve_route_with_cleared_quantities_does_not_send_anything(
+        client, admin_user, instance, pending_request, monkeypatch):
+    _forbid_partner(monkeypatch)
+    _login(client, admin_user)
+
+    messages = _flashes(client.post(
+        f'/admin/instances/{instance.id}/materials/approve',
+        data={'csrf_token': _admin_csrf(client),
+              'sku': ['NEEDLE-30G', 'TUBE-VAC'], 'quantity': ['', '']},
+        follow_redirects=True,
+    ))
+
+    db.session.refresh(pending_request)
+    assert pending_request.status == S.PENDING_REVIEW
+    assert any('погоджувати нічого' in m for m in messages), messages
+
+
+def test_approve_route_refuses_an_unknown_sku(client, admin_user, instance,
+                                              pending_request, monkeypatch):
+    """Погодити ІНШИЙ перелік, ніж той, що бачить відповідальний, -- рівно
+    той збій, від якого погодження захищає. Невідомий артикул -- відмова."""
+    _forbid_partner(monkeypatch)
+    _login(client, admin_user)
+
+    messages = _flashes(client.post(
+        f'/admin/instances/{instance.id}/materials/approve',
+        data={'csrf_token': _admin_csrf(client),
+              'sku': ['NEEDLE-30G', 'FORGED-1'], 'quantity': ['5', '5']},
+        follow_redirects=True,
+    ))
+
+    db.session.refresh(pending_request)
+    assert pending_request.status == S.PENDING_REVIEW
+    assert any('FORGED-1' in m for m in messages), messages
+    assert 'FORGED-1' not in [i.sku for i in pending_request.items]

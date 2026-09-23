@@ -401,6 +401,7 @@ def instance_materials(instance_id):
         participants=participants,
         trainer_url=trainer_url,
         statuses=MaterialReservationStatus,
+        max_quantity=mrq.MAX_QUANTITY,
     )
 
 
@@ -714,9 +715,26 @@ def instance_materials_approve(instance_id):
     # Правки кількостей передаються в approve(), а не пишуться тут: вони
     # мають лягти ЛИШЕ після гейту статусу (застаріла вкладка інакше
     # переписала б уже погоджену заявку до того, як отримала б відмову).
+    # Розбір і підстановка назв -- ті самі, що в кабінеті тренера
+    # (material_request_service.parse_form_rows / resolve_rows).
     try:
-        ok, result = mrq.approve(instance, reservation,
-                                 edits=_items_from_form('quantity'))
+        # Форма без жодного рядка -- правок не надсилали (None: погоджується
+        # збережений перелік). Рядки є, але всі кількості порожні -- це
+        # відповідальний очистив перелік, і approve() відмовить.
+        edits, dropped = None, []
+        skus = request.form.getlist('sku')
+        if skus:
+            rows = mrq.parse_form_rows(skus, request.form.getlist('quantity'))
+            edits, dropped = mrq.resolve_rows(instance, reservation, rows)
+        if dropped:
+            # Не попередження, а відмова: погодити ІНШИЙ перелік, ніж той,
+            # що бачить відповідальний, -- рівно той збій, від якого
+            # погодження й захищає.
+            flash('Позиції, яких немає в каталозі складу: '
+                  f'{", ".join(dropped)}. Заявку не погоджено -- перевірте '
+                  'перелік і спробуйте ще раз.', 'error')
+            return _redirect_page(instance_id)
+        ok, result = mrq.approve(instance, reservation, edits=edits)
     except mrq.RequestTransitionError as exc:
         flash(str(exc), 'warning')
         return _redirect_page(instance_id)

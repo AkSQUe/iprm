@@ -336,37 +336,6 @@ def _own_instance(instance_id):
     return instance
 
 
-def _form_rows():
-    """Рядки з POST'а: паралельні списки sku[] і quantity[].
-
-    Невалідні (порожній sku, нечислова або недодатна кількість) мовчки
-    відкидаються: це не помилка введення, а вилучений рядок -- саме так
-    працює кнопка «прибрати» у формі.
-    """
-    skus = request.form.getlist('sku')
-    quantities = request.form.getlist('quantity')
-    names = request.form.getlist('name')
-    images = request.form.getlist('image_url')
-    rows = []
-    for index, sku in enumerate(skus):
-        sku = (sku or '').strip()
-        if not sku:
-            continue
-        try:
-            quantity = int(quantities[index])
-        except (IndexError, TypeError, ValueError):
-            continue
-        if quantity <= 0:
-            continue
-        rows.append({
-            'sku': sku,
-            'name': names[index] if index < len(names) else None,
-            'image_url': images[index] if index < len(images) else None,
-            'quantity': quantity,
-        })
-    return rows
-
-
 @trainer_cabinet_bp.route('/materials')
 @trainer_required
 def materials():
@@ -396,8 +365,21 @@ def materials_request(instance_id):
             return redirect(url_for('trainer_cabinet.materials_request',
                                     instance_id=instance_id))
         if form.validate_on_submit():
+            try:
+                rows = mrq.parse_form_rows(request.form.getlist('sku'),
+                                           request.form.getlist('quantity'))
+            except mrq.RequestTransitionError as exc:
+                flash(str(exc), 'error')
+                return redirect(url_for('trainer_cabinet.materials_request',
+                                        instance_id=instance_id))
             reservation = mrq.get_or_create_draft(instance, current_user)
-            mrq.save_items(reservation, _form_rows())
+            # Назву й фото кожного рядка бере сервер (resolve_rows), а не
+            # форма: їх потім бачать відповідальні, які за ними й погоджують.
+            items, dropped = mrq.resolve_rows(instance, reservation, rows)
+            mrq.save_items(reservation, items)
+            if dropped:
+                flash(_('Позиції, яких немає в каталозі складу, не збережено: %(count)s',
+                        count=len(dropped)), 'warning')
             reservation.trainer_comment = (form.comment.data or '').strip() or None
             if request.form.get('action') == 'submit':
                 try:
@@ -427,6 +409,7 @@ def materials_request(instance_id):
         rows=mrq.rows_for_form(instance, reservation),
         catalog=catalog,
         catalog_unavailable=catalog_unavailable,
+        max_quantity=mrq.MAX_QUANTITY,
     )
 
 
