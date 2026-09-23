@@ -480,18 +480,33 @@ def certificates_save():
 
     Санітизація -- тим самим trainer_service.sanitize_certificates, що й в
     адмінці: один санітизатор на обидва входи, тож тренер не може покласти в
-    поле те, чого не може покласти адмін.
+    поле те, чого не може покласти адмін. Власника позицій адмінка не
+    перевіряє (вона довірена), кабінет -- перевіряє: див.
+    trainer_service.filter_owned_certificates.
     """
     import json
 
     from app.services import trainer_service
 
-    raw = request.form.get('certificates') or '[]'
-    try:
-        items = json.loads(raw)
-    except ValueError:
-        items = []
-    g.trainer.certificates = trainer_service.sanitize_certificates(items)
+    # Відсутнє поле чи зламаний JSON -- не «порожній список»: так кожен
+    # збій на боці браузера мовчки стирав би всі сертифікати тренера.
+    # `null` -- валідний стан (поле ще ні разу не заповнювали), це порожньо.
+    raw = request.form.get('certificates')
+    readable = raw is not None
+    items = None
+    if readable:
+        try:
+            items = json.loads(raw)
+        except ValueError:
+            readable = False
+    if not readable or not (items is None or isinstance(items, list)):
+        flash(_('Не вдалося прочитати дані форми. Оновіть сторінку й спробуйте ще раз.'),
+              'error')
+        return redirect(url_for('trainer_cabinet.certificates'))
+    g.trainer.certificates = trainer_service.filter_owned_certificates(
+        trainer_service.sanitize_certificates(items or []),
+        g.trainer, current_user,
+    )
     try:
         db.session.commit()
     except Exception:
@@ -589,10 +604,18 @@ def certificate_report(cert_id):
         abort(404)
     message = (request.form.get('message') or '').strip()[:2000]
     try:
-        EmailService.send_lecturer_certificate_complaint(cert, message)
+        entries = EmailService.send_lecturer_certificate_complaint(cert, message)
     except Exception:
         logger.exception('Failed to report lecturer certificate %s', cert.number)
         flash(_('Не вдалося надіслати повідомлення. Спробуйте пізніше.'), 'error')
+        return redirect(url_for('trainer_cabinet.certificates'))
+    # Порожній список -- жодного отримувача (сповіщення 'certificate' ніхто не
+    # отримує); None/'failed' -- лист відкинула пошта. «Надіслано» в обох
+    # випадках було б неправдою: тренер чекав би відповіді, якої не буде.
+    if not any(getattr(e, 'status', None) in ('pending', 'sent') for e in entries or []):
+        logger.warning('Lecturer certificate complaint %s reached nobody', cert.number)
+        flash(_('Повідомлення не доставлено: зараз його нікому отримати. '
+                'Напишіть, будь ласка, на пошту ІПРМ.'), 'error')
         return redirect(url_for('trainer_cabinet.certificates'))
     audit_logger.info('Trainer %s reported lecturer cert %s',
                       g.trainer.id, cert.number)

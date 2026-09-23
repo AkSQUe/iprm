@@ -165,6 +165,49 @@ def sanitize_certificates(items):
     return out
 
 
+def filter_owned_certificates(items, trainer, user):
+    """Лишити з уже санітизованих позицій лише ті, що належать тренеру.
+
+    Лише для кабінету тренера; адмінка довірена й сюди не ходить.
+    `sanitize_certificates` перевіряє форму позиції, але не власника, а
+    `attach_trainer_media` після збереження перепривʼязує кожен згаданий
+    MediaFile до тренера і фізично перейменовує файл. Без цього фільтра
+    тренер, підставивши чужий media_id, забирав би собі й перейменовував
+    медіа іншого тренера.
+
+    Позиція з media_id -- лише коли файл завантажив сам користувач або він
+    уже належить цьому тренеру. Позиція без media_id -- лише коли така сама
+    (за url) вже є в його сертифікатах: нову картинку тренер додає тільки
+    завантаженням, яке дає media_id, тож «нова позиція без media_id» -- це
+    або підробка, або чуже посилання. Чужа позиція відкидається ЦІЛКОМ, а не
+    лише її media_id: інакше лишилось би посилання на чужий файл, який тренер
+    і далі показував би як свій.
+    """
+    if not items:
+        return []
+    own_urls = {
+        (c or {}).get('url') for c in (trainer.certificates or [])
+        if isinstance(c, dict)
+    }
+    wanted = {it['media_id'] for it in items if it.get('media_id')}
+    owned = set()
+    if wanted:
+        for media in MediaFile.query.filter(MediaFile.id.in_(wanted)).all():
+            if media.uploaded_by == user.id or (
+                    media.entity_type == 'trainer'
+                    and media.entity_id == trainer.id):
+                owned.add(media.id)
+    out = []
+    for it in items:
+        mid = it.get('media_id')
+        if mid:
+            if mid in owned:
+                out.append(it)
+        elif it.get('url') in own_urls:
+            out.append(it)
+    return out
+
+
 def collect_media_ids(trainer):
     """Зібрати media_id, на які посилається тренер (photo + certs + patents).
 

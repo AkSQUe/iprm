@@ -51,6 +51,14 @@ class _InputValueFinder(HTMLParser):
         if d.get('id') == self.field_id:
             self.value = d.get('value')
 
+def _flashes(client):
+    """Тексти flash-повідомлень у сесії. На сторінці вони лежать у JSON для
+    тостів (tojson екранує кирилицю в \\uXXXX), тож шукати їх у HTML
+    ненадійно -- читаємо саму сесію до редіректу."""
+    with client.session_transaction() as sess:
+        return [message for _category, message in sess.get('_flashes', [])]
+
+
 # Власний лічильник номерів заходів БПР, як у test_lecturer_certificates.py:
 # issue_for_instance комітить сам, а деякі тести тут викликають фабрику
 # двічі (свій + чужий сертифікат), тож номери мають не збігатися в межах
@@ -129,35 +137,64 @@ def test_download_foreign_certificate_is_404(client):
 
 
 def test_report_error_notifies_curator(client):
+    from types import SimpleNamespace
     from unittest.mock import patch
 
     user, _, cert = _trainer_with_certificate()
     login(client, user)
     with patch('app.services.email_service.EmailService'
-               '.send_lecturer_certificate_complaint') as notify:
+               '.send_lecturer_certificate_complaint',
+               return_value=[SimpleNamespace(status='pending')]) as notify:
         resp = client.post(f'/trainer/certificates/{cert.id}/report',
-                           data={'message': 'Помилка в ПІБ'},
-                           follow_redirects=True)
-    assert resp.status_code == 200
+                           data={'message': 'Помилка в ПІБ'})
+    assert resp.status_code == 302
     assert notify.called
+    assert _flashes(client) == ['Повідомлення надіслано куратору']
+
+
+def test_report_without_recipients_does_not_claim_success(client):
+    """Нуль отримувачів: notify_admins_with_template повертає [] -- лист не
+    пішов нікому, і «надіслано куратору» було б неправдою."""
+    from unittest.mock import patch
+
+    user, _, cert = _trainer_with_certificate()
+    login(client, user)
+    with patch('app.services.notification_recipients.resolve', return_value=[]):
+        resp = client.post(f'/trainer/certificates/{cert.id}/report',
+                           data={'message': 'Помилка в ПІБ'})
+    assert resp.status_code == 302
+    flashes = _flashes(client)
+    assert 'Повідомлення надіслано куратору' not in flashes
+    assert any(m.startswith('Повідомлення не доставлено') for m in flashes)
 
 
 def test_report_error_on_foreign_certificate_is_404(client):
+    from unittest.mock import patch
+
     _, _, foreign = _trainer_with_certificate()
     other_user = make_user()
     make_trainer(other_user, name='Чужий Т. 3')
     login(client, other_user)
-    resp = client.post(f'/trainer/certificates/{foreign.id}/report',
-                       data={'message': 'X'})
+    with patch('app.services.email_service.EmailService'
+               '.send_lecturer_certificate_complaint') as notify:
+        resp = client.post(f'/trainer/certificates/{foreign.id}/report',
+                           data={'message': 'X'})
     assert resp.status_code == 404
+    assert not notify.called
 
 
 # --- власні сертифікати (редагування тренером) --------------------------
 
 
 def test_trainer_saves_own_regalia(client):
+    """Тренер змінює підпис уже наявної позиції -- зберігається."""
     user = make_user()
     trainer = make_trainer(user, name='Регалійний Т.')
+    trainer.certificates = [
+        {'url': '/media/2026/06/a.webp', 'thumb': '/media/2026/06/a.webp',
+         'caption': 'Старий підпис'},
+    ]
+    db.session.commit()
     login(client, user)
     payload = json.dumps([
         {'url': '/media/2026/06/a.webp', 'thumb': '/media/2026/06/a.webp',
@@ -169,6 +206,84 @@ def test_trainer_saves_own_regalia(client):
     db.session.refresh(trainer)
     assert len(trainer.certificates) == 1
     assert trainer.certificates[0]['caption'] == 'Диплом'
+
+
+def test_new_item_without_media_id_is_rejected(client):
+    """Нову картинку тренер додає лише завантаженням (воно дає media_id).
+    Позиція без media_id, якої ще не було, -- це підроблений запит або
+    посилання на чужий файл."""
+    user = make_user()
+    trainer = make_trainer(user, name='Підробний Т.')
+    login(client, user)
+    payload = json.dumps([
+        {'url': '/media/2026/06/foreign.webp', 'caption': 'Не моє'},
+    ])
+    client.post('/trainer/certificates', data={'certificates': payload},
+                follow_redirects=True)
+    db.session.refresh(trainer)
+    assert trainer.certificates in (None, [])
+
+
+@pytest.mark.parametrize('form', [
+    {},                               # поле відсутнє
+    {'certificates': '[{"url": '},   # зламаний JSON
+    {'certificates': '{"url": "/media/2026/06/a.webp"}'},  # не список
+])
+def test_unreadable_payload_changes_nothing(client, form):
+    """Збій на боці браузера не має трактуватись як «стерти все»."""
+    user = make_user()
+    trainer = make_trainer(user, name='Незмінний Т.')
+    saved = [{'url': '/media/2026/06/a.webp', 'thumb': '/media/2026/06/a.webp',
+              'caption': 'Диплом'}]
+    trainer.certificates = saved
+    db.session.commit()
+    login(client, user)
+    resp = client.post('/trainer/certificates', data=form)
+    assert resp.status_code == 302
+    assert any(m.startswith('Не вдалося прочитати дані форми')
+               for m in _flashes(client))
+    db.session.refresh(trainer)
+    assert trainer.certificates == saved
+
+
+def test_foreign_media_id_is_not_hijacked(client, media_root):
+    """Фінальна рецензія, C2: тренер Б підставляє media_id медіа тренера А.
+    Без перевірки власника attach_trainer_media перепривʼязав би MediaFile
+    до Б і фізично перейменував файл А під slug Б."""
+    import os
+
+    from app.models.trainer import Trainer
+
+    user_a = make_user()
+    trainer_a = make_trainer(user_a, name='Власник А.')
+    login(client, user_a)
+    uploaded = client.post('/trainer/certificates/upload',
+                           data={'file': (_png(), 'a.png')},
+                           content_type='multipart/form-data').get_json()
+    client.post('/trainer/certificates', data={'certificates': json.dumps([{
+        'url': uploaded['url'], 'thumb': uploaded['thumb'],
+        'media_id': uploaded['media_id'], 'caption': 'Диплом А',
+    }])}, follow_redirects=True)
+    media = db.session.get(MediaFile, uploaded['media_id'])
+    before = (media.entity_type, media.entity_id, media.file_path)
+    assert before[:2] == ('trainer', trainer_a.id)
+    db.session.refresh(trainer_a)
+    url_a = trainer_a.certificates[0]['url']
+
+    user_b = make_user()
+    trainer_b = make_trainer(user_b, name='Нападник Б.')
+    login(client, user_b)
+    client.post('/trainer/certificates', data={'certificates': json.dumps([{
+        'url': url_a, 'thumb': url_a, 'media_id': media.id, 'caption': 'Моє',
+    }])}, follow_redirects=True)
+
+    db.session.expire_all()
+    media = db.session.get(MediaFile, uploaded['media_id'])
+    assert (media.entity_type, media.entity_id, media.file_path) == before
+    assert os.path.exists(media.abs_path)
+    trainer_b = db.session.get(Trainer, trainer_b.id)
+    assert not any(c.get('media_id') == media.id or c.get('url') == url_a
+                   for c in (trainer_b.certificates or []))
 
 
 def test_save_rejects_invalid_url(client):
