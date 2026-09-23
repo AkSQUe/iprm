@@ -20,7 +20,7 @@ from app.rbac import permission_required
 from app.extensions import db
 from app.models.course_instance import CourseInstance
 from app.models.material_reservation import (
-    MaterialReservation, MaterialReservationStatus,
+    MaterialReservation, MaterialReservationOrigin, MaterialReservationStatus,
 )
 from app.services import material_reservation_service as mrs
 from app.services import material_request_service as mrq
@@ -373,8 +373,14 @@ def instance_materials(instance_id):
 
     participants = instance.registration_count if hasattr(instance, 'registration_count') else None
 
+    # Лінк для тренера -- легасі-канал: тренер за токеном підтверджує
+    # комплект, який підготував адмін. Для заявки з кабінету тренер уже все
+    # подав сам, і підказки цього каналу («Лінк для тренера», «Тренер ще не
+    # підтвердив перелік») про неї брешуть. `origin` -- ознака каналу, що
+    # не змінюється разом зі статусом.
     trainer_url = None
-    if reservation is not None:
+    if (reservation is not None
+            and reservation.origin != MaterialReservationOrigin.TRAINER_CABINET):
         trainer_url = url_for('main.trainer_materials',
                               token=mrs.make_trainer_token(instance_id), _external=True)
 
@@ -456,8 +462,7 @@ def instance_materials_reserve(instance_id):
         # MM Medic відповідає `exists`, коли документ уже живий: наш перелік
         # він при цьому НЕ застосовує. Сказати тут «подано» означало б
         # відзвітувати про зміну, якої не сталося.
-        if ((result.data or {}).get('status') if isinstance(result.data, dict)
-                else None) == 'exists':
+        if mrs.document_already_open(result):
             flash('Заявка на MM Medic уже існує — перелік не змінено. '
                   'Відкрийте її та збережіть зміни.', 'error')
         else:
@@ -706,18 +711,36 @@ def instance_materials_approve(instance_id):
     if reservation is None:
         return _redirect_page(instance_id)
 
-    items = _items_from_form('quantity')
-    if items:
-        mrq.save_items(reservation, items)
-
+    # Правки кількостей передаються в approve(), а не пишуться тут: вони
+    # мають лягти ЛИШЕ після гейту статусу (застаріла вкладка інакше
+    # переписала б уже погоджену заявку до того, як отримала б відмову).
     try:
-        ok, result = mrq.approve(instance, reservation)
+        ok, result = mrq.approve(instance, reservation,
+                                 edits=_items_from_form('quantity'))
     except mrq.RequestTransitionError as exc:
         flash(str(exc), 'warning')
+        return _redirect_page(instance_id)
+    except MMConfigError as exc:
+        flash(str(exc), 'error')
         return _redirect_page(instance_id)
     if not ok:
         _flash_result_error(result)
         return _redirect_page(instance_id)
+    if mrs.document_already_open(result):
+        # Той самий випадок, що й у `/reserve`: документ із цим ref уже
+        # відкритий на MM Medic (друге погодження в гонці або документ,
+        # поданий раніше), перевірений перелік партнер НЕ застосував.
+        # Дзеркало вже показує живий документ; лист тренеру не шлемо --
+        # у гонці його вже надіслав той, хто погодив першим.
+        audit_logger.info('Admin %s approved material request for instance %s: '
+                          'document already open on MM Medic',
+                          current_user.email, instance_id)
+        flash('Заявка на MM Medic уже існує — перевірений перелік не '
+              'застосовано. Перегляньте її нижче та за потреби збережіть зміни.',
+              'error')
+        return _redirect_page(instance_id)
+    audit_logger.info('Admin %s approved material request for instance %s',
+                      current_user.email, instance_id)
     _notify_decision(reservation, instance, 'approved')
     flash('Заявку погоджено й надіслано на склад', 'success')
     return _redirect_page(instance_id)

@@ -172,8 +172,20 @@ def reject(reservation, comment, user) -> MaterialReservation:
                    'Вкажіть причину відхилення')
 
 
-def approve(instance, reservation):
+def approve(instance, reservation, edits=None):
     """Погодити й надіслати на MM Medic. Повертає (ok, result).
+
+    `edits` -- правки кількостей від відповідального (ті самі dict'и, що
+    приймає `save_items`). Лягають у заявку ЛИШЕ ПІСЛЯ гейту статусу: доти
+    роут писав їх до перевірки, і застаріла вкладка переписувала кількості
+    (і видаляла рядки) вже погодженої заявки, а відмова приходила потім.
+
+    `exists` від MM Medic (документ із цим ref уже відкритий) -- не успіх:
+    перевірений перелік партнер НЕ застосував. Статус рухає сам
+    `submit_request()` (дзеркало мусить відповідати живому документу),
+    але `reviewed_*` тут не пишемо -- рішення цього виклику нічого не
+    змінило, і в гонці двох погоджень перезаписало б того, хто встиг першим.
+    Відрізнити випадок викликач може через `mrs.document_already_open()`.
 
     Гейт на статус стоїть ПЕРЕД викликом партнера й ловить повторне
     натискання в межах одного запиту чи одного обʼєкта в пам'яті: щойно
@@ -195,6 +207,8 @@ def approve(instance, reservation):
     """
     if reservation.status not in _REVIEWABLE:
         raise RequestTransitionError('Погодити можна лише заявку на перевірці')
+    if edits:
+        save_items(reservation, edits)
 
     items = [{'sku': item.sku, 'quantity': item.quantity_requested}
              for item in reservation.items
@@ -216,8 +230,9 @@ def approve(instance, reservation):
 
     if author_id is not None:
         reservation.created_by_id = author_id
-    reservation.reviewed_at = datetime.now(timezone.utc)
-    reservation.reviewed_by_id = reviewer_id
+    if not mrs.document_already_open(result):
+        reservation.reviewed_at = datetime.now(timezone.utc)
+        reservation.reviewed_by_id = reviewer_id
     db.session.commit()
     return True, result
 

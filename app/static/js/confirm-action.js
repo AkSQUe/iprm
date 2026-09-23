@@ -118,22 +118,36 @@
     btns[next].focus();
   });
 
-  // Перехоплення submit-форм з data-confirm
+  // Перехоплення submit-форм з data-confirm -- на самій формі або на
+  // кнопці, якою її відправили. Кнопку click-обробник нижче навмисно
+  // пропускає ("обробить submit-listener форми"), тож без перевірки
+  // submitter тут data-confirm на submit-кнопці не спрацьовував узагалі.
+  // Через submitter ловиться й Enter у полі: браузер відправляє форму
+  // кнопкою за замовчуванням, і її підтвердження теж має спрацювати.
   document.addEventListener('submit', function (e) {
     var form = e.target;
-    if (!form.matches('[data-confirm]')) return;
+    var submitter = e.submitter || null;
+    var source = form.matches('[data-confirm]') ? form
+      : (submitter && submitter.matches && submitter.matches('[data-confirm]')
+        ? submitter : null);
+    if (!source) return;
     if (form.__confirmed) { form.__confirmed = false; return; }
     e.preventDefault();
     open({
-      message: form.getAttribute('data-confirm'),
-      okText: form.getAttribute('data-confirm-ok'),
-      cancelText: form.getAttribute('data-confirm-cancel'),
-      danger: form.hasAttribute('data-confirm-danger'),
+      message: source.getAttribute('data-confirm'),
+      okText: source.getAttribute('data-confirm-ok'),
+      cancelText: source.getAttribute('data-confirm-cancel'),
+      danger: source.hasAttribute('data-confirm-danger'),
       onResolve: function (ok) {
         if (ok) {
           form.__confirmed = true;
-          if (typeof form.requestSubmit === 'function') form.requestSubmit();
-          else form.submit();
+          // Та сама кнопка: її formaction і name/value мають дійти до сервера.
+          if (typeof form.requestSubmit === 'function') {
+            if (submitter) form.requestSubmit(submitter);
+            else form.requestSubmit();
+          } else {
+            form.submit();
+          }
         }
       },
     });

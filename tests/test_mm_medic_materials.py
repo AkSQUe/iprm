@@ -1016,6 +1016,113 @@ def test_approve_route_keeps_the_trainer_as_author_and_mails_him(
     assert [log.to_email for log in approved] == [trainer_user.email]
 
 
+def test_stale_approval_does_not_rewrite_an_approved_request(
+        client, admin_user, instance, pending_request, monkeypatch):
+    """Адмін Б із застарілої вкладки тисне «Погодити» на вже погодженій
+    заявці з іншими кількостями. Правки не мають лягти в БД: доти
+    `save_items` стояв ПЕРЕД гейтом статусу й переписував
+    `quantity_requested` (і видаляв рядки) вже надісланої заявки."""
+    from app.models.material_reservation import MaterialReservationStatus as S
+    from tests.support.rbac import switch_user
+
+    partner = _PartnerClient()
+    monkeypatch.setattr(mrs, 'get_client', lambda: partner)
+    monkeypatch.setattr(routes, '_notify_decision', lambda *a, **k: None)
+    pending_request.status = S.SUBMITTED
+    db.session.commit()
+    before = {i.sku: i.quantity_requested for i in pending_request.items}
+    switch_user(client, admin_user)
+
+    client.post(f'/admin/instances/{instance.id}/materials/approve',
+                data={'csrf_token': _admin_csrf(client),
+                      'sku': ['NEEDLE-30G'], 'quantity': ['99']},
+                follow_redirects=True)
+
+    db.session.expire_all()
+    after = {i.sku: i.quantity_requested for i in pending_request.items}
+    assert after == before
+    assert partner.calls == []
+
+
+def test_approve_route_does_not_claim_success_when_document_exists(
+        client, admin_user, instance, pending_request, monkeypatch):
+    """MM Medic відповів `exists`: документ із цим ref уже відкритий, і
+    перевірений перелік НЕ застосовано. Сказати «погоджено й надіслано» --
+    відзвітувати про зміну, якої не сталося (той самий випадок, що
+    `/reserve` вже розпізнає)."""
+    from tests.support.rbac import switch_user
+
+    mailed = []
+    monkeypatch.setattr(mrs, 'get_client', lambda: _PartnerClient('exists'))
+    monkeypatch.setattr(routes, '_notify_decision',
+                        lambda res, inst, decision: mailed.append(decision))
+    switch_user(client, admin_user)
+
+    response = client.post(f'/admin/instances/{instance.id}/materials/approve',
+                           data={'csrf_token': _admin_csrf(client)},
+                           follow_redirects=True)
+
+    messages = _flashes(response)
+    assert not any('погоджено' in m for m in messages), messages
+    assert any('вже існує' in m or 'уже існує' in m for m in messages), messages
+    assert mailed == []
+
+
+def test_approve_page_asks_before_approving(client, admin_user, instance,
+                                            pending_request):
+    """Кнопка «Погодити й надіслати» -- перша кнопка сабміту форми
+    кількостей (зовнішня, `form="materialsForm"`), тож Enter у будь-якому
+    полі кількості натискав саме її. Підтвердження -- той самий механізм
+    `data-confirm`, що й у списання на цій сторінці."""
+    from tests.support.rbac import switch_user
+
+    switch_user(client, admin_user)
+    body = client.get(f'/admin/instances/{instance.id}/materials').get_data(as_text=True)
+
+    button = re.search(r'<button[^>]*form="materialsForm"[^>]*>', body, re.S)
+    assert button is not None
+    assert 'data-confirm=' in button.group(0)
+    assert 'data-confirm-ok=' in button.group(0)
+
+
+def test_cabinet_request_page_hides_the_legacy_trainer_link(client, admin_user,
+                                                           instance,
+                                                           pending_request):
+    """«Лінк для тренера» і «Тренер ще не підтвердив перелік» -- легасі-канал
+    (тренер підтверджує підготовлений адміном комплект за токеном). Заявку з
+    кабінету тренер уже подав сам, і ці підказки про неї брешуть."""
+    from tests.support.rbac import switch_user
+
+    switch_user(client, admin_user)
+    body = client.get(f'/admin/instances/{instance.id}/materials').get_data(as_text=True)
+
+    assert 'Лінк для тренера' not in body
+    assert 'Тренер ще не підтвердив перелік' not in body
+
+
+def test_sidebar_counter_failure_rolls_the_session_back(client, admin_user,
+                                                        monkeypatch):
+    """Фейлсофт лічильника без rollback на Postgres лишав транзакцію
+    перерваною -- і падав уже решта рендера, тобто вся адмінка."""
+    from app.services import material_request_service as mrq
+    from tests.support.rbac import switch_user
+
+    def _boom():
+        raise RuntimeError('db is down')
+
+    rolled_back = []
+    real_rollback = db.session.rollback
+    monkeypatch.setattr(mrq, 'pending_review_count', _boom)
+    monkeypatch.setattr(db.session, 'rollback',
+                        lambda: rolled_back.append(True) or real_rollback())
+    switch_user(client, admin_user)
+
+    response = client.get('/admin/materials')
+
+    assert response.status_code == 200
+    assert rolled_back
+
+
 # --------------------- overview ordering + sidebar counter (Task 8) ---------------------
 
 @pytest.fixture

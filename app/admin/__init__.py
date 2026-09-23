@@ -52,10 +52,15 @@ def inject_pending_material_requests():
     Fail-soft: сайдбар малюється на КОЖНІЙ адмін-сторінці, і збій цього
     запиту не має класти, скажімо, редагування курсу.
     """
+    from app.extensions import db
     try:
         from app.services import material_request_service as mrq
         return {'pending_material_requests': mrq.pending_review_count()}
     except Exception:
+        # Без відкату на Postgres транзакція лишається перерваною, і падає
+        # уже решта рендера -- тобто вся адмінка, від якої фейлсофт мав
+        # захистити.
+        db.session.rollback()
         return {'pending_material_requests': 0}
 
 

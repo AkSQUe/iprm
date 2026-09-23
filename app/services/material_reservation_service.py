@@ -396,6 +396,17 @@ def submit_request(instance, items):
     return True, result, reservation
 
 
+def document_already_open(result):
+    """Чи відповів MM Medic на подання `exists` -- документ із цим ref уже живий.
+
+    Подання ідемпотентне: на відкритий документ партнер повертає його як є і
+    наш перелік НЕ застосовує. `ok` при цьому істинне, тож без окремої
+    перевірки викликач відзвітував би про зміну, якої не сталося.
+    """
+    data = getattr(result, 'data', None)
+    return isinstance(data, dict) and data.get('status') == 'exists'
+
+
 def update_request_items(instance, items):
     """Переписати перелік ЩЕ НЕ погодженої заявки на MM Medic.
 
