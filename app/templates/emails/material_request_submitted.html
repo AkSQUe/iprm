@@ -21,8 +21,9 @@
                 {% if event_date %}{{ detail_row(_('Дата'), event_date | kyiv('%d.%m.%Y')) }}{% endif %}
                 {% if reservation.created_by %}{{ detail_row(_('Подав'), reservation.created_by.email) }}{% endif %}
                 {# Орієнтир для перевірки кількостей: матеріали -- лише очним. #}
-                {% set offline_count, total_count = participants %}
-                {% if total_count %}{{ detail_row(_('Зареєстровано очно'), _('%(offline)s із %(total)s', offline=offline_count, total=total_count)) }}{% endif %}
+                {#- Без розпакування: лист мусить рендеритись і без цього поля
+                    (smoke-тест усіх листів, test_all_email_templates_render). #}
+                {% if participants and participants[1] %}{{ detail_row(_('Зареєстровано очно'), _('%(offline)s із %(total)s', offline=participants[0], total=participants[1])) }}{% endif %}
                 {% for item in items %}
                 {{ detail_row(item.name or item.sku, item.quantity_requested) }}
                 {% endfor %}

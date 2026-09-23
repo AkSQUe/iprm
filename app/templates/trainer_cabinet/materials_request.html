@@ -20,13 +20,12 @@
   </p>
   {# Орієнтир для кількостей. Матеріали потрібні лише тим, хто прийде
      очно: на гібриді загальне число вводило б в оману. #}
-  {% set offline_count, total_count = participants %}
-  {% if total_count %}
+  {% if participants and participants[1] %}
   <p class="account-card__text">
-    {% if offline_count == total_count %}
-      {{ _('Зареєстровано учасників: %(count)s', count=total_count) }}
+    {% if participants[0] == participants[1] %}
+      {{ _('Зареєстровано учасників: %(count)s', count=participants[1]) }}
     {% else %}
-      {{ _('Зареєстровано очно: %(offline)s із %(total)s', offline=offline_count, total=total_count) }}
+      {{ _('Зареєстровано очно: %(offline)s із %(total)s', offline=participants[0], total=participants[1]) }}
     {% endif %}
   </p>
   {% endif %}
