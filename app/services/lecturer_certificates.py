@@ -288,10 +288,17 @@ def _missing_trainers_by_instance(instances):
 
 
 def _issue_for_missing(instances, missing):
-    """Добрати сертифікати заходам із `missing`. Повертає кількість виданих."""
+    """Добрати сертифікати заходам із `missing`. Повертає кількість виданих.
+
+    Захід із відомою причиною блокування пропускаємо, а не пробуємо видачу:
+    `issue_for_instance` на ньому впала б на тій самій передумові й вислала б
+    адмінам лист «не видано» -- уже вдруге, бо перший пішов у мить завершення
+    заходу. Про такий захід нагадує щоденний звіт (`daily_maintenance`), і
+    окремий лист до нього щоранку був би дублем про одне й те саме.
+    """
     issued = 0
     for instance in instances:
-        if instance.id not in missing:
+        if instance.id not in missing or blocking_reason(instance) is not None:
             continue
         issued += len(issue_for_instance(instance))
     return issued

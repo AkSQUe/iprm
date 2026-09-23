@@ -551,6 +551,9 @@ def certificates_save():
 
 @trainer_cabinet_bp.route('/certificates/upload', methods=['POST'])
 @trainer_required
+# Файл лягає на диск і в медіа-реєстр ще до «Зберегти»: без ліміту одна
+# вкладка могла б засипати їх файлами по 25 МБ.
+@limiter.limit('30 per minute')
 def certificate_upload():
     """Завантажити зображення сертифіката в медіа-реєстр.
 
@@ -582,6 +585,9 @@ def certificate_upload():
 
 @trainer_cabinet_bp.route('/certificates/<int:cert_id>/download')
 @trainer_required
+# PDF рендериться WeasyPrint на кожен клік (файл ніде не зберігається), а
+# це секунда-дві процесора -- повторні кліки не мають класти воркер.
+@limiter.limit('30 per minute')
 def certificate_download(cert_id):
     """Завантажити власний сертифікат лектора (перевірка володіння).
 
@@ -612,6 +618,9 @@ def certificate_download(cert_id):
 
 @trainer_cabinet_bp.route('/certificates/<int:cert_id>/report', methods=['POST'])
 @trainer_required
+# Кожна скарга -- лист кураторам; п'яти за хвилину досить на будь-яку
+# справжню помилку в документах.
+@limiter.limit('5 per minute')
 def certificate_report(cert_id):
     """Повідомити куратора про помилку у виданому сертифікаті.
 

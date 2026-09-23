@@ -715,3 +715,23 @@ def test_report_names_real_reason_for_each_blocked_instance(app, enabled_mail):
     # Причини містять '->' -- у листі вони HTML-екрановані автоескейпом.
     assert str(escape(blocked[0][1])) in log.html_body
     assert str(escape(blocked[1][1])) in log.html_body
+
+
+def test_daily_maintenance_does_not_resend_failure_letter_for_blocked(app):
+    """Заблокований захід -- лише у щоденному звіті, без окремого листа «не видано».
+
+    Лист «не видано» вже пішов адмінам у мить завершення заходу. Якби
+    щоденна джоба пробувала видачу знову, кожного ранку до звіту додавався б
+    ще один такий лист на кожен заблокований захід -- два листи про одне й те
+    саме щодня, аж до кінця вікна добору.
+    """
+    inst, _ = _completed_instance(points=None, trainers=1)
+    with patch('app.services.email_service.EmailService'
+               '.notify_lecturer_certificate_failed') as failed, \
+            patch('app.services.email_service.EmailService'
+                  '.notify_lecturer_certificate_report') as report:
+        stats = lc_svc.daily_maintenance()
+    assert not failed.called
+    assert report.call_count == 1
+    assert stats['blocked'] == 1
+    assert stats['issued'] == 0

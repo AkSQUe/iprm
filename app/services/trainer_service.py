@@ -175,8 +175,12 @@ def filter_owned_certificates(items, trainer, user):
     тренер, підставивши чужий media_id, забирав би собі й перейменовував
     медіа іншого тренера.
 
-    Позиція з media_id -- лише коли файл завантажив сам користувач або він
-    уже належить цьому тренеру. Позиція без media_id -- лише коли така сама
+    Позиція з media_id -- лише коли файл завантажив сам користувач і він ще
+    НІКОМУ не належить (щойно завантажений у кабінеті), або коли він уже
+    належить цьому тренеру. «Завантажив сам» без другої умови пропускав
+    власні файли інших сутностей -- фото анкети, а в адміна з карткою
+    тренера ще й обкладинки курсів і блогу, -- і attach_trainer_media
+    переприв'язував би їх до сертифікатів. Позиція без media_id -- лише коли така сама
     (за url) вже є в його сертифікатах: нову картинку тренер додає тільки
     завантаженням, яке дає media_id, тож «нова позиція без media_id» -- це
     або підробка, або чуже посилання. Чужа позиція відкидається ЦІЛКОМ, а не
@@ -193,9 +197,11 @@ def filter_owned_certificates(items, trainer, user):
     owned = set()
     if wanted:
         for media in MediaFile.query.filter(MediaFile.id.in_(wanted)).all():
-            if media.uploaded_by == user.id or (
-                    media.entity_type == 'trainer'
-                    and media.entity_id == trainer.id):
+            unbound_own = (media.uploaded_by == user.id
+                           and media.entity_type is None)
+            already_his = (media.entity_type == 'trainer'
+                           and media.entity_id == trainer.id)
+            if unbound_own or already_his:
                 owned.add(media.id)
     out = []
     for it in items:

@@ -4,6 +4,7 @@ import json
 import tempfile
 from html.parser import HTMLParser
 from itertools import count
+from unittest.mock import patch
 
 import pytest
 from PIL import Image
@@ -409,3 +410,83 @@ def test_own_certificates_field_survives_html_roundtrip(client):
 
     parsed = json.loads(parser.value)
     assert parsed == trainer.certificates
+
+
+def test_own_media_bound_to_other_entity_is_not_rebound(client, media_root):
+    """Власне медіа, вже привʼязане до ІНШОЇ сутності, у сертифікати не йде.
+
+    Фото анкети тренер завантажує сам (uploader_id = він), тож перевірка
+    «завантажив сам» його пропускала: підробивши POST із media_id фото,
+    тренер отримував переприв'язку MediaFile до сертифікатів і
+    перейменування файлу. Для адміна з карткою тренера так само досяжні
+    обкладинки курсів і блогу, які він колись завантажив.
+    """
+    from werkzeug.datastructures import FileStorage
+
+    from app.services import media_service
+    from app.services.trainer_cabinet import get_or_create_profile
+
+    user = make_user()
+    trainer = make_trainer(user, name='Фото анкети Т.')
+    profile = get_or_create_profile(trainer)
+    db.session.commit()
+    media, error = media_service.create_from_upload(
+        FileStorage(stream=_png(), filename='photo.png', content_type='image/png'),
+        entity_type='trainer_profile', entity_id=profile.id,
+        usage_type='photo', uploader_id=user.id,
+    )
+    assert error is None
+    db.session.commit()
+    before = (media.entity_type, media.entity_id, media.usage_type, media.file_path)
+
+    login(client, user)
+    client.post('/trainer/certificates', data={'certificates': json.dumps([{
+        'url': media.url, 'thumb': media.url, 'media_id': media.id,
+        'caption': 'Підроблена позиція',
+    }])}, follow_redirects=True)
+
+    db.session.refresh(media)
+    assert (media.entity_type, media.entity_id, media.usage_type,
+            media.file_path) == before
+    db.session.refresh(trainer)
+    assert not any((c or {}).get('media_id') == media.id
+                   for c in (trainer.certificates or []))
+
+
+def test_complaints_are_rate_limited(client):
+    """Кожна скарга -- лист кураторам; без ліміту одна вкладка засипала б їх."""
+    user, _, cert = _trainer_with_certificate()
+    login(client, user)
+    with patch('app.services.email_service.EmailService'
+               '.send_lecturer_certificate_complaint', return_value=[]):
+        codes = [client.post(f'/trainer/certificates/{cert.id}/report',
+                             data={'message': 'Помилка в ПІБ'}).status_code
+                 for _ in range(6)]
+    assert codes[:5] == [302] * 5
+    assert codes[5] == 429
+
+
+def test_uploads_are_rate_limited(client, media_root):
+    """Завантаження кладе файл на диск ще до «Зберегти»: без ліміту тренер
+    міг би безмежно засипати медіа-реєстр."""
+    user = make_user()
+    make_trainer(user, name='Завантажувач Т.')
+    login(client, user)
+    codes = [client.post('/trainer/certificates/upload',
+                         data={'file': (_png(), 'a.png')},
+                         content_type='multipart/form-data').status_code
+             for _ in range(31)]
+    assert all(c == 200 for c in codes[:30])
+    assert codes[30] == 429
+
+
+def test_downloads_are_rate_limited(client):
+    """PDF рендериться на кожен клік -- повторні запити мають упертись у ліміт."""
+    user, _, cert = _trainer_with_certificate()
+    login(client, user)
+    with patch('app.services.certificate_service.render_lecturer_pdf',
+               return_value=b'%PDF-1.4 fake'):
+        codes = [client.get(f'/trainer/certificates/{cert.id}/download').status_code
+                 for _ in range(31)]
+    assert all(c == 200 for c in codes[:30])
+    assert codes[30] == 429
