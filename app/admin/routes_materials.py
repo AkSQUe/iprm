@@ -779,6 +779,8 @@ def instance_materials_return(instance_id):
     except mrq.RequestTransitionError as exc:
         flash(str(exc), 'warning')
         return _redirect_page(instance_id)
+    audit_logger.info('Admin %s returned material request for instance %s to the trainer',
+                      current_user.email, instance_id)
     _notify_decision(reservation, instance, 'returned')
     flash('Заявку повернуто тренеру', 'success')
     return _redirect_page(instance_id)
@@ -799,6 +801,8 @@ def instance_materials_reject(instance_id):
     except mrq.RequestTransitionError as exc:
         flash(str(exc), 'warning')
         return _redirect_page(instance_id)
+    audit_logger.info('Admin %s rejected material request for instance %s',
+                      current_user.email, instance_id)
     _notify_decision(reservation, instance, 'rejected')
     flash('Заявку відхилено', 'success')
     return _redirect_page(instance_id)

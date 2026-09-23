@@ -23,6 +23,7 @@ from app.models.material_reservation import (
     MaterialReservationStatus,
 )
 from app.services import material_reservation_service as mrs
+from app.utils import ensure_utc, kyiv_day_start_utc
 
 logger = logging.getLogger(__name__)
 
@@ -383,23 +384,62 @@ def catalog_for_trainer(search=None):
     ], False
 
 
-def prefill_rows(instance):
-    """Рядки, якими відкривається порожня заявка: стандартний комплект курсу.
+def _prefill_kit(instance):
+    """ОДИН комплект, яким відкривається порожня заявка, або None.
 
-    `kits_for_instance` віддає курсові комплекти І універсальні
-    (`course_id IS NULL`). Беремо позиції з усіх активних, складаючи
-    кількості на однаковий sku: два комплекти, що обидва містять серветки,
-    мають дати одну позицію, а не дві.
+    Комплекти -- альтернативи, а не частини одного набору: `is_default` в
+    адмінці так і підписано -- «пропонується першим при застосуванні», і
+    застосовують один. Доти префіл складав УСІ активні комплекти курсу й
+    універсальні, і «Базовий» + «Розширений» давали тренеру подвоєні
+    кількості.
+
+    Курсові комплекти мають перевагу над універсальними. Усередині групи --
+    позначений за замовчуванням, інакше єдиний. Кілька курсових без
+    позначки -- неоднозначно, і вгадувати не беремося: краще порожня форма,
+    ніж чужий набір.
     """
-    merged = {}
-    for kit in mrs.kits_for_instance(instance):
-        for item in kit.items:
-            row = merged.setdefault(item.sku, {
-                'sku': item.sku, 'name': item.name_snapshot,
-                'image_url': None, 'quantity': 0,
-            })
-            row['quantity'] += item.quantity or 0
-    return [row for row in merged.values() if row['quantity'] > 0]
+    kits = mrs.kits_for_instance(instance)
+    own = [k for k in kits if k.course_id == instance.course_id]
+    universal = [k for k in kits if k.course_id is None]
+    for group in (own, universal):
+        if not group:
+            continue
+        defaults = [k for k in group if k.is_default]
+        if defaults:
+            return defaults[0]
+        return group[0] if len(group) == 1 else None
+    return None
+
+
+def prefill_rows(instance):
+    """Рядки, якими відкривається порожня заявка: один комплект (див. `_prefill_kit`)."""
+    kit = _prefill_kit(instance)
+    if kit is None:
+        return []
+    return [{'sku': item.sku, 'name': item.name_snapshot, 'image_url': None,
+             'quantity': item.quantity}
+            for item in kit.items if (item.quantity or 0) > 0]
+
+
+# Стани заходу, для яких ще має сенс заявка на матеріали. Той самий набір,
+# що показує кабінет (trainer_cabinet.upcoming_instances).
+_LIVE_INSTANCE_STATUSES = ('published', 'active')
+
+
+def accepts_requests(instance, now=None) -> bool:
+    """Чи приймає захід заявку на матеріали: опублікований чи активний і ще
+    не минув (за київською добою, як і список у кабінеті).
+
+    Список у кабінеті й так показує лише такі заходи, але сторінка заявки
+    відкривається за прямим URL -- і доти приймала заявку на минулий чи
+    скасований захід, яку відповідальному лишалось хіба відхилити.
+    """
+    if instance.status not in _LIVE_INSTANCE_STATUSES:
+        return False
+    ends = instance.end_date or instance.start_date
+    if ends is None:
+        return True  # дату ще призначать -- заявку можна готувати
+    return ensure_utc(ends) >= kyiv_day_start_utc(now)
 
 
 def rows_for_form(instance, reservation):

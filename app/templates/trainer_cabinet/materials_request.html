@@ -23,7 +23,13 @@
      в поверненої, і у відхиленої, але поверненій тренер ще може допомогти,
      а відхилена закрита. Чернетці пояснення не потрібне -- форма відкрита. #}
   {% set status = reservation.status if reservation else None %}
-  {% if status == 'returned' %}
+  {% if not accepts and status in [None, 'draft', 'returned'] %}
+  {# Першим: для чернетки чи поверненої на мертвий захід заклик «виправте й
+     надішліть» був би неправдою -- надіслати вже не можна. #}
+  <p class="alert alert--info" role="note">
+    {{ _('Заявку на цей захід уже не приймаємо: він минув або скасований.') }}
+  </p>
+  {% elif status == 'returned' %}
   <div class="alert alert--warning">
     <strong class="alert__title">{{ _('Заявку повернуто на доопрацювання') }}</strong>
     {% if reservation.review_comment %}<p>{{ reservation.review_comment }}</p>{% endif %}
@@ -74,23 +80,24 @@
     </ul>
 
     {% if editable %}
-      {% if catalog_unavailable %}
-      <p class="alert alert--warning">
-        {{ _('Каталог складу зараз недоступний. Заявку можна надіслати з наявного переліку, а додати нові позиції -- пізніше.') }}
-      </p>
-      {% else %}
       <div class="trainer-materials-add">
         <label for="materialsAdd">{{ _('Додати позицію') }}</label>
         <input type="search" id="materialsAdd" class="form-input"
                placeholder="{{ _('Пошук по каталогу') }}" autocomplete="off"
                data-catalog-search data-remove-label="{{ _('Прибрати') }}">
         <ul class="account-card trainer-materials-suggest" data-suggest hidden></ul>
+        {# Стан пошуку показує trainer-materials.js: сервер каталог під час
+           рендеру не питає (живий виклик MM Medic вішав би сторінку), тож
+           про недоступність дізнаємось, коли тренер шукає. #}
+        <p class="alert alert--warning" data-catalog-status role="status" hidden
+           data-msg-unavailable="{{ _('Каталог складу зараз недоступний. Заявку можна надіслати з наявного переліку, а додати нові позиції -- пізніше.') }}"
+           data-msg-throttled="{{ _('Забагато запитів до каталогу. Зачекайте хвилину й спробуйте ще раз.') }}"
+           data-msg-error="{{ _('Не вдалося виконати пошук. Спробуйте ще раз.') }}"></p>
       </div>
-      {% endif %}
 
       <div class="form-group">
         <label for="{{ form.comment.id }}">{{ form.comment.label.text }}</label>
-        {{ form.comment(class="form-input", id=form.comment.id, rows=3) }}
+        {{ form.comment(class="form-input", id=form.comment.id, rows=3, maxlength=comment_max) }}
       </div>
 
       <div class="trainer-materials-actions">

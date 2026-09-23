@@ -354,14 +354,22 @@ def materials():
 def materials_request(instance_id):
     instance = _own_instance(instance_id)
     reservation = mrq.mrs.get_reservation(instance_id)
-    editable = mrq.is_editable_by_trainer(reservation)
+    # Минулий чи скасований захід відкривається за прямим URL (для історії),
+    # але заявку на нього вже не приймаємо.
+    accepts = mrq.accepts_requests(instance)
+    editable = accepts and mrq.is_editable_by_trainer(reservation)
     form = MaterialRequestForm()
+    posted_rows = None
 
     if request.method == 'POST':
         if not editable:
             # Не «надіслано на перевірку»: сюди доходять і погоджена, і
             # відхилена заявка, і про них ця фраза збрехала б.
-            flash(_('Цю заявку вже не можна редагувати.'), 'warning')
+            if not accepts:
+                flash(_('Заявку на цей захід уже не приймаємо: він минув або скасований.'),
+                      'warning')
+            else:
+                flash(_('Цю заявку вже не можна редагувати.'), 'warning')
             return redirect(url_for('trainer_cabinet.materials_request',
                                     instance_id=instance_id))
         if form.validate_on_submit():
@@ -397,20 +405,43 @@ def materials_request(instance_id):
             return redirect(url_for('trainer_cabinet.materials_request',
                                     instance_id=instance_id))
 
+        # Форма не пройшла (прострочений CSRF, задовгий коментар). Доти
+        # сторінка мовчки показувала ЗБЕРЕЖЕНІ рядки -- правки тренера
+        # зникали без жодного слова. Тепер: причина + його ж рядки на екрані.
+        flash(str(form.comment.errors[0]) if form.comment.errors else
+              _('Заявку не збережено: сторінка застаріла. Перевірте перелік і надішліть ще раз.'),
+              'error')
+        posted_rows = _rows_from_post(instance, reservation)
+
     if request.method == 'GET':
         form.comment.data = reservation.trainer_comment if reservation else None
-    catalog, catalog_unavailable = mrq.catalog_for_trainer()
+    # Каталог тут НЕ тягнемо: шаблону він не потрібен, а живий виклик MM Medic
+    # (з ретраями) на холодному кеші вішав би сторінку. Про недоступний
+    # каталог скаже пошук, коли тренер ним скористається (trainer-materials.js).
     return render_template(
         'trainer_cabinet/materials_request.html',
         form=form,
         instance=instance,
         reservation=reservation,
         editable=editable,
-        rows=mrq.rows_for_form(instance, reservation),
-        catalog=catalog,
-        catalog_unavailable=catalog_unavailable,
+        accepts=accepts,
+        rows=(posted_rows if posted_rows is not None
+              else mrq.rows_for_form(instance, reservation)),
         max_quantity=mrq.MAX_QUANTITY,
+        comment_max=MaterialRequestForm.COMMENT_MAX,
     )
+
+
+def _rows_from_post(instance, reservation):
+    """Рядки з відхиленого POST у вигляді для форми, або None, якщо їх не
+    розібрати. Назви -- так само від сервера (resolve_rows), не з форми."""
+    try:
+        rows = mrq.parse_form_rows(request.form.getlist('sku'),
+                                   request.form.getlist('quantity'))
+    except mrq.RequestTransitionError:
+        return None
+    items, _dropped = mrq.resolve_rows(instance, reservation, rows)
+    return items
 
 
 def _notify_material_request(reservation, instance):

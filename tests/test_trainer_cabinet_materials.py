@@ -391,3 +391,125 @@ def test_parse_form_rows_refuses_too_many_rows(app):
     skus = [f'S{i}' for i in range(mrq.MAX_ROWS + 1)]
     with pytest.raises(mrq.RequestTransitionError):
         mrq.parse_form_rows(skus, ['1'] * len(skus))
+
+
+# --- Префіл: один комплект, а не сума всіх ---------------------------------
+
+def _kit(course_id, name, sku, quantity, is_default=False):
+    kit = MaterialKit(name=name, course_id=course_id, is_active=True,
+                      is_default=is_default)
+    db.session.add(kit)
+    db.session.flush()
+    db.session.add(MaterialKitItem(kit_id=kit.id, sku=sku,
+                                   name_snapshot=name, quantity=quantity))
+    db.session.commit()
+    return kit
+
+
+def test_prefill_takes_the_default_kit_not_the_sum(app, instance):
+    """Комплекти -- альтернативи («пропонується першим при застосуванні»).
+    Доти «Базовий» + «Розширений» складались, і тренер бачив подвоєне."""
+    from app.services import material_request_service as mrq
+
+    _kit(instance.course_id, 'Базовий', 'NEEDLE-30G', 10, is_default=True)
+    _kit(instance.course_id, 'Розширений', 'NEEDLE-30G', 25)
+
+    rows = mrq.prefill_rows(instance)
+
+    assert [(r['sku'], r['quantity']) for r in rows] == [('NEEDLE-30G', 10)]
+
+
+def test_prefill_does_not_guess_between_several_unmarked_kits(app, instance):
+    from app.services import material_request_service as mrq
+
+    _kit(instance.course_id, 'Перший', 'A-1', 5)
+    _kit(instance.course_id, 'Другий', 'B-2', 5)
+
+    assert mrq.prefill_rows(instance) == []
+
+
+def test_prefill_prefers_the_course_kit_over_a_universal_one(app, instance):
+    from app.services import material_request_service as mrq
+
+    _kit(None, 'Універсальний', 'UNI-1', 3, is_default=True)
+    _kit(instance.course_id, 'Курсовий', 'OWN-1', 7)
+
+    assert [r['sku'] for r in mrq.prefill_rows(instance)] == ['OWN-1']
+
+
+# --- Заявку приймає лише живий захід ---------------------------------------
+
+@pytest.mark.parametrize('status, days, expected', [
+    ('published', 7, True),
+    ('active', 0, True),
+    ('published', -3, False),   # минув
+    ('cancelled', 7, False),
+    ('draft', 7, False),
+])
+def test_accepts_requests(app, instance, status, days, expected):
+    from app.services import material_request_service as mrq
+
+    instance.status = status
+    instance.start_date = datetime.now(timezone.utc) + timedelta(days=days)
+    instance.end_date = None
+    db.session.commit()
+
+    assert mrq.accepts_requests(instance) is expected
+
+
+def test_request_for_a_past_event_is_refused(client, trainer_user, instance, kit):
+    """Сторінка відкривається за прямим URL -- доти й заявку на минулий захід
+    приймала, і відповідальному лишалось хіба відхилити її."""
+    from app.services import material_request_service as mrq
+
+    instance.start_date = datetime.now(timezone.utc) - timedelta(days=3)
+    db.session.commit()
+    _login(client, trainer_user)
+
+    response = client.post(f'/trainer/materials/{instance.id}', data={
+        'csrf_token': _csrf(client, f'/trainer/materials/{instance.id}'),
+        'sku': ['NEEDLE-30G'], 'quantity': ['3'], 'action': 'submit',
+    }, follow_redirects=True)
+
+    assert mrq.mrs.get_reservation(instance.id) is None
+    assert any('уже не приймаємо' in m for m in _flashes(response)), _flashes(response)
+
+
+# --- Невалідний POST і сторінка без MM Medic --------------------------------
+
+def test_rejected_form_keeps_the_trainer_rows_and_says_why(client, trainer_user,
+                                                          instance, kit):
+    """Доти невалідна форма мовчки показувала ЗБЕРЕЖЕНІ рядки: правки
+    тренера зникали без жодного слова."""
+    from app.services import material_request_service as mrq
+
+    _login(client, trainer_user)
+
+    response = client.post(f'/trainer/materials/{instance.id}', data={
+        'csrf_token': _csrf(client, f'/trainer/materials/{instance.id}'),
+        'sku': ['NEEDLE-30G'], 'quantity': ['777'],
+        'comment': 'x' * 2001, 'action': 'draft',
+    })
+
+    assert response.status_code == 200
+    assert any('задовгий' in m for m in _flashes(response)), _flashes(response)
+    assert 'value="777"' in response.get_data(as_text=True)
+    assert mrq.mrs.get_reservation(instance.id) is None
+
+
+def test_request_page_does_not_call_the_partner_on_render(client, trainer_user,
+                                                         instance, kit, monkeypatch):
+    """Шаблону каталог не потрібен, а живий виклик MM Medic (з ретраями) на
+    холодному кеші вішав сторінку. Про недоступність скаже пошук."""
+    from app.services import material_reservation_service as mrs
+
+    def _boom(**kwargs):
+        raise AssertionError('сторінка не мала питати каталог')
+
+    monkeypatch.setattr(mrs, 'get_catalog', _boom)
+    _login(client, trainer_user)
+
+    response = client.get(f'/trainer/materials/{instance.id}')
+
+    assert response.status_code == 200
+    assert b'data-catalog-status' in response.data

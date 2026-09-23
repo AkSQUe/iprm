@@ -7176,3 +7176,19 @@ msgstr "Too many items in the request: no more than %(max)s"
 #, python-format
 msgid "Позиції, яких немає в каталозі складу, не збережено: %(count)s"
 msgstr "Items not found in the warehouse catalog were not saved: %(count)s"
+
+msgid "Заявку на цей захід уже не приймаємо: він минув або скасований."
+msgstr "This event no longer accepts requests: it has passed or was cancelled."
+
+msgid "Заявку не збережено: сторінка застаріла. Перевірте перелік і надішліть ще раз."
+msgstr "The request was not saved: the page has expired. Check the list and submit again."
+
+msgid "Забагато запитів до каталогу. Зачекайте хвилину й спробуйте ще раз."
+msgstr "Too many catalog requests. Wait a minute and try again."
+
+msgid "Не вдалося виконати пошук. Спробуйте ще раз."
+msgstr "Search failed. Please try again."
+
+#, python-format
+msgid "Коментар задовгий: не більше %(max)d символів."
+msgstr "The comment is too long: no more than %(max)d characters."

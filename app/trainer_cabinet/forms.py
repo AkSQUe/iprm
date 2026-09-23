@@ -100,4 +100,10 @@ class MaterialRequestForm(FlaskForm):
     динамічну кількість рядків без FieldList, а FieldList тут дав би
     складність без користі. Форма потрібна заради CSRF і коментаря.
     """
-    comment = TextAreaField(_l('Коментар до заявки'), validators=[Optional()])
+    # Межа -- бо коментар цілком іде в лист відповідальним.
+    COMMENT_MAX = 2000
+    comment = TextAreaField(_l('Коментар до заявки'), validators=[
+        Optional(),
+        Length(max=COMMENT_MAX,
+               message=_l('Коментар задовгий: не більше %(max)d символів.')),
+    ])

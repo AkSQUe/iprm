@@ -10,8 +10,22 @@
   var body = form.querySelector('[data-rows-body]');
   var search = form.querySelector('[data-catalog-search]');
   var suggest = form.querySelector('[data-suggest]');
+  var status = form.querySelector('[data-catalog-status]');
   var catalogUrl = form.getAttribute('data-catalog-url');
   var timer = null;
+  /* Номер останнього запиту пошуку: відповідь на застарілий запит («гол»
+     після «голк») приходить пізніше й перетирала б свіжі підказки. */
+  var requestSeq = 0;
+
+  function showStatus(kind) {
+    if (!status) { return; }
+    status.textContent = status.getAttribute('data-msg-' + kind) || '';
+    status.hidden = false;
+  }
+
+  function hideStatus() {
+    if (status) { status.hidden = true; }
+  }
 
   form.addEventListener('click', function (event) {
     var button = event.target.closest('[data-remove-row]');
@@ -106,16 +120,44 @@
     search.addEventListener('input', function () {
       window.clearTimeout(timer);
       var query = search.value.trim();
-      if (query.length < 2) { suggest.hidden = true; return; }
+      if (query.length < 2) {
+        requestSeq++;  /* відповідь, що ще летить, не має відкрити підказки знову */
+        suggest.hidden = true;
+        hideStatus();
+        return;
+      }
       /* Кожен запит -- живий HTTP у MM Medic, тому пауза, а не пошук на
          кожну літеру. Серверний ліміт -- 30/хв. */
       timer = window.setTimeout(function () {
+        var mine = ++requestSeq;
         window.fetch(catalogUrl + '?q=' + encodeURIComponent(query), {
           headers: { 'Accept': 'application/json' }
         })
-          .then(function (response) { return response.json(); })
-          .then(function (data) { renderSuggestions(data.items || []); })
-          .catch(function () { suggest.hidden = true; });
+          .then(function (response) {
+            if (response.status === 429) { return { throttled: true }; }
+            if (!response.ok) { throw new Error('HTTP ' + response.status); }
+            return response.json();
+          })
+          .then(function (data) {
+            if (mine !== requestSeq) { return; }  /* застаріла відповідь */
+            if (data.throttled) {
+              suggest.hidden = true;
+              showStatus('throttled');
+              return;
+            }
+            if (data.unavailable) {
+              suggest.hidden = true;
+              showStatus('unavailable');
+              return;
+            }
+            hideStatus();
+            renderSuggestions(data.items || []);
+          })
+          .catch(function () {
+            if (mine !== requestSeq) { return; }
+            suggest.hidden = true;
+            showStatus('error');
+          });
       }, 300);
     });
   }
