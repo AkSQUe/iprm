@@ -100,3 +100,19 @@ def labels_for(keys):
     """Підписи шапки в тому ж порядку -- з того самого реєстру."""
     by_key = {c.key: c for c in COLUMNS}
     return [by_key[k].label for k in keys]
+
+
+def render_pdf(trainers, keys, title=None):
+    """PDF-таблиця резюме. Рядок -- тренер, колонка -- поле анкети."""
+    from flask import current_app, render_template
+    # WeasyPrint імпортуємо ліниво: на машинах без GTK імпорт може падати,
+    # і він не має валити старт застосунку.
+    from weasyprint import HTML
+
+    html = render_template(
+        'admin/trainer_resume_pdf.html',
+        title=title or 'Резюме тренерів',
+        labels=labels_for(keys),
+        rows=build_rows(trainers, keys),
+    )
+    return HTML(string=html, base_url=current_app.static_folder).write_pdf()

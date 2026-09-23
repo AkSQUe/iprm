@@ -1,6 +1,8 @@
 import json
 import logging
-from flask import render_template, redirect, url_for, flash, request, jsonify
+from flask import (
+    render_template, redirect, url_for, flash, request, jsonify, current_app,
+)
 from flask_login import current_user
 from app.admin import _listing, admin_bp
 from app.rbac import permission_required
@@ -149,6 +151,53 @@ def trainers_list():
         new_proposals=new_proposals,
         complete_profiles=complete_profiles,
     )
+
+
+@admin_bp.route('/trainers/resume.pdf', methods=['POST'])
+@permission_required('trainers.view')
+def trainers_resume_pdf():
+    """PDF-резюме обраних тренерів для пакета документів при подачі заходу."""
+    import io
+    from datetime import date
+
+    from flask import send_file
+
+    from app.services import trainer_resume_service as rs
+
+    ids = [int(v) for v in request.form.getlist('ids') if v.isdigit()]
+    if not ids:
+        flash('Оберіть хоча б одного тренера', 'error')
+        return redirect(request.referrer or url_for('admin.trainers_list'))
+
+    trainers = Trainer.query.filter(Trainer.id.in_(ids)).all()
+    # Порядок рядків -- як у запиті, а не як віддала БД: адмін обирав тренерів
+    # у тому порядку, у якому вони йдуть у поданні заходу.
+    by_id = {t.id: t for t in trainers}
+    ordered = [by_id[i] for i in ids if i in by_id]
+    if not ordered:
+        flash('Тренерів не знайдено', 'error')
+        return redirect(request.referrer or url_for('admin.trainers_list'))
+
+    keys = rs.normalize_keys(request.form.getlist('columns'), current_user)
+    try:
+        pdf = rs.render_pdf(ordered, keys)
+    except Exception:
+        current_app.logger.exception('trainer resume pdf failed')
+        flash('Не вдалося сформувати PDF резюме', 'error')
+        return redirect(request.referrer or url_for('admin.trainers_list'))
+
+    audit_logger.info(
+        'Admin %s exported trainer resume (%d trainers, columns=%s)',
+        current_user.email, len(ordered), ','.join(keys),
+    )
+    response = send_file(
+        io.BytesIO(pdf), mimetype='application/pdf', as_attachment=True,
+        download_name=f'rezume-treneriv-{date.today():%Y-%m-%d}.pdf',
+    )
+    # Документ -- персональні дані тренерів; проміжним і браузерним кешам
+    # такий PDF діставатися не має, як і договору в кабінеті тренера.
+    response.headers['Cache-Control'] = 'no-store, private'
+    return response
 
 
 @admin_bp.route('/trainers/new', methods=['GET', 'POST'])

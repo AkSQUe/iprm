@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<title>{{ title }}</title>
+<style>
+  /* Альбомна: таблиця на десяток тренерів у книжкову не влазить. */
+  @page { size: A4 landscape; margin: 12mm 10mm; }
+  body { font-family: 'DejaVu Sans', sans-serif; font-size: 9pt; color: #17131D; }
+  h1 { font-size: 13pt; margin: 0 0 8mm 0; }
+  table { width: 100%; border-collapse: collapse; }
+  /* Шапка повторюється на кожній сторінці -- інакше з другої сторінки
+     незрозуміло, що в якій колонці. */
+  thead { display: table-header-group; }
+  th, td { border: 0.4pt solid #B9B2C4; padding: 2mm 2.5mm; text-align: left;
+           vertical-align: top; }
+  th { background: #F7F4FB; font-weight: 600; }
+  tr { page-break-inside: avoid; }
+  ul { margin: 0; padding-left: 4mm; }
+</style>
+</head>
+<body>
+<h1>{{ title }}</h1>
+<table>
+  <thead>
+    <tr>{% for label in labels %}<th>{{ label }}</th>{% endfor %}</tr>
+  </thead>
+  <tbody>
+    {% for row in rows %}
+    <tr>
+      {% for cell in row %}
+      <td>
+        {%- set lines = cell.splitlines() | select | list -%}
+        {%- if lines | length > 1 -%}
+        <ul>{% for line in lines %}<li>{{ line }}</li>{% endfor %}</ul>
+        {%- else -%}
+        {{ cell }}
+        {%- endif -%}
+      </td>
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</body>
+</html>
