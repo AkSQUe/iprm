@@ -10,8 +10,10 @@ from flask_login import current_user
 
 from app.extensions import db, limiter
 from app.models.course_instance import CourseInstance
+from app.models.mixins import utcnow
 from app.models.site_settings import SiteSettings
 from app.models.trainer_course_proposal import TrainerCourseProposal
+from app.services import lecturer_certificates as lc_svc
 from app.services import material_request_service as mrq
 from app.services import trainer_cabinet as svc
 from app.trainer_cabinet import trainer_cabinet_bp
@@ -67,6 +69,7 @@ def index():
         courses=svc.trainer_courses(trainer),
         profile_complete=bool(trainer.profile and trainer.profile.is_complete),
         attention=svc.attention_items(trainer, settings, upcoming=upcoming),
+        new_certificates=lc_svc.unseen_count(trainer),
         **referral,
     )
 
@@ -624,6 +627,16 @@ def certificate_download(cert_id):
         flash(_('Не вдалося підготувати PDF. Спробуйте пізніше або '
                 'зверніться до підтримки.'), 'error')
         return redirect(url_for('trainer_cabinet.certificates'))
+    # Перше відкриття знімає позначку «нове». Лише після вдалого рендеру:
+    # документ, якого тренер так і не отримав, новим і лишається. Збій
+    # позначки не заважає віддати PDF.
+    if cert.downloaded_at is None:
+        cert.downloaded_at = utcnow()
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            logger.exception('Failed to mark lecturer certificate %s as seen', cert.number)
     response = send_file(
         io.BytesIO(pdf), mimetype='application/pdf', as_attachment=True,
         download_name=f'lecturer-{cert.number}.pdf',

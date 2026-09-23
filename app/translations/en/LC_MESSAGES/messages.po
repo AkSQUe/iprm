@@ -7321,3 +7321,6 @@ msgstr "Move up"
 
 msgid "Перемістити нижче"
 msgstr "Move down"
+
+msgid "Нове"
+msgstr "New"

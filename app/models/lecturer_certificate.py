@@ -80,6 +80,11 @@ class LecturerCertificate(TimestampMixin, db.Model):
     # невідправлений лист видимим. Без колонки лист, що не пішов через
     # недоступну пошту, зник би безслідно.
     emailed_at = db.Column(db.DateTime(timezone=True), index=True)
+    # Коли тренер уперше завантажив PDF у кабінеті. NULL -- документ для нього
+    # ще «новий»: позначка на картці «Сертифікати» тримається, доки він його
+    # не відкрив. Перевидача скидає поле так само, як emailed_at: виправлений
+    # документ -- знову новий.
+    downloaded_at = db.Column(db.DateTime(timezone=True))
 
     instance = db.relationship('CourseInstance', foreign_keys=[instance_id])
     trainer = db.relationship('Trainer', foreign_keys=[trainer_id])

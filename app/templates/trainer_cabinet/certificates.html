@@ -34,7 +34,9 @@
         {% for cert in issued %}
         <li class="account-card cabinet-certs-list__item">
           <div class="cabinet-certs-list__main">
-            <h3 class="iprm-block-title">{{ cert.event_title }}</h3>
+            <h3 class="iprm-block-title">{{ cert.event_title }}
+              {% if cert.downloaded_at is none %}<span class="badge badge--info">{{ _('Нове') }}</span>{% endif %}
+            </h3>
             <p class="account-card__text">
               № {{ cert.number }}
               {%- if cert.event_date %} &middot; {{ cert.event_date.strftime('%d.%m.%Y') }}{% endif %}

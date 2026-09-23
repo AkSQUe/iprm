@@ -10,8 +10,12 @@
     </h3>
     <p class="account-card__text">{{ _('Контакти, реквізити ФОП, дані для договору та інформація про ваші курси') }}</p>
   </a>
+  {# «Нове» -- сертифікати, які тренер ще не відкривав (downloaded_at IS NULL):
+     свіжий документ за проведений захід інакше легко пропустити. #}
   <a href="{{ url_for('trainer_cabinet.certificates') }}" class="account-card account-card--link">
-    <h3 class="iprm-block-title">{{ _('Сертифікати') }}</h3>
+    <h3 class="iprm-block-title">{{ _('Сертифікати') }}
+      {% if new_certificates %}<span class="badge badge--info">{{ _('Нове') }}: {{ new_certificates }}</span>{% endif %}
+    </h3>
     <p class="account-card__text">{{ _('Документи за проведені заходи та ваші власні сертифікати') }}</p>
   </a>
   <a href="{{ url_for('trainer_cabinet.materials') }}" class="account-card account-card--link">

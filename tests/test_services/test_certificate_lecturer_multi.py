@@ -215,3 +215,19 @@ def test_reissue_resets_emailed_at(app):
 
     again = cs.reissue_lecturer_certificate(instance, a)
     assert again.emailed_at is None
+
+
+def test_reissue_makes_certificate_new_again(app):
+    """Виправлений документ -- для тренера знову новий: позначка в кабінеті
+    загорається, доки він не відкриє нову версію."""
+    from app.services import certificate_service as cs
+    from app.models.mixins import utcnow
+
+    a = _trainer('Тренер Нове')
+    instance = _instance_with_trainers([a.id])
+    cert = cs.issue_lecturer_certificate(instance, a)
+    cert.downloaded_at = utcnow()
+    db.session.commit()
+
+    again = cs.reissue_lecturer_certificate(instance, a)
+    assert again.downloaded_at is None

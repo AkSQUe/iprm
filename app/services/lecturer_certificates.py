@@ -218,6 +218,18 @@ def _delivered(cert, log):
     return EmailService.is_already_queued(key)
 
 
+def unseen_count(trainer):
+    """Скільки виданих тренеру сертифікатів він ще не відкривав у кабінеті."""
+    from app.models.lecturer_certificate import LecturerCertificate
+
+    return (
+        LecturerCertificate.query
+        .filter(LecturerCertificate.trainer_id == trainer.id,
+                LecturerCertificate.downloaded_at.is_(None))
+        .count()
+    )
+
+
 def delivery_statuses(certs):
     """{cert.id: стан листа} для показу адміну біля кожного сертифіката.
 

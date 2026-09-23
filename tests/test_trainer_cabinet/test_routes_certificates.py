@@ -573,3 +573,30 @@ def test_reordering_does_not_rename_bound_files(client, media_root):
     db.session.expire_all()
     assert {u['media_id']: db.session.get(MediaFile, u['media_id']).file_path
             for u in uploads} == paths
+
+
+def test_new_certificate_is_marked_until_downloaded(client):
+    """Свіжий документ за проведений захід легко пропустити: картка
+    «Сертифікати» й сам рядок позначені «нове», доки тренер його не відкрив."""
+    user, _, cert = _trainer_with_certificate()
+    login(client, user)
+    assert 'Нове: 1' in client.get('/trainer/').get_data(as_text=True)
+    assert 'badge--info' in client.get('/trainer/certificates').get_data(as_text=True)
+
+    with patch('app.services.certificate_service.render_lecturer_pdf',
+               return_value=b'%PDF-1.4 fake'):
+        assert client.get(f'/trainer/certificates/{cert.id}/download').status_code == 200
+    db.session.refresh(cert)
+    assert cert.downloaded_at is not None
+    assert 'Нове:' not in client.get('/trainer/').get_data(as_text=True)
+
+
+def test_failed_render_keeps_certificate_new(client):
+    """Документ, якого тренер так і не отримав, новим і лишається."""
+    user, _, cert = _trainer_with_certificate()
+    login(client, user)
+    with patch('app.services.certificate_service.render_lecturer_pdf',
+               side_effect=RuntimeError('weasyprint down')):
+        client.get(f'/trainer/certificates/{cert.id}/download')
+    db.session.refresh(cert)
+    assert cert.downloaded_at is None
