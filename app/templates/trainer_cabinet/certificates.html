@@ -71,8 +71,13 @@
       </p>
       <form method="post" action="{{ url_for('trainer_cabinet.certificates_save') }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {# tojson екранує лише ' (розрахований на <script>, не на HTML-атрибут):
+           у подвійних лапках перша ж лапка з JSON обірвала б атрибут ("[{" --
+           і далі текст вузла). Одинарні лапки -- вже усталений у проєкті
+           спосіб класти tojson в атрибут, див. data-tags/data-formats у
+           partials/_course_card.html. #}
         <input type="hidden" name="certificates" id="regalia-cert-field"
-               value="{{ trainer.certificates | tojson }}"
+               value='{{ trainer.certificates | tojson }}'
                data-upload-url="{{ url_for('trainer_cabinet.certificate_upload') }}">
         <div class="regalia-certs__grid" id="regalia-certs-grid"></div>
         <input type="file" id="regalia-cert-file"

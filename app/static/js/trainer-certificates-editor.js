@@ -17,9 +17,18 @@
     (kids || []).forEach(function(c) { if (c) n.appendChild(c); });
     return n;
   }
-  // Субсет-шрифт без лігатур -> рендеримо через КОДПОЙНТ (window.msGlyph),
-  // інакше видно сиру назву (IPRM_ICONS задає base_admin.html).
-  function icon(name) { var s = el('span', {'class': 'material-symbols-rounded'}); s.textContent = (window.msGlyph ? window.msGlyph(name) : name); return s; }
+  // На відміну від копії в admin-trainer-regalia.js, ця функція живе на
+  // ДВОХ сторінках: в адмінці window.msGlyph/IPRM_ICONS є (base_admin.html),
+  // у кабінеті тренера (base.html) -- нема, бо шрифт іконок підключає лише
+  // адмінський каркас. Фолбек на сиру назву ('close') показував би саме
+  // слово замість кнопки -- замість цього символ "×", та сама заглушка, що
+  // й .iprm-lightbox__close у lightbox.js: не залежить від жодного шрифту.
+  // Єдиний виклик у цьому файлі -- icon('close'), тож інших назв тут нема.
+  function icon(name) {
+    var s = el('span', {'class': 'material-symbols-rounded', 'aria-hidden': 'true'});
+    s.textContent = window.msGlyph ? window.msGlyph(name) : '×';
+    return s;
+  }
   function notify(m) { if (typeof window.iprmToast === 'function') window.iprmToast(m, 'error'); else alert(m); }
   function parse(v) { try { var x = JSON.parse(v || '[]'); return Array.isArray(x) ? x : []; } catch (e) { return []; } }
 

@@ -2,6 +2,7 @@
 import io
 import json
 import tempfile
+from html.parser import HTMLParser
 from itertools import count
 
 import pytest
@@ -31,6 +32,24 @@ def _png():
     Image.new('RGB', (700, 500), (60, 120, 90)).save(buf, 'PNG')
     buf.seek(0)
     return buf
+
+
+class _InputValueFinder(HTMLParser):
+    """Атрибут value заданого <input id="..."> -- розбирає так само, як
+    браузер (включно з розкодуванням &#39; тощо), на відміну від regex/
+    текстового пошуку, який не бачить, де саме обривається атрибут."""
+
+    def __init__(self, field_id):
+        super().__init__()
+        self.field_id = field_id
+        self.value = None
+
+    def handle_starttag(self, tag, attrs):
+        if tag != 'input':
+            return
+        d = dict(attrs)
+        if d.get('id') == self.field_id:
+            self.value = d.get('value')
 
 # Власний лічильник номерів заходів БПР, як у test_lecturer_certificates.py:
 # issue_for_instance комітить сам, а деякі тести тут викликають фабрику
@@ -242,3 +261,36 @@ def test_trainer_cannot_write_foreign_certificates(client):
                 follow_redirects=True)
     db.session.refresh(foreign)
     assert len(foreign.certificates) == 1
+
+
+def test_own_certificates_field_survives_html_roundtrip(client):
+    """Візуальна перевірка (раунд 2): tojson екранує лише ' -- призначений
+    для <script>, не для атрибута в подвійних лапках. У подвійних лапках
+    перша ж лапка з JSON обірвала б атрибут ("[{" -- і далі текст вузла),
+    field.value дорівнював би "[{", JSON.parse падав би, catch тихо
+    повертав [], редактор стартував би порожнім -- і "Зберегти" без жодної
+    зміни стер би всі наявні сертифікати тренера з БД.
+
+    Підпис навмисно містить лапки й апостроф -- саме ті символи, що ламають
+    атрибут у подвійних лапках.
+    """
+    user = make_user()
+    trainer = make_trainer(user, name='Лапковий Т.')
+    trainer.certificates = [
+        {'url': '/media/2026/06/a.webp', 'thumb': '/media/2026/06/a.webp',
+         'caption': 'Диплом "Ін\'єкції"'},
+        {'url': '/media/2026/06/b.webp', 'thumb': '/media/2026/06/b.webp',
+         'caption': 'Просто підпис'},
+    ]
+    db.session.commit()
+    login(client, user)
+
+    resp = client.get('/trainer/certificates')
+    assert resp.status_code == 200
+
+    parser = _InputValueFinder('regalia-cert-field')
+    parser.feed(resp.data.decode('utf-8'))
+    assert parser.value is not None, 'поле #regalia-cert-field не знайдено в HTML'
+
+    parsed = json.loads(parser.value)
+    assert parsed == trainer.certificates
