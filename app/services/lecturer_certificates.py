@@ -124,33 +124,49 @@ def send_pending(limit=50):
     breaker-а це самопідживлення -- 'failed' від черги тримали б його
     відкритим, і пошта всього сайту не відновилась би.
     """
+    from sqlalchemy.orm import joinedload
+
     from app.models.lecturer_certificate import LecturerCertificate
+    from app.models.trainer import Trainer
     from app.services.email_service import EmailService
 
-    # Лише id і наперед: коміт на кожному записі нижче expire-ить сесію, а
-    # ліміт спроб не можна перекласти на LIMIT запиту -- пропущені записи
-    # в нього не входять.
-    pending_ids = [
-        row.id for row in (
-            db.session.query(LecturerCertificate.id)
+    # Адресу кожного запису рахуємо наперед, одним запитом разом із
+    # тренером, анкетою й акаунтом, -- ДО першого коміту нижче. Коміт
+    # expire-ить сесію, і після нього ліниві звʼязки давали б по кілька
+    # запитів на запис. Безадресні лишаються в черзі назавжди (їх не
+    # позначаємо, щоб вони дійшли до звіту), тож без цього кожен тік раз на
+    # п'ять хвилин ставав би дорожчим. Ліміт спроб на LIMIT запиту не
+    # перекладаємо: пропущені записи в нього не входять.
+    trainer_path = joinedload(LecturerCertificate.trainer)
+    queue = [
+        (cert.id, recipient_email(cert.trainer))
+        for cert in (
+            LecturerCertificate.query
+            .options(trainer_path.joinedload(Trainer.profile),
+                     trainer_path.joinedload(Trainer.user))
             .filter(LecturerCertificate.emailed_at.is_(None),
                     LecturerCertificate.trainer_id.isnot(None))
             .order_by(LecturerCertificate.issued_at, LecturerCertificate.id)
             .all()
         )
+        if cert.trainer is not None
     ]
+    # Suppression -- властивість адреси, а не запису: у тренера з кількома
+    # сертифікатами вона одна на всі, і питати БД щоразу нема навіщо.
+    suppressed = {}
     sent = skipped = attempts = 0
-    for cert_id in pending_ids:
+    for cert_id, to_email in queue:
         if attempts >= limit:
             break
-        cert = db.session.get(LecturerCertificate, cert_id)
-        if cert is None or cert.trainer is None:
-            continue
-        to_email = recipient_email(cert.trainer)
-        if not to_email or EmailService._is_blocked(to_email, 'certificate'):
+        if to_email and to_email not in suppressed:
+            suppressed[to_email] = EmailService.is_suppressed(to_email, 'certificate')
+        if not to_email or suppressed[to_email]:
             # Свідомо НЕ ставимо emailed_at: запис лишається видимим як
             # «видано, не надіслано» і потрапляє в щоденний звіт адміну.
             skipped += 1
+            continue
+        cert = db.session.get(LecturerCertificate, cert_id)
+        if cert is None:
             continue
         attempts += 1
         try:
@@ -194,7 +210,7 @@ def _delivered(cert, log):
     if log is not None:
         return log.status in ('pending', 'sent')
     key = EmailService.lecturer_certificate_idempotency_key(cert)
-    return EmailService._idempotency_seen(key)
+    return EmailService.is_already_queued(key)
 
 
 def _notify_failed(instance, reason):
@@ -237,12 +253,20 @@ def _completed_instances():
     """
     from datetime import timedelta
 
+    from sqlalchemy.orm import joinedload, selectinload
+
+    from app.models.course import Course
     from app.models.course_instance import CourseInstance
 
     since = utcnow() - timedelta(days=LECTURER_AUTO_ISSUE_WINDOW_DAYS)
     ended_at = db.func.coalesce(CourseInstance.end_date, CourseInstance.start_date)
+    # Тренери дати й курсу -- наперед: `effective_trainers` і
+    # `blocking_reason` (номер заходу й бали беруться з курсу) звертаються
+    # до них на кожному заході, і ліниво це три запити на захід.
     return (
         CourseInstance.query
+        .options(selectinload(CourseInstance.trainers),
+                 joinedload(CourseInstance.course).selectinload(Course.trainers))
         .filter(CourseInstance.status == 'completed', ended_at >= since)
         .all()
     )

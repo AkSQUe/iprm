@@ -490,3 +490,53 @@ def test_downloads_are_rate_limited(client):
                  for _ in range(31)]
     assert all(c == 200 for c in codes[:30])
     assert codes[30] == 429
+
+
+def test_save_warns_when_items_were_dropped(client):
+    """Стара вкладка чи другий пристрій: частина позицій уже не тренерова.
+
+    Раніше фільтр відкидав їх мовчки, і тренер бачив «Сертифікати
+    збережено», хоча частини списку в базі вже не було.
+    """
+    user = make_user()
+    trainer = make_trainer(user, name='Дві вкладки Т.')
+    own = {'url': '/media/2026/06/own.webp', 'thumb': '/media/2026/06/own.webp',
+           'caption': 'Моє'}
+    trainer.certificates = [own]
+    db.session.commit()
+    login(client, user)
+    client.post('/trainer/certificates', data={'certificates': json.dumps([
+        own,
+        {'url': '/media/2026/06/stale.webp', 'caption': 'З іншої вкладки'},
+    ])})
+    flashes = _flashes(client)
+    assert 'Сертифікати збережено' not in flashes
+    assert any('пропущено' in m and '(1)' in m for m in flashes)
+    db.session.refresh(trainer)
+    assert [c['url'] for c in trainer.certificates] == [own['url']]
+
+
+def test_save_without_drops_reports_plain_success(client):
+    user = make_user()
+    trainer = make_trainer(user, name='Одна вкладка Т.')
+    own = {'url': '/media/2026/06/own.webp', 'thumb': '/media/2026/06/own.webp',
+           'caption': 'Моє'}
+    trainer.certificates = [own]
+    db.session.commit()
+    login(client, user)
+    client.post('/trainer/certificates', data={'certificates': json.dumps([own])})
+    assert _flashes(client) == ['Сертифікати збережено']
+
+
+@pytest.mark.parametrize('message', ['', '   '])
+def test_empty_complaint_is_not_sent(client, message):
+    """Порожня скарга не дає куратору жодної зачіпки, що виправляти."""
+    user, _, cert = _trainer_with_certificate()
+    login(client, user)
+    with patch('app.services.email_service.EmailService'
+               '.send_lecturer_certificate_complaint') as notify:
+        resp = client.post(f'/trainer/certificates/{cert.id}/report',
+                           data={'message': message})
+    assert resp.status_code == 302
+    assert not notify.called
+    assert any(m.startswith('Опишіть') for m in _flashes(client))

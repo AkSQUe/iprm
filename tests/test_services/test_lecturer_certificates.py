@@ -735,3 +735,52 @@ def test_daily_maintenance_does_not_resend_failure_letter_for_blocked(app):
     assert report.call_count == 1
     assert stats['blocked'] == 1
     assert stats['issued'] == 0
+
+
+class _QueryCounter:
+    """Рахує SQL-запити до БД у межах блоку with."""
+
+    def __enter__(self):
+        from sqlalchemy import event
+        self.count = 0
+        self._engine = db.engine
+        event.listen(self._engine, 'before_cursor_execute', self._inc)
+        return self
+
+    def _inc(self, *args, **kwargs):
+        self.count += 1
+
+    def __exit__(self, *exc):
+        from sqlalchemy import event
+        event.remove(self._engine, 'before_cursor_execute', self._inc)
+
+
+def test_send_pending_scans_addressless_queue_without_per_record_queries(app):
+    """Безадресні сертифікати лишаються в черзі назавжди й скануються щотіку.
+
+    Ліниві звʼязки давали кілька запитів на кожен такий запис, і тік раз на
+    п'ять хвилин ставав дорожчим із кожним новим тренером без пошти. Ціна
+    сканування мусить не залежати від довжини черги.
+    """
+    for _ in range(12):
+        inst, _ = _completed_instance(trainers=1)
+        lc_svc.issue_for_instance(inst)
+    with _QueryCounter() as counter:
+        sent, skipped = lc_svc.send_pending()
+    assert (sent, skipped) == (0, 12)
+    assert counter.count <= 3, counter.count
+
+
+def test_missing_trainers_lookup_does_not_grow_with_instances(app):
+    """Добір ходить по всіх завершених заходах вікна; тренери дати й курсу
+    мусять вантажитись наперед, а не по три запити на кожен захід."""
+    for _ in range(6):
+        _completed_instance(trainers=2)
+    db.session.expire_all()
+    with _QueryCounter() as counter:
+        instances = lc_svc._completed_instances()
+        missing = lc_svc._missing_trainers_by_instance(instances)
+        for inst in instances:
+            lc_svc.blocking_reason(inst)
+    assert len(missing) >= 6
+    assert counter.count <= 8, counter.count

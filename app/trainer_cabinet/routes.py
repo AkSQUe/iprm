@@ -527,10 +527,15 @@ def certificates_save():
         flash(_('Не вдалося прочитати дані форми. Оновіть сторінку й спробуйте ще раз.'),
               'error')
         return redirect(url_for('trainer_cabinet.certificates'))
+    submitted = items or []
     g.trainer.certificates = trainer_service.filter_owned_certificates(
-        trainer_service.sanitize_certificates(items or []),
+        trainer_service.sanitize_certificates(submitted),
         g.trainer, current_user,
     )
+    # Санітизатор і фільтр власності відкидають позиції мовчки -- а тренер зі
+    # старою вкладкою чи з двох пристроїв інакше побачив би «збережено» і не
+    # дізнався, що частини його списку в базі немає.
+    dropped = len(submitted) - len(g.trainer.certificates)
     try:
         db.session.commit()
     except Exception:
@@ -543,9 +548,14 @@ def certificates_save():
     # і рано чи пізно фізично зникають під CLI media-prune-orphans, хоча
     # сторінка тренера й далі показує їх як наявні.
     trainer_service.attach_trainer_media(g.trainer)
-    audit_logger.info('Trainer %s updated own certificates (%d items)',
-                      g.trainer.id, len(g.trainer.certificates))
-    flash(_('Сертифікати збережено'), 'success')
+    audit_logger.info('Trainer %s updated own certificates (%d items, %d dropped)',
+                      g.trainer.id, len(g.trainer.certificates), dropped)
+    if dropped:
+        flash(_('Збережено, але частину позицій (%(count)d) пропущено: їх уже '
+                'немає у вашому списку. Оновіть сторінку й перевірте список.',
+                count=dropped), 'warning')
+    else:
+        flash(_('Сертифікати збережено'), 'success')
     return redirect(url_for('trainer_cabinet.certificates'))
 
 
@@ -636,6 +646,11 @@ def certificate_report(cert_id):
     if cert is None:
         abort(404)
     message = (request.form.get('message') or '').strip()[:2000]
+    if not message:
+        # Порожня скарга доходить до куратора листом без жодної зачіпки, що
+        # саме виправляти, -- і відповіді на неї тренер так і не дочекається.
+        flash(_('Опишіть, будь ласка, що саме не так у сертифікаті.'), 'error')
+        return redirect(url_for('trainer_cabinet.certificates'))
     try:
         entries = EmailService.send_lecturer_certificate_complaint(cert, message)
     except Exception:

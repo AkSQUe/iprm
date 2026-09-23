@@ -75,7 +75,9 @@ const document = {
   addEventListener(evt, fn) { (this.listeners[evt] = this.listeners[evt] || []).push(fn); },
 };
 
-const window = {};
+// addEventListener -- редактор вішає на window попередження про незбережені
+// зміни (beforeunload); у браузері він є завжди.
+const window = { addEventListener() {} };
 if (withGlyph) {
   // Заглушка адмінського window.msGlyph (справжній -- у base_admin.html):
   // повертає розпізнаваний рядок, щоб довести, що ЦЕЙ шлях і досі

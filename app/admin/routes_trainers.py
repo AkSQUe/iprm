@@ -195,11 +195,7 @@ def trainers_resume_pdf():
         flash('Оберіть хоча б одного тренера', 'error')
         return redirect(request.referrer or url_for('admin.trainers_list'))
 
-    trainers = Trainer.query.filter(Trainer.id.in_(ids)).all()
-    # Порядок рядків -- як у запиті, а не як віддала БД: адмін обирав тренерів
-    # у тому порядку, у якому вони йдуть у поданні заходу.
-    by_id = {t.id: t for t in trainers}
-    ordered = [by_id[i] for i in ids if i in by_id]
+    ordered = rs.load_trainers(ids)
     if not ordered:
         flash('Тренерів не знайдено', 'error')
         return redirect(request.referrer or url_for('admin.trainers_list'))

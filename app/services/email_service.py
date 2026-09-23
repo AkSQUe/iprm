@@ -299,6 +299,21 @@ class EmailService:
             EmailLog.status.in_(['pending', 'sent']),
         ).first() is not None
 
+    # Публічні входи для доменних черг (розсилка сертифікатів лектора): їм
+    # треба знати наперед, чи send_email узагалі пошле лист, і після -- чи
+    # лист цієї версії вже в журналі. Відповідь та сама, що в самого
+    # send_email, бо це ті самі перевірки; окремі імена -- щоб чужий модуль
+    # не залежав від приватних деталей цього класу.
+    @staticmethod
+    def is_suppressed(to, trigger):
+        """Чи send_email відкине лист на цю адресу для цього тригера."""
+        return EmailService._is_blocked(to, trigger)
+
+    @staticmethod
+    def is_already_queued(idempotency_key):
+        """Чи лист із цим ключем уже в черзі або надісланий."""
+        return EmailService._idempotency_seen(idempotency_key)
+
     @staticmethod
     def _deliverability_headers(to, ctx, sender_addr):
         """List-Unsubscribe (+ one-click) для кращої доставки. Якщо адресат --

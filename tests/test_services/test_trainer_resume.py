@@ -84,3 +84,36 @@ def test_profile_name_wins_over_directory_name(app):
     db.session.refresh(trainer)
     rows = rs.build_rows([trainer], ['full_name'])
     assert rows == [['Анкетний Т.']]
+
+
+def test_load_trainers_keeps_request_order_and_drops_unknown(app):
+    first = make_trainer(name='Перший Т.')
+    second = make_trainer(name='Другий Т.')
+    db.session.commit()
+    loaded = rs.load_trainers([second.id, 999999, first.id])
+    assert [t.id for t in loaded] == [second.id, first.id]
+
+
+def test_build_rows_reads_profiles_without_extra_queries(app):
+    """Кожна клітинка читає поле анкети: анкети мусять прийти разом із
+    тренерами, а не окремим запитом на кожен рядок документа."""
+    from sqlalchemy import event
+
+    ids = []
+    for i in range(5):
+        trainer = make_trainer(name=f'Резюме {i} Т.')
+        db.session.add(TrainerProfile(trainer_id=trainer.id, workplace=f'Клініка {i}'))
+        ids.append(trainer.id)
+    db.session.commit()
+    db.session.expire_all()
+
+    trainers = rs.load_trainers(ids)
+    queries = []
+    listener = lambda *a, **k: queries.append(1)  # noqa: E731
+    event.listen(db.engine, 'before_cursor_execute', listener)
+    try:
+        rows = rs.build_rows(trainers, ['full_name', 'workplace'])
+    finally:
+        event.remove(db.engine, 'before_cursor_execute', listener)
+    assert [r[1] for r in rows] == [f'Клініка {i}' for i in range(5)]
+    assert queries == []

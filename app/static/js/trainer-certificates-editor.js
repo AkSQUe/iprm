@@ -38,7 +38,17 @@
     var csrf = csrfEl ? csrfEl.value : '';
     var certs = parse(field.value);
     var dragFrom = null;
-    var sync = function() { field.value = JSON.stringify(certs); };
+    // Завантажений файл уже на сервері, але в список тренера потрапляє лише
+    // після «Зберегти»: хто йшов зі сторінки раніше, втрачав його мовчки.
+    // Попереджаємо лише за справжньої зміни; відправка форми знімає прапорець.
+    var dirty = false;
+    var sync = function() { field.value = JSON.stringify(certs); dirty = true; };
+    if (field.form) field.form.addEventListener('submit', function() { dirty = false; });
+    window.addEventListener('beforeunload', function(e) {
+      if (!dirty) return;
+      e.preventDefault();
+      e.returnValue = '';
+    });
     var render = function() {
       grid.innerHTML = '';
       certs.forEach(function(c, i) {

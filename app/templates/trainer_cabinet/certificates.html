@@ -50,7 +50,8 @@
                   action="{{ url_for('trainer_cabinet.certificate_report', cert_id=cert.id) }}">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <input type="text" name="message" class="form-input form-input--sm cabinet-certs-report__input"
-                     placeholder="{{ _('Що не так?') }}" maxlength="2000">
+                     placeholder="{{ _('Що не так?') }}" maxlength="2000" required
+                     aria-label="{{ _('Що не так у сертифікаті') }} {{ cert.number }}">
               <button type="submit" class="apple-btn apple-btn--outline apple-btn--sm">{{ _('Повідомити про помилку') }}</button>
             </form>
           </div>

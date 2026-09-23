@@ -90,6 +90,28 @@ def normalize_keys(raw_keys, user):
     return [k for k in allowed if k in picked]
 
 
+def load_trainers(ids):
+    """Тренери за id -- у порядку `ids`, з анкетою наперед.
+
+    Порядок саме запиту, а не БД: адмін обирає тренерів у тому порядку, у
+    якому вони йдуть у поданні заходу. Анкета вантажиться одним запитом разом
+    із тренерами -- кожна клітинка таблиці читає поле анкети, і ліниво це
+    був би окремий запит на кожен рядок документа. Невідомі id відкидаються.
+    """
+    from sqlalchemy.orm import joinedload
+
+    from app.models.trainer import Trainer
+
+    if not ids:
+        return []
+    found = (
+        Trainer.query.options(joinedload(Trainer.profile))
+        .filter(Trainer.id.in_(ids)).all()
+    )
+    by_id = {t.id: t for t in found}
+    return [by_id[i] for i in ids if i in by_id]
+
+
 def build_rows(trainers, keys):
     """Рядок на тренера, клітинка на колонку -- у порядку keys."""
     by_key = {c.key: c for c in COLUMNS}
