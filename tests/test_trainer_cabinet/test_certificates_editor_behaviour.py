@@ -155,3 +155,11 @@ def test_leaving_with_unsaved_changes_is_guarded(tmp_path):
     assert out['cleanPrevented'] is False
     assert out['dirtyPrevented'] is True
     assert out['afterSubmitPrevented'] is False
+
+
+def test_visible_strings_go_through_public_dictionary(tmp_path):
+    """У кабінеті словник i18n.js є -- рядки редактора мусять іти через нього,
+    інакше тренер з ru/en бачить українські підказки."""
+    out = _run(tmp_path, 'i18n')
+    assert out['removeTitle'] == 'T:Видалити'
+    assert out['capPlaceholder'] == 'T:Підпис (необовʼязково)'

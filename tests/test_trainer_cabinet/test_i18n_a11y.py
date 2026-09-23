@@ -81,3 +81,30 @@ def test_counts_grid_outranks_stat_grid():
     assert selectors, 'правило для лічильників зникло'
     for selector in selectors:
         assert selector.strip().startswith('.apple-page '), selector
+
+
+def test_certificates_page_is_translated(client):
+    """Розділ сертифікатів кабінету -- перекладений, як і решта кабінету."""
+    user = make_user()
+    make_trainer(user, name='Сертифікати EN')
+    login(client, user)
+    html = client.get('/en/trainer/certificates').get_data(as_text=True)
+    assert 'Your own certificates' in html
+    assert 'For the events you conducted' in html
+    assert 'Власні сертифікати' not in html
+    assert 'За проведені заходи' not in html
+
+
+def test_certificate_upload_error_is_translated(client):
+    """Текст відмови media_service -- український і без _(): тренеру
+    показуємо перекладене загальне повідомлення, причина лишається в лозі."""
+    user = make_user()
+    make_trainer(user, name='Завантаження EN')
+    login(client, user)
+    resp = client.post('/en/trainer/certificates/upload',
+                       data={'file': (io.BytesIO(b'not an image'), 'bad.png')},
+                       content_type='multipart/form-data')
+    assert resp.status_code == 400
+    error = resp.get_json()['error']
+    assert error.startswith('Could not process the file')
+    assert not re.search('[А-Яа-яІіЇїЄєҐґ]', error)

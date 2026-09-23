@@ -29,6 +29,17 @@
     s.textContent = window.msGlyph ? window.msGlyph(name) : '×';
     return s;
   }
+  // Переклад видимих рядків: словник i18n.js (app/js_strings.py) є лише на
+  // публічних сторінках, тобто в кабінеті тренера. В адмінці його немає --
+  // лишається український рядок, але з тими самими підстановками {name}:
+  // фолбек "повернути ключ" показав би адміну буквальне {code}.
+  function t(key, params) {
+    if (window.iprmI18n && window.iprmI18n.t) return window.iprmI18n.t(key, params);
+    if (!params) return key;
+    return key.replace(/\{(\w+)\}/g, function(m, n) {
+      return Object.prototype.hasOwnProperty.call(params, n) ? String(params[n]) : m;
+    });
+  }
   function notify(m) { if (typeof window.iprmToast === 'function') window.iprmToast(m, 'error'); else alert(m); }
   function parse(v) { try { var x = JSON.parse(v || '[]'); return Array.isArray(x) ? x : []; } catch (e) { return []; } }
 
@@ -53,13 +64,13 @@
       grid.innerHTML = '';
       certs.forEach(function(c, i) {
         var img = el('img', {'class': 'iprm-img-cover', src: c.thumb || c.url, alt: '', draggable: 'false'});
-        var rm = el('button', {type: 'button', 'class': 'regalia-cert__remove', title: 'Видалити'}, [icon('close')]);
+        var rm = el('button', {type: 'button', 'class': 'regalia-cert__remove', title: t('Видалити')}, [icon('close')]);
         rm.addEventListener('click', function() { certs.splice(i, 1); render(); sync(); });
-        var cap = el('input', {'class': 'form-input regalia-cert__cap', type: 'text', placeholder: 'Підпис (необовʼязково)'});
+        var cap = el('input', {'class': 'form-input regalia-cert__cap', type: 'text', placeholder: t('Підпис (необовʼязково)')});
         cap.value = c.caption || '';
         cap.addEventListener('input', function() { c.caption = cap.value; sync(); });
         // Перетягуємо за мініатюру (поле підпису лишається редагованим).
-        var thumb = el('div', {'class': 'regalia-cert__thumb', draggable: 'true', title: 'Перетягніть, щоб змінити порядок'}, [img, rm]);
+        var thumb = el('div', {'class': 'regalia-cert__thumb', draggable: 'true', title: t('Перетягніть, щоб змінити порядок')}, [img, rm]);
         thumb.addEventListener('dragstart', function(e) {
           dragFrom = i; thumb.classList.add('regalia-cert__thumb--drag');
           if (e.dataTransfer) { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', String(i)); }
@@ -86,24 +97,27 @@
     // process_trainer_signature потребує slug для імені файлу), а в кабінеті
     // тренера взагалі немає полів #slug/#full_name, з яких його брати.
     var uploadCert = function(file) {
-      if (file.size > 25 * 1024 * 1024) { notify('Максимальний розмір: 25 MB'); return; }
+      if (file.size > 25 * 1024 * 1024) { notify(t('Максимальний розмір: 25 MB')); return; }
       var fd = new FormData();
       fd.append('file', file);
       if (csrf) fd.append('csrf_token', csrf);
       addBtn.disabled = true;
       fetch(uploadUrl, {method: 'POST', body: fd})
         .then(function(r) {
-          if (r.status === 413) { notify('Файл завеликий (макс. 25 MB)'); return null; }
+          if (r.status === 413) { notify(t('Файл завеликий (макс. 25 MB)')); return null; }
+          // 429 -- ліміт частоти завантажень у кабінеті: відповідь не JSON, і
+          // без окремої гілки тренер бачив би «неочікувану відповідь сервера».
+          if (r.status === 429) { notify(t('Забагато завантажень поспіль. Зачекайте хвилину й спробуйте ще раз.')); return null; }
           return r.json().then(function(d) { return {ok: r.ok, d: d}; }, function() {
-            notify('Неочікувана відповідь сервера (код ' + r.status + ')'); return null;
+            notify(t('Неочікувана відповідь сервера (код {code})', {code: r.status})); return null;
           });
         })
         .then(function(res) {
           if (!res) return;
           if (res.ok) { certs.push({url: res.d.url, thumb: res.d.thumb, card: res.d.card, media_id: res.d.media_id, caption: ''}); render(); sync(); }
-          else notify(res.d.error || 'Помилка завантаження');
+          else notify(res.d.error || t('Помилка завантаження'));
         })
-        .catch(function() { notify('Помилка мережі'); })
+        .catch(function() { notify(t('Помилка мережі')); })
         .then(function() { addBtn.disabled = false; });
     };
   }

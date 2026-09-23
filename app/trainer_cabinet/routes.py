@@ -577,7 +577,13 @@ def certificate_upload():
         usage_type='certificate', uploader_id=current_user.id,
     )
     if error:
-        return jsonify({'error': error}), 400
+        # Тексти media_service -- українські й не обгорнуті в _() (як і для
+        # фото анкети, див. _save_photo): кабінет перекладений, тож тренер
+        # бачить перекладене загальне повідомлення, а конкретна причина --
+        # у лозі.
+        logger.warning('Trainer %s certificate upload rejected: %s', g.trainer.id, error)
+        return jsonify({'error': _('Не вдалося обробити файл. Спробуйте інший: '
+                                   'JPG, PNG, WebP або HEIC.')}), 400
     try:
         db.session.commit()
     except Exception:

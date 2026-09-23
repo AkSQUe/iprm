@@ -7216,3 +7216,102 @@ msgstr "What to fix:"
 
 msgid "Виправити заявку"
 msgstr "Fix the request"
+
+#, python-format
+msgid "Ваш сертифікат тренера: %(title)s"
+msgstr "Your trainer certificate: %(title)s"
+
+msgid "Ваш сертифікат тренера"
+msgstr "Your trainer certificate"
+
+#, python-format
+msgid "Сертифікат за проведення заходу %(title)s"
+msgstr "Certificate for conducting the event %(title)s"
+
+msgid "Дякуємо за проведений захід. Сертифікат додано до цього листа у форматі PDF, а також він завжди доступний у вашому кабінеті."
+msgstr "Thank you for conducting the event. The certificate is attached to this email as a PDF and is always available in your cabinet."
+
+msgid "Документи за проведені заходи та ваші власні сертифікати"
+msgstr "Documents for the events you conducted and your own certificates"
+
+msgid "Сертифікати | Кабінет тренера | ІПРМ"
+msgstr "Certificates | Trainer cabinet | IPRM"
+
+msgid "За проведені заходи"
+msgstr "For the events you conducted"
+
+msgid "Ці документи видає ІПРМ після завершення заходу і надсилає вам листом. Змінити їх не можна: номер і дані зафіксовані на момент видачі."
+msgstr "IPRM issues these documents after the event ends and sends them to you by email. They cannot be changed: the number and details are fixed at the time of issue."
+
+msgid "Що не так?"
+msgstr "What is wrong?"
+
+msgid "Що не так у сертифікаті"
+msgstr "What is wrong with the certificate"
+
+msgid "Повідомити про помилку"
+msgstr "Report an error"
+
+msgid "Сертифікатів поки немає. Вони зʼявляться тут після завершення заходу."
+msgstr "No certificates yet. They will appear here after the event ends."
+
+msgid "Власні сертифікати"
+msgstr "Your own certificates"
+
+msgid "Дипломи й посвідчення, які показуються на вашій публічній сторінці тренера. Це не те саме, що поле «Професійні сертифікати» в анкеті: те поле -- текстовий перелік для резюме до реєстру БПР."
+msgstr "Diplomas and credentials shown on your public trainer page. This is not the same as the “Professional certificates” field in the questionnaire: that field is a text list for the resume submitted to the BPR register."
+
+msgid "Додати сертифікат"
+msgstr "Add certificate"
+
+msgid "Професійні сертифікати (по одному в рядку)"
+msgstr "Professional certificates (one per line)"
+
+msgid "Не вдалося прочитати дані форми. Оновіть сторінку й спробуйте ще раз."
+msgstr "Could not read the form data. Refresh the page and try again."
+
+#, python-format
+msgid "Збережено, але частину позицій (%(count)d) пропущено: їх уже немає у вашому списку. Оновіть сторінку й перевірте список."
+msgstr "Saved, but some items (%(count)d) were skipped: they are no longer in your list. Refresh the page and check the list."
+
+msgid "Сертифікати збережено"
+msgstr "Certificates saved"
+
+msgid "Опишіть, будь ласка, що саме не так у сертифікаті."
+msgstr "Please describe what exactly is wrong with the certificate."
+
+msgid "Не вдалося надіслати повідомлення. Спробуйте пізніше."
+msgstr "Could not send the message. Please try again later."
+
+msgid "Повідомлення не доставлено: зараз його нікому отримати. Напишіть, будь ласка, на пошту ІПРМ."
+msgstr "The message was not delivered: there is nobody to receive it right now. Please write to the IPRM email."
+
+msgid "Повідомлення надіслано куратору"
+msgstr "Message sent to the curator"
+
+msgid "Підпис (необовʼязково)"
+msgstr "Caption (optional)"
+
+msgid "Перетягніть, щоб змінити порядок"
+msgstr "Drag to reorder"
+
+msgid "Максимальний розмір: 25 MB"
+msgstr "Maximum size: 25 MB"
+
+msgid "Файл завеликий (макс. 25 MB)"
+msgstr "File is too large (max. 25 MB)"
+
+msgid "Забагато завантажень поспіль. Зачекайте хвилину й спробуйте ще раз."
+msgstr "Too many uploads in a row. Wait a minute and try again."
+
+msgid "Неочікувана відповідь сервера (код {code})"
+msgstr "Unexpected server response (code {code})"
+
+msgid "Помилка завантаження"
+msgstr "Upload error"
+
+msgid "Помилка мережі"
+msgstr "Network error"
+
+msgid "Не вдалося обробити файл. Спробуйте інший: JPG, PNG, WebP або HEIC."
+msgstr "Could not process the file. Try another one: JPG, PNG, WebP or HEIC."

@@ -540,3 +540,36 @@ def test_empty_complaint_is_not_sent(client, message):
     assert resp.status_code == 302
     assert not notify.called
     assert any(m.startswith('Опишіть') for m in _flashes(client))
+
+
+def test_reordering_does_not_rename_bound_files(client, media_root):
+    """Перестановка регалій -- не причина перейменовувати файли.
+
+    Імʼя {slug}-certificate-N рахувалось за ПОЗИЦІЄЮ на кожному збереженні:
+    поміняв місцями два сертифікати -- обидва файли перейменовано, URL на
+    публічній сторінці змінились, а колізія імен дописувала суфікси -{id}.
+    Уже привʼязаний до тренера файл лишає своє імʼя.
+    """
+    user = make_user()
+    trainer = make_trainer(user, name='Перестановка Т.')
+    login(client, user)
+    uploads = [client.post('/trainer/certificates/upload',
+                           data={'file': (_png(), f'{n}.png')},
+                           content_type='multipart/form-data').get_json()
+               for n in ('a', 'b')]
+
+    def save(order):
+        db.session.refresh(trainer)
+        current = {c['media_id']: c for c in (trainer.certificates or [])}
+        items = [current.get(u['media_id']) or {
+            'url': u['url'], 'thumb': u['thumb'], 'media_id': u['media_id'], 'caption': ''}
+            for u in order]
+        client.post('/trainer/certificates', data={'certificates': json.dumps(items)})
+
+    save(uploads)
+    paths = {u['media_id']: db.session.get(MediaFile, u['media_id']).file_path
+             for u in uploads}
+    save(list(reversed(uploads)))
+    db.session.expire_all()
+    assert {u['media_id']: db.session.get(MediaFile, u['media_id']).file_path
+            for u in uploads} == paths

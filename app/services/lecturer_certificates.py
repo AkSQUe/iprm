@@ -400,6 +400,17 @@ def on_status_changed(instance, old_status, issued_by=None):
     return []
 
 
+def _collect_and_issue():
+    """(заходи вікна, кому чого бракує, скільки видано) -- один прохід.
+
+    Спільний крок `issue_missing` і `daily_maintenance`: другій потрібні ще
+    й самі `instances`/`missing`, щоб зібрати звіт без повторного проходу.
+    """
+    instances = _completed_instances()
+    missing = _missing_trainers_by_instance(instances)
+    return instances, missing, _issue_for_missing(instances, missing)
+
+
 def issue_missing():
     """Добрати сертифікати завершеним заходам. Повертає кількість виданих.
 
@@ -407,9 +418,7 @@ def issue_missing():
     заходу; тренера додали до складу після завершення. Обидва лишали б
     тренера без документа назавжди, бо тригер спрацьовує рівно один раз.
     """
-    instances = _completed_instances()
-    missing = _missing_trainers_by_instance(instances)
-    return _issue_for_missing(instances, missing)
+    return _collect_and_issue()[2]
 
 
 def daily_maintenance():
@@ -423,9 +432,7 @@ def daily_maintenance():
     from app.models.lecturer_certificate import LecturerCertificate
     from app.services.email_service import EmailService
 
-    instances = _completed_instances()
-    missing = _missing_trainers_by_instance(instances)
-    issued = _issue_for_missing(instances, missing)
+    instances, missing, issued = _collect_and_issue()
     requeued = requeue_undelivered()
 
     cutoff = utcnow() - timedelta(hours=STUCK_AFTER_HOURS)

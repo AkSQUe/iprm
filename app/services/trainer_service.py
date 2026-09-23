@@ -6,6 +6,7 @@
   * URL зображень сертифікатів -- лише локальні (/static/images/trainers/...).
 """
 import logging
+import os
 import re
 from urllib.parse import urlparse
 
@@ -279,9 +280,20 @@ def attach_trainer_media(trainer):
         m = rows.get(mid)
         if not m:
             continue
+        # Уже привʼязаний до цього тренера файл із його ж префіксом імені
+        # лишаємо як є: номер -N рахується за позицією, і перейменування на
+        # кожному збереженні робило б із простої перестановки переіменування
+        # файлів, зміну URL на публічній сторінці й суфікси -{id} від колізій.
+        # Новий файл або змінений slug тренера перейменовуються, як і раніше.
+        prefix = media_service.friendly_basename(trainer.slug, usage)
+        keep_name = (m.entity_type == 'trainer' and m.entity_id == trainer.id
+                     and m.usage_type == usage
+                     and os.path.basename(m.file_path or '').startswith(prefix))
         m.entity_type = 'trainer'
         m.entity_id = trainer.id
         m.usage_type = usage
+        if keep_name:
+            continue
         idx = cert_idx.get(mid) if usage == 'certificate' else (
             pat_idx.get(mid) if usage == 'patent' else None)
         mapping.update(media_service.rename_for_entity(m, trainer.slug, idx))
