@@ -22,8 +22,10 @@
     min-width: 900px;
   }
 
-  .admin-trainers-col--person { width: 27%; }
-  .admin-trainers-col--role { width: 24%; }
+  /* Позначки для резюме тренерів (PDF) -- сама галочка, без підпису. */
+  .admin-trainers-col--select { width: 4%; }
+  .admin-trainers-col--person { width: 25%; }
+  .admin-trainers-col--role { width: 22%; }
   .admin-trainers-col--years { width: 10%; }
   .admin-trainers-col--state { width: 14%; }
   /* Ширину задає мітка шапки, а не вміст: «ПЕРЕКЛАД» довше за «ru 0/2». */

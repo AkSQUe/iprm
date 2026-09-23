@@ -1,9 +1,11 @@
 """PDF-резюме тренерів."""
+from html.parser import HTMLParser
+
 import pytest
 
 from app.extensions import db
-from tests.support.rbac import make_super_admin, switch_user
-from tests.test_trainer_cabinet._factories import make_trainer
+from tests.support.rbac import make_super_admin, make_user_with_role, switch_user
+from tests.test_trainer_cabinet._factories import make_course, make_instance, make_trainer
 
 
 def _weasyprint_available():
@@ -25,6 +27,59 @@ def _admin(client):
     db.session.commit()
     switch_user(client, admin)
     return admin
+
+
+class _DialogParser(HTMLParser):
+    """Розбирає ЛИШЕ форму з action на trainers_resume_pdf.
+
+    Регулярка на розмітку діалогу була б крихкою при найменшій зміні
+    відступів чи атрибутів -- html.parser бачить структуру, а не текст.
+    Форми в самій сторінці не вкладені одна в одну, тож простого прапорця
+    «зараз усередині потрібної форми» достатньо.
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.in_form = False
+        self.has_csrf = False
+        self.columns = []  # [(value, checked)]
+        self.labels = {}
+        self._label_for = None
+        self._label_text = []
+
+    def handle_starttag(self, tag, attrs):
+        attrs = dict(attrs)
+        if tag == 'form':
+            self.in_form = (attrs.get('action') or '').endswith('/trainers/resume.pdf')
+            return
+        if not self.in_form:
+            return
+        if tag == 'input':
+            name = attrs.get('name')
+            if name == 'csrf_token':
+                self.has_csrf = True
+            elif name == 'columns':
+                self.columns.append((attrs.get('value'), 'checked' in attrs))
+        elif tag == 'label' and attrs.get('for'):
+            self._label_for = attrs['for']
+            self._label_text = []
+
+    def handle_data(self, data):
+        if self._label_for is not None:
+            self._label_text.append(data)
+
+    def handle_endtag(self, tag):
+        if tag == 'label' and self._label_for is not None:
+            self.labels[self._label_for] = ''.join(self._label_text).strip()
+            self._label_for = None
+        elif tag == 'form':
+            self.in_form = False
+
+
+def _parse_dialog(html_bytes):
+    parser = _DialogParser()
+    parser.feed(html_bytes.decode('utf-8'))
+    return parser
 
 
 @requires_weasyprint
@@ -101,3 +156,87 @@ def test_rows_follow_request_order_not_db_order(client):
 
     assert resp.status_code == 200
     assert calls == [[second.id, first.id]]
+
+
+def test_dialog_labels_match_pdf_headers(app):
+    """Підписи діалогу й шапка PDF беруться з одного реєстру."""
+    from app.services import trainer_resume_service as rs
+
+    keys = ['full_name', 'workplace']
+    assert rs.labels_for(keys) == [
+        c.label for c in rs.COLUMNS if c.key in keys
+    ]
+
+
+def test_trainers_list_offers_export_dialog(client):
+    """Список тренерів: форма, CSRF і чекбокси колонок -- з реєстру, а не
+    вписані вручну в шаблон."""
+    from app.services import trainer_resume_service as rs
+
+    admin = _admin(client)
+    make_trainer(name='Списковий Т.')
+    db.session.commit()
+
+    resp = client.get('/admin/trainers')
+    assert resp.status_code == 200
+
+    parsed = _parse_dialog(resp.data)
+    assert parsed.has_csrf
+    expected_keys = [c.key for c in rs.available_columns(admin)]
+    assert [value for value, _ in parsed.columns] == expected_keys
+    assert {value for value, checked in parsed.columns if checked} == set(rs.DEFAULT_KEYS)
+    for column in rs.available_columns(admin):
+        assert parsed.labels.get(f'resume-col-{column.key}') == column.label
+
+
+def test_instance_page_offers_export_dialog(client):
+    from app.services import trainer_resume_service as rs
+    from app.services.trainer_links import set_trainers
+
+    admin = _admin(client)
+    course = make_course()
+    trainer = make_trainer(name='Діалоговий Т.')
+    set_trainers(course, [trainer.id])
+    inst = make_instance(course)
+    db.session.commit()
+
+    resp = client.get(f'/admin/instances/{inst.id}/edit')
+    assert resp.status_code == 200
+    assert b'resume.pdf' in resp.data
+
+    parsed = _parse_dialog(resp.data)
+    assert parsed.has_csrf
+    expected_keys = [c.key for c in rs.available_columns(admin)]
+    assert [value for value, _ in parsed.columns] == expected_keys
+    assert {value for value, checked in parsed.columns if checked} == set(rs.DEFAULT_KEYS)
+
+
+def test_instance_without_trainers_hides_export_button(client):
+    """Без тренерів заходу кнопка вела б у порожній діалог -- її немає."""
+    _admin(client)
+    course = make_course()
+    inst = make_instance(course)
+    db.session.commit()
+
+    resp = client.get(f'/admin/instances/{inst.id}/edit')
+    assert resp.status_code == 200
+    assert b'data-modal-open="resume-columns-dialog"' not in resp.data
+
+
+def test_dialog_hides_birth_date_without_finance_permission(client):
+    """Дата народження -- trainers.finance; редактор контенту його не має."""
+    from app.services import trainer_resume_service as rs
+
+    editor = make_user_with_role('content_editor', email='tc-resume-editor@test.com')
+    db.session.commit()
+    switch_user(client, editor)
+    make_trainer(name='Без фінансів Т.')
+    db.session.commit()
+
+    resp = client.get('/admin/trainers')
+    assert resp.status_code == 200
+
+    parsed = _parse_dialog(resp.data)
+    values = [value for value, _ in parsed.columns]
+    assert 'birth_date' not in values
+    assert values == [c.key for c in rs.available_columns(editor)]

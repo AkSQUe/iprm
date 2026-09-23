@@ -7,6 +7,7 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-i18n-tabs.css') }}?v={{ assets_version }}">
+{% if instance and lecturers %}<link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css') }}?v={{ assets_version }}">{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -48,6 +49,14 @@
       <a href="{{ url_for('admin.instance_quiz_results', instance_id=instance.id) }}" class="btn-admin btn-admin--secondary">
         {{ icon('quiz') }} Тестування
       </a>
+      {% endif %}
+      {# Резюме тренерів для пакета документів БПР -- лише коли є кого
+         вписувати: без тренерів заходу кнопка вела б у порожній діалог. #}
+      {% if instance and lecturers %}
+      <button type="button" class="btn-admin btn-admin--secondary" data-modal-open="resume-columns-dialog"
+              data-trainer-ids="{{ lecturers | map(attribute='id') | join(',') }}">
+        {{ icon('picture_as_pdf') }} Резюме тренерів (PDF)
+      </button>
       {% endif %}
       {# Лише коли тема задана: без неї проведення зветься назвою курсу, і
          перекладати тут нічого -- переклад назви живе в картці курсу. #}
@@ -356,8 +365,15 @@
   {% endif %}
   </div>
 </div>
+{% if instance and lecturers %}
+{% include 'partials/_resume_columns_dialog.html' %}
+{% endif %}
 <script src="{{ url_for('static', filename='js/admin-instance-points.js') }}?v={{ assets_version }}"></script>
 <script src="{{ url_for('static', filename='js/admin-multiselect.js') }}?v={{ assets_version }}" defer></script>
 <script src="{{ url_for('static', filename='js/admin-i18n-tabs.js') }}?v={{ assets_version }}"></script>
 <script src="{{ url_for('static', filename='js/admin-course-speakers.js') }}?v={{ assets_version }}" defer></script>
+{% if instance and lecturers %}
+<script src="{{ url_for('static', filename='js/modal.js') }}?v={{ assets_version }}" defer></script>
+<script src="{{ url_for('static', filename='js/resume-columns-dialog.js') }}?v={{ assets_version }}" defer></script>
+{% endif %}
 {% endblock %}

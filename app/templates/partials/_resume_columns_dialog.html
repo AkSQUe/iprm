@@ -1,0 +1,49 @@
+{#- Діалог вибору колонок резюме тренерів.
+
+    Один партіал на два входи -- сторінку проведення (тренери заходу) і
+    список тренерів (довільна вибірка). Розійшовшись, вони давали б два
+    різні набори колонок для того самого документа, а порядок колонок
+    визначає сервер (COLUMNS у trainer_resume_service), тож підписи тут
+    беруться з реєстру, а не вписуються вручну.
+
+    Розмітка -- готовий компонент дизайн-системи `.modal` (modal.css +
+    modal.js, вже показаний у каталозі /admin/design-system): сторінка,
+    що підключає цей партіал, мусить підключити й modal.css/modal.js.
+
+    Очікує в контексті:
+    resume_columns      -- список ResumeColumn, available_columns(current_user)
+    resume_default_keys -- ключі, позначені за замовчуванням (DEFAULT_KEYS)
+
+    Ідентифікатори тренерів у форму кладе resume-columns-dialog.js перед
+    відкриттям -- сама форма їх не знає, бо джерело різне на двох сторінках
+    (явний перелік на кнопці проведення чи позначені рядки списку). #}
+<div class="modal" id="resume-columns-dialog" hidden>
+  <div class="modal__backdrop" data-modal-close></div>
+  <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="resume-columns-dialog-title">
+    <div class="modal__head">
+      <h3 class="modal__title" id="resume-columns-dialog-title">Колонки резюме</h3>
+      <button type="button" class="modal__close" data-modal-close aria-label="Закрити">&times;</button>
+    </div>
+    <form method="post" action="{{ url_for('admin.trainers_resume_pdf') }}"
+          class="admin-form" id="resume-columns-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="modal__body">
+        <p class="form-hint">Оберіть, які поля анкети увійдуть у таблицю.</p>
+        {% for column in resume_columns %}
+        <div class="form-checkbox">
+          <input type="checkbox" name="columns" value="{{ column.key }}"
+                 id="resume-col-{{ column.key }}"
+                 {% if column.key in resume_default_keys %}checked{% endif %}>
+          <label for="resume-col-{{ column.key }}">{{ column.label }}</label>
+        </div>
+        {% endfor %}
+        {# Заповнюється resume-columns-dialog.js перед відкриттям вікна. #}
+        <div id="resume-columns-ids"></div>
+      </div>
+      <div class="modal__foot">
+        <button type="button" class="btn-admin btn-admin--secondary" data-modal-close>Скасувати</button>
+        <button type="submit" class="btn-admin btn-admin--primary">Сформувати PDF</button>
+      </div>
+    </form>
+  </div>
+</div>

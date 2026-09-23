@@ -119,6 +119,8 @@ def _apply_account_link(trainer, email):
 @admin_bp.route('/trainers')
 @permission_required('trainers.view')
 def trainers_list():
+    from app.services import trainer_resume_service as rs
+
     filters = {
         'q': _listing.text_arg('q'),
         'state': _listing.choice_arg('state', _TRAINER_STATES),
@@ -150,6 +152,8 @@ def trainers_list():
         state_options=list(_TRAINER_STATES.items()),
         new_proposals=new_proposals,
         complete_profiles=complete_profiles,
+        resume_columns=rs.available_columns(current_user),
+        resume_default_keys=rs.DEFAULT_KEYS,
     )
 
 

@@ -6,6 +6,7 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-trainers.css') }}?v={{ assets_version }}">
+{% if trainers %}<link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css') }}?v={{ assets_version }}">{% endif %}
 {% endblock %}
 
 {% from 'admin/partials/_filter_bar.html' import filter_bar, empty_state  %}
@@ -44,6 +45,14 @@
           </label>
         </form>
       </div>
+      {% if trainers %}
+      {# Резюме довільної вибірки тренерів для пакета документів БПР --
+         кнопка відкриває спільний діалог колонок (той самий, що й на
+         сторінці проведення); id бере з позначених рядків таблиці. #}
+      <button type="button" class="btn-admin btn-admin--secondary" data-modal-open="resume-columns-dialog">
+        {{ icon('picture_as_pdf') }} Резюме обраних (PDF)
+      </button>
+      {% endif %}
       <a href="{{ url_for('admin.trainer_create') }}" class="btn-admin btn-admin--primary">{{ icon('add') }} Додати тренера</a>
     </div>
   </div>
@@ -65,6 +74,7 @@
      надвоє. #}
   <table class="admin-table admin-table--fixed admin-trainers-table">
     <colgroup>
+      <col class="admin-trainers-col--select">
       <col class="admin-trainers-col--person">
       <col class="admin-trainers-col--role">
       <col class="admin-trainers-col--years">
@@ -74,6 +84,7 @@
     </colgroup>
     <thead>
       <tr>
+        <th></th>
         <th class="admin-text-left">ПІБ</th>
         <th class="admin-text-left">Посада</th>
         <th>Стаж</th>
@@ -85,6 +96,13 @@
     <tbody>
       {% for trainer in trainers %}
       <tr>
+        <td>
+          {# Джерело id для діалогу резюме (resume-columns-dialog.js) --
+             позначені рядки, коли кнопка «Резюме обраних» відкрита без
+             власного переліку. #}
+          <input type="checkbox" name="trainer_ids" value="{{ trainer.id }}"
+                 aria-label="Обрати тренера {{ trainer.full_name }}">
+        </td>
         {# Обличчя впізнається швидше за прізвище, а модель віддає окремий
            thumb саме під списки. Немає фото -- ініціали в тому самому колі:
            стовпчик імен не має стрибати залежно від того, чиє фото встигли
@@ -208,4 +226,9 @@
 
   </div>
 </div>
+{% if trainers %}
+{% include 'partials/_resume_columns_dialog.html' %}
+<script src="{{ url_for('static', filename='js/modal.js') }}?v={{ assets_version }}" defer></script>
+<script src="{{ url_for('static', filename='js/resume-columns-dialog.js') }}?v={{ assets_version }}" defer></script>
+{% endif %}
 {% endblock %}
