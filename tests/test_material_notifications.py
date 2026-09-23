@@ -1488,3 +1488,34 @@ def test_decision_letter_follows_the_trainer_language(app, instance, monkeypatch
     finally:
         db.session.delete(user)
         db.session.commit()
+
+
+def test_material_request_letters_show_the_kyiv_date(app, instance, trainer_user,
+                                                     monkeypatch):
+    """Дата заходу -- київська. Захід о 00:30 за Києвом лежить у БД як
+    21:30 UTC попереднього дня, і голий `strftime` показував учорашню дату."""
+    from app.services.email_service import EmailService
+    from tests.support.mail import enable_live_mail
+
+    enable_live_mail(monkeypatch)
+    monkeypatch.setattr(
+        'app.services.notification_recipients.resolve',
+        lambda event_type, instance=None, new_status=None: (
+            ['reviewer-kyiv@example.com'] if event_type == 'material_request' else []))
+    instance.start_date = datetime(2026, 9, 30, 21, 30, tzinfo=timezone.utc)
+    reservation = _reservation_with_items(instance)
+    reservation.created_by_id = trainer_user.id
+    reservation.trainer_submitted_at = datetime.now(timezone.utc)
+    reservation.reviewed_at = datetime.now(timezone.utc)
+    reservation.review_comment = 'Причина'
+    db.session.commit()
+
+    entries = EmailService.send_material_request_submitted(reservation, instance)
+    for decision in ('returned', 'approved', 'rejected'):
+        entries.append(EmailService.send_material_request_decision(
+            reservation, instance, decision))
+
+    for entry in entries:
+        assert entry is not None
+        assert '01.10.2026' in entry.html_body, entry.template_name
+        assert '30.09.2026' not in entry.html_body, entry.template_name

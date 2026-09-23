@@ -18,7 +18,7 @@
         <tr>
             <td style="padding: 20px 24px;">
                 <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #17131D; line-height: 1.3;">{{ event_title }}</p>
-                {% if event_date %}{{ detail_row(_('Дата'), event_date.strftime('%d.%m.%Y')) }}{% endif %}
+                {% if event_date %}{{ detail_row(_('Дата'), event_date | kyiv('%d.%m.%Y')) }}{% endif %}
                 {% if reservation.created_by %}{{ detail_row(_('Подав'), reservation.created_by.email) }}{% endif %}
                 {% for item in items %}
                 {{ detail_row(item.name or item.sku, item.quantity_requested) }}
