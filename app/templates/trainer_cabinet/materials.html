@@ -29,8 +29,17 @@
 <div class="apple-page">
   <section class="iprm-section" aria-labelledby="trainer-materials-title">
     <div class="iprm-section__inner">
-      <p><a href="{{ url_for('trainer_cabinet.index') }}" class="account-course__link">{{ _('Кабінет тренера') }}</a></p>
-      <h1 id="trainer-materials-title" class="iprm-section__title">{{ _('Матеріали до заходу') }}</h1>
+      <a href="{{ url_for('trainer_cabinet.index') }}" class="iprm-back-link">{{ _('Кабінет тренера') }}</a>
+
+      {# Заголовок внутрішньої сторінки кабінету -- той самий блок, що на
+         /trainer/contract і /trainer/certificates. #}
+      <header class="apple-section-head">
+        <span class="iprm-eyebrow">{{ _('Кабінет тренера') }}</span>
+        {# Градієнт -- на весь заголовок, а не на останнє слово: розбивати
+           фразу на два msgid не можна, у ru/en інший порядок слів. #}
+        <h1 id="trainer-materials-title" class="iprm-section__title"><span class="apple-gradient-text">{{ _('Матеріали до заходу') }}</span></h1>
+        <p class="iprm-section__subtitle">{{ _('Заявка на витратні матеріали: перелік, кількості, стан перевірки') }}</p>
+      </header>
 
       {% if not instances %}
       <div class="iprm-empty-state">
@@ -42,16 +51,23 @@
         {% set reservation = reservations.get(instance.id) %}
         <li class="account-card trainer-materials-list__item">
           <div class="trainer-materials-list__main">
+            {# Стан і дата -- у мета-рядку над назвою, як у списку заходів на
+               головній кабінету: бейдж біля правого краю картки був за сотні
+               пікселів від тексту, якого він стосується. #}
+            <p class="account-card__text iprm-card-meta">
+              <span class="badge badge--{{ reservation.status_badge if reservation else 'draft' }}">
+                {{ status_labels.get(reservation.status, reservation.status) if reservation else _('Не подано') }}
+              </span>
+              <span>{% if instance.start_date %}{{ instance.start_date | kyiv('%d.%m.%Y') }}{% else %}{{ _('Дата уточнюється') }}{% endif %}</span>
+            </p>
             <h3 class="iprm-block-title">
               <a href="{{ url_for('trainer_cabinet.materials_request', instance_id=instance.id) }}" class="account-course__link">{{ instance.effective_title }}</a>
             </h3>
-            <p class="account-card__text">
-              {% if instance.start_date %}{{ instance.start_date | kyiv('%d.%m.%Y') }}{% else %}{{ _('Дата уточнюється') }}{% endif %}
-            </p>
           </div>
-          <span class="badge badge--{{ reservation.status_badge if reservation else 'draft' }}">
-            {{ status_labels.get(reservation.status, reservation.status) if reservation else _('Не подано') }}
-          </span>
+          <a class="apple-btn apple-btn--outline apple-btn--sm"
+             href="{{ url_for('trainer_cabinet.materials_request', instance_id=instance.id) }}">
+            {{ _('Відкрити заявку') if reservation else _('Подати заявку') }}
+          </a>
         </li>
         {% endfor %}
       </ul>

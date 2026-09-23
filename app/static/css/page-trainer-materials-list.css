@@ -1,6 +1,7 @@
 /* Список найближчих заходів тренера з матеріалами -- ЛИШЕ layout цієї
    сторінки. Декор -- з дизайн-системи: картка -- .account-card, стан --
-   .badge. Жоден із цих класів тут не перевизначається.
+   .badge, мета-рядок -- .iprm-card-meta, дія -- .apple-btn. Жоден із цих
+   класів тут не перевизначається.
    Завантажується після account.css. Єдиний споживач -- materials.html:
    форма заявки (materials_request.html) має свою розкладку в
    page-trainer-materials.css, спільних класів між ними немає. */
@@ -27,6 +28,6 @@
 @media (max-width: 640px) {
   .trainer-materials-list__item {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
   }
 }
