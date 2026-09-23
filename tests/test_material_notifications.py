@@ -1283,24 +1283,106 @@ def _reservation_with_items(instance):
 
 def test_submitted_letter_goes_to_the_configured_recipients(app, instance,
                                                             monkeypatch):
-    from app.services.email_service import EmailService
+    """Кожен відповідальний отримує СВІЙ лист, з власним ключем.
 
-    sent = []
+    Доти ключ був один на подію й спільний для всіх адресатів, а
+    `_idempotency_seen` перевіряє його по email_logs безстроково: перший
+    адресат лист отримував, решта -- ні. Тест, що стояв тут, мокав
+    `send_email` і закріплював саме цю поведінку як правильну.
+    """
+    from app.services.email_service import EmailService
+    from tests.support.mail import enable_live_mail
+
+    enable_live_mail(monkeypatch)
     monkeypatch.setattr(
         'app.services.notification_recipients.resolve',
         lambda event_type, instance=None, new_status=None: (
             ['a@example.com', 'b@example.com']
             if event_type == 'material_request' else []))
-    monkeypatch.setattr(EmailService, 'send_email',
-                        staticmethod(lambda **kw: sent.append(kw) or object()))
 
     reservation = _reservation_with_items(instance)
-    EmailService.send_material_request_submitted(reservation, instance)
+    reservation.trainer_submitted_at = datetime.now(timezone.utc)
+    db.session.commit()
+    results = EmailService.send_material_request_submitted(reservation, instance)
 
-    assert [kw['to'] for kw in sent] == ['a@example.com', 'b@example.com']
-    assert all(kw['trigger'] == 'material_request' for kw in sent)
-    assert all(kw['idempotency_key'] ==
-               f'matreq:{reservation.external_ref}:submitted' for kw in sent)
+    assert all(entry is not None for entry in results), results
+    logs = EmailLog.query.filter_by(template_name='material_request_submitted').all()
+    assert sorted(log.to_email for log in logs) == ['a@example.com', 'b@example.com']
+    assert all(log.trigger == 'material_request' for log in logs)
+    assert len({log.idempotency_key for log in logs}) == 2
+
+
+class _Clock:
+    """Годинник, що йде на секунду вперед на кожен виклик.
+
+    Між поданням і поверненням у житті минають хвилини; у тесті -- мікросекунди,
+    а на Windows два `datetime.now()` поспіль можуть і збігтись. Ключ листа
+    тримається на моменті події, тож тест не має залежати від роздільності
+    системного таймера.
+    """
+    def __init__(self):
+        self._now = datetime(2026, 9, 22, 10, 0, tzinfo=timezone.utc)
+
+    def now(self, tz=None):
+        self._now += timedelta(seconds=1)
+        return self._now
+
+
+def test_resubmitted_and_returned_again_request_mails_every_time(
+        app, instance, trainer_user, monkeypatch):
+    """Подав -> повернули -> виправив і подав знову -> повернули знову.
+
+    Кожен крок -- окремий лист. Зі старим ключем (`matreq:<ref>:<дія>`) друге
+    подання й друге повернення мовчки відсікались як «уже надіслані».
+    """
+    from app.services import material_request_service as mrq
+    from app.services.email_service import EmailService
+    from tests.support.mail import enable_live_mail
+
+    enable_live_mail(monkeypatch)
+    monkeypatch.setattr(mrq, 'datetime', _Clock())
+    monkeypatch.setattr(
+        'app.services.notification_recipients.resolve',
+        lambda event_type, instance=None, new_status=None: (
+            ['reviewer@example.com'] if event_type == 'material_request' else []))
+
+    reservation = _reservation_with_items(instance)
+    reservation.status = MaterialReservationStatus.DRAFT
+    reservation.created_by_id = trainer_user.id
+    db.session.commit()
+
+    outcomes = []
+    for round_no in (1, 2):
+        mrq.submit(reservation, trainer_user)
+        outcomes.extend(EmailService.send_material_request_submitted(
+            reservation, instance))
+        mrq.return_to_trainer(reservation, f'Правка {round_no}', None)
+        outcomes.append(EmailService.send_material_request_decision(
+            reservation, instance, 'returned'))
+
+    assert all(entry is not None for entry in outcomes), outcomes
+    submitted = EmailLog.query.filter_by(
+        template_name='material_request_submitted',
+        to_email='reviewer@example.com').count()
+    returned = EmailLog.query.filter_by(
+        template_name='material_request_returned',
+        to_email=trainer_user.email).count()
+    assert (submitted, returned) == (2, 2)
+
+
+def test_material_request_key_fits_the_column(app):
+    """`email_logs.idempotency_key` -- String(64). SQLite довжину не
+    перевіряє, Postgres -- так, і довший ключ поклав би INSERT листа."""
+    from types import SimpleNamespace
+    from app.models.email_log import EmailLog as Log
+    from app.services.email_service import _material_request_key, _per_recipient_key
+
+    worst = SimpleNamespace(id=2 ** 63 - 1)
+    moment = datetime(2099, 12, 31, 23, 59, 59, 999999, tzinfo=timezone.utc)
+    for event in ('s', 'returned', 'approved', 'rejected'):
+        key = _per_recipient_key(_material_request_key(worst, event, moment),
+                                 'someone.with.a.very.long.address@example.com')
+        assert len(key) <= Log.idempotency_key.type.length, key
 
 
 def test_decision_letters_render_for_every_decision(app, instance, trainer_user):
@@ -1329,8 +1411,7 @@ def test_decision_letter_is_skipped_when_nobody_to_write_to(app, instance):
 
 def test_idempotency_key_differs_per_decision(app, instance, trainer_user,
                                               monkeypatch):
-    """Дві заявки одного тренера, розведені поспіль, не мають злитись у
-    60-секундному вікні дедупу."""
+    """Два рішення по одній заявці -- два листи, а не один."""
     from app.services.email_service import EmailService
 
     sent = []
@@ -1340,14 +1421,14 @@ def test_idempotency_key_differs_per_decision(app, instance, trainer_user,
     reservation = _reservation_with_items(instance)
     reservation.created_by_id = trainer_user.id
     reservation.review_comment = 'Причина'
+    reservation.reviewed_at = datetime.now(timezone.utc)
 
     EmailService.send_material_request_decision(reservation, instance, 'returned')
     EmailService.send_material_request_decision(reservation, instance, 'approved')
 
     keys = [kw['idempotency_key'] for kw in sent]
-    assert keys == [f'matreq:{reservation.external_ref}:returned',
-                    f'matreq:{reservation.external_ref}:approved']
     assert len(set(keys)) == 2
+    assert all(str(reservation.id) in key for key in keys)
 
 
 def test_mm_status_webhook_old_payload_keeps_existing_cost(app, client):

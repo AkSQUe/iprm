@@ -965,6 +965,57 @@ def test_approve_route_keeps_pending_review_when_partner_fails(client, admin_use
     assert pending_request.status == S.PENDING_REVIEW
 
 
+class _PartnerClient:
+    """Партнер, що відповідає на `submit_request` так, як справжній MM Medic.
+
+    Підміняється лише HTTP-клієнт: `submit_request()` у сервісі резервувань
+    працює справжній -- саме він переписує `created_by_id`, і саме це
+    мокнутий `submit_request` приховував.
+    """
+    def __init__(self, status='created'):
+        self.status = status
+        self.calls = []
+
+    def submit_request(self, ref, meta, items):
+        from app.services.mm_medic_client import MMResult
+        self.calls.append(items)
+        return MMResult(ok=True, http_status=200, data={
+            'status': self.status,
+            'reservation': {'items': [
+                {'sku': it['sku'], 'name': it['sku'],
+                 'quantity_requested': it['quantity']} for it in items]},
+        })
+
+
+def test_approve_route_keeps_the_trainer_as_author_and_mails_him(
+        client, admin_user, trainer_user, instance, pending_request, monkeypatch):
+    """Лист «заявку прийнято» -- тренеру, а не адміну, що натиснув кнопку.
+
+    `submit_request()` пише в `created_by_id` поточного користувача -- для
+    легасі-каналу адмінки це правильно (там автор і є адмін). Для заявки з
+    кабінету автор -- тренер, і `approve()` мусить його зберегти.
+    """
+    from app.models.email_log import EmailLog
+    from app.models.material_reservation import MaterialReservationStatus as S
+    from tests.support.mail import enable_live_mail
+    from tests.support.rbac import switch_user
+
+    enable_live_mail(monkeypatch)
+    monkeypatch.setattr(mrs, 'get_client', lambda: _PartnerClient())
+    switch_user(client, admin_user)
+
+    client.post(f'/admin/instances/{instance.id}/materials/approve',
+                data={'csrf_token': _admin_csrf(client)},
+                follow_redirects=True)
+
+    db.session.refresh(pending_request)
+    assert pending_request.status == S.SUBMITTED
+    assert pending_request.created_by_id == trainer_user.id
+    approved = EmailLog.query.filter_by(
+        template_name='material_request_approved').all()
+    assert [log.to_email for log in approved] == [trainer_user.email]
+
+
 # --------------------- overview ordering + sidebar counter (Task 8) ---------------------
 
 @pytest.fixture

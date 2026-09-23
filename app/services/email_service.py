@@ -11,6 +11,7 @@ Protection system:
 - Test emails are always synchronous and never retried.
 - Thread-safe: SMTP config is passed as a dict, never mutated on app.config.
 """
+import hashlib
 import html as _htmllib
 import logging
 import re
@@ -26,7 +27,7 @@ from flask_mail import Message
 from app.extensions import db
 from app.models.email_log import EmailLog, MAX_RETRIES, STALE_PENDING_MINUTES
 from app.services.money import format_amount
-from app.utils import normalize_whitespace
+from app.utils import ensure_utc, normalize_whitespace
 
 logger = logging.getLogger(__name__)
 
@@ -160,6 +161,35 @@ def _trainer_requisites_key(profile):
     stamp = int(updated.timestamp() * 1_000_000) if updated else 0
     trainer_id = profile.trainer_id if profile is not None else 0
     return f'trainer-requisites-{trainer_id}-{stamp}'
+
+
+def _material_request_key(reservation, event, moment):
+    """Ключ-основа листа по заявці на матеріали: подія + її момент.
+
+    Момент (`trainer_submitted_at` для подання, `reviewed_at` для рішення)
+    відрізняє друге подання після повернення від першого: це нова подія, а
+    не повтор. `_idempotency_seen` перевіряє ключ по email_logs БЕЗСТРОКОВО,
+    тож ключ лише з назвою дії (як було) один раз на все життя заявки
+    дозволяв кожен вид листа -- друге подання і друге повернення мовчки
+    відсікались. Мікросекунди -- з тієї ж причини, що в
+    `_trainer_proposal_status_key`. `id`, а не `external_ref`: ключ
+    обмежений String(64), а id коротший і так само унікальний.
+    """
+    moment = ensure_utc(moment)
+    stamp = int(moment.timestamp() * 1_000_000) if moment else 0
+    return f'matreq:{reservation.id}:{event}:{stamp}'
+
+
+def _per_recipient_key(base, to):
+    """Ключ конкретного листа: основа + короткий відбиток адреси.
+
+    Один лист на подію розходиться кільком адресатам, а ключ перевіряється
+    по email_logs без огляду на адресу: спільний ключ віддавав лист лише
+    першому, решта отримувала «вже надіслано». Повну адресу в ключ не
+    кладемо -- колонка String(64), і довга адреса її переповнила б.
+    """
+    tag = hashlib.sha1((to or '').strip().lower().encode('utf-8')).hexdigest()[:8]
+    return f'{base}:{tag}'
 
 
 def _open_smtp(smtp_cfg):
@@ -1849,10 +1879,11 @@ class EmailService:
         PendingRollbackError. Огортаємо кожну ітерацію у try з
         rollback, щоб провал на одній адресі не блокував решту.
 
-        idempotency_key -- необов'язковий, прокидається як є у кожен
-        send_email. Без нього дедуп send_email тримається на парі
-        адреса+тригер за 60 секунд; наявні виклики його не передають і
-        працюють так само, як і раніше.
+        idempotency_key -- необов'язкова ОСНОВА ключа. Кожен адресат
+        отримує власний ключ (`_per_recipient_key`): ключ перевіряється по
+        email_logs без огляду на адресу, і спільний для всіх віддав би лист
+        лише першому. Без ключа дедуп send_email тримається на парі
+        адреса+тригер за 60 секунд; такі виклики працюють, як і раніше.
         """
         results = []
         for to in recipients:
@@ -1864,7 +1895,8 @@ class EmailService:
                     context=context,
                     trigger=trigger,
                     registration_id=registration_id,
-                    idempotency_key=idempotency_key,
+                    idempotency_key=(_per_recipient_key(idempotency_key, to)
+                                     if idempotency_key else None),
                 )
                 results.append(entry)
             except Exception:
@@ -2113,7 +2145,8 @@ class EmailService:
 
         `idempotency_key` обходить 60-секундний дедуп (адреса+тригер). Без
         нього дві заявки, розведені поспіль на ту саму адресу, злилися б в
-        один лист замість двох.
+        один лист замість двох. Ключ -- на конкретне подання
+        (`trainer_submitted_at`), суфікс адресата дописує `_send_to_recipients`.
         """
         from app.services.notification_recipients import resolve
         recipients = resolve('material_request', instance=instance)
@@ -2127,7 +2160,8 @@ class EmailService:
             context=ctx,
             trigger='material_request',
             registration_id=None,
-            idempotency_key=f'matreq:{reservation.external_ref}:submitted',
+            idempotency_key=_material_request_key(
+                reservation, 's', reservation.trainer_submitted_at),
         )
 
     # Рішення -> шаблон. Лише мапінг на назву шаблону -- тему свідомо НЕ
@@ -2189,7 +2223,9 @@ class EmailService:
             context=ctx,
             trigger='material_request',
             registration_id=None,
-            idempotency_key=f'matreq:{reservation.external_ref}:{decision}',
+            idempotency_key=_per_recipient_key(
+                _material_request_key(reservation, decision, reservation.reviewed_at),
+                user.email),
         )
 
     @staticmethod

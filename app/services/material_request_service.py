@@ -197,6 +197,11 @@ def approve(instance, reservation):
     if not items:
         raise RequestTransitionError('Заявка порожня: погоджувати нічого')
 
+    # Автор заявки -- тренер. `submit_request()` пише в `created_by_id` того,
+    # хто натиснув кнопку: для легасі-каналу адмінки це правильно (там автор
+    # і є адмін), тож сам сервіс не чіпаємо, а відновлюємо автора тут. Без
+    # цього лист «заявку прийнято» (адресат -- `created_by`) ішов адміну.
+    author_id = reservation.created_by_id
     reviewer_id = mrs._submitter_id()
     ok, result, _reservation = mrs.submit_request(instance, items)
     if not ok:
@@ -204,6 +209,8 @@ def approve(instance, reservation):
                        reservation.external_ref)
         return False, result
 
+    if author_id is not None:
+        reservation.created_by_id = author_id
     reservation.reviewed_at = datetime.now(timezone.utc)
     reservation.reviewed_by_id = reviewer_id
     db.session.commit()
