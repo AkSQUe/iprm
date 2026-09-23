@@ -7252,6 +7252,9 @@ msgstr "What is wrong with the certificate"
 msgid "Повідомити про помилку"
 msgstr "Report an error"
 
+msgid "Ви ще не додали жодного сертифіката."
+msgstr "You have not added any certificates yet."
+
 msgid "Сертифікатів поки немає. Вони зʼявляться тут після завершення заходу."
 msgstr "No certificates yet. They will appear here after the event ends."
 

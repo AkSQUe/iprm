@@ -29,23 +29,51 @@
   flex: 1 1 260px;
 }
 
+/* align-items: flex-start, а не center: коли розкрито форму скарги, блок
+   дій стає вищим, і центрування зсувало б кнопку PDF на середину панелі. */
 .cabinet-certs-list__actions {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   flex: 0 0 auto;
 }
 
+/* Скарга згорнута в <details>: видимий лишається тільки кнопка-перемикач,
+   поле з'являється під нею. Позиціювання -- відносне, щоб панель із полем
+   лягла під кнопкою й не розсувала рядок дій. */
 .cabinet-certs-report {
+  position: relative;
+}
+
+/* Маркер <summary> прибирається двома способами: list-style для Firefox,
+   ::-webkit-details-marker для Safari. Вигляд самої кнопки -- .apple-btn
+   дизайн-системи, тут його ніхто не чіпає. */
+.cabinet-certs-report__toggle {
+  list-style: none;
+}
+
+.cabinet-certs-report__toggle::-webkit-details-marker {
+  display: none;
+}
+
+.cabinet-certs-report__form {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+  margin-top: 8px;
 }
 
 .cabinet-certs-report__input {
   width: 12rem;
+}
+
+/* Редактор власних сертифікатів -- одна картка: сітка мініатюр, порожній
+   стан і кнопки лежали просто на тлі секції й не читались як один блок. */
+.cabinet-certs-editor {
+  max-width: 900px;
+  margin: 0 auto;
 }
 
 /* Панель «Додати сертифікат» / «Зберегти» під редактором регалій. Окремий
@@ -63,6 +91,13 @@
   .cabinet-certs-list__item {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  /* У колонці flex-basis міряє ВИСОТУ: 260px з базового правила робили з
+     головного блоку картки порожній прямокутник заввишки в пів-екрана. */
+  .cabinet-certs-list__main {
+    flex: 0 0 auto;
+    width: 100%;
   }
 
   .cabinet-certs-list__actions {

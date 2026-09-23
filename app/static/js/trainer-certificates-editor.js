@@ -75,9 +75,13 @@
       var target = dir < 0 ? pair.up : pair.down;
       (target.disabled ? (dir < 0 ? pair.down : pair.up) : target).focus();
     };
+    // Порожній стан малює шаблон (у кабінеті тренера), тут лише перемикання.
+    // В адмінській картці тренера цього блоку немає -- звідси перевірка.
+    var empty = document.getElementById('regalia-certs-empty');
     var render = function() {
       grid.innerHTML = '';
       moveButtons = [];
+      if (empty) empty.hidden = certs.length > 0;
       certs.forEach(function(c, i) {
         var img = el('img', {'class': 'iprm-img-cover', src: c.thumb || c.url, alt: '', draggable: 'false'});
         var rm = el('button', {type: 'button', 'class': 'regalia-cert__remove', title: t('Видалити')}, [icon('close')]);

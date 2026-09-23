@@ -11,21 +11,20 @@
 
 {% block content %}
 <div class="apple-page">
-  {# Заголовок -- той самий hero-блок, що на index.html кабінету тренера. #}
-  <div class="iprm-hero-wrap">
-    <section class="iprm-hero" aria-labelledby="trainer-certs-title">
-      <div class="iprm-hero__content">
-        <span class="iprm-eyebrow">{{ _('Кабінет тренера') }}</span>
-        <h1 id="trainer-certs-title" class="iprm-hero__title">{{ _('Сертифікати') }}</h1>
-      </div>
-    </section>
-  </div>
-
+  {# Заголовок внутрішньої сторінки кабінету -- той самий блок, що на
+     /trainer/contract: посилання назад, eyebrow, h1 і лід. #}
   <section class="iprm-section" aria-labelledby="issued-title">
     <div class="iprm-section__inner">
-      <p><a href="{{ url_for('trainer_cabinet.index') }}" class="account-course__link">{{ _('Кабінет тренера') }}</a></p>
+      <a href="{{ url_for('trainer_cabinet.index') }}" class="iprm-back-link">{{ _('Кабінет тренера') }}</a>
+
+      <header class="apple-section-head">
+        <span class="iprm-eyebrow">{{ _('Кабінет тренера') }}</span>
+        <h1 class="iprm-section__title"><span class="apple-gradient-text">{{ _('Сертифікати') }}</span></h1>
+        <p class="iprm-section__subtitle">{{ _('Документи за проведені заходи та ваші власні сертифікати') }}</p>
+      </header>
+
       <h2 id="issued-title" class="iprm-section__title">{{ _('За проведені заходи') }}</h2>
-      <p class="account-card__text">
+      <p class="iprm-section__subtitle">
         {{ _('Ці документи видає ІПРМ після завершення заходу і надсилає вам листом. Змінити їх не можна: номер і дані зафіксовані на момент видачі.') }}
       </p>
 
@@ -48,14 +47,21 @@
                href="{{ url_for('trainer_cabinet.certificate_download', cert_id=cert.id) }}">
               {{ _('Завантажити PDF') }}
             </a>
-            <form method="post" class="cabinet-certs-report"
-                  action="{{ url_for('trainer_cabinet.certificate_report', cert_id=cert.id) }}">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <input type="text" name="message" class="form-input form-input--sm cabinet-certs-report__input"
-                     placeholder="{{ _('Що не так?') }}" maxlength="2000" required
-                     aria-label="{{ _('Що не так у сертифікаті') }} {{ cert.number }}">
-              <button type="submit" class="apple-btn apple-btn--outline apple-btn--sm">{{ _('Повідомити про помилку') }}</button>
-            </form>
+            {# Скарга -- рідкісна дія, тож поле згорнуте: інакше кожна картка
+               несла порожній інпут, і список читався як форма. Кнопка
+               відправки лежить усередині <details> разом із полем, тож
+               обов'язкове поле ніколи не буває прихованим на момент сабміту. #}
+            <details class="cabinet-certs-report">
+              <summary class="apple-btn apple-btn--outline apple-btn--sm cabinet-certs-report__toggle">{{ _('Повідомити про помилку') }}</summary>
+              <form method="post" class="cabinet-certs-report__form"
+                    action="{{ url_for('trainer_cabinet.certificate_report', cert_id=cert.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="text" name="message" class="form-input form-input--sm cabinet-certs-report__input"
+                       placeholder="{{ _('Що не так?') }}" maxlength="2000" required
+                       aria-label="{{ _('Що не так у сертифікаті') }} {{ cert.number }}">
+                <button type="submit" class="apple-btn apple-btn--primary apple-btn--sm">{{ _('Надіслати') }}</button>
+              </form>
+            </details>
           </div>
         </li>
         {% endfor %}
@@ -66,13 +72,14 @@
     </div>
   </section>
 
-  <section class="iprm-section" aria-labelledby="own-title">
+  <section class="iprm-section apple-section-gray" aria-labelledby="own-title">
     <div class="iprm-section__inner">
       <h2 id="own-title" class="iprm-section__title">{{ _('Власні сертифікати') }}</h2>
-      <p class="account-card__text">
+      <p class="iprm-section__subtitle">
         {{ _('Дипломи й посвідчення, які показуються на вашій публічній сторінці тренера. Це не те саме, що поле «Професійні сертифікати» в анкеті: те поле -- текстовий перелік для резюме до реєстру БПР.') }}
       </p>
-      <form method="post" action="{{ url_for('trainer_cabinet.certificates_save') }}">
+      <form method="post" class="account-card cabinet-certs-editor"
+            action="{{ url_for('trainer_cabinet.certificates_save') }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         {# tojson екранує лише ' (розрахований на <script>, не на HTML-атрибут):
            у подвійних лапках перша ж лапка з JSON обірвала б атрибут ("[{" --
@@ -83,6 +90,11 @@
                value='{{ trainer.certificates | tojson }}'
                data-upload-url="{{ url_for('trainer_cabinet.certificate_upload') }}">
         <div class="regalia-certs__grid" id="regalia-certs-grid"></div>
+        {# Порожній стан редактора: показ і ховання -- на редакторі, бо сітку
+           малює він (доданий файл з'являється без перезавантаження). #}
+        <div class="iprm-empty-state iprm-empty-state--compact" id="regalia-certs-empty" hidden>
+          <p>{{ _('Ви ще не додали жодного сертифіката.') }}</p>
+        </div>
         <input type="file" id="regalia-cert-file"
                accept="image/png,image/jpeg,image/webp,.heic,.heif" multiple hidden>
         <div class="cabinet-certs-editor__actions">
