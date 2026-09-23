@@ -367,3 +367,74 @@ def test_trainers_table_select_column_is_labelled(client):
     html = client.get('/admin/trainers').get_data(as_text=True)
     assert '<span class="visually-hidden">Обрати</span>' in html
     assert '<td data-label="Обрати">' in html
+
+
+# --- Офіційна форма «Резюме викладача/тренера» (БПР) ------------------------
+
+def _export_recording(client, monkeypatch, **extra):
+    """Вивантаження без WeasyPrint із записом, який рендер викликано."""
+    from app.services import trainer_resume_service as rs
+
+    called = []
+    monkeypatch.setattr(rs, 'render_pdf',
+                        lambda trainers, keys: called.append('table') or b'%PDF-t%')
+    monkeypatch.setattr(rs, 'render_form_pdf',
+                        lambda trainers, keys: called.append('form') or b'%PDF-f%')
+    trainer = make_trainer(name='Режимний Т.')
+    db.session.commit()
+    resp = client.post('/admin/trainers/resume.pdf', data={
+        'ids': [str(trainer.id)], 'columns': ['full_name'], **extra,
+    })
+    return resp, called
+
+
+def test_form_layout_renders_the_official_form_with_its_own_filename(client, monkeypatch):
+    """Форма й таблиця -- різні документи: різне імʼя, щоб два вивантаження
+    одного дня не перезаписали одне одного в завантаженнях."""
+    from datetime import date
+
+    _admin(client)
+    resp, called = _export_recording(client, monkeypatch, layout='form')
+
+    assert resp.status_code == 200
+    assert called == ['form']
+    assert (f'rezume-forma-bpr-{date.today():%Y-%m-%d}.pdf'
+            in resp.headers['Content-Disposition'])
+
+
+def test_request_without_layout_stays_a_table(client, monkeypatch):
+    """Прямий запит без поля (старий клієнт) -- таблиця, як до появи форми."""
+    _admin(client)
+    resp, called = _export_recording(client, monkeypatch)
+
+    assert resp.status_code == 200
+    assert called == ['table']
+    assert 'rezume-treneriv-' in resp.headers['Content-Disposition']
+
+
+def test_dialog_offers_the_form_first_and_checked(client):
+    """Форма -- за замовчуванням: вона й іде в пакет документів до реєстру."""
+    _admin(client)
+    make_trainer(name='Діалоговий Т.')
+    db.session.commit()
+
+    html = client.get('/admin/trainers').get_data(as_text=True)
+
+    form_at = html.index('value="form" id="resume-layout-form" checked')
+    table_at = html.index('value="table" id="resume-layout-table"')
+    assert form_at < table_at
+    assert 'value="table" id="resume-layout-table" checked' not in html
+
+
+@requires_weasyprint
+def test_form_export_returns_pdf(client):
+    _admin(client)
+    trainer = make_trainer(name='Формовий Т.')
+    db.session.commit()
+    resp = client.post('/admin/trainers/resume.pdf', data={
+        'ids': [str(trainer.id)], 'columns': ['full_name', 'workplace'],
+        'layout': 'form',
+    })
+    assert resp.status_code == 200
+    assert resp.data[:4] == b'%PDF'
+    assert resp.headers['Cache-Control'] == 'no-store, private'

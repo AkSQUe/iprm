@@ -157,8 +157,12 @@ def trainers_list():
     )
 
 
-def _resume_filename(instance_id, today):
+def _resume_filename(instance_id, today, as_form=False):
     """Імʼя PDF резюме: з датою, а зі сторінки проведення -- ще й з номером.
+
+    Форма й таблиця -- різні документи з однаковими даними: різний префікс,
+    щоб два вивантаження одного дня не перезаписували одне одного в теці
+    завантажень.
 
     Пакет документів подається на конкретний захід, і в теці з поданнями
     кількох заходів файли з однаковими іменами (лише дата) не розрізнити.
@@ -176,7 +180,8 @@ def _resume_filename(instance_id, today):
         if instance is not None:
             number = instance.effective_bpr_event_number or str(instance.id)
             suffix = '-' + secure_filename(number)
-    return f'rezume-treneriv{suffix}-{today:%Y-%m-%d}.pdf'
+    prefix = 'rezume-forma-bpr' if as_form else 'rezume-treneriv'
+    return f'{prefix}{suffix}-{today:%Y-%m-%d}.pdf'
 
 
 @admin_bp.route('/trainers/resume.pdf', methods=['POST'])
@@ -201,20 +206,26 @@ def trainers_resume_pdf():
         return redirect(request.referrer or url_for('admin.trainers_list'))
 
     keys = rs.normalize_keys(request.form.getlist('columns'), current_user)
+    # Діалог надсилає 'form' за замовчуванням. Запит без поля (прямий виклик,
+    # старий клієнт) -- таблицею, як було до появи форми.
+    as_form = request.form.get('layout') == 'form'
     try:
-        pdf = rs.render_pdf(ordered, keys)
+        pdf = (rs.render_form_pdf(ordered, keys) if as_form
+               else rs.render_pdf(ordered, keys))
     except Exception:
         current_app.logger.exception('trainer resume pdf failed')
         flash('Не вдалося сформувати PDF резюме', 'error')
         return redirect(request.referrer or url_for('admin.trainers_list'))
 
     audit_logger.info(
-        'Admin %s exported trainer resume (%d trainers, columns=%s)',
-        current_user.email, len(ordered), ','.join(keys),
+        'Admin %s exported trainer resume (%d trainers, layout=%s, columns=%s)',
+        current_user.email, len(ordered), 'form' if as_form else 'table',
+        ','.join(keys),
     )
     response = send_file(
         io.BytesIO(pdf), mimetype='application/pdf', as_attachment=True,
-        download_name=_resume_filename(request.form.get('instance_id'), date.today()),
+        download_name=_resume_filename(request.form.get('instance_id'), date.today(),
+                                       as_form=as_form),
     )
     # Документ -- персональні дані тренерів; проміжним і браузерним кешам
     # такий PDF діставатися не має, як і договору в кабінеті тренера.

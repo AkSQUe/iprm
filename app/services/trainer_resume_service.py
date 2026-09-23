@@ -1,4 +1,8 @@
-"""Резюме тренерів PDF-таблицею для подачі заходу до реєстру БПР.
+"""Резюме тренерів у PDF для подачі заходу до реєстру БПР.
+
+Два виходи з одних даних: офіційна форма «Резюме викладача/тренера» (аркуш
+на тренера, `render_form_pdf`) -- те, що вкладається в пакет документів, і
+зведена таблиця (рядок на тренера, `render_pdf`) -- для огляду.
 
 Реєстр колонок нижче -- ОДНЕ джерело істини на трьох споживачів: діалог
 вибору колонок, шапка PDF і витягання значень у клітинки. Якби підписи жили
@@ -62,10 +66,28 @@ COLUMNS = (
                  'trainers.finance'),
 )
 
-# Ядро резюме БПР -- обрані за замовчуванням.
+# Ядро резюме БПР -- обрані за замовчуванням: усе, з чого складається
+# офіційна форма (FORM_ROWS нижче). Без телефону й пошти перше ж
+# вивантаження форми мало б порожні «Засоби зв'язку». Дата народження тут
+# теж, але `normalize_keys` пропускає її лише тим, хто має trainers.finance.
 DEFAULT_KEYS = (
-    'full_name', 'education', 'position_titles', 'workplace',
-    'professional_certificates',
+    'full_name', 'birth_date', 'email', 'phone', 'education',
+    'position_titles', 'workplace', 'professional_certificates',
+)
+
+# Офіційна форма «Резюме викладача/тренера» для пакета документів до реєстру
+# БПР: (підпис рядка форми, ключі колонок реєстру, з яких він складається).
+# Підписи й порядок -- дослівно з форми. Дані -- з тих самих геттерів COLUMNS,
+# тож форма й таблиця не можуть розійтися в тому, що показують.
+# «Інші відомості» -- посада та регалії: окремого рядка для них форма не має.
+FORM_ROWS = (
+    ('Прізвище, власне ім’я, по батькові (за наявності)', ('full_name',)),
+    ('Дата народження', ('birth_date',)),
+    ('Засоби зв’язку (електронна адреса, номер телефону)', ('email', 'phone')),
+    ('Освіта (рівень освіти та навчальні заклади)', ('education',)),
+    ('Місце роботи', ('workplace',)),
+    ('Професійні сертифікати', ('professional_certificates',)),
+    ('Інші відомості', ('position_titles',)),
 )
 
 
@@ -122,6 +144,50 @@ def labels_for(keys):
     """Підписи шапки в тому ж порядку -- з того самого реєстру."""
     by_key = {c.key: c for c in COLUMNS}
     return [by_key[k].label for k in keys]
+
+
+def build_form(trainers, keys):
+    """Сторінка форми на тренера: [[(підпис рядка, значення), ...], ...].
+
+    Рядки -- ЗАВЖДИ всі й у порядку офіційної форми. Вибір колонок вирішує,
+    що ЗАПОВНИТИ, а не що показати: без рядка документ перестав би бути тією
+    формою, яку приймає реєстр. Невибраний чи недоступний (дата народження
+    без trainers.finance -- `normalize_keys` її вже відкинув) рядок лишається
+    порожнім для ручного заповнення. Кілька колонок в одному рядку (пошта й
+    телефон) -- окремими рядками тексту.
+
+    Тренерів -- з `load_trainers`: анкети там приходять разом із ними, і цикл
+    нижче не робить жодного запиту.
+    """
+    by_key = {c.key: c for c in COLUMNS}
+    picked = set(keys)
+    pages = []
+    for trainer in trainers:
+        rows = []
+        for label, row_keys in FORM_ROWS:
+            parts = [str(by_key[k].getter(trainer) or '').strip()
+                     for k in row_keys if k in picked]
+            rows.append((label, '\n'.join(p for p in parts if p)))
+        pages.append(rows)
+    return pages
+
+
+def render_form_html(trainers, keys):
+    """HTML офіційної форми -- окремо від PDF, щоб його можна було перевірити
+    без WeasyPrint (на машинах без GTK він не імпортується)."""
+    from flask import render_template
+
+    return render_template('admin/trainer_resume_form_pdf.html',
+                           pages=build_form(trainers, keys))
+
+
+def render_form_pdf(trainers, keys):
+    """PDF офіційної форми: книжковий аркуш на кожного тренера."""
+    from flask import current_app
+    from weasyprint import HTML
+
+    return HTML(string=render_form_html(trainers, keys),
+                base_url=current_app.static_folder).write_pdf()
 
 
 def render_pdf(trainers, keys, title=None):

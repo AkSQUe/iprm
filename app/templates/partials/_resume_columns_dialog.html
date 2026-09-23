@@ -29,7 +29,23 @@
           class="admin-form" id="resume-columns-form">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="modal__body">
-        <p class="form-hint">Оберіть, які поля анкети увійдуть у таблицю.</p>
+        {# Два виходи з тих самих даних (trainer_resume_service). Форма --
+           першою й за замовчуванням: вона й іде в пакет документів до
+           реєстру БПР. Запит без цього поля сервер віддає таблицею, як
+           до появи форми. #}
+        <fieldset class="form-group">
+          <legend>Вигляд документа</legend>
+          <div class="form-checkbox">
+            <input type="radio" name="layout" value="form" id="resume-layout-form" checked>
+            <label for="resume-layout-form">Форма резюме (БПР) — окремий аркуш на кожного тренера</label>
+          </div>
+          <div class="form-checkbox">
+            <input type="radio" name="layout" value="table" id="resume-layout-table">
+            <label for="resume-layout-table">Зведена таблиця — усі тренери разом</label>
+          </div>
+        </fieldset>
+        <p class="form-hint">Оберіть, які поля анкети заповнити. У формі
+          невибрані рядки лишаються порожніми — для заповнення вручну.</p>
         {% for column in resume_columns %}
         <div class="form-checkbox">
           <input type="checkbox" name="columns" value="{{ column.key }}"

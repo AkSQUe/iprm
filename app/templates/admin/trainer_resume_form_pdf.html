@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<title>Резюме викладача/тренера</title>
+<style>
+  /* Офіційна форма «Резюме викладача/тренера» для пакета документів до
+     реєстру БПР -- аркуш на тренера (trainer_resume_service.FORM_ROWS).
+     Стилі -- готовими значеннями: WeasyPrint не читає var() з common.css
+     (так само, як у trainer_resume_pdf.html). І без класів -- лише теги й
+     data-атрибути, як у сусідньому шаблоні: класи дизайн-системи живуть у
+     CSS-файлах, а сторож test_css_markup_sync вимагає для кожного класу
+     розмітки правило саме там. */
+  @page { size: A4 portrait; margin: 20mm 18mm; }
+  body { font-family: 'Times New Roman', 'DejaVu Serif', serif; font-size: 12pt;
+         color: #000000; }
+  section { break-after: page; page-break-after: always; }
+  section:last-child { break-after: auto; page-break-after: auto; }
+  h1 { text-align: center; font-size: 12pt; font-weight: normal;
+       margin: 0 0 14mm 0; line-height: 2; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { border: 0.6pt solid #000000; padding: 1.5mm 2mm; vertical-align: top;
+           text-align: left; }
+  th { width: 44%; font-weight: bold; }
+  /* Висота -- як у бланку: порожній рядок лишається придатним для ручного
+     заповнення. У таблиці height діє як мінімальна висота, текст її розтягує. */
+  td { white-space: pre-line; }
+  tr[data-height="short"] th, tr[data-height="short"] td { height: 6mm; }
+  tr[data-height="tall"] th, tr[data-height="tall"] td { height: 34mm; }
+  tr { page-break-inside: avoid; }
+</style>
+</head>
+<body>
+{% for rows in pages %}
+<section>
+  <h1>Резюме<br>викладача/тренера</h1>
+  <table>
+    <tbody>
+      {% for label, value in rows %}
+      {#- ПІБ і дата народження в бланку -- короткі рядки, решта -- високі. #}
+      <tr data-height="{{ 'short' if loop.index <= 2 else 'tall' }}">
+        <th scope="row">{{ label }}</th>
+        <td>{{ value }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endfor %}
+</body>
+</html>
