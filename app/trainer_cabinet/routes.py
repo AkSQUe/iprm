@@ -66,7 +66,7 @@ def index():
         counts=svc.registration_counts([i.id for i in upcoming]),
         courses=svc.trainer_courses(trainer),
         profile_complete=bool(trainer.profile and trainer.profile.is_complete),
-        attention=svc.attention_items(trainer, settings),
+        attention=svc.attention_items(trainer, settings, upcoming=upcoming),
         **referral,
     )
 
@@ -339,7 +339,9 @@ def _own_instance(instance_id):
 @trainer_cabinet_bp.route('/materials')
 @trainer_required
 def materials():
-    instances = svc.upcoming_instances(g.trainer)
+    # Онлайн-заходам витратні матеріали не потрібні -- у списку їм не місце.
+    instances = [inst for inst in svc.upcoming_instances(g.trainer)
+                 if mrq.needs_materials(inst)]
     # Доти -- окремий get_reservation на кожен захід (N+1). Окремий запит не
     # потрібен зовсім: `CourseInstance.material_reservations` -- lazy='selectin',
     # тож резервування всіх заходів списку вже підвантажені одним батчем разом
@@ -357,9 +359,10 @@ def materials():
 def materials_request(instance_id):
     instance = _own_instance(instance_id)
     reservation = mrq.mrs.get_reservation(instance_id)
-    # Минулий чи скасований захід відкривається за прямим URL (для історії),
-    # але заявку на нього вже не приймаємо.
-    accepts = mrq.accepts_requests(instance)
+    # Минулий, скасований чи онлайн-захід відкривається за прямим URL (для
+    # історії), але заявку на нього не приймаємо.
+    block_reason = mrq.request_block_reason(instance)
+    accepts = block_reason is None
     editable = accepts and mrq.is_editable_by_trainer(reservation)
     form = MaterialRequestForm()
     posted_rows = None
@@ -368,7 +371,9 @@ def materials_request(instance_id):
         if not editable:
             # Не «надіслано на перевірку»: сюди доходять і погоджена, і
             # відхилена заявка, і про них ця фраза збрехала б.
-            if not accepts:
+            if block_reason == 'online':
+                flash(_('Онлайн-заходу витратні матеріали не потрібні.'), 'warning')
+            elif block_reason == 'closed':
                 flash(_('Заявку на цей захід уже не приймаємо: він минув або скасований.'),
                       'warning')
             else:
@@ -428,6 +433,8 @@ def materials_request(instance_id):
         reservation=reservation,
         editable=editable,
         accepts=accepts,
+        block_reason=block_reason,
+        participants=mrq.offline_participants(instance),
         rows=(posted_rows if posted_rows is not None
               else mrq.rows_for_form(instance, reservation)),
         max_quantity=mrq.MAX_QUANTITY,

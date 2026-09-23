@@ -65,6 +65,8 @@
         {{ instance.effective_title or 'Захід' }}
         {% if instance.start_date %} — {{ instance.start_date.strftime('%d.%m.%Y') }}{% endif %}
         {% if participants is not none %} · учасників: {{ participants }}{% endif %}
+        {#- Матеріали потрібні лише очним: на гібриді загальне число оманливе. #}
+        {% if offline_participants is not none and participants is not none and offline_participants != participants %} (очно: {{ offline_participants }}){% endif %}
       </p>
     </div>
     <div class="admin-hero__actions">

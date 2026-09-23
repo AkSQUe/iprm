@@ -402,6 +402,7 @@ def instance_materials(instance_id):
         trainer_url=trainer_url,
         statuses=MaterialReservationStatus,
         max_quantity=mrq.MAX_QUANTITY,
+        offline_participants=mrq.offline_participants(instance)[0],
     )
 
 

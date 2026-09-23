@@ -49,6 +49,12 @@
           <p class="trainer-attention__text">{{ _('Коментар куратора:') }} {{ item.comment }}</p>
           <a href="{{ url_for('trainer_cabinet.proposal_edit', proposal_id=item.proposal_id) }}">{{ _('Доопрацювати пропозицію') }}</a>
         </li>
+        {% elif item.kind == 'materials_returned' %}
+        <li class="alert alert--warning">
+          <strong class="alert__title">{{ _('Заявку на матеріали повернуто: %(title)s', title=item.title) }}</strong>
+          {% if item.comment %}<p class="trainer-attention__text">{{ _('Що виправити:') }} {{ item.comment }}</p>{% endif %}
+          <a href="{{ url_for('trainer_cabinet.materials_request', instance_id=item.instance_id) }}">{{ _('Виправити заявку') }}</a>
+        </li>
         {% elif item.kind == 'profile_incomplete' %}
         <li class="alert alert--warning">
           <strong class="alert__title">{{ _('Анкету не заповнено') }}</strong>

@@ -2146,6 +2146,7 @@ class EmailService:
     @staticmethod
     def _material_request_context(reservation, instance):
         """Спільний контекст усіх чотирьох листів заявки на матеріали."""
+        from app.services.material_request_service import offline_participants
         return {
             'reservation': reservation,
             'instance': instance,
@@ -2156,6 +2157,9 @@ class EmailService:
                       if (item.quantity_requested or 0) > 0],
             'admin_url': EmailService._materials_admin_url(
                 instance.id if instance else reservation.instance_id),
+            # (очно, усього): відповідальний звіряє кількості саме з тими, хто
+            # прийде очно -- онлайн-учасникам матеріали не потрібні.
+            'participants': offline_participants(instance) if instance else (0, 0),
         }
 
     @staticmethod

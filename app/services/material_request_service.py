@@ -434,20 +434,47 @@ def prefill_rows(instance):
 _LIVE_INSTANCE_STATUSES = ('published', 'active')
 
 
-def accepts_requests(instance, now=None) -> bool:
-    """Чи приймає захід заявку на матеріали: опублікований чи активний і ще
-    не минув (за київською добою, як і список у кабінеті).
+def needs_materials(instance) -> bool:
+    """Чи бувають у заходу витратні матеріали: у онлайн-заходу -- ні.
+    Гібрид -- так: частина учасників приходить очно."""
+    return instance.event_format != 'online'
 
-    Список у кабінеті й так показує лише такі заходи, але сторінка заявки
-    відкривається за прямим URL -- і доти приймала заявку на минулий чи
-    скасований захід, яку відповідальному лишалось хіба відхилити.
+
+def request_block_reason(instance, now=None):
+    """Чому заявку на матеріали для заходу подати не можна, або None.
+
+    'online' -- онлайн-захід, матеріали йому не потрібні; 'closed' -- захід
+    не опублікований, скасований чи вже минув (за київською добою, як і
+    список у кабінеті). Список і так показує лише живі очні заходи, але
+    сторінка заявки відкривається за прямим URL -- і доти приймала заявку
+    на мертвий захід, яку відповідальному лишалось хіба відхилити.
     """
+    if not needs_materials(instance):
+        return 'online'
     if instance.status not in _LIVE_INSTANCE_STATUSES:
-        return False
+        return 'closed'
     ends = instance.end_date or instance.start_date
     if ends is None:
-        return True  # дату ще призначать -- заявку можна готувати
-    return ensure_utc(ends) >= kyiv_day_start_utc(now)
+        return None  # дату ще призначать -- заявку можна готувати
+    return None if ensure_utc(ends) >= kyiv_day_start_utc(now) else 'closed'
+
+
+def accepts_requests(instance, now=None) -> bool:
+    """Чи приймає захід заявку на матеріали (див. `request_block_reason`)."""
+    return request_block_reason(instance, now) is None
+
+
+def offline_participants(instance):
+    """(очно, усього) незаскасованих реєстрацій заходу.
+
+    Витратні матеріали потрібні лише тим, хто прийде очно: на гібридному
+    заході загальне число вводило б в оману і тренера, і відповідального.
+    """
+    from app.services.trainer_cabinet import registration_counts
+    counts = registration_counts([instance.id]).get(instance.id)
+    if not counts:
+        return 0, 0
+    return counts['offline'], counts['total']
 
 
 def rows_for_form(instance, reservation):

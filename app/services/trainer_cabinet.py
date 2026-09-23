@@ -169,13 +169,19 @@ def return_proposal(proposal, comment):
     proposal.curator_comment = (comment or '').strip() or None
 
 
-def attention_items(trainer, settings):
+def attention_items(trainer, settings, upcoming=None):
     """Що тренеру варто зробити зараз: список простих dict для /trainer/.
+
+    `upcoming` -- уже завантажені `upcoming_instances(trainer)`, якщо маршрут
+    їх має (головна кабінету має): без нього підтягнемо самі.
 
     kind:
     - 'returned' -- пропозиція повернута на доопрацювання (чернетка з
       непорожнім коментарем куратора; submit_proposal коментар стирає, тож
       звичайна чернетка його не має);
+    - 'materials_returned' -- заявку на матеріали повернуто на
+      доопрацювання: без виправлення вона не піде на склад, а лист
+      тренер міг і пропустити;
     - 'profile_incomplete' -- анкета не заповнена (без неї немає договору й
       гонорару);
     - 'contract_missing' -- PDF договору ще не завантажено адміном, лише
@@ -195,6 +201,20 @@ def attention_items(trainer, settings):
         if comment:
             items.append({'kind': 'returned', 'proposal_id': proposal.id,
                           'title': proposal.title, 'comment': comment})
+    # Локальний імпорт: material_request_service сам тягне цей модуль
+    # (offline_participants -> registration_counts).
+    from app.services import material_request_service as mrq
+    from app.models.material_reservation import MaterialReservationStatus
+    for instance in (upcoming if upcoming is not None else upcoming_instances(trainer)):
+        if not mrq.needs_materials(instance):
+            continue
+        # material_reservations -- lazy='selectin', уже підвантажені батчем.
+        material_request = next(iter(instance.material_reservations), None)
+        if (material_request is not None
+                and material_request.status == MaterialReservationStatus.RETURNED):
+            items.append({'kind': 'materials_returned', 'instance_id': instance.id,
+                          'title': instance.effective_title,
+                          'comment': (material_request.review_comment or '').strip()})
     if not (trainer.profile and trainer.profile.is_complete):
         items.append({'kind': 'profile_incomplete'})
     if not settings.has_trainer_contract:

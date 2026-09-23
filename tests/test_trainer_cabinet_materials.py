@@ -555,3 +555,95 @@ def test_materials_list_reads_reservations_in_one_query(client, trainer_user,
     # Три заходи -- і все одно по одному батчу, а не по запиту на захід.
     assert len(reservation_reads) == 1, reservation_reads
     assert len(item_reads) <= 1, item_reads
+
+
+# --- Онлайн-заходи, учасники, «Потребує уваги» ------------------------------
+
+def test_online_event_is_not_listed_and_refuses_a_request(client, trainer_user,
+                                                          instance, kit):
+    """Вебінару витратні матеріали не потрібні: у списку його немає, а за
+    прямим URL сторінка каже чому й заявки не приймає. Гібрид -- приймає."""
+    from app.services import material_request_service as mrq
+
+    instance.event_format = 'online'
+    db.session.commit()
+    _login(client, trainer_user)
+
+    listing = client.get('/trainer/materials').get_data(as_text=True)
+    assert instance.effective_title not in listing
+
+    response = client.post(f'/trainer/materials/{instance.id}', data={
+        'csrf_token': _csrf(client, f'/trainer/materials/{instance.id}'),
+        'sku': ['NEEDLE-30G'], 'quantity': ['3'], 'action': 'submit',
+    }, follow_redirects=True)
+
+    assert mrq.mrs.get_reservation(instance.id) is None
+    assert any('Онлайн' in m for m in _flashes(response)), _flashes(response)
+
+
+def test_hybrid_event_still_accepts_a_request(app, instance):
+    from app.services import material_request_service as mrq
+
+    instance.event_format = 'hybrid'
+    db.session.commit()
+
+    assert mrq.accepts_requests(instance) is True
+
+
+def _counts(monkeypatch, instance, offline, total):
+    """Підмінити підрахунок реєстрацій: справжні реєстрації тягнуть за собою
+    користувачів, тарифи й платежі, а тут перевіряється лише показ."""
+    from app.services import trainer_cabinet
+    monkeypatch.setattr(trainer_cabinet, 'registration_counts', lambda ids: {
+        instance.id: {'total': total, 'paid': 0, 'online': total - offline,
+                      'offline': offline}})
+
+
+def test_request_page_shows_the_in_person_count(client, trainer_user, instance,
+                                                kit, monkeypatch):
+    """Орієнтир для кількостей -- ті, хто прийде очно: на гібриді загальне
+    число вводило б в оману."""
+    _counts(monkeypatch, instance, offline=3, total=5)
+    _login(client, trainer_user)
+
+    body = client.get(f'/trainer/materials/{instance.id}').get_data(as_text=True)
+
+    assert 'Зареєстровано очно: 3 із 5' in body
+
+
+def test_submitted_letter_tells_the_reviewers_the_in_person_count(app, instance,
+                                                                  kit, trainer_user,
+                                                                  monkeypatch):
+    from app.services import material_request_service as mrq
+    from app.services.email_service import EmailService
+
+    _counts(monkeypatch, instance, offline=3, total=5)
+    res = mrq.get_or_create_draft(instance, trainer_user)
+    mrq.save_items(res, [{'sku': 'NEEDLE-30G', 'name': 'Голки 30G',
+                          'image_url': None, 'quantity': 3}])
+
+    from flask import render_template
+
+    ctx = EmailService._material_request_context(res, instance)
+    # render_template, а не jinja_env: лист рендериться з контекст-процесорами
+    # (site_settings тощо), без них базовий шаблон листа не збирається.
+    with app.test_request_context():
+        html = render_template('emails/material_request_submitted.html', **ctx)
+
+    assert ctx['participants'] == (3, 5)
+    assert '3 із 5' in html
+
+
+def test_returned_request_shows_up_in_needs_attention(client, trainer_user,
+                                                      instance, kit):
+    """Лист про повернення тренер міг пропустити -- на головній кабінету
+    повернута заявка стоїть у «Потребує уваги», поруч із поверненою
+    пропозицією."""
+    _request_in(instance, trainer_user, S.RETURNED, comment='Додайте серветки')
+    _login(client, trainer_user)
+
+    body = client.get('/trainer/').get_data(as_text=True)
+
+    assert 'Заявку на матеріали повернуто' in body
+    assert 'Додайте серветки' in body
+    assert f'/trainer/materials/{instance.id}' in body

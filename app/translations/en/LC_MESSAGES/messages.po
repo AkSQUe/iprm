@@ -7192,3 +7192,27 @@ msgstr "Search failed. Please try again."
 #, python-format
 msgid "Коментар задовгий: не більше %(max)d символів."
 msgstr "The comment is too long: no more than %(max)d characters."
+
+msgid "Онлайн-заходу витратні матеріали не потрібні."
+msgstr "Online events do not need consumables."
+
+#, python-format
+msgid "Зареєстровано учасників: %(count)s"
+msgstr "Registered participants: %(count)s"
+
+#, python-format
+msgid "Зареєстровано очно: %(offline)s із %(total)s"
+msgstr "Registered in person: %(offline)s of %(total)s"
+
+msgid "Зареєстровано очно"
+msgstr "Registered in person"
+
+#, python-format
+msgid "%(offline)s із %(total)s"
+msgstr "%(offline)s of %(total)s"
+
+msgid "Що виправити:"
+msgstr "What to fix:"
+
+msgid "Виправити заявку"
+msgstr "Fix the request"

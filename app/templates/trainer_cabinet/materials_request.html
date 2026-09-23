@@ -18,6 +18,18 @@
     {% if instance.start_date %}{{ instance.start_date | kyiv('%d.%m.%Y') }}{% else %}{{ _('Дата уточнюється') }}{% endif %}
     {%- if instance.city %} &middot; {{ instance.city.t('name') }}{% elif instance.location %} &middot; {{ instance.location | localize_location }}{% endif %}
   </p>
+  {# Орієнтир для кількостей. Матеріали потрібні лише тим, хто прийде
+     очно: на гібриді загальне число вводило б в оману. #}
+  {% set offline_count, total_count = participants %}
+  {% if total_count %}
+  <p class="account-card__text">
+    {% if offline_count == total_count %}
+      {{ _('Зареєстровано учасників: %(count)s', count=total_count) }}
+    {% else %}
+      {{ _('Зареєстровано очно: %(offline)s із %(total)s', offline=offline_count, total=total_count) }}
+    {% endif %}
+  </p>
+  {% endif %}
 
   {# Текст -- за станом заявки, а не за наявністю коментаря: коментар є і
      в поверненої, і у відхиленої, але поверненій тренер ще може допомогти,
@@ -27,7 +39,11 @@
   {# Першим: для чернетки чи поверненої на мертвий захід заклик «виправте й
      надішліть» був би неправдою -- надіслати вже не можна. #}
   <p class="alert alert--info" role="note">
-    {{ _('Заявку на цей захід уже не приймаємо: він минув або скасований.') }}
+    {% if block_reason == 'online' %}
+      {{ _('Онлайн-заходу витратні матеріали не потрібні.') }}
+    {% else %}
+      {{ _('Заявку на цей захід уже не приймаємо: він минув або скасований.') }}
+    {% endif %}
   </p>
   {% elif status == 'returned' %}
   <div class="alert alert--warning">
