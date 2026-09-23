@@ -294,9 +294,12 @@
         <div class="iprm-empty-state iprm-empty-state--full">
           <p>Порожній стан на всю ширину (--full)</p>
         </div>
+        <div class="iprm-empty-state iprm-empty-state--compact">
+          <p>Щільний варіант усередині картки (--compact)</p>
+        </div>
       </div>
     </div>
-    <p class="ds-hint">.iprm-empty-state (common.css): text-align center, padding 48px 24px, без власного фону -- саме так він і живе на сторінці (courses/trainers/clinics list.html), голим текстом у сітці карток. Попередній мокап домальовував фон і радіус, яких компонент не має. .iprm-empty-state--full: grid-column 1 / -1. Під .apple-page (apple-pages.css) він стає плашкою: 80px 24px / 17px / тло --iprm-card-bg / пунктирна межа --iprm-border-strong -- без межі плашка зникала в тёмній темі, де тло картки й сторінки однакові.</p>
+    <p class="ds-hint">.iprm-empty-state (common.css): text-align center, padding 48px 24px, без власного фону -- саме так він і живе на сторінці (courses/trainers/clinics list.html), голим текстом у сітці карток. Попередній мокап домальовував фон і радіус, яких компонент не має. .iprm-empty-state--full: grid-column 1 / -1. .iprm-empty-state--compact (apple-pages.css): та сама плашка щільніше -- 28px 20px / 15px, для місця всередині картки (редактор власних сертифікатів у кабінеті тренера). Під .apple-page (apple-pages.css) він стає плашкою: 80px 24px / 17px / тло --iprm-card-bg / пунктирна межа --iprm-border-strong -- без межі плашка зникала в тёмній темі, де тло картки й сторінки однакові.</p>
   </div>
 
   <!-- ===== FORM FEEDBACK ===== -->
