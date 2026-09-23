@@ -1,8 +1,9 @@
-/* Регалії тренера: .regalia-cert* -- сітка сертифікатів-зображень (спільна
-   для адмінки й кабінету тренера), .regalia-link* -- лишається лише в
-   адмінці (патенти, статті). Файл без префікса page- саме тому, що перший
-   блок має 2+ споживачі -- межа дизайн-системи цього проєкту. На токенах
-   дизайн-системи. */
+/* Регалії тренера: .regalia-cert* -- сітка сертифікатів-зображень, спільна
+   для адмінки (admin/trainer_edit.html) і кабінету тренера
+   (trainer_cabinet/certificates.html). Файл без префікса page- саме тому,
+   що має 2+ споживачі -- межа дизайн-системи цього проєкту. Рядки патентів
+   і статей (.regalia-link*) живуть лише в картці тренера адмінки і тому --
+   у page-admin-trainer-edit.css. На токенах дизайн-системи. */
 
 .regalia-certs__grid { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 10px; }
 .regalia-cert { width: 130px; }
@@ -18,57 +19,3 @@
 }
 .regalia-cert__remove .material-symbols-rounded { font-size: 16px; }
 .regalia-cert__cap { margin-top: 6px; font-size: 0.8125rem; padding: 6px 8px; }
-
-
-.regalia-links__rows { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
-.regalia-link { display: flex; gap: 8px; align-items: center; }
-.regalia-link__label { flex: 1 1 35%; }
-.regalia-link__url { flex: 1 1 55%; }
-.regalia-link__move,
-.regalia-link__remove {
-  flex: 0 0 auto;
-  width: 36px; height: 36px; border: 1px solid var(--iprm-border); border-radius: var(--iprm-radius-sm);
-  background: var(--iprm-white); color: var(--iprm-text-secondary); cursor: pointer;
-  display: inline-flex; align-items: center; justify-content: center;
-}
-.regalia-link__move:hover { background: var(--iprm-card-bg); }
-.regalia-link__remove:hover { color: var(--iprm-error); border-color: rgba(239, 68, 68, 0.3); }
-.regalia-link__move .material-symbols-rounded,
-.regalia-link__remove .material-symbols-rounded { font-size: 18px; }
-
-/* Рядок патенту з опційним сканом: мініатюра + кнопка завантаження. */
-.regalia-link--img { align-items: stretch; }
-.regalia-link__thumb {
-  flex: 0 0 auto; position: relative;
-  width: 56px; height: 56px;
-  border: 1px solid var(--iprm-border); border-radius: var(--iprm-radius-sm);
-  background: var(--iprm-card-bg); overflow: hidden;
-}
-.regalia-link__thumb-img { display: block; }
-.regalia-link__upload {
-  position: absolute; inset: 0;
-  width: 100%; height: 100%; border: none; cursor: pointer;
-  background: rgba(0, 0, 0, 0.04); color: var(--iprm-accent);
-  display: inline-flex; align-items: center; justify-content: center;
-}
-.regalia-link__thumb-img[src] + .regalia-link__upload {
-  background: rgba(0, 0, 0, 0.35); color: var(--iprm-on-accent); opacity: 0; transition: opacity 0.15s;
-}
-.regalia-link__thumb:hover .regalia-link__upload { opacity: 1; }
-.regalia-link__upload .material-symbols-rounded { font-size: 20px; }
-/* Кнопка "прибрати скан" -- поверх мініатюри (показується лише коли є скан). */
-.regalia-link__thumb-clear {
-  position: absolute; top: 2px; right: 2px; z-index: 2;
-  width: 20px; height: 20px; padding: 0; border: none; border-radius: 50%;
-  background: rgba(0, 0, 0, 0.6); color: var(--iprm-on-accent); cursor: pointer;
-  display: inline-flex; align-items: center; justify-content: center;
-}
-.regalia-link__thumb-clear:hover { background: var(--iprm-error); }
-.regalia-link__thumb-clear .material-symbols-rounded { font-size: 14px; }
-
-/* Перенесено з admin.css: баланс реферальних балів. */
-.admin-referral-balance {
-  margin-top: 12px;
-  font-size: 0.9375rem;
-  color: var(--iprm-text);
-}

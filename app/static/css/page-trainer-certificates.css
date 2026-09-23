@@ -1,7 +1,10 @@
 /* Розділ сертифікатів кабінету тренера -- ЛИШЕ layout цієї сторінки.
    Декор (колір, шрифт, межа, тінь) береться з дизайн-системи: картка --
    .account-card, кнопки -- .apple-btn, поля -- .form-input, порожній
-   стан -- .iprm-empty-state. Жоден із цих класів тут не перевизначається.
+   стан -- .iprm-empty-state. Жоден із цих класів тут не перевизначається:
+   ширину поля скарги задає власний клас .cabinet-certs-report__input поруч
+   із .form-input, а не селектор на сам .form-input -- інакше правка поля в
+   дизайн-системі не доходила б до цієї сторінки.
    Завантажується після account.css. У проєкті немає токенів --space-*,
    тому відступи -- прямі px, як і в інших page-*.css. */
 
@@ -41,7 +44,7 @@
   gap: 8px;
 }
 
-.cabinet-certs-report .form-input {
+.cabinet-certs-report__input {
   width: 12rem;
 }
 
@@ -55,7 +58,7 @@
     width: 100%;
   }
 
-  .cabinet-certs-report .form-input {
+  .cabinet-certs-report__input {
     width: 100%;
   }
 }
