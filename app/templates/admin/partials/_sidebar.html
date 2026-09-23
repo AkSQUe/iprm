@@ -195,6 +195,7 @@
       <a href="{{ url_for('admin.materials_overview') }}" class="admin-sidebar__link{% if ep in ('admin.materials_overview', 'admin.instance_materials') %} admin-sidebar__link--active{% endif %}">
         {{ icon('widgets') }}
         <span class="admin-sidebar__text">Резервування</span>
+        {% if pending_material_requests %}<span class="badge badge--warning">{{ pending_material_requests }}</span>{% endif %}
       </a>
       {% endif %}
       {% if can('materials.view') %}

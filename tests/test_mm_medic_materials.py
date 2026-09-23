@@ -963,3 +963,68 @@ def test_approve_route_keeps_pending_review_when_partner_fails(client, admin_use
 
     db.session.refresh(pending_request)
     assert pending_request.status == S.PENDING_REVIEW
+
+
+# --------------------- overview ordering + sidebar counter (Task 8) ---------------------
+
+@pytest.fixture
+def consumed_request(app):
+    """Резервування у ЗАКРИТОМУ циклі ('consumed') -- на окремому заході,
+    щоб не зіткнутись з `pending_request` (одна заявка на захід).
+    Потрібне лише щоб перевірити: воно НЕ випереджає заявку на перевірці
+    в огляді."""
+    from app.models.material_reservation import (
+        MaterialReservation, MaterialReservationStatus)
+
+    course = _course('Курс для списаного резервування')
+    inst = _instance(course)
+    res = MaterialReservation(
+        instance_id=inst.id,
+        external_ref=f'consumed-{uuid4().hex[:8]}',
+        status=MaterialReservationStatus.CONSUMED,
+    )
+    db.session.add(res)
+    db.session.commit()
+    return res
+
+
+def test_overview_lists_pending_requests_first(client, admin_user, instance,
+                                               pending_request, consumed_request):
+    """Заявка на перевірці -- єдиний стан, що чекає дії людини, тож вона
+    має бути вгорі списку, а не загубитись серед закритих.
+
+    Рядки розрізняємо за назвою заходу (`effective_title`) -- вона й так
+    рендериться в огляді (посилання на матеріали заходу), тож розрізнення
+    не вимагає показувати щось нове лише заради тесту."""
+    _login(client, admin_user)
+    response = client.get('/admin/materials')
+    body = response.get_data(as_text=True)
+
+    assert response.status_code == 200
+    assert body.index(pending_request.instance.effective_title) < body.index(
+        consumed_request.instance.effective_title)
+
+
+def test_pending_review_count_reflects_only_requests_awaiting_review(app,
+                                                                     instance,
+                                                                     pending_request):
+    from app.services import material_request_service as mrq
+    from app.models.material_reservation import MaterialReservationStatus as S
+
+    assert mrq.pending_review_count() == 1
+
+    pending_request.status = S.SUBMITTED
+    db.session.commit()
+    assert mrq.pending_review_count() == 0
+
+
+def test_sidebar_shows_pending_material_requests_badge(client, admin_user,
+                                                        pending_request):
+    """Лічильник у сайдбарі -- та сама цифра, що й `pending_review_count`,
+    і видно її на будь-якій адмін-сторінці, не лише на самому огляді."""
+    _login(client, admin_user)
+    response = client.get('/admin/materials')
+    body = response.get_data(as_text=True)
+
+    assert response.status_code == 200
+    assert 'badge--warning">1</span>' in body

@@ -13,6 +13,7 @@ from flask import (
     current_app, flash, redirect, render_template, request, send_file, url_for,
 )
 from flask_login import current_user
+from sqlalchemy import case
 
 from app.admin import _listing, admin_bp
 from app.rbac import permission_required
@@ -939,7 +940,15 @@ def _apply_overview_filters(query, f):
 def _overview_query(f):
     query = (MaterialReservation.query
              .join(CourseInstance, CourseInstance.id == MaterialReservation.instance_id))
-    return _apply_overview_filters(query, f).order_by(MaterialReservation.created_at.desc())
+    # Заявка на перевірці -- єдиний стан, що чекає дії людини. Лист можна
+    # пропустити, рядок унизу списку -- ні, тож вона піднімається над усім
+    # рештою; наявне сортування (за часом створення) лишається всередині груп.
+    awaiting = case(
+        (MaterialReservation.status == MaterialReservationStatus.PENDING_REVIEW, 0),
+        else_=1,
+    )
+    return _apply_overview_filters(query, f).order_by(
+        awaiting, MaterialReservation.created_at.desc())
 
 
 @admin_bp.route('/materials')

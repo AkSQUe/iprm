@@ -202,12 +202,42 @@ def test_sync_forms_returns_to_the_forms_page(client, admin):
     assert page.headers['Location'].endswith('/admin/meta-leads/forms')
 
 
+# Сигнатура САМЕ selectin-підвантаження цих двох зв'язків (а не будь-якої
+# згадки їхніх таблиць). `lazy='selectin'` пакетно добирає дочірні рядки за
+# FK батьківських обʼєктів, тож запит завжди має форму
+# "FROM <таблиця> WHERE <fk-колонка> IN (...)" -- або, коли в батчі рівно
+# один батько, SQLAlchemy іноді розгортає `IN` у рівність і навіть міняє
+# боки виразу на "? = <fk-колонка>" (перевірено прямим запуском обох
+# гілок -- один захід і три заходи -- з логуванням `before_cursor_execute`).
+# Обидві форми, обидва боки рівності -- звідси регекс перевіряє FK-колонку
+# поряд з IN чи "=" з будь-якого боку.
+#
+# Це вужче за голу підрядкову згадку назви таблиці: контекст-процесор
+# сайдбару (Task 8) робить власний COUNT по `material_reservations`
+# ФІЛЬТРОВАНИЙ ПО `status`, а не по `instance_id` -- жодного відношення до
+# N+1, який цей тест стереже, і ловитись цим детектором не повинен.
+import re as _re
+
+_RESERVATIONS_SELECTIN = _re.compile(
+    r'material_reservations\.instance_id\s*(IN|=)|=\s*material_reservations\.instance_id')
+_KITS_SELECTIN = _re.compile(
+    r'material_kits\.course_id\s*(IN|=)|=\s*material_kits\.course_id')
+
+
 def test_offer_dropdown_does_not_load_heavy_relations(client, admin):
     """Випадайка бере рівно id, назву й дату -- і нічого більше.
 
     `CourseInstance.material_reservations` і `Course.material_kits`
     оголошені `lazy='selectin'`, тож завантаження заходу цілком тягло за
     собою ще два SELECT на КОЖЕН варіант випадайки.
+
+    Детектор ловить САМЕ ці два batched SELECT (`_RESERVATIONS_SELECTIN` /
+    `_KITS_SELECTIN` вище), а не будь-яку появу назв цих таблиць у SQL:
+    після Task 8 сторінка сайдбару адмінки (де рендериться й ця форма)
+    додатково робить один агрегатний `COUNT(...) FROM material_reservations
+    WHERE ... status = ?` для бейджа лічильника -- це один запит на всю
+    сторінку, не той N+1, що тут стережеться, і голий детектор
+    (`'material_reservations' in s`) ловив його хибно.
     """
     from sqlalchemy import event as sa_event
 
@@ -230,7 +260,7 @@ def test_offer_dropdown_does_not_load_heavy_relations(client, admin):
 
     assert page.status_code == 200
     heavy = [s for s in statements
-             if 'material_reservations' in s or 'material_kits' in s]
+             if _RESERVATIONS_SELECTIN.search(s) or _KITS_SELECTIN.search(s)]
     assert heavy == [], f'важкі зв\'язки підвантажились: {len(heavy)} запит(ів)'
 
 

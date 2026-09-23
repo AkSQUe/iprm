@@ -41,4 +41,22 @@ def inject_pending_refund_requests():
         return {'pending_refund_requests': 0}
 
 
+@admin_bp.context_processor
+def inject_pending_material_requests():
+    """Лічильник неперевірених заявок на матеріали для сайдбара.
+
+    `context_processor` блупринта, а не додатка -- з тієї ж причини, що й
+    сусідній лічильник повернень: інакше COUNT їхав би на кожну публічну
+    сторінку заради числа, видимого лише в адмінці.
+
+    Fail-soft: сайдбар малюється на КОЖНІЙ адмін-сторінці, і збій цього
+    запиту не має класти, скажімо, редагування курсу.
+    """
+    try:
+        from app.services import material_request_service as mrq
+        return {'pending_material_requests': mrq.pending_review_count()}
+    except Exception:
+        return {'pending_material_requests': 0}
+
+
 from app.admin import routes  # noqa: F401,E402
