@@ -63,14 +63,6 @@
   align-items: center;
 }
 
-.trainer-events__meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 12px;
-  margin-bottom: 8px;
-}
-
 /* .apple-page -- не декор, а вага селектора: лічильники сидять у
    .iprm-stat-grid, і `.apple-page .iprm-stat-grid` (apple-pages.css) з
    auto-fit перебивав одиночний клас -- сітка на 5/3 колонки не діяла. */

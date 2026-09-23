@@ -85,7 +85,7 @@
           <div class="trainer-events__main">
             {# Місце може бути невідоме (очний захід без міста й адреси) --
                тоді бейдж не виводиться, лишається тільки дата. #}
-            <p class="account-card__text trainer-events__meta">
+            <p class="account-card__text iprm-card-meta">
               {{ location_badge(inst.event_format, inst.city.t('name') if inst.city else inst.location) }}
               <span>{% if inst.start_date %}{{ inst.start_date | kyiv('%d.%m.%Y %H:%M') }}{% else %}{{ _('Дата уточнюється') }}{% endif %}</span>
             </p>

@@ -383,8 +383,15 @@
               <p class="account-card__text">Ще один розділ кабінету.</p>
             </a>
           </div>
+          <div class="account-card">
+            <p class="account-card__text iprm-card-meta">
+              <span class="badge badge--warning">На перевірці</span>
+              <span>05.10.2026</span>
+            </p>
+            <h3 class="iprm-block-title">Картка з мета-рядком (.iprm-card-meta)</h3>
+          </div>
         </div>
-        <p class="ds-hint">.account-grid + .account-card (account.css) -- сітка карток-посилань на розділи кабінету. Використовується в особистому кабінеті (auth/account.html) і кабінеті тренера (trainer_cabinet) -- спільний компонент кількох доменів.</p>
+        <p class="ds-hint">.account-grid + .account-card (account.css) -- сітка карток-посилань на розділи кабінету. Використовується в особистому кабінеті (auth/account.html) і кабінеті тренера (trainer_cabinet) -- спільний компонент кількох доменів. .iprm-card-meta (apple-pages.css) -- рядок дрібних відомостей НАД назвою: бейдж стану, таблетка місця, дата; flex із переносом, gap 8/12, відступ 8px під рядком. Живе на списку заходів і на списку матеріалів кабінету тренера.</p>
     </div>
   </div>
 
