@@ -227,3 +227,60 @@ def test_form_still_works_when_the_partner_is_silent(app, instance, monkeypatch,
 
     rows = mrq.prefill_rows(instance)
     assert [r['sku'] for r in rows] == ['NEEDLE-30G']
+
+
+def _request_in(instance, trainer_user, status, comment=None):
+    """Заявка з одним рядком у заданому стані -- для перевірки текстів."""
+    from app.services import material_request_service as mrq
+
+    res = mrq.get_or_create_draft(instance, trainer_user)
+    mrq.save_items(res, [{'sku': 'NEEDLE-30G', 'name': None,
+                          'image_url': None, 'quantity': 3}])
+    res.status = status
+    res.review_comment = comment
+    db.session.commit()
+    return res
+
+
+@pytest.mark.parametrize('status, expected, forbidden', [
+    (S.RETURNED, 'Заявку повернуто на доопрацювання', 'Заявку відхилено'),
+    (S.REJECTED, 'Заявку відхилено', 'якщо її повернуть'),
+    (S.PENDING_REVIEW, 'надіслано на перевірку', 'Заявку відхилено'),
+    (S.SUBMITTED, 'Заявку погоджено й передано на склад', 'надіслано на перевірку'),
+    (S.RESERVED, 'Заявку погоджено й передано на склад', 'надіслано на перевірку'),
+    (S.CANCELLED, 'Цю заявку вже не можна редагувати', 'надіслано на перевірку'),
+])
+def test_request_page_says_what_actually_happened(client, trainer_user, instance,
+                                                   status, expected, forbidden):
+    """Доти відхилену заявку підписували «Заявку повернуто» з обіцянкою
+    «редагувати можна буде, якщо повернуть», а погоджену -- «надіслано на
+    перевірку». Тренер читав неправду про власну заявку."""
+    _request_in(instance, trainer_user, status, comment='Захід без матеріалів')
+    _login(client, trainer_user)
+
+    body = client.get(f'/trainer/materials/{instance.id}').get_data(as_text=True)
+
+    assert expected in body
+    assert forbidden not in body
+    if status == S.REJECTED:
+        assert 'Причина: Захід без матеріалів' in body
+
+
+def test_list_badge_speaks_the_trainer_language(client, trainer_user, instance):
+    """Бейдж стану в кабінеті перекладний. Модельний `status_label` --
+    українська мова адмінки («На погодженні»), якої тренеру не видно."""
+    _request_in(instance, trainer_user, S.SUBMITTED)
+    _login(client, trainer_user)
+
+    from flask_babel import refresh
+
+    uk = client.get('/trainer/materials').get_data(as_text=True)
+    # flask_babel кешує локаль на `g`, а app-контекст у тестах один на весь
+    # тест: без refresh() другий запит отримав би локаль першого.
+    refresh()
+    ru = client.get('/ru/trainer/materials').get_data(as_text=True)
+
+    assert 'Передано на склад' in uk
+    assert 'На погодженні' not in uk
+    assert 'Передано на склад' in ru
+    assert 'Материалы к мероприятию' in ru

@@ -390,8 +390,9 @@ def materials_request(instance_id):
 
     if request.method == 'POST':
         if not editable:
-            flash(_('Заявку вже надіслано на перевірку, редагувати її не можна.'),
-                  'warning')
+            # Не «надіслано на перевірку»: сюди доходять і погоджена, і
+            # відхилена заявка, і про них ця фраза збрехала б.
+            flash(_('Цю заявку вже не можна редагувати.'), 'warning')
             return redirect(url_for('trainer_cabinet.materials_request',
                                     instance_id=instance_id))
         if form.validate_on_submit():

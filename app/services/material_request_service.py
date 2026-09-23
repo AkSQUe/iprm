@@ -13,6 +13,8 @@
 import logging
 from datetime import datetime, timezone
 
+from flask_babel import gettext as _
+
 from app.extensions import db
 from app.models.material_reservation import (
     MaterialReservation,
@@ -122,11 +124,14 @@ def is_editable_by_trainer(reservation) -> bool:
 
 def submit(reservation, user) -> MaterialReservation:
     """Тренер надіслав заявку на перевірку. Нікуди не летить -- лише статус."""
+    # Тексти перекладні: їх читає тренер у кабінеті (flash із роуту), а
+    # кабінет -- перекладний. Решта відмов цього модуля адресована адмінці
+    # й лишається українською.
     if reservation.status not in _SUBMITTABLE:
         raise RequestTransitionError(
-            'Надіслати можна лише чернетку або повернену заявку')
+            _('Надіслати можна лише чернетку або повернену заявку'))
     if not any((item.quantity_requested or 0) > 0 for item in reservation.items):
-        raise RequestTransitionError('Заявка порожня: додайте хоча б одну позицію')
+        raise RequestTransitionError(_('Заявка порожня: додайте хоча б одну позицію'))
 
     reservation.status = MaterialReservationStatus.PENDING_REVIEW
     reservation.origin = MaterialReservationOrigin.TRAINER_CABINET

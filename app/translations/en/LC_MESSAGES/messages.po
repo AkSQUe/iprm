@@ -7021,3 +7021,146 @@ msgstr "Draft deleted"
 #~ "knowledge you can apply in practice "
 #~ "right away."
 
+#, python-format
+msgid "Заявку на матеріали повернуто: %(title)s"
+msgstr "Your materials request has been returned: %(title)s"
+
+#, python-format
+msgid "Заявку на матеріали прийнято: %(title)s"
+msgstr "Your materials request has been accepted: %(title)s"
+
+#, python-format
+msgid "Заявку на матеріали відхилено: %(title)s"
+msgstr "Your materials request has been declined: %(title)s"
+
+msgid "Надіслати можна лише чернетку або повернену заявку"
+msgstr "Only a draft or a returned request can be submitted"
+
+msgid "Заявка порожня: додайте хоча б одну позицію"
+msgstr "The request is empty: add at least one item"
+
+msgid "Заявку на матеріали прийнято"
+msgstr "Materials request accepted"
+
+msgid "Заявку на матеріали погоджено — її передано на склад"
+msgstr "Your materials request has been approved and passed to the warehouse"
+
+msgid "Заявку передано на склад MM Medic. Окремих дій від вас не потрібно."
+msgstr "The request has been passed to the MM Medic warehouse. No further action is needed from you."
+
+msgid "Заявку на матеріали відхилено"
+msgstr "Materials request declined"
+
+msgid "Причина"
+msgstr "Reason"
+
+msgid "Причину відмови не вказано."
+msgstr "No reason was given."
+
+msgid "Заявку на матеріали повернуто"
+msgstr "Materials request returned"
+
+msgid "Заявку на матеріали повернули на доопрацювання"
+msgstr "Your materials request was returned for revision"
+
+msgid "Заявку на матеріали повернуто на доопрацювання"
+msgstr "Materials request returned for revision"
+
+msgid "Заявку на витратні матеріали повернуто вам на доопрацювання. Внесіть правки й надішліть її знову."
+msgstr "Your consumables request has been returned to you for revision. Make the changes and submit it again."
+
+msgid "Що треба виправити"
+msgstr "What needs to be fixed"
+
+msgid "Відкрити заявку"
+msgstr "Open request"
+
+msgid "Матеріали до заходу"
+msgstr "Event materials"
+
+msgid "Заявка на витратні матеріали: перелік, кількості, стан перевірки"
+msgstr "Consumables request: items, quantities, review status"
+
+msgid "Матеріали до заходу | Кабінет тренера | ІПРМ"
+msgstr "Event materials | Trainer cabinet | IPRM"
+
+msgid "На перевірці"
+msgstr "Under review"
+
+msgid "Повернуто на доопрацювання"
+msgstr "Returned for revision"
+
+msgid "Передано на склад"
+msgstr "Passed to the warehouse"
+
+msgid "Відвантажено"
+msgstr "Shipped"
+
+msgid "Списано"
+msgstr "Written off"
+
+msgid "Відхилено"
+msgstr "Declined"
+
+msgid "Скасовано"
+msgstr "Cancelled"
+
+msgid "Протерміновано"
+msgstr "Expired"
+
+msgid "У вас немає найближчих заходів."
+msgstr "You have no upcoming events."
+
+msgid "Не подано"
+msgstr "Not submitted"
+
+msgid "Матеріали | Кабінет тренера | ІПРМ"
+msgstr "Materials | Trainer cabinet | IPRM"
+
+msgid "Заявку повернуто на доопрацювання"
+msgstr "The request was returned for revision"
+
+msgid "Виправте заявку й надішліть її знову."
+msgstr "Please correct the request and submit it again."
+
+#, python-format
+msgid "Причина: %(reason)s"
+msgstr "Reason: %(reason)s"
+
+msgid "Заявку надіслано на перевірку. Редагувати її можна буде, якщо її повернуть."
+msgstr "The request has been sent for review. You will be able to edit it if it is returned to you."
+
+msgid "Заявку погоджено й передано на склад."
+msgstr "The request has been approved and passed to the warehouse."
+
+msgid "Цю заявку вже не можна редагувати."
+msgstr "This request can no longer be edited."
+
+#, python-format
+msgid "Кількість: %(name)s"
+msgstr "Quantity: %(name)s"
+
+#, python-format
+msgid "Прибрати: %(name)s"
+msgstr "Remove: %(name)s"
+
+msgid "Каталог складу зараз недоступний. Заявку можна надіслати з наявного переліку, а додати нові позиції -- пізніше."
+msgstr "The warehouse catalog is unavailable right now. You can submit the request with the current list and add new items later."
+
+msgid "Додати позицію"
+msgstr "Add item"
+
+msgid "Пошук по каталогу"
+msgstr "Search the catalog"
+
+msgid "Відправити"
+msgstr "Submit"
+
+msgid "Коментар до заявки"
+msgstr "Comment on the request"
+
+msgid "Заявку надіслано на перевірку."
+msgstr "The request has been sent for review."
+
+msgid "Чернетку збережено."
+msgstr "Draft saved."

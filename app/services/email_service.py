@@ -2198,6 +2198,9 @@ class EmailService:
             return None
 
         ctx = EmailService._material_request_context(reservation, instance)
+        # Отримувач у контексті -- за ним `_recipient_locale` обирає мову
+        # теми й тіла. Без нього лист тренеру завжди йшов українською.
+        ctx['user'] = user
         ctx['comment'] = reservation.review_comment
         ctx['trainer_url'] = EmailService._trainer_materials_url(
             instance.id if instance else reservation.instance_id)

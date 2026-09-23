@@ -1454,3 +1454,37 @@ def test_mm_status_webhook_old_payload_keeps_existing_cost(app, client):
     item = MaterialReservation.query.get(res.id).items[0]
     assert item.cost_uah == Decimal('50.00')
     assert item.cost_complete is True
+
+
+def test_decision_letter_follows_the_trainer_language(app, instance, monkeypatch):
+    """Кабінет тренера перекладний -- лист про рішення теж.
+
+    Доти `send_material_request_decision` не клав отримувача в контекст, і
+    `_recipient_locale` завжди давав `uk`: тренер, що читає сайт російською,
+    отримував українську тему й українське тіло.
+    """
+    from app.models.user import User
+    from app.services.email_service import EmailService
+    from tests.support.mail import enable_live_mail
+
+    enable_live_mail(monkeypatch)
+    user = User(email='trainer-matreq-ru@example.com', preferred_language='ru')
+    db.session.add(user)
+    db.session.commit()
+    try:
+        reservation = _reservation_with_items(instance)
+        reservation.created_by_id = user.id
+        reservation.review_comment = 'Забули серветки'
+        reservation.reviewed_at = datetime.now(timezone.utc)
+        db.session.commit()
+
+        entry = EmailService.send_material_request_decision(
+            reservation, instance, 'returned')
+
+        assert entry is not None
+        assert entry.subject.startswith('Заявка на материалы возвращена'), entry.subject
+        assert 'Что нужно исправить' in entry.html_body
+        assert 'Що треба виправити' not in entry.html_body
+    finally:
+        db.session.delete(user)
+        db.session.commit()

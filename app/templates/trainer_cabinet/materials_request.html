@@ -19,16 +19,32 @@
     {%- if instance.city %} &middot; {{ instance.city.t('name') }}{% elif instance.location %} &middot; {{ instance.location | localize_location }}{% endif %}
   </p>
 
-  {% if reservation and reservation.review_comment %}
+  {# Текст -- за станом заявки, а не за наявністю коментаря: коментар є і
+     в поверненої, і у відхиленої, але поверненій тренер ще може допомогти,
+     а відхилена закрита. Чернетці пояснення не потрібне -- форма відкрита. #}
+  {% set status = reservation.status if reservation else None %}
+  {% if status == 'returned' %}
   <div class="alert alert--warning">
-    <strong class="alert__title">{{ _('Заявку повернуто') }}</strong>
-    <p>{{ reservation.review_comment }}</p>
+    <strong class="alert__title">{{ _('Заявку повернуто на доопрацювання') }}</strong>
+    {% if reservation.review_comment %}<p>{{ reservation.review_comment }}</p>{% endif %}
+    <p>{{ _('Виправте заявку й надішліть її знову.') }}</p>
   </div>
-  {% endif %}
-
-  {% if not editable %}
+  {% elif status == 'rejected' %}
+  <div class="alert alert--warning">
+    <strong class="alert__title">{{ _('Заявку відхилено') }}</strong>
+    {% if reservation.review_comment %}<p>{{ _('Причина: %(reason)s', reason=reservation.review_comment) }}</p>{% endif %}
+  </div>
+  {% elif status == 'pending_review' %}
   <p class="alert alert--info" role="note">
     {{ _('Заявку надіслано на перевірку. Редагувати її можна буде, якщо її повернуть.') }}
+  </p>
+  {% elif status in ['submitted', 'reserved', 'issued', 'consumed'] %}
+  <p class="alert alert--info" role="note">
+    {{ _('Заявку погоджено й передано на склад.') }}
+  </p>
+  {% elif not editable %}
+  <p class="alert alert--info" role="note">
+    {{ _('Цю заявку вже не можна редагувати.') }}
   </p>
   {% endif %}
 

@@ -8,6 +8,23 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/page-trainer-materials-list.css') }}?v={{ assets_version }}">
 {% endblock %}
 
+{# Підписи стану -- саме для тренера і перекладні. `status_label` моделі не
+   годиться: його читає адмінка, яка навмисно неперекладна, і там він
+   говорить мовою складу («На погодженні» для поданої на MM Medic заявки),
+   а тренеру після погодження треба прочитати «передано на склад». #}
+{% set status_labels = {
+  'draft': _('Чернетка'),
+  'pending_review': _('На перевірці'),
+  'returned': _('Повернуто на доопрацювання'),
+  'submitted': _('Передано на склад'),
+  'reserved': _('Зарезервовано'),
+  'issued': _('Відвантажено'),
+  'consumed': _('Списано'),
+  'rejected': _('Відхилено'),
+  'cancelled': _('Скасовано'),
+  'expired': _('Протерміновано'),
+} %}
+
 {% block content %}
 <div class="apple-page">
   <section class="iprm-section" aria-labelledby="trainer-materials-title">
@@ -33,7 +50,7 @@
             </p>
           </div>
           <span class="badge badge--{{ reservation.status_badge if reservation else 'draft' }}">
-            {{ reservation.status_label if reservation else _('Не подано') }}
+            {{ status_labels.get(reservation.status, reservation.status) if reservation else _('Не подано') }}
           </span>
         </li>
         {% endfor %}
