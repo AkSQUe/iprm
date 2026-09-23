@@ -513,3 +513,45 @@ def test_request_page_does_not_call_the_partner_on_render(client, trainer_user,
 
     assert response.status_code == 200
     assert b'data-catalog-status' in response.data
+
+
+# --- Список заходів: один запит, а не N+1 ----------------------------------
+
+def test_materials_list_reads_reservations_in_one_query(client, trainer_user,
+                                                        instance, kit):
+    """Доти -- окремий get_reservation на кожен захід (N+1). Тепер
+    резервування приходять одним selectin-батчем разом із заходами
+    (`CourseInstance.material_reservations`), і їхні рядки -- теж одним."""
+    from sqlalchemy import event as sa_event
+    from app.services import material_request_service as mrq
+
+    for days in (8, 9):
+        extra = CourseInstance(course_id=instance.course_id, status='published',
+                               event_format='offline', max_participants=20,
+                               start_date=datetime.now(timezone.utc) + timedelta(days=days))
+        db.session.add(extra)
+        db.session.flush()
+        res = mrq.get_or_create_draft(extra, trainer_user)
+        mrq.save_items(res, [{'sku': 'NEEDLE-30G', 'name': None,
+                              'image_url': None, 'quantity': 1}])
+    _login(client, trainer_user)
+
+    statements = []
+
+    def _record(conn, cursor, statement, params, context, executemany):
+        statements.append(statement)
+
+    sa_event.listen(db.engine, 'before_cursor_execute', _record)
+    try:
+        page = client.get('/trainer/materials')
+    finally:
+        sa_event.remove(db.engine, 'before_cursor_execute', _record)
+
+    assert page.status_code == 200
+    reservation_reads = [s for s in statements
+                         if 'FROM material_reservations' in s]
+    item_reads = [s for s in statements
+                  if 'FROM material_reservation_items' in s]
+    # Три заходи -- і все одно по одному батчу, а не по запиту на захід.
+    assert len(reservation_reads) == 1, reservation_reads
+    assert len(item_reads) <= 1, item_reads

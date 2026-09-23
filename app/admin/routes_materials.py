@@ -734,7 +734,7 @@ def instance_materials_approve(instance_id):
                   f'{", ".join(dropped)}. Заявку не погоджено -- перевірте '
                   'перелік і спробуйте ще раз.', 'error')
             return _redirect_page(instance_id)
-        ok, result = mrq.approve(instance, reservation, edits=edits)
+        ok, result = mrq.approve(instance, reservation, edits=edits, user=current_user)
     except mrq.RequestTransitionError as exc:
         flash(str(exc), 'warning')
         return _redirect_page(instance_id)

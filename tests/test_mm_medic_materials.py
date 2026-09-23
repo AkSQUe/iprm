@@ -1254,3 +1254,25 @@ def test_approve_route_refuses_an_unknown_sku(client, admin_user, instance,
     assert pending_request.status == S.PENDING_REVIEW
     assert any('FORGED-1' in m for m in messages), messages
     assert 'FORGED-1' not in [i.sku for i in pending_request.items]
+
+
+def test_approve_records_the_reviewer_it_is_given(app, instance, pending_request,
+                                                  admin_user, monkeypatch):
+    """Рецензент -- з явного параметра, як у return_to_trainer/reject, а не з
+    приватного `mrs._submitter_id()` через межу модуля."""
+    from app.services import material_request_service as mrq
+
+    class _Ok:
+        ok = True
+        data = {'reservation': {'items': []}}
+
+    def _fake_submit_request(inst, items):
+        pending_request.status = S.SUBMITTED
+        return True, _Ok(), pending_request
+
+    monkeypatch.setattr(mrq.mrs, 'submit_request', _fake_submit_request)
+
+    ok, _result = mrq.approve(instance, pending_request, user=admin_user)
+
+    assert ok is True
+    assert pending_request.reviewed_by_id == admin_user.id

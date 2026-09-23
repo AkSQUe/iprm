@@ -340,9 +340,12 @@ def _own_instance(instance_id):
 @trainer_required
 def materials():
     instances = svc.upcoming_instances(g.trainer)
-    reservations = {
-        inst.id: mrq.mrs.get_reservation(inst.id) for inst in instances
-    }
+    # Доти -- окремий get_reservation на кожен захід (N+1). Окремий запит не
+    # потрібен зовсім: `CourseInstance.material_reservations` -- lazy='selectin',
+    # тож резервування всіх заходів списку вже підвантажені одним батчем разом
+    # із заходами. Рядок один на захід (external_ref унікальний).
+    reservations = {inst.id: next(iter(inst.material_reservations), None)
+                    for inst in instances}
     return render_template('trainer_cabinet/materials.html',
                            trainer=g.trainer,
                            instances=instances,

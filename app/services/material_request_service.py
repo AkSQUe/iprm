@@ -14,6 +14,7 @@ import logging
 from datetime import datetime, timezone
 
 from flask_babel import gettext as _
+from sqlalchemy import func
 
 from app.extensions import db
 from app.models.material_reservation import (
@@ -276,8 +277,12 @@ def reject(reservation, comment, user) -> MaterialReservation:
                    'Вкажіть причину відхилення')
 
 
-def approve(instance, reservation, edits=None):
+def approve(instance, reservation, edits=None, user=None):
     """Погодити й надіслати на MM Medic. Повертає (ok, result).
+
+    `user` -- хто погоджує (пишеться в `reviewed_by_id`). Явний параметр, як
+    у `return_to_trainer`/`reject`, а не приватний `mrs._submitter_id()`
+    через межу модуля.
 
     `edits` -- правки кількостей від відповідального (ті самі dict'и, що
     приймає `save_items`). Лягають у заявку ЛИШЕ ПІСЛЯ гейту статусу: доти
@@ -334,7 +339,7 @@ def approve(instance, reservation, edits=None):
     # і є адмін), тож сам сервіс не чіпаємо, а відновлюємо автора тут. Без
     # цього лист «заявку прийнято» (адресат -- `created_by`) ішов адміну.
     author_id = reservation.created_by_id
-    reviewer_id = mrs._submitter_id()
+    reviewer_id = getattr(user, 'id', None)
     ok, result, _reservation = mrs.submit_request(instance, items)
     if not ok:
         logger.warning('Не вдалося надіслати заявку %s на MM Medic',
@@ -351,11 +356,14 @@ def approve(instance, reservation, edits=None):
 
 
 def pending_review_count() -> int:
-    """Скільки заявок чекає перевірки -- для лічильника в сайдбарі."""
-    return (MaterialReservation.query
-            .filter(MaterialReservation.status
-                    == MaterialReservationStatus.PENDING_REVIEW)
-            .count())
+    """Скільки заявок чекає перевірки -- для лічильника в сайдбарі.
+
+    `count(id)`, а не `Query.count()`: останній загортає в підзапит УСІ
+    колонки моделі, а лічильник виконується на КОЖНІЙ сторінці адмінки.
+    """
+    return db.session.query(func.count(MaterialReservation.id)).filter(
+        MaterialReservation.status == MaterialReservationStatus.PENDING_REVIEW,
+    ).scalar() or 0
 
 
 def catalog_for_trainer(search=None):
