@@ -218,6 +218,37 @@ def _delivered(cert, log):
     return EmailService.is_already_queued(key)
 
 
+def delivery_statuses(certs):
+    """{cert.id: стан листа} для показу адміну біля кожного сертифіката.
+
+    Стани: 'sent' (лист пішов, дата -- `emailed_at`), 'queued' (піде
+    найближчим тіком розсилки), 'no_address' (у тренера немає жодної пошти),
+    'suppressed' (адреса в списку блокування), 'orphan' (тренера видалено з
+    довідника -- слати нікому). Та сама логіка, що в `send_pending`, щоб
+    адмін бачив рівно те, що зробить розсилка, а не дізнавався про безадресних
+    лише з ранкового звіту. Suppression питаємо раз на адресу.
+    """
+    from app.services.email_service import EmailService
+
+    suppressed = {}
+    out = {}
+    for cert in certs:
+        if cert.emailed_at is not None:
+            out[cert.id] = 'sent'
+            continue
+        if cert.trainer is None:
+            out[cert.id] = 'orphan'
+            continue
+        address = recipient_email(cert.trainer)
+        if not address:
+            out[cert.id] = 'no_address'
+            continue
+        if address not in suppressed:
+            suppressed[address] = EmailService.is_suppressed(address, 'certificate')
+        out[cert.id] = 'suppressed' if suppressed[address] else 'queued'
+    return out
+
+
 def requeue_undelivered():
     """Повернути в чергу сертифікати, чий лист зрештою не дійшов.
 

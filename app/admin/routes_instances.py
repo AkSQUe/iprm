@@ -471,6 +471,7 @@ def _render_instance_form(form, instance, preselected_course_id=None):
     може рівно доти, доки збирається не в одному місці: саме так на шляху
     помилки вже зникали з форми успадковані значення.
     """
+    from app.services import lecturer_certificates as lc_svc
     from app.services import trainer_resume_service as rs
 
     certs = _lecturer_certs_by_trainer(instance) if instance else {}
@@ -491,6 +492,9 @@ def _render_instance_form(form, instance, preselected_course_id=None):
         # переліку тренерів у нього немає, але сам документ існує, має номер
         # і вже на руках у людини -- зникнути з адмінки він не може.
         orphan_certs=[lc for tid, lc in certs.items() if tid not in in_lineup],
+        # Стан листа біля кожного сертифіката: безадресного тренера адмін
+        # бачить одразу тут, а не з ранкового звіту наступного дня.
+        cert_delivery=lc_svc.delivery_statuses(list(certs.values())),
         resume_columns=rs.available_columns(current_user),
         resume_default_keys=rs.DEFAULT_KEYS,
     )

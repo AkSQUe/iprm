@@ -52,6 +52,13 @@
       <button type="button" class="btn-admin btn-admin--secondary" data-modal-open="resume-columns-dialog">
         {{ icon('picture_as_pdf') }} Резюме обраних (PDF)
       </button>
+      {# Вибір переживає пошук (resume-columns-dialog.js): позначений, але
+         відфільтрований тренер на екрані не видно, а в документ він
+         потрапить -- тому лічильник і «Скинути» тут, біля кнопки. #}
+      <span class="form-hint" id="resume-selected-count" aria-live="polite" hidden></span>
+      <button type="button" class="btn-admin btn-admin--secondary btn-admin--sm" data-resume-clear hidden>
+        Скинути вибір
+      </button>
       {% endif %}
       <a href="{{ url_for('admin.trainer_create') }}" class="btn-admin btn-admin--primary">{{ icon('add') }} Додати тренера</a>
     </div>
@@ -87,7 +94,11 @@
         {# Підпис видимий лише скрінрідеру, але саме з тексту <th>
            admin-table-cards.js бере data-label картки на мобільному --
            порожній заголовок лишав би чекбокс там без підпису. #}
-        <th scope="col"><span class="visually-hidden">Обрати</span></th>
+        <th scope="col">
+          <span class="visually-hidden">Обрати</span>
+          <input type="checkbox" data-resume-select-all
+                 aria-label="Обрати всіх показаних тренерів">
+        </th>
         <th class="admin-text-left">ПІБ</th>
         <th class="admin-text-left">Посада</th>
         <th>Стаж</th>

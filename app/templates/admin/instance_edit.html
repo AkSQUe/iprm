@@ -274,12 +274,30 @@
     {# Кожен тренер заходу читає лекцію особисто -- окремий сертифікат на
        кожного, а не один на перевагу першого. Видача кожного лишається
        свідомою дією: кнопки «видати всім» немає навмисно. #}
+    {# Стан листа тренеру -- те саме, що зробить розсилка
+       (lecturer_certificates.delivery_statuses). Безадресного тренера видно
+       одразу тут, а не з ранкового звіту наступного дня. #}
+    {% macro delivery_badge(cert) %}
+      {%- set state = cert_delivery.get(cert.id) -%}
+      {%- if state == 'sent' -%}
+      <span class="badge badge--success">Надіслано {{ cert.emailed_at | kyiv('%d.%m.%Y') }}</span>
+      {%- elif state == 'queued' -%}
+      <span class="badge badge--info">У черзі на розсилку</span>
+      {%- elif state == 'no_address' -%}
+      <span class="badge badge--warning">Немає пошти тренера</span>
+      {%- elif state == 'suppressed' -%}
+      <span class="badge badge--warning">Адресу заблоковано</span>
+      {%- elif state == 'orphan' -%}
+      <span class="badge badge--draft">Тренера видалено -- лист не надсилається</span>
+      {%- endif -%}
+    {% endmacro %}
     <div class="admin-table-wrap">
     <table class="admin-table">
       <thead>
         <tr>
           <th>Тренер</th>
           <th>Сертифікат</th>
+          <th>Лист тренеру</th>
         </tr>
       </thead>
       <tbody>
@@ -316,6 +334,7 @@
             </form>
             {% endif %}
           </td>
+          <td>{% if cert %}{{ delivery_badge(cert) }}{% endif %}</td>
         </tr>
         {% endfor %}
         {% for cert in orphan_certs %}
@@ -350,6 +369,7 @@
               </button>
             </form>
           </td>
+          <td>{{ delivery_badge(cert) }}</td>
         </tr>
         {% endfor %}
       </tbody>

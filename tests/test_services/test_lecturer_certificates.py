@@ -821,3 +821,30 @@ def test_requeue_leaves_other_outcomes_alone(app, status, retries, error):
     assert lc_svc.requeue_undelivered() == 0
     db.session.refresh(cert)
     assert cert.emailed_at is not None
+
+
+def test_delivery_statuses_cover_every_state(app):
+    """Адмін бачить біля сертифіката рівно те, що зробить розсилка."""
+    from app.models.email_suppression import EmailSuppression
+
+    certs = {}
+    for state in ('sent', 'queued', 'no_address', 'suppressed', 'orphan'):
+        inst, (trainer,) = _completed_instance(trainers=1)
+        cert = lc_svc.issue_for_instance(inst)[0]
+        if state == 'sent':
+            cert.emailed_at = utcnow()
+        elif state == 'queued':
+            trainer.email = 'tc-status-queued@test.com'
+        elif state == 'suppressed':
+            trainer.email = 'tc-status-blocked@test.com'
+            db.session.add(EmailSuppression(email='tc-status-blocked@test.com',
+                                            reason=EmailSuppression.REASON_BOUNCE))
+        elif state == 'orphan':
+            cert.trainer_id = None
+        certs[state] = cert
+    db.session.commit()
+    for cert in certs.values():
+        db.session.refresh(cert)
+    statuses = lc_svc.delivery_statuses(list(certs.values()))
+    assert {state: statuses[cert.id] for state, cert in certs.items()} == {
+        state: state for state in certs}

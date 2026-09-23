@@ -94,3 +94,24 @@ def test_json_response_also_issues(client):
     cert = LecturerCertificate.query.filter_by(
         instance_id=inst.id, trainer_id=trainer.id).one()
     assert cert.emailed_at is None
+
+
+def test_instance_page_shows_certificate_delivery_state(client):
+    """Безадресного тренера адмін бачить одразу на сторінці проведення."""
+    from app.services import lecturer_certificates as lc_svc
+
+    inst, trainer = _setup(client)
+    inst.status = 'completed'
+    db.session.commit()
+    lc_svc.issue_for_instance(inst)
+    html = client.get(f'/admin/instances/{inst.id}/edit').get_data(as_text=True)
+    assert 'Лист тренеру' in html
+    assert 'Немає пошти тренера' in html
+
+    cert = LecturerCertificate.query.filter_by(instance_id=inst.id).one()
+    from app.models.mixins import utcnow
+    cert.emailed_at = utcnow()
+    db.session.commit()
+    html = client.get(f'/admin/instances/{inst.id}/edit').get_data(as_text=True)
+    assert 'Надіслано' in html
+    assert 'Немає пошти тренера' not in html
