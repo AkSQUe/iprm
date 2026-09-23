@@ -21,6 +21,16 @@ logger = logging.getLogger(__name__)
 # розсилки -- той намагається знову щоп'ять хвилин сам).
 STUCK_AFTER_HOURS = 24
 
+# Автоматичний добір (щоденна джоба) і блок «заблоковано» у звіті бачать лише
+# заходи, що завершились не раніше стількох днів тому. Без межі перший же
+# запуск видав би й розіслав сертифікати за ВСІ історичні заходи: xlsx-імпорт
+# (scripts/import_xlsx_data.py) заводить минулі заходи одразу в 'completed',
+# і тренери отримали б пачку листів за роки назад -- або щоденний звіт вічно
+# перелічував би старі заходи без балів, і його перестали б читати. Перехід
+# статусу адміном (issue_for_instance з маршрутів) межі не має: там людина
+# діє свідомо.
+LECTURER_AUTO_ISSUE_WINDOW_DAYS = 30
+
 
 def issue_for_instance(instance, issued_by=None):
     """Видати сертифікати всім тренерам заходу. Повертає список записів.
@@ -94,45 +104,68 @@ def recipient_email(trainer):
 def send_pending(limit=50):
     """Розіслати сертифікати, які ще не пішли листом.
 
-    Повертає (надіслано, пропущено). Черга -- `emailed_at IS NULL`. У
-    "пропущено" потрапляють два різні випадки: немає тренера (сирітський
-    запис) і є тренер, але жодної його адреси -- обидва не надсилаються,
-    але з різних причин, тож рахунок спільний, а причина видна лише в лозі.
-    Збій на одному записі не ставить `emailed_at` і не зупиняє решту:
-    наступний тік спробує знову. Ліміт -- щоб один тік не рендерив сотню PDF
-    поспіль після довгого простою пошти.
+    Повертає (надіслано, пропущено). Черга -- `emailed_at IS NULL` серед
+    записів, що мають тренера: сирота (`trainer_id IS NULL`) -- незмінний
+    знімок видачі видаленому з довідника тренеру, слати його нікому, і в
+    черзі він лише вічно займав би її голову.
+
+    "Пропущено" -- тренер без жодної адреси або адреса в suppression: листа
+    не може бути взагалі, тож ліміт на такі записи не витрачається. Інакше
+    півсотні безадресних із раннім issued_at назавжди закрили б чергу для
+    тих, кому слати є куди. Ліміт рахує лише справжні спроби відправки --
+    щоб один тік не рендерив сотню PDF поспіль після довгого простою пошти.
+
+    `emailed_at` ставиться лише тоді, коли лист цієї версії справді
+    поставлено в чергу або вже надіслано (див. `_delivered`). Збій на одному
+    записі не зупиняє решту: наступний тік спробує знову. Виняток --
+    'failed' від самого send_email (вимкнена пошта, відкритий circuit
+    breaker, збій рендеру шаблону): це стан пошти, а не листа, і кожна
+    наступна спроба в тому ж тіку дала б ще один 'failed' у журналі. Для
+    breaker-а це самопідживлення -- 'failed' від черги тримали б його
+    відкритим, і пошта всього сайту не відновилась би.
     """
     from app.models.lecturer_certificate import LecturerCertificate
     from app.services.email_service import EmailService
 
-    pending = (
-        LecturerCertificate.query
-        .filter(LecturerCertificate.emailed_at.is_(None))
-        .order_by(LecturerCertificate.issued_at)
-        .limit(limit)
-        .all()
-    )
-    sent = skipped = 0
-    for cert in pending:
-        if cert.trainer is None:
-            # trainer_id -- nullable з ondelete='SET NULL': сертифікат є
-            # незмінним знімком видачі й переживає видалення тренера з
-            # довідника, тож цей рядок -- не теоретичний, а справжній
-            # сирітський запис, якого нема кому надіслати.
-            skipped += 1
+    # Лише id і наперед: коміт на кожному записі нижче expire-ить сесію, а
+    # ліміт спроб не можна перекласти на LIMIT запиту -- пропущені записи
+    # в нього не входять.
+    pending_ids = [
+        row.id for row in (
+            db.session.query(LecturerCertificate.id)
+            .filter(LecturerCertificate.emailed_at.is_(None),
+                    LecturerCertificate.trainer_id.isnot(None))
+            .order_by(LecturerCertificate.issued_at, LecturerCertificate.id)
+            .all()
+        )
+    ]
+    sent = skipped = attempts = 0
+    for cert_id in pending_ids:
+        if attempts >= limit:
+            break
+        cert = db.session.get(LecturerCertificate, cert_id)
+        if cert is None or cert.trainer is None:
             continue
         to_email = recipient_email(cert.trainer)
-        if not to_email:
+        if not to_email or EmailService._is_blocked(to_email, 'certificate'):
             # Свідомо НЕ ставимо emailed_at: запис лишається видимим як
             # «видано, не надіслано» і потрапляє в щоденний звіт адміну.
             skipped += 1
             continue
+        attempts += 1
         try:
-            EmailService.send_lecturer_certificate(cert, to_email)
+            log = EmailService.send_lecturer_certificate(cert, to_email)
         except Exception:
             db.session.rollback()
             logger.exception(
                 'Failed to email lecturer certificate %s', cert.number)
+            continue
+        if not _delivered(cert, log):
+            logger.warning(
+                'Lecturer certificate %s not queued (%s), left for next tick',
+                cert.number, getattr(log, 'error_message', None) or 'skipped')
+            if log is not None and log.status == 'failed':
+                break
             continue
         cert.emailed_at = utcnow()
         try:
@@ -144,6 +177,24 @@ def send_pending(limit=50):
             continue
         sent += 1
     return sent, skipped
+
+
+def _delivered(cert, log):
+    """Чи лист ЦІЄЇ версії сертифіката поставлено в чергу або надіслано.
+
+    send_email повертає EmailLog або None. EmailLog -- дивимось статус:
+    'failed' означає, що лист не пішов (вимкнена пошта, circuit breaker,
+    збій рендеру). None буває з двох причин, і лише одна з них -- успіх:
+    idempotent skip (лист цієї версії вже в журналі) чи suppression адреси.
+    Розрізняємо тим самим запитом, яким send_email вирішував про skip:
+    запис із цим ключем у статусі pending/sent є лише в першому випадку.
+    """
+    from app.services.email_service import EmailService
+
+    if log is not None:
+        return log.status in ('pending', 'sent')
+    key = EmailService.lecturer_certificate_idempotency_key(cert)
+    return EmailService._idempotency_seen(key)
 
 
 def _notify_failed(instance, reason):
@@ -177,8 +228,24 @@ def blocking_reason(instance):
 
 
 def _completed_instances():
+    """Завершені заходи в межах вікна автодобору.
+
+    Кінець заходу -- `end_date`, а для одноденних (без неї) -- `start_date`.
+    Фільтр у SQL, а не в циклі: історичних заходів з імпорту на порядки
+    більше, ніж свіжих, і тягнути їх у пам'ять щодня нема навіщо. Захід без
+    жодної дати у вікно не потрапляє -- коли він відбувся, невідомо.
+    """
+    from datetime import timedelta
+
     from app.models.course_instance import CourseInstance
-    return CourseInstance.query.filter_by(status='completed').all()
+
+    since = utcnow() - timedelta(days=LECTURER_AUTO_ISSUE_WINDOW_DAYS)
+    ended_at = db.func.coalesce(CourseInstance.end_date, CourseInstance.start_date)
+    return (
+        CourseInstance.query
+        .filter(CourseInstance.status == 'completed', ended_at >= since)
+        .all()
+    )
 
 
 def _missing_trainers_by_instance(instances):
@@ -230,6 +297,20 @@ def _issue_for_missing(instances, missing):
     return issued
 
 
+def on_status_changed(instance, old_status, issued_by=None):
+    """Видати сертифікати тренерам, якщо захід щойно перейшов у 'completed'.
+
+    Статус змінюють два маршрути -- швидкий перемикач і форма редагування
+    проведення, -- і умова переходу живе тут одна: розійшовшись у двох
+    місцях, вона вже раз лишила форму без видачі. Викликати ПІСЛЯ вдалого
+    коміту статусу: видача комітить сама, і збій у ній не має відкочувати
+    зміну статусу.
+    """
+    if old_status != 'completed' and instance.status == 'completed':
+        return issue_for_instance(instance, issued_by=issued_by)
+    return []
+
+
 def issue_missing():
     """Добрати сертифікати завершеним заходам. Повертає кількість виданих.
 
@@ -258,9 +339,12 @@ def daily_maintenance():
     issued = _issue_for_missing(instances, missing)
 
     cutoff = utcnow() - timedelta(hours=STUCK_AFTER_HOURS)
+    # Сироти (trainer_id IS NULL) -- поза звітом, як і поза чергою: тренера
+    # видалено з довідника, і адміну з таким записом нічого зробити.
     stuck = (
         LecturerCertificate.query
         .filter(LecturerCertificate.emailed_at.is_(None),
+                LecturerCertificate.trainer_id.isnot(None),
                 LecturerCertificate.issued_at < cutoff)
         .all()
     )
@@ -269,10 +353,15 @@ def daily_maintenance():
     # ньому відсутній -- навіть якщо налаштування (номер провайдера)
     # спорожніли ПІСЛЯ видачі. Добирати там нічого, і щоденний звіт не має
     # нагадувати про такий захід знову й знову.
-    blocked = [
-        inst for inst in instances
-        if inst.id in missing and blocking_reason(inst) is not None
-    ]
+    # Пари (захід, причина): причин блокування три, і звіт мусить назвати
+    # справжню, а не одну на всіх.
+    blocked = []
+    for inst in instances:
+        if inst.id not in missing:
+            continue
+        reason = blocking_reason(inst)
+        if reason is not None:
+            blocked.append((inst, reason))
     if stuck or blocked:
         try:
             EmailService.notify_lecturer_certificate_report(stuck, blocked)

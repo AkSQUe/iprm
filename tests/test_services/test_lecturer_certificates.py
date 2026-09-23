@@ -1,6 +1,7 @@
 """Автовидача сертифікатів лектора на захід."""
 from datetime import timedelta
 from itertools import count
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
@@ -161,23 +162,42 @@ def test_recipient_email_skips_blank_profile_email(app):
 
 
 # ---------------------------------------------------------------------------
-# send_lecturer_certificate: ключ ідемпотентності на id сертифіката, а не на
-# щось спільне для кількох подій (напр. trainer_id) -- див. брифи задачі 4.
+# send_lecturer_certificate: ключ ідемпотентності на версію сертифіката (id +
+# issued_at), а не на щось спільне для кількох подій (напр. trainer_id) --
+# див. брифи задачі 4 і фінальну рецензію (C1).
 # ---------------------------------------------------------------------------
+class _MailSwitch:
+    """Керування ізольованою поштою з тесту: `cfg['is_enabled']` -- вимкнути
+    пошту в налаштуваннях, `breaker_open` -- відкрити circuit breaker,
+    `outbox` -- повідомлення, які пішли б у SMTP (з вкладеннями)."""
+
+    def __init__(self):
+        self.cfg = {
+            'server': 'smtp.example.com', 'port': 587, 'use_ssl': False,
+            'use_tls': True, 'username': 'u@example.com', 'password': 'x',
+            'is_enabled': True, 'has_password': True, 'sender': 'u@example.com',
+        }
+        self.breaker_open = False
+        self.outbox = []
+
+
 @pytest.fixture
 def enabled_mail(monkeypatch):
     """Імітувати увімкнену пошту без мережі -- як однойменна фікстура в
     test_email_service.py: мокаємо SMTP-конфіг і фонову відправку, щоб
     перевіряти сам журнал EmailLog, а не лізти в мережу чи мокати
-    send_lecturer_certificate (це довело б лише факт виклику, не ключ)."""
-    cfg = {
-        'server': 'smtp.example.com', 'port': 587, 'use_ssl': False, 'use_tls': True,
-        'username': 'u@example.com', 'password': 'x', 'is_enabled': True,
-        'has_password': True, 'sender': 'u@example.com',
-    }
-    monkeypatch.setattr(email_service, '_get_smtp_config', lambda app: cfg)
-    monkeypatch.setattr(EmailService, '_send_in_thread', staticmethod(lambda *a, **k: None))
-    monkeypatch.setattr(EmailService, '_check_circuit_breaker', staticmethod(lambda: False))
+    send_lecturer_certificate (це довело б лише факт виклику, не ключ).
+
+    Справжній send_email з усіма його гардами лишається; підмінено лише
+    транспорт і два входи гардів, якими тест перемикає стан пошти."""
+    switch = _MailSwitch()
+    monkeypatch.setattr(email_service, '_get_smtp_config', lambda app: switch.cfg)
+    monkeypatch.setattr(
+        EmailService, '_send_in_thread',
+        staticmethod(lambda app, msg, log_id, cfg: switch.outbox.append(msg)))
+    monkeypatch.setattr(EmailService, '_check_circuit_breaker',
+                        staticmethod(lambda: switch.breaker_open))
+    return switch
 
 
 @pytest.fixture(autouse=True)
@@ -225,33 +245,36 @@ def test_same_certificate_twice_is_deduplicated(app, enabled_mail):
 # send_pending: черга розсилки (emailed_at IS NULL). Планувальник у TESTING
 # вимкнено, тож тут тестується сама функція, а не обгортку scheduler_service.
 # ---------------------------------------------------------------------------
-def test_send_pending_marks_emailed_at(app):
+def _queued(status='pending'):
+    """Те, що повертає send_email, коли лист поставлено в чергу: EmailLog зі
+    статусом. MagicMock тут не годиться -- send_pending читає саме статус."""
+    return SimpleNamespace(status=status)
+
+
+def test_send_pending_marks_emailed_at(app, enabled_mail):
     inst, _ = _completed_instance(trainers=1)
     cert = lc_svc.issue_for_instance(inst)[0]
     cert.trainer.email = 'tc-lect@test.com'
     db.session.commit()
-    with patch('app.services.email_service.EmailService'
-               '.send_lecturer_certificate') as send:
-        sent, skipped = lc_svc.send_pending()
+    sent, skipped = lc_svc.send_pending()
     assert (sent, skipped) == (1, 0)
-    assert send.call_count == 1
+    assert len(enabled_mail.outbox) == 1
     db.session.refresh(cert)
     assert cert.emailed_at is not None
 
 
-def test_send_pending_does_not_send_twice(app):
+def test_send_pending_does_not_send_twice(app, enabled_mail):
     inst, _ = _completed_instance(trainers=1)
     cert = lc_svc.issue_for_instance(inst)[0]
     cert.trainer.email = 'tc-lect2@test.com'
     db.session.commit()
-    with patch('app.services.email_service.EmailService'
-               '.send_lecturer_certificate'):
-        lc_svc.send_pending()
-        sent, _ = lc_svc.send_pending()
+    lc_svc.send_pending()
+    sent, _ = lc_svc.send_pending()
     assert sent == 0
+    assert len(enabled_mail.outbox) == 1
 
 
-def test_two_certificates_for_one_trainer_give_two_letters(app):
+def test_two_certificates_for_one_trainer_give_two_letters(app, enabled_mail):
     """60-секундне вікно дедуплікації не має зʼїдати другий сертифікат."""
     course = make_course()
     course.bpr_event_number = str(next(_event_numbers))
@@ -264,23 +287,19 @@ def test_two_certificates_for_one_trainer_give_two_letters(app):
     db.session.commit()
     lc_svc.issue_for_instance(first)
     lc_svc.issue_for_instance(second)
-    with patch('app.services.email_service.EmailService'
-               '.send_lecturer_certificate') as send:
-        sent, _ = lc_svc.send_pending()
+    sent, _ = lc_svc.send_pending()
     assert sent == 2
-    keys = {c.kwargs.get('to_email') or c.args[1] for c in send.call_args_list}
-    assert keys == {'tc-two@test.com'}
+    assert {m.recipients[0] for m in enabled_mail.outbox} == {'tc-two@test.com'}
+    assert len(enabled_mail.outbox) == 2
 
 
-def test_trainer_without_email_is_skipped_but_others_proceed(app):
+def test_trainer_without_email_is_skipped_but_others_proceed(app, enabled_mail):
     inst, made = _completed_instance(trainers=2)
     certs = lc_svc.issue_for_instance(inst)
     certs[0].trainer.email = 'tc-has@test.com'
     certs[1].trainer.email = None
     db.session.commit()
-    with patch('app.services.email_service.EmailService'
-               '.send_lecturer_certificate'):
-        sent, skipped = lc_svc.send_pending()
+    sent, skipped = lc_svc.send_pending()
     assert (sent, skipped) == (1, 1)
     db.session.refresh(certs[1])
     assert certs[1].emailed_at is None
@@ -309,7 +328,7 @@ def test_failure_on_one_record_does_not_stop_the_rest(app):
 
     with patch(
         'app.services.email_service.EmailService.send_lecturer_certificate',
-        side_effect=[None, RuntimeError('smtp down'), None],
+        side_effect=[_queued(), RuntimeError('smtp down'), _queued()],
     ):
         sent, _ = lc_svc.send_pending()
 
@@ -320,6 +339,138 @@ def test_failure_on_one_record_does_not_stop_the_rest(app):
     assert certs[0].emailed_at is not None
     assert certs[1].emailed_at is None
     assert certs[2].emailed_at is not None
+
+
+# ---------------------------------------------------------------------------
+# send_pending: emailed_at -- лише коли лист справді поставлено в чергу або
+# надіслано (фінальна рецензія, I1). Усе, що send_email відхилив мовчки,
+# лишається в черзі й видиме у щоденному звіті.
+# ---------------------------------------------------------------------------
+def _pending_with_address(email):
+    inst, _ = _completed_instance(trainers=1)
+    cert = lc_svc.issue_for_instance(inst)[0]
+    cert.trainer.email = email
+    db.session.commit()
+    return cert
+
+
+def test_send_pending_leaves_queue_when_mail_disabled(app, enabled_mail):
+    cert = _pending_with_address('tc-disabled@test.com')
+    enabled_mail.cfg['is_enabled'] = False
+    sent, _ = lc_svc.send_pending()
+    assert sent == 0
+    db.session.refresh(cert)
+    assert cert.emailed_at is None
+    assert enabled_mail.outbox == []
+
+
+def test_send_pending_leaves_queue_when_circuit_breaker_open(app, enabled_mail):
+    cert = _pending_with_address('tc-breaker@test.com')
+    enabled_mail.breaker_open = True
+    sent, _ = lc_svc.send_pending()
+    assert sent == 0
+    db.session.refresh(cert)
+    assert cert.emailed_at is None
+
+
+def test_send_pending_leaves_queue_when_address_suppressed(app, enabled_mail):
+    from app.models.email_suppression import EmailSuppression
+
+    cert = _pending_with_address('tc-suppressed@test.com')
+    EmailSuppression.add('tc-suppressed@test.com')
+    db.session.commit()
+    sent, skipped = lc_svc.send_pending()
+    assert (sent, skipped) == (0, 1)
+    db.session.refresh(cert)
+    assert cert.emailed_at is None
+    assert enabled_mail.outbox == []
+
+
+def test_send_pending_stops_tick_on_global_mail_failure(app, enabled_mail):
+    """Вимкнена пошта й відкритий breaker -- стан пошти загалом, а не
+    конкретного листа: кожна наступна спроба в тому ж тіку дала б ще один
+    'failed' у журналі (і ще один рендер PDF). З breaker-ом це
+    самопідживлення: 'failed' від черги тримали б його відкритим, і пошта
+    сайту не відновилась би ніколи. Тому -- одна спроба на тік."""
+    _pending_with_address('tc-stop-a@test.com')
+    _pending_with_address('tc-stop-b@test.com')
+    enabled_mail.cfg['is_enabled'] = False
+    lc_svc.send_pending()
+    failed = EmailLog.query.filter(
+        EmailLog.to_email.in_(['tc-stop-a@test.com', 'tc-stop-b@test.com']),
+        EmailLog.status == 'failed',
+    ).count()
+    assert failed == 1
+
+
+def test_send_pending_counts_already_sent_version_as_emailed(app, enabled_mail):
+    """None від send_email через idempotent skip ТІЄЇ Ж версії -- лист уже
+    пішов (наприклад, попередній тік упав між відправкою й комітом
+    emailed_at). Вважати його ненадісланим означало б вічно тримати запис у
+    черзі та щодня показувати адміну як застряглий."""
+    cert = _pending_with_address('tc-seen@test.com')
+    EmailService.send_lecturer_certificate(cert, 'tc-seen@test.com')
+    assert cert.emailed_at is None
+    sent, _ = lc_svc.send_pending()
+    assert sent == 1
+    db.session.refresh(cert)
+    assert cert.emailed_at is not None
+    assert EmailLog.query.filter_by(to_email='tc-seen@test.com').count() == 1
+
+
+# ---------------------------------------------------------------------------
+# send_pending: черга не застрягає (фінальна рецензія, I2).
+# ---------------------------------------------------------------------------
+def test_addressless_head_of_queue_does_not_block_sendable(app, enabled_mail):
+    """55 безадресних з раннім issued_at не мають займати ліміт 50: інакше
+    той, кому є куди слати, не отримав би листа ніколи."""
+    early = utcnow() - timedelta(days=2)
+    inst = make_instance(make_course(), days=-3, status='completed')
+    trainers = [make_trainer(name=f'Безадресний {i}') for i in range(55)]
+    for i, trainer in enumerate(trainers):
+        db.session.add(LecturerCertificate(
+            instance_id=inst.id,
+            trainer_id=trainer.id, number=f'BA-{i}', recipient_name='Т',
+            event_title='Захід', issued_at=early + timedelta(seconds=i),
+        ))
+    db.session.commit()
+    cert = _pending_with_address('tc-after-addressless@test.com')
+
+    sent, skipped = lc_svc.send_pending()
+
+    assert sent == 1
+    assert skipped == 55
+    db.session.refresh(cert)
+    assert cert.emailed_at is not None
+
+
+def test_orphan_certificates_are_not_queued(app, enabled_mail):
+    """Сирота (trainer_id IS NULL) -- ні в черзі, ні в ліміті, ні в звіті:
+    з ним нічого не можна зробити."""
+    inst = make_instance(make_course(), days=-3, status='completed')
+    early = utcnow() - timedelta(days=2)
+    for i in range(55):
+        # Два NULL у trainer_id не порушують unique-пари -- так само, як
+        # після видалення двох тренерів одного заходу.
+        db.session.add(LecturerCertificate(
+            instance_id=inst.id,
+            trainer_id=None, number=f'OR-{i}', recipient_name='Т',
+            event_title='Захід', issued_at=early + timedelta(seconds=i),
+        ))
+    db.session.commit()
+    cert = _pending_with_address('tc-after-orphans@test.com')
+
+    sent, skipped = lc_svc.send_pending()
+
+    assert (sent, skipped) == (1, 0)
+    db.session.refresh(cert)
+    assert cert.emailed_at is not None
+
+    with patch('app.services.email_service.EmailService'
+               '.notify_lecturer_certificate_report') as report:
+        stats = lc_svc.daily_maintenance()
+    assert stats['stuck'] == 0
+    assert not report.called
 
 
 # ---------------------------------------------------------------------------
@@ -451,7 +602,8 @@ def test_daily_maintenance_sends_report_with_actual_stuck_and_blocked_records(ap
     report.assert_called_once()
     stuck_arg, blocked_arg = report.call_args.args
     assert [c.id for c in stuck_arg] == [cert.id]
-    assert [i.id for i in blocked_arg] == [blocked_inst.id]
+    assert [inst.id for inst, _reason in blocked_arg] == [blocked_inst.id]
+    assert 'бали' in blocked_arg[0][1]
 
 
 def test_daily_maintenance_excludes_fully_issued_instance_from_blocked(app):
@@ -474,3 +626,92 @@ def test_daily_maintenance_excludes_fully_issued_instance_from_blocked(app):
 
     assert stats['blocked'] == 0
     assert not report.called
+
+
+# ---------------------------------------------------------------------------
+# Вікно автодобору (фінальна рецензія, C3): щоденна джоба не видає й не
+# показує в «заблоковано» історичні заходи з імпорту.
+# ---------------------------------------------------------------------------
+def _completed_days_ago(days, points=5):
+    inst, made = _completed_instance(points=points, trainers=1)
+    inst.start_date = utcnow() - timedelta(days=days)
+    db.session.commit()
+    return inst
+
+
+def test_daily_maintenance_ignores_instance_outside_window(app):
+    old = _completed_days_ago(lc_svc.LECTURER_AUTO_ISSUE_WINDOW_DAYS * 2)
+    old_blocked = _completed_days_ago(
+        lc_svc.LECTURER_AUTO_ISSUE_WINDOW_DAYS * 2, points=None)
+    with patch('app.services.email_service.EmailService'
+               '.notify_lecturer_certificate_failed'),          patch('app.services.email_service.EmailService'
+               '.notify_lecturer_certificate_report') as report:
+        stats = lc_svc.daily_maintenance()
+    assert stats['issued'] == 0
+    assert stats['blocked'] == 0
+    assert not report.called
+    assert LecturerCertificate.query.filter(
+        LecturerCertificate.instance_id.in_([old.id, old_blocked.id])).count() == 0
+
+
+def test_daily_maintenance_issues_for_instance_inside_window(app):
+    recent = _completed_days_ago(5)
+    stats = lc_svc.daily_maintenance()
+    assert stats['issued'] == 1
+    assert LecturerCertificate.query.filter_by(instance_id=recent.id).count() == 1
+
+
+def test_window_uses_end_date_when_present(app):
+    """Багатоденний захід: початок поза вікном, кінець -- у ньому."""
+    inst = _completed_days_ago(lc_svc.LECTURER_AUTO_ISSUE_WINDOW_DAYS + 10)
+    inst.end_date = utcnow() - timedelta(days=2)
+    db.session.commit()
+    assert lc_svc.issue_missing() == 1
+
+
+def test_status_transition_is_not_limited_by_window(app):
+    """Адмін, що свідомо переводить старий захід у 'completed', отримує
+    видачу -- вікно стосується лише автоматичного добору."""
+    inst = _completed_days_ago(lc_svc.LECTURER_AUTO_ISSUE_WINDOW_DAYS * 3)
+    issued = lc_svc.on_status_changed(inst, 'published')
+    assert len(issued) == 1
+
+
+# ---------------------------------------------------------------------------
+# on_status_changed (фінальна рецензія, I3): одна умова переходу на обидва
+# маршрути.
+# ---------------------------------------------------------------------------
+def test_on_status_changed_issues_only_on_transition_into_completed(app):
+    inst, _ = _completed_instance(trainers=1)
+    assert lc_svc.on_status_changed(inst, 'completed') == []
+    assert LecturerCertificate.query.filter_by(instance_id=inst.id).count() == 0
+    inst.status = 'published'
+    assert lc_svc.on_status_changed(inst, 'draft') == []
+    assert LecturerCertificate.query.filter_by(instance_id=inst.id).count() == 0
+    inst.status = 'completed'
+    assert len(lc_svc.on_status_changed(inst, 'published')) == 1
+
+
+# ---------------------------------------------------------------------------
+# Звіт адмінам (фінальна рецензія, I4): справжня причина біля кожного заходу.
+# ---------------------------------------------------------------------------
+def test_report_names_real_reason_for_each_blocked_instance(app, enabled_mail):
+    from markupsafe import escape
+
+    no_points, _ = _completed_instance(points=None, trainers=1)
+    no_number, _ = _completed_instance(trainers=1)
+    no_number.course.bpr_event_number = ''
+    db.session.commit()
+    blocked = [(no_points, lc_svc.blocking_reason(no_points)),
+               (no_number, lc_svc.blocking_reason(no_number))]
+
+    with patch('app.services.notification_recipients.resolve',
+               return_value=['tc-report-admin@test.com']):
+        EmailService.notify_lecturer_certificate_report([], blocked)
+
+    log = EmailLog.query.filter_by(to_email='tc-report-admin@test.com').one()
+    assert 'без балів' not in log.subject
+    assert 'заблоковано' in log.subject
+    # Причини містять '->' -- у листі вони HTML-екрановані автоескейпом.
+    assert str(escape(blocked[0][1])) in log.html_body
+    assert str(escape(blocked[1][1])) in log.html_body

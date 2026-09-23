@@ -27,14 +27,14 @@
     {% endif %}
 
     {% if blocked %}
-    {{ section_title('Заходи без балів БПР тренеру') }}
+    {{ section_title('Заходи, де видача заблокована') }}
     <p class="mobile-text" style="margin: 0 0 12px 0; font-size: 15px; color: #625A6D; line-height: 1.5;">
-        Захід завершено, але видати сертифікати неможливо. Щойно бали внесуть,
-        система видасть їх сама.
+        Захід завершено, але видати сертифікати неможливо. Щойно причину
+        виправлять, система видасть їх сама.
     </p>
     <ul style="margin: 0 0 24px 0; padding-left: 20px; font-size: 15px; color: #17131D; line-height: 1.6;">
-        {% for inst in blocked %}
-        <li><a href="{{ base_url }}/admin/instances/{{ inst.id }}/edit" style="color: #6B3FA0;">{{ inst.effective_title_for('uk') }}</a></li>
+        {% for inst, reason in blocked %}
+        <li><a href="{{ base_url }}/admin/instances/{{ inst.id }}/edit" style="color: #6B3FA0;">{{ inst.effective_title_for('uk') }}</a> — {{ reason }}</li>
         {% endfor %}
     </ul>
     {% endif %}

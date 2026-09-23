@@ -552,6 +552,9 @@ def instance_edit(instance_id):
         form.trainer_ids.data = [t.id for t in instance.trainers]
 
     if form.validate_on_submit():
+        # Статус до форми: вона теж переводить захід у 'completed', і видача
+        # сертифікатів тренерам мусить спрацювати й на цьому шляху.
+        old_status = instance.status
         try:
             course_service.populate_instance_from_form(instance, form)
         except course_service.InvalidStatusTransition as exc:
@@ -568,6 +571,8 @@ def instance_edit(instance_id):
             audit_logger.info(
                 'Admin %s updated instance %s', current_user.email, instance.id,
             )
+            from app.services import lecturer_certificates as lc_svc
+            lc_svc.on_status_changed(instance, old_status, issued_by=current_user)
             flash('Проведення оновлено', 'success')
             return redirect(url_for('admin.instances_list'))
 
@@ -735,9 +740,8 @@ def instance_status_update(instance_id):
     # Сертифікати тренерам -- рівно на переході в 'completed'. Лише INSERT:
     # рендер PDF і лист робить фонова джоба, тож адмін не чекає WeasyPrint,
     # а збій рендера не відкочує зміну статусу.
-    if new_status == 'completed' and old_status != 'completed':
-        from app.services import lecturer_certificates as lc_svc
-        lc_svc.issue_for_instance(instance, issued_by=current_user)
+    from app.services import lecturer_certificates as lc_svc
+    lc_svc.on_status_changed(instance, old_status, issued_by=current_user)
 
     if wants_json:
         return jsonify({

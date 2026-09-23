@@ -1372,13 +1372,32 @@ class EmailService:
         return f'{base}/auth/account' if base else '/auth/account'
 
     @staticmethod
+    def lecturer_certificate_idempotency_key(lecturer_cert):
+        """Ключ листа з сертифікатом лектора -- на ВЕРСІЮ документа.
+
+        Дві вимоги, і кожна ламається без свого складника:
+        - id: без ключа дедуплікація ключується на адресу+тригер у вікні 60 с,
+          і тренер, якому в одному тіку джоби йдуть сертифікати за ДВА заходи,
+          отримав би лише один лист;
+        - issued_at: перевидача зберігає той самий id, і ключ лише на id
+          назавжди блокував би лист виправленої версії -- send_email бачив би
+          в журналі старий лист з тим самим ключем і мовчки пропускав новий.
+          Перевидача оновлює issued_at, тож нова версія має новий ключ.
+        Секундна точність: дві перевидачі в ту саму секунду зіллються в один
+        лист -- свідомо прийнятий рідкісний випадок.
+
+        Цим самим ключем `lecturer_certificates.send_pending` перевіряє, чи
+        лист цієї версії вже пішов, тож обчислюється він в одному місці.
+        """
+        return (f'lecturer-cert-{lecturer_cert.id}-'
+                f'{int(lecturer_cert.issued_at.timestamp())}')
+
+    @staticmethod
     def send_lecturer_certificate(lecturer_cert, to_email):
         """Лист тренеру з PDF-сертифікатом лектора у вкладенні.
 
-        Тригер 'certificate' (наявний, транзакційний) з idempotency_key на id
-        сертифіката. Ключ обовʼязковий: без нього дедуплікація ключується на
-        адресу+тригер у вікні 60 с, і тренер, якому в одному тіку джоби йдуть
-        сертифікати за ДВА заходи, отримав би лише один лист.
+        Тригер 'certificate' (наявний, транзакційний) з ключем ідемпотентності
+        на версію документа -- див. `lecturer_certificate_idempotency_key`.
         """
         from app.services.certificate_service import render_lecturer_pdf
 
@@ -1395,7 +1414,8 @@ class EmailService:
                 'cabinet_url': EmailService._trainer_cabinet_url(),
             },
             trigger='certificate',
-            idempotency_key=f'lecturer-cert-{lecturer_cert.id}',
+            idempotency_key=EmailService.lecturer_certificate_idempotency_key(
+                lecturer_cert),
             attachments=[(filename, 'application/pdf', pdf_bytes)],
         )
 
@@ -2003,8 +2023,10 @@ class EmailService:
         """Щоденний звіт адмінам: що застрягло в сертифікатах лектора.
 
         `stuck` -- видані документи, які добу не можуть піти листом (немає
-        жодної адреси тренера або пошта стабільно падає). `blocked` -- завершені
-        заходи, де видачі не було через відсутні бали БПР.
+        жодної адреси тренера або пошта стабільно падає). `blocked` -- пари
+        (захід, причина): завершені заходи, де видача неможлива. Причин три
+        (бали БПР тренеру, номер провайдера, номер заходу), тож і тема, і
+        список називають їх як є, а не «без балів» на всіх.
         """
         from app.models.site_settings import SiteSettings
 
@@ -2012,7 +2034,7 @@ class EmailService:
         return EmailService.notify_admins_with_template(
             event_type='certificate',
             subject=(f'Сертифікати лектора: {len(stuck)} не надіслано, '
-                     f'{len(blocked)} заходів без балів'),
+                     f'{len(blocked)} заходів заблоковано'),
             template_name='admin_lecturer_certificate_report',
             context={'stuck': stuck, 'blocked': blocked, 'base_url': base},
         )
