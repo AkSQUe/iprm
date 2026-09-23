@@ -240,3 +240,130 @@ def test_dialog_hides_birth_date_without_finance_permission(client):
     values = [value for value, _ in parsed.columns]
     assert 'birth_date' not in values
     assert values == [c.key for c in rs.available_columns(editor)]
+
+
+def _viewer_with(*perms):
+    """Користувач з рівно цими правами -- вбудованої ролі «керує заходами,
+    але не бачить тренерів» немає."""
+    from app.models.rbac import Permission, Role
+
+    role = Role(name='t_resume_' + '_'.join(p.replace('.', '') for p in perms),
+                display_name='T')
+    # Спершу в сесію: інакше autoflush на запиті Permission нижче
+    # попереджає про роль поза сесією.
+    db.session.add(role)
+    for p in perms:
+        role.permissions.append(Permission.query.filter_by(name=p).one())
+    db.session.flush()
+    return make_user_with_role(role.name, email='tc-resume-noview@test.com')
+
+
+def test_instance_page_hides_export_without_trainers_view(client):
+    """Кнопка вела б у маршрут під trainers.view -- без права її не видно."""
+    from app.services.trainer_links import set_trainers
+
+    user = _viewer_with('instances.view', 'instances.manage')
+    db.session.commit()
+    switch_user(client, user)
+    course = make_course()
+    trainer = make_trainer(name='Прихований Т.')
+    set_trainers(course, [trainer.id])
+    inst = make_instance(course)
+    db.session.commit()
+
+    resp = client.get(f'/admin/instances/{inst.id}/edit')
+    assert resp.status_code == 200
+    assert b'data-modal-open="resume-columns-dialog"' not in resp.data
+    assert b'resume.pdf' not in resp.data
+
+
+def _instance_id_inputs(html_bytes):
+    class _Finder(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.values = []
+
+        def handle_starttag(self, tag, attrs):
+            attrs = dict(attrs)
+            if tag == 'input' and attrs.get('name') == 'instance_id':
+                self.values.append(attrs.get('value'))
+
+    finder = _Finder()
+    finder.feed(html_bytes.decode('utf-8'))
+    return finder.values
+
+
+def test_instance_dialog_carries_instance_id(client):
+    from app.services.trainer_links import set_trainers
+
+    _admin(client)
+    course = make_course()
+    trainer = make_trainer(name='Номерний Т.')
+    set_trainers(course, [trainer.id])
+    inst = make_instance(course)
+    db.session.commit()
+
+    resp = client.get(f'/admin/instances/{inst.id}/edit')
+    assert _instance_id_inputs(resp.data) == [str(inst.id)]
+
+    listing = client.get('/admin/trainers')
+    assert _instance_id_inputs(listing.data) == []
+
+
+def _export(client, monkeypatch, **extra):
+    """Вивантаження без WeasyPrint -- тут перевіряється лише імʼя файлу."""
+    from app.services import trainer_resume_service as rs
+
+    monkeypatch.setattr(rs, 'render_pdf', lambda trainers, keys: b'%PDF-fake%')
+    trainer = make_trainer(name='Файловий Т.')
+    db.session.commit()
+    return client.post('/admin/trainers/resume.pdf', data={
+        'ids': [str(trainer.id)], 'columns': ['full_name'], **extra,
+    })
+
+
+def test_filename_from_instance_page_has_event_number(client, monkeypatch):
+    from datetime import date
+
+    _admin(client)
+    course = make_course()
+    course.bpr_event_number = '4321'
+    inst = make_instance(course)
+    db.session.commit()
+
+    resp = _export(client, monkeypatch, instance_id=str(inst.id))
+
+    assert resp.status_code == 200
+    disposition = resp.headers['Content-Disposition']
+    assert f'rezume-treneriv-4321-{date.today():%Y-%m-%d}.pdf' in disposition
+
+
+def test_filename_falls_back_to_instance_id_without_number(client, monkeypatch):
+    _admin(client)
+    inst = make_instance(make_course())
+    db.session.commit()
+
+    resp = _export(client, monkeypatch, instance_id=str(inst.id))
+
+    assert f'rezume-treneriv-{inst.id}-' in resp.headers['Content-Disposition']
+
+
+def test_filename_from_trainers_list_has_only_date(client, monkeypatch):
+    from datetime import date
+
+    _admin(client)
+    resp = _export(client, monkeypatch)
+    assert (f'rezume-treneriv-{date.today():%Y-%m-%d}.pdf'
+            in resp.headers['Content-Disposition'])
+
+
+def test_trainers_table_select_column_is_labelled(client):
+    """Мобільні картки (admin-table-cards.js) беруть підпис комірки з тексту
+    <th>; порожній заголовок лишав чекбокс без підпису і для скрінрідера."""
+    _admin(client)
+    make_trainer(name='Картковий Т.')
+    db.session.commit()
+
+    html = client.get('/admin/trainers').get_data(as_text=True)
+    assert '<span class="visually-hidden">Обрати</span>' in html
+    assert '<td data-label="Обрати">' in html

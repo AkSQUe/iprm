@@ -84,7 +84,10 @@
     </colgroup>
     <thead>
       <tr>
-        <th></th>
+        {# Підпис видимий лише скрінрідеру, але саме з тексту <th>
+           admin-table-cards.js бере data-label картки на мобільному --
+           порожній заголовок лишав би чекбокс там без підпису. #}
+        <th scope="col"><span class="visually-hidden">Обрати</span></th>
         <th class="admin-text-left">ПІБ</th>
         <th class="admin-text-left">Посада</th>
         <th>Стаж</th>
@@ -96,7 +99,7 @@
     <tbody>
       {% for trainer in trainers %}
       <tr>
-        <td>
+        <td data-label="Обрати">
           {# Джерело id для діалогу резюме (resume-columns-dialog.js) --
              позначені рядки, коли кнопка «Резюме обраних» відкрита без
              власного переліку. #}

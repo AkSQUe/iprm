@@ -157,6 +157,28 @@ def trainers_list():
     )
 
 
+def _resume_filename(instance_id, today):
+    """Імʼя PDF резюме: з датою, а зі сторінки проведення -- ще й з номером.
+
+    Пакет документів подається на конкретний захід, і в теці з поданнями
+    кількох заходів файли з однаковими іменами (лише дата) не розрізнити.
+    Номер -- той самий, що на сертифікатах (effective_bpr_event_number);
+    поки його не вписали, -- id проведення, аби імʼя все одно вказувало на
+    захід. Невідоме чи зіпсоване instance_id -- просто імʼя без номера.
+    """
+    from werkzeug.utils import secure_filename
+
+    from app.models.course_instance import CourseInstance
+
+    suffix = ''
+    if instance_id and str(instance_id).isdigit():
+        instance = db.session.get(CourseInstance, int(instance_id))
+        if instance is not None:
+            number = instance.effective_bpr_event_number or str(instance.id)
+            suffix = '-' + secure_filename(number)
+    return f'rezume-treneriv{suffix}-{today:%Y-%m-%d}.pdf'
+
+
 @admin_bp.route('/trainers/resume.pdf', methods=['POST'])
 @permission_required('trainers.view')
 def trainers_resume_pdf():
@@ -196,7 +218,7 @@ def trainers_resume_pdf():
     )
     response = send_file(
         io.BytesIO(pdf), mimetype='application/pdf', as_attachment=True,
-        download_name=f'rezume-treneriv-{date.today():%Y-%m-%d}.pdf',
+        download_name=_resume_filename(request.form.get('instance_id'), date.today()),
     )
     # Документ -- персональні дані тренерів; проміжним і браузерним кешам
     # такий PDF діставатися не має, як і договору в кабінеті тренера.

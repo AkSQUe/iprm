@@ -13,6 +13,7 @@
     Очікує в контексті:
     resume_columns      -- список ResumeColumn, available_columns(current_user)
     resume_default_keys -- ключі, позначені за замовчуванням (DEFAULT_KEYS)
+    instance            -- (необовʼязково) проведення, з якого відкрито діалог
 
     Ідентифікатори тренерів у форму кладе resume-columns-dialog.js перед
     відкриттям -- сама форма їх не знає, бо джерело різне на двох сторінках
@@ -39,6 +40,12 @@
         {% endfor %}
         {# Заповнюється resume-columns-dialog.js перед відкриттям вікна. #}
         <div id="resume-columns-ids"></div>
+        {# Зі сторінки проведення маршрут додає номер заходу в імʼя файлу:
+           пакет документів подається на конкретний захід. Поза контейнером
+           ids -- скрипт перед кожним відкриттям його спорожнює. #}
+        {% if instance is defined and instance %}
+        <input type="hidden" name="instance_id" value="{{ instance.id }}">
+        {% endif %}
       </div>
       <div class="modal__foot">
         <button type="button" class="btn-admin btn-admin--secondary" data-modal-close>Скасувати</button>

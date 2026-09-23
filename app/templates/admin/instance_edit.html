@@ -51,8 +51,10 @@
       </a>
       {% endif %}
       {# Резюме тренерів для пакета документів БПР -- лише коли є кого
-         вписувати: без тренерів заходу кнопка вела б у порожній діалог. #}
-      {% if instance and lecturers %}
+         вписувати (без тренерів кнопка вела б у порожній діалог) і лише з
+         trainers.view: маршрут вивантаження під цим правом, і без нього
+         кнопка вела б у відмову. #}
+      {% if instance and lecturers and can('trainers.view') %}
       <button type="button" class="btn-admin btn-admin--secondary" data-modal-open="resume-columns-dialog"
               data-trainer-ids="{{ lecturers | map(attribute='id') | join(',') }}">
         {{ icon('picture_as_pdf') }} Резюме тренерів (PDF)
@@ -365,7 +367,7 @@
   {% endif %}
   </div>
 </div>
-{% if instance and lecturers %}
+{% if instance and lecturers and can('trainers.view') %}
 {% include 'partials/_resume_columns_dialog.html' %}
 {% endif %}
 <script src="{{ url_for('static', filename='js/admin-instance-points.js') }}?v={{ assets_version }}"></script>
