@@ -244,7 +244,7 @@
           <div class="admin-speakers" data-speakers-preview
                data-speakers-source="trainer_ids"
                data-speakers-url="{{ url_for('admin.trainer_card_json', trainer_id=0) | replace('/0/', '/__ID__/') }}"
-               data-speakers-inherited="{{ (inherited.trainers | map(attribute='id') | list if inherited else []) | tojson }}"
+               data-speakers-inherited='{{ (inherited.trainers | map(attribute="id") | list if inherited else []) | tojson }}'
                data-speakers-inherited-note="Власних тренерів немає -- захід веде склад курсу:"
                data-speakers-empty="Тренерів немає ні у проведення, ні в курсу: сертифікати й розсилка «Тренер заходу» лишаться без тренера.">
           </div>

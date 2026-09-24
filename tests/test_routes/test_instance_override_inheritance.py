@@ -121,7 +121,7 @@ class TestTrainersPreviewTellsTheTruth:
 
         html = _form(client, instance)
 
-        assert f'data-speakers-inherited="[{first.id}, {second.id}]"' in html
+        assert f"data-speakers-inherited='[{first.id}, {second.id}]'" in html
         assert 'Скопіювати тренерів з курсу' in html
 
     def test_lineup_order_survives_into_the_preview(self, client, admin):
@@ -135,7 +135,7 @@ class TestTrainersPreviewTellsTheTruth:
 
         html = _form(client, instance)
 
-        assert f'data-speakers-inherited="[{first.id}, {second.id}]"' in html
+        assert f"data-speakers-inherited='[{first.id}, {second.id}]'" in html
 
     def test_no_copy_button_when_there_is_nothing_to_copy(self, client, admin):
         instance = _instance(_course())
@@ -143,7 +143,7 @@ class TestTrainersPreviewTellsTheTruth:
 
         html = _form(client, instance)
 
-        assert 'data-speakers-inherited="[]"' in html
+        assert "data-speakers-inherited='[]'" in html
         assert 'Скопіювати тренерів з курсу' not in html
 
     def test_the_old_lie_about_the_speakers_block_is_gone(self, client, admin):

@@ -30,3 +30,25 @@ def test_no_template_names_an_instance_by_its_course_title():
             if pattern.search(line) and path.as_posix() not in ALLOWED:
                 offenders.append(f'{path.as_posix()}:{number}')
     assert not offenders, 'проведення назване назвою курсу: ' + ', '.join(offenders)
+
+
+def test_no_tojson_inside_double_quoted_attribute():
+    """Сторож проти `attr="{{ x | tojson }}"`.
+
+    `tojson` екранує `'`, але не `"` -- він розрахований на `<script>`, а не
+    на HTML-атрибут. У подвійних лапках перша ж лапка з JSON обриває атрибут,
+    і решта значення стає текстом вузла. Так на сторінці сертифікатів тренера
+    зникали всі його сертифікати, і 334 тести цього не бачили. Правильно --
+    одинарні лапки, як data-tags у partials/_course_card.html.
+    """
+    import re
+    from pathlib import Path
+
+    pattern = re.compile(r'="\{\{[^"]*?\|\s*tojson\b[^"]*?\}\}"')
+    offenders = []
+    for path in Path('app/templates').rglob('*.html'):
+        text = path.read_text(encoding='utf-8')
+        for match in pattern.finditer(text):
+            number = text.count('\n', 0, match.start()) + 1
+            offenders.append(f'{path.as_posix()}:{number}')
+    assert not offenders, 'tojson у подвійних лапках атрибута: ' + ', '.join(offenders)
