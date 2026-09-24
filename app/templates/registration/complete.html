@@ -8,6 +8,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/choice.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/registration.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/form-progress.css') }}?v={{ assets_version }}">
 {% endblock %}
@@ -67,9 +68,9 @@
     {# ----- Тип учасника ----- #}
     <div class="form-section reg-form-section">
       <h3 class="form-section__title reg-form-section__title">{{ _('Тип учасника') }} <span class="required">*</span></h3>
-      <div class="reg-user-type" data-required-group="radio" data-hint="{{ _('Оберіть тип учасника') }}">
+      <div class="choice-cards" data-required-group="radio" data-hint="{{ _('Оберіть тип учасника') }}">
         {% for code, label in form.user_type.choices if code %}
-        <label class="reg-user-type__option">
+        <label class="choice-cards__option">
           <input type="radio" name="user_type" value="{{ code }}" {% if form.user_type.data == code %}checked{% endif %}>
           <span>{{ label }}</span>
         </label>
@@ -141,10 +142,10 @@
     <div class="form-section reg-form-section">
       <h3 class="form-section__title reg-form-section__title">{{ _('Спеціалізації') }} <span class="required">*</span></h3>
       <p class="reg-form-section__hint">{{ _('Можна обрати декілька. Пошук — Ctrl+F у браузері.') }}</p>
-      <div class="reg-specializations" data-spec-list data-required-group="checkbox" data-hint="{{ _('Оберіть хоча б одну спеціалізацію') }}">
+      <div class="choice-list choice-list--scroll" data-spec-list data-required-group="checkbox" data-hint="{{ _('Оберіть хоча б одну спеціалізацію') }}">
         {% set selected_specs = form.specializations.data or [] %}
         {% for code, label in form.specializations.choices %}
-        <label class="reg-specializations__item">
+        <label class="choice-list__item">
           <input type="checkbox" name="specializations" value="{{ code }}" {% if code in selected_specs %}checked{% endif %}>
           <span>{{ label }}</span>
         </label>

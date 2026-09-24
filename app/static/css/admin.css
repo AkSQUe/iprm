@@ -373,6 +373,11 @@
   margin-top: 18px;
 }
 
+.admin-form .form-checkbox input[type="radio"] {
+  accent-color: var(--iprm-accent);
+  cursor: pointer;
+}
+
 .admin-form .form-checkbox input[type="checkbox"] {
   width: 18px;
   height: 18px;
@@ -3774,6 +3779,19 @@ th.access-perm__label {
   padding: 0;
   margin-bottom: 8px;
   font-weight: 600;
+}
+
+/* Кілька груп поспіль (діалог резюме: вигляд документа, поля анкети) --
+   без відступу друга група прилипала б до першої там, де батько не
+   flex із gap (тіло модалки). Між сусідами, а не margin-bottom кожній:
+   остання група не тягне порожнечу до футера. */
+.admin-form fieldset + fieldset {
+  margin-top: 20px;
+}
+
+/* Підказка одразу під підписом групи -- до вмісту, який вона пояснює. */
+.admin-form legend + .form-hint {
+  margin: -4px 0 10px;
 }
 
 /* Кнопка згортання групи -- текстова, без тла й рамки кнопки; стрілка

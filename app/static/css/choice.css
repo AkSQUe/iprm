@@ -1,0 +1,104 @@
+/* choice.css -- групи вибору: картки-варіанти й список прапорців.
+
+   Жили в registration.css як .reg-user-type і .reg-specializations, і
+   адмінка, якій знадобився той самий вибір (діалог вивантаження резюме),
+   їх не бачила: registration.css там не підключений. Компонент,
+   невидимий для другої сторінки, вона пише заново -- тому він тут, під
+   іменем без домену, а споживачі підключають цей файл.
+
+   .choice-cards  -- кілька варіантів у ряд, обраний підсвічено межею й
+                     тлом; для radio (один із небагатьох) або коротких
+                     checkbox-наборів. Необов'язковий __note -- пояснення
+                     другим рядком під назвою варіанта.
+   .choice-list   -- сітка прапорців в одній вставці; --scroll обмежує
+                     висоту для довгих переліків (спеціальності), короткий
+                     список (поля анкети) показується цілком, без прокрутки
+                     всередині модалки, що й так прокручується. */
+
+/* ---------- Картки-варіанти ---------- */
+.choice-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px;
+}
+
+.choice-cards__option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: var(--iprm-white);
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-sm);
+  cursor: pointer;
+  font-size: 0.9375rem;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.choice-cards__option:hover {
+  border-color: var(--iprm-border-neutral);
+}
+
+.choice-cards__option:has(input:checked) {
+  border-color: var(--iprm-accent);
+  background: var(--iprm-accent-light);
+}
+
+.choice-cards__option input[type="radio"],
+.choice-cards__option input[type="checkbox"] {
+  flex-shrink: 0;
+  accent-color: var(--iprm-accent);
+}
+
+.choice-cards__note {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: var(--iprm-text-secondary);
+}
+
+/* ---------- Список прапорців ---------- */
+.choice-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 6px 12px;
+  padding: 16px;
+  background: var(--iprm-card-bg);
+  border-radius: var(--iprm-radius-sm);
+  border: 1px solid var(--iprm-border);
+}
+
+.choice-list--scroll {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.choice-list__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  font-size: 0.875rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.choice-list__item:hover {
+  background: rgba(var(--iprm-accent-rgb), 0.06);
+}
+
+.choice-list__item:has(input:checked) {
+  background: var(--iprm-accent-light);
+  color: var(--iprm-accent);
+  font-weight: 500;
+}
+
+.choice-list__item input[type="checkbox"] {
+  accent-color: var(--iprm-accent);
+}
+
+@media (max-width: 640px) {
+  .choice-list--scroll { max-height: 240px; }
+}

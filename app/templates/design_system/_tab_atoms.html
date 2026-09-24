@@ -446,12 +446,12 @@
 
         <div class="form-section reg-form-section">
           <h3 class="form-section__title reg-form-section__title">Тип учасника <span class="required">*</span></h3>
-          <div class="reg-user-type" data-required-group="radio">
-            <label class="reg-user-type__option">
+          <div class="choice-cards" data-required-group="radio">
+            <label class="choice-cards__option">
               <input type="radio" name="ds-user-type" checked>
               <span>Лікар</span>
             </label>
-            <label class="reg-user-type__option">
+            <label class="choice-cards__option">
               <input type="radio" name="ds-user-type">
               <span>Медсестра/медбрат</span>
             </label>
@@ -461,12 +461,12 @@
         <div class="form-section reg-form-section">
           <h3 class="form-section__title reg-form-section__title">Спеціалізації <span class="required">*</span></h3>
           <p class="reg-form-section__hint">Можна обрати декілька. Пошук -- Ctrl+F у браузері.</p>
-          <div class="reg-specializations" data-required-group="checkbox">
-            <label class="reg-specializations__item">
+          <div class="choice-list choice-list--scroll" data-required-group="checkbox">
+            <label class="choice-list__item">
               <input type="checkbox" name="ds-spec" checked>
               <span>Дерматологія</span>
             </label>
-            <label class="reg-specializations__item">
+            <label class="choice-list__item">
               <input type="checkbox" name="ds-spec">
               <span>Косметологія</span>
             </label>
@@ -507,14 +507,14 @@
             <td>Модифікатор до .form-section, а не заміна -- клас навішується поруч (`form-section reg-form-section`) і додає лише __title/__hint.</td>
           </tr>
           <tr>
-            <td class="admin-cell-title">reg-user-type</td>
-            <td>auth, registration</td>
-            <td>data-required-group="radio" -- без обраного варіанта форма не сабмітиться; JS підсвічує обраний .reg-user-type__option.</td>
+            <td class="admin-cell-title">choice-cards</td>
+            <td>choice.css -- auth, registration, admin</td>
+            <td>data-required-group="radio" -- без обраного варіанта форма не сабмітиться; обраний .choice-cards__option підсвічує CSS (:has), не JS. Окремо показаний у розділі «Групи вибору».</td>
           </tr>
           <tr>
-            <td class="admin-cell-title">reg-specializations</td>
-            <td>auth, registration</td>
-            <td>data-spec-list + data-required-group="checkbox" -- потрібна хоча б одна галочка; список довгий, тому підказка радить Ctrl+F.</td>
+            <td class="admin-cell-title">choice-list--scroll</td>
+            <td>choice.css -- auth, registration</td>
+            <td>data-spec-list + data-required-group="checkbox" -- потрібна хоча б одна галочка; список довгий, тому --scroll обмежує висоту, а підказка радить Ctrl+F.</td>
           </tr>
           <tr>
             <td class="admin-cell-title">reg-moh-notice</td>
@@ -550,6 +550,49 @@
           </tr>
         </tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- ===== CHOICE GROUPS ===== -->
+  <div class="ds-section-alt">
+    <div class="ds-section" id="choice">
+      <p class="ds-label">Components</p>
+      <h2 class="ds-title">Групи вибору (choice-*)</h2>
+
+      <h3 class="ds-section-heading">Картки-варіанти (.choice-cards) з поясненням</h3>
+      <div class="ds-demo">
+        <form class="admin-form" action="#">
+          <fieldset>
+            <legend>Вигляд документа</legend>
+            <div class="choice-cards">
+              <label class="choice-cards__option">
+                <input type="radio" name="ds-choice-layout" checked>
+                <span>Форма резюме (БПР)<span class="choice-cards__note">Окремий аркуш на кожного тренера</span></span>
+              </label>
+              <label class="choice-cards__option">
+                <input type="radio" name="ds-choice-layout">
+                <span>Зведена таблиця<span class="choice-cards__note">Усі тренери разом</span></span>
+              </label>
+            </div>
+          </fieldset>
+        </form>
+      </div>
+
+      <h3 class="ds-section-heading">Список прапорців (.choice-list)</h3>
+      <div class="ds-demo">
+        <form class="admin-form" action="#">
+          <fieldset>
+            <legend>Поля анкети</legend>
+            <div class="choice-list">
+              <label class="choice-list__item"><input type="checkbox" checked> <span>ПІБ</span></label>
+              <label class="choice-list__item"><input type="checkbox" checked> <span>Освіта</span></label>
+              <label class="choice-list__item"><input type="checkbox" checked> <span>Професійні сертифікати</span></label>
+              <label class="choice-list__item"><input type="checkbox"> <span>Соцмережі</span></label>
+            </div>
+          </fieldset>
+        </form>
+      </div>
+      <p class="ds-hint">choice.css -- один компонент на публіку й адмінку: реєстрація і дані сертифіката (тип учасника, спеціальності) та діалог вивантаження резюме тренерів (partials/_resume_columns_dialog.html). Обраний варіант підсвічує CSS (:has), не JS. __note -- пояснення другим рядком, щоб назва варіанта лишалась короткою. Модифікатор --scroll обмежує висоту для довгого переліку (спеціальності, Ctrl+F); короткий список без нього показується цілком -- у модалці інакше вийшла б прокрутка всередині прокрутки.</p>
     </div>
   </div>
 
