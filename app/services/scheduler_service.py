@@ -44,22 +44,45 @@ def _lock_id_for(job_name):
     return int.from_bytes(digest[:8], 'big', signed=False) & 0x7FFFFFFFFFFFFFFF
 
 
+def _lock_connection():
+    from app.extensions import db
+    return db.engine.connect()
+
+
 @contextmanager
 def _job_lock(job_name):
-    """Acquired pg_try_advisory_lock. Якщо зайнято -- yield False (skip)."""
-    from app.extensions import db
+    """Acquired pg_try_advisory_lock. Якщо зайнято -- yield False (skip).
+
+    Замок сесійний, тобто належить КОНКРЕТНОМУ зʼєднанню. Тому він береться й
+    знімається на окремому зʼєднанні, яке живе рівно стільки, скільки джоба,
+    а не через db.session: перший же commit у тілі джоби віддавав зʼєднання
+    сесії в пул, unlock ішов уже іншим (і нічого не знімав), а замок лишався
+    висіти на зʼєднанні в пулі до pool_recycle -- і джоба до того часу мовчки
+    пропускала кожен запуск. На проді 24.09.2026 так висіли три замки.
+    """
     lock_id = _lock_id_for(job_name)
-    got = db.session.execute(
-        text('SELECT pg_try_advisory_lock(:id)'), {'id': lock_id}
-    ).scalar()
+    conn = _lock_connection()
+    got = False
     try:
-        yield bool(got)
+        got = bool(conn.execute(
+            text('SELECT pg_try_advisory_lock(:id)'), {'id': lock_id}
+        ).scalar())
+        # Закриваємо транзакцію: сесійний замок її переживає, а зʼєднання не
+        # висить «idle in transaction» усю джобу.
+        conn.commit()
+        yield got
     finally:
-        if got:
-            db.session.execute(
-                text('SELECT pg_advisory_unlock(:id)'), {'id': lock_id}
-            )
-            db.session.commit()
+        try:
+            if got:
+                conn.execute(text('SELECT pg_advisory_unlock(:id)'), {'id': lock_id})
+                conn.commit()
+        except Exception:
+            # Не зняли -- зʼєднання не можна віддавати в пул із замком:
+            # invalidate закриває його, і PostgreSQL звільняє замок сам.
+            logger.exception('Failed to release job lock %s', job_name)
+            conn.invalidate()
+        finally:
+            conn.close()
 
 
 def init_scheduler(app):
