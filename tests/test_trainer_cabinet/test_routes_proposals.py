@@ -45,16 +45,28 @@ def test_create_draft(client):
     assert p.theses == ['Методи визначення КОС', 'Фізіологічні межі рН', 'Буферні системи']
 
 
+def test_title_of_100_chars_is_accepted(client):
+    # Межу підняли з 50 до 100 на прохання куратора: назви доповідей
+    # ("Багата тромбоцитами плазма PRP та інші аутологічні ...") у 50 не
+    # вміщались. Рівно на межі -- приймається й зберігається цілком.
+    trainer = _setup(client)
+    title = 'я' * 100
+    resp = client.post('/trainer/proposals/new', data={**DATA, 'title': title})
+    assert resp.status_code == 302
+    p = TrainerCourseProposal.query.filter_by(trainer_id=trainer.id).one()
+    assert p.title == title
+
+
 def test_title_limit_and_theses_limit(client):
     _setup(client)
-    resp = client.post('/trainer/proposals/new', data={**DATA, 'title': 'x' * 51})
+    resp = client.post('/trainer/proposals/new', data={**DATA, 'title': 'x' * 101})
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
     assert 'form-error' in html
     # C13: межа -- з TrainerCourseProposal.TITLE_MAX/THESES_MAX через
     # %(max)d, а не окремий рядок "50": розсинхрон між повідомленням і
     # реальним обмеженням тут неможливий за конструкцією.
-    assert 'Не більше 50 символів' in html
+    assert 'Не більше 100 символів' in html
     assert f'maxlength="{TrainerCourseProposal.TITLE_MAX}"' in html
     resp = client.post('/trainer/proposals/new',
                        data={**DATA, 'theses': '\n'.join(str(i) for i in range(11))})
@@ -226,7 +238,7 @@ def test_invalid_content_with_submit_is_not_submitted(client):
     client.post('/trainer/proposals/new', data=DATA)
     p = TrainerCourseProposal.query.filter_by(trainer_id=trainer.id).one()
     resp = client.post(f'/trainer/proposals/{p.id}',
-                       data={**DATA, 'title': 'x' * 51, 'action': 'submit'})
+                       data={**DATA, 'title': 'x' * (TrainerCourseProposal.TITLE_MAX + 1), 'action': 'submit'})
     assert resp.status_code == 200 and 'form-error' in resp.get_data(as_text=True)
     db.session.expire_all()
     assert p.status == 'draft' and p.title == 'КОС крові: діагностика'
