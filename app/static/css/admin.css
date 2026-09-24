@@ -1897,11 +1897,6 @@ a.admin-stat-card:focus-visible {
   border-color: var(--iprm-nav-active);
 }
 
-.form-hint {
-  font-size: 0.75rem;
-  color: var(--iprm-text-light);
-}
-
 /* Select dropdown -- прибираємо native-стрілку браузера і малюємо свою.
    Без appearance:none було видно дві стрілки поруч (native + background-image). */
 /* Контроли панелі фільтрів розтягуються, заповнюючи ширину контейнера

@@ -2172,9 +2172,18 @@ select.form-input:-moz-focusring {
   text-shadow: 0 0 0 var(--iprm-text);
 }
 
-.form-section .form-hint {
+/* Підказка поля -- скрізь, а не лише в картці форми (так само, як
+   .form-error нижче). Була `.form-section .form-hint`, і поза карткою
+   (форма пароля на complete_pay, поле файлу на сторінці презентацій
+   тренера) підказка лишалась голим абзацом тексту; адмінка ж тримала
+   власну копію тих самих двох властивостей в admin.css. Відступ -- лише в
+   картці форми, як і був: адмінські підказки стоять у своєму ритмі. */
+.form-hint {
   font-size: 12px;
   color: var(--iprm-text-light);
+}
+
+.form-section .form-hint {
   margin-top: 4px;
 }
 
