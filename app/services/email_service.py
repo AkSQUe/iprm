@@ -189,6 +189,11 @@ def _material_request_key(reservation, event, moment):
     return f'matreq:{reservation.id}:{event}:{stamp}'
 
 
+def _trainer_presentation_key(presentation):
+    """Одне завантаження -- один лист кожному адресату (далі _per_recipient_key)."""
+    return f'trainer-presentation-{presentation.id}'
+
+
 def _per_recipient_key(base, to):
     """Ключ конкретного листа: основа + короткий відбиток адреси.
 
@@ -1716,6 +1721,59 @@ class EmailService:
             idempotency_key=_trainer_proposal_key(proposal),
             lang='uk',
         )
+
+    @staticmethod
+    def send_trainer_presentation_notification(presentation):
+        """Тренер завантажив презентацію до заходу -- лист співробітникам.
+
+        Адресати -- активні користувачі з ролями super_admin, admin,
+        content_editor (trainer_presentation_service.RECIPIENT_ROLES). У листі
+        посилання на завантаження в адмінці, а не вкладення: файл до 50 МБ
+        пошта не пропустила б, і кожен адресат зберігав би власну копію байтів
+        в email_attachments. Повертає результати send_email на кожного адресата.
+        """
+        from flask import url_for
+        from app.models.site_settings import SiteSettings
+        from app.services import trainer_presentation_service as tps
+
+        recipients = tps.recipient_emails()
+        if not recipients:
+            logger.warning('Trainer presentation %s: no staff recipients '
+                           '(super_admin/admin/content_editor)', presentation.id)
+            return []
+        base = (SiteSettings.get().website_url or '').rstrip('/')
+
+        def _abs(path):
+            return f'{base}{path}' if base else path
+
+        instance = presentation.instance
+        trainer = presentation.trainer
+        context = {
+            'presentation': presentation,
+            'trainer': trainer,
+            'instance': instance,
+            'download_url': _abs(url_for('admin.trainer_presentation_download',
+                                         presentation_id=presentation.id)),
+            'instance_url': _abs(url_for('admin.instance_edit', instance_id=instance.id)),
+        }
+        subject = (f'Презентація від тренера {normalize_whitespace(trainer.full_name)}: '
+                   f'{normalize_whitespace(instance.effective_title or "захід")}')
+        base_key = _trainer_presentation_key(presentation)
+        results = []
+        for to in recipients:
+            try:
+                results.append(EmailService.send_email(
+                    to=to, subject=subject,
+                    template_name='trainer_presentation_uploaded',
+                    context=context, trigger='trainer_presentation',
+                    idempotency_key=_per_recipient_key(base_key, to), lang='uk',
+                ))
+            except Exception:
+                db.session.rollback()
+                logger.exception('Trainer presentation %s: send_email failed for %s',
+                                 presentation.id, to)
+                results.append(None)
+        return results
 
     @staticmethod
     def send_trainer_proposal_status(proposal):

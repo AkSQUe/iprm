@@ -398,3 +398,32 @@ def trainer_card_json(trainer_id):
         'missing': missing,
         'edit_url': url_for('admin.trainer_edit', trainer_id=trainer.id),
     })
+
+
+@admin_bp.route('/trainers/presentations/<int:presentation_id>/download')
+@permission_required('trainers.view')
+def trainer_presentation_download(presentation_id):
+    """Презентація тренера до заходу -- байт у байт, як завантажив тренер.
+
+    Посилання на цей маршрут іде в лист співробітникам. Файл приватний
+    (поза static), тож no-store: проміжні кеші й спільний комп'ютер не
+    повинні тримати копію.
+    """
+    from flask import abort, send_file
+    from app.models.trainer_presentation import TrainerPresentation
+    from app.services import trainer_presentation_service as tps
+
+    presentation = db.session.get(TrainerPresentation, presentation_id)
+    if presentation is None:
+        abort(404)
+    path = tps.file_path(presentation)
+    if not path.is_file():
+        logger.error('Trainer presentation %s: file missing on disk (%s)',
+                     presentation.id, path)
+        abort(404)
+    response = send_file(
+        path, mimetype=presentation.mimetype, as_attachment=True,
+        download_name=presentation.original_filename, max_age=0,
+    )
+    response.headers['Cache-Control'] = 'no-store, private'
+    return response

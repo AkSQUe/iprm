@@ -1,0 +1,42 @@
+{% extends "emails/base.html" %}
+{% from "emails/_macros.html" import button_primary, detail_row, spacer %}
+
+{% block title %}Презентація від тренера{% endblock %}
+
+{% block preview_text %}{{ trainer.full_name }} -- {{ instance.effective_title or 'захід' }}{% endblock %}
+
+{% block content %}
+    <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #17131D; line-height: 1.25;">
+        Нова презентація до заходу
+    </h1>
+
+    <p class="mobile-text" style="margin: 0 0 24px 0; font-size: 15px; color: #625A6D; line-height: 1.5;">
+        Тренер завантажив презентацію в кабінеті. Файл доступний в адмінці
+        для ролей із переглядом тренерів.
+    </p>
+
+    <table role="presentation" style="width: 100%; margin-bottom: 24px; background-color: #F7F4FB; border: 1px solid #E9E4EF; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td style="padding: 20px 24px;">
+                <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #17131D; line-height: 1.3;">
+                    {{ instance.effective_title or 'Захід' }}
+                </p>
+                {{ detail_row("Тренер", trainer.full_name) }}
+                {{ detail_row("Дата", instance.start_date | kyiv('%d.%m.%Y') if instance.start_date else "уточнюється") }}
+                {% if instance.city %}{{ detail_row("Місто", instance.city.name) }}{% endif %}
+                {{ detail_row("Файл", presentation.original_filename) }}
+                {{ detail_row("Розмір", presentation.size_label) }}
+            </td>
+        </tr>
+    </table>
+
+    {{ button_primary("Завантажити презентацію", download_url) }}
+
+    {{ spacer(12) }}
+
+    <p class="mobile-text" style="margin: 0; font-size: 14px; color: #625A6D; line-height: 1.5;">
+        <a href="{{ instance_url }}" style="color: #7437C9;">Відкрити захід в адмінці</a>
+    </p>
+
+    {{ spacer(16) }}
+{% endblock %}
