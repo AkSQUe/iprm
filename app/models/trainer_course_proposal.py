@@ -20,7 +20,7 @@ class TrainerCourseProposal(TimestampMixin, db.Model):
         (ACCEPTED, 'Прийнято'),
     ]
     STATUS_BADGES = {DRAFT: 'draft', SUBMITTED: 'pending', ACCEPTED: 'active'}
-    TITLE_MAX = 100
+    TITLE_MAX = 120
     THESES_MAX = 10
 
     id = db.Column(BigIntPK, primary_key=True)

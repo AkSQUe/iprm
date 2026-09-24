@@ -45,12 +45,12 @@ def test_create_draft(client):
     assert p.theses == ['Методи визначення КОС', 'Фізіологічні межі рН', 'Буферні системи']
 
 
-def test_title_of_100_chars_is_accepted(client):
-    # Межу підняли з 50 до 100 на прохання куратора: назви доповідей
+def test_title_at_limit_is_accepted(client):
+    # Межу підняли з 50 до 120 на прохання куратора: назви доповідей
     # ("Багата тромбоцитами плазма PRP та інші аутологічні ...") у 50 не
     # вміщались. Рівно на межі -- приймається й зберігається цілком.
     trainer = _setup(client)
-    title = 'я' * 100
+    title = 'я' * TrainerCourseProposal.TITLE_MAX
     resp = client.post('/trainer/proposals/new', data={**DATA, 'title': title})
     assert resp.status_code == 302
     p = TrainerCourseProposal.query.filter_by(trainer_id=trainer.id).one()
@@ -59,14 +59,14 @@ def test_title_of_100_chars_is_accepted(client):
 
 def test_title_limit_and_theses_limit(client):
     _setup(client)
-    resp = client.post('/trainer/proposals/new', data={**DATA, 'title': 'x' * 101})
+    resp = client.post('/trainer/proposals/new', data={**DATA, 'title': 'x' * (TrainerCourseProposal.TITLE_MAX + 1)})
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
     assert 'form-error' in html
     # C13: межа -- з TrainerCourseProposal.TITLE_MAX/THESES_MAX через
     # %(max)d, а не окремий рядок "50": розсинхрон між повідомленням і
     # реальним обмеженням тут неможливий за конструкцією.
-    assert 'Не більше 100 символів' in html
+    assert f'Не більше {TrainerCourseProposal.TITLE_MAX} символів' in html
     assert f'maxlength="{TrainerCourseProposal.TITLE_MAX}"' in html
     resp = client.post('/trainer/proposals/new',
                        data={**DATA, 'theses': '\n'.join(str(i) for i in range(11))})
