@@ -73,7 +73,7 @@ class EmailLog(TimestampMixin, db.Model):
             "'email_confirm', 'course_request', 'certificate', 'blog_comment', "
             "'password_reset', 'backup_failure', 'backup_report', 'materials', "
             "'referral', 'meta_lead', 'transfer', 'quiz', 'trainer_proposal', "
-            "'trainer_requisites', 'material_request', 'test')",
+            "'trainer_requisites', 'material_request', 'trainer_presentation', 'test')",
             name='ck_email_logs_trigger',
         ),
         db.Index('ix_email_logs_created_at', 'created_at'),
@@ -127,6 +127,9 @@ class EmailLog(TimestampMixin, db.Model):
         # на спільному тригері нагадування з'їдало б заявку, що прийшла в ту
         # саму хвилину на ту саму адресу.
         ('material_request', 'Заявка на матеріали'),
+        # Тренер завантажив презентацію до заходу -- лист співробітникам
+        # (super_admin, admin, content_editor) із посиланням на файл.
+        ('trainer_presentation', 'Презентація тренера'),
         ('test', 'Тест'),
     ]
 

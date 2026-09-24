@@ -28,6 +28,9 @@ app/translations/**/*.mo
 # the Jinja template lives -- is NOT ignored.
 /certificates/
 
+# Trainer event presentations (private uploads, persisted on server, not in repo).
+/trainer_presentations/
+
 # Database backups (created by backup service, persisted on server)
 /backups/
 

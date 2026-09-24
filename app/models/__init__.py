@@ -7,6 +7,7 @@ from app.models.medical_profile import MedicalProfile
 from app.models.trainer import Trainer
 from app.models.trainer_profile import TrainerProfile
 from app.models.trainer_course_proposal import TrainerCourseProposal
+from app.models.trainer_presentation import TrainerPresentation
 from app.models.program_block import ProgramBlock
 from app.models.registration import EventRegistration
 from app.models.registration_transfer import RegistrationTransfer
@@ -57,6 +58,7 @@ __all__ = [
     'Role', 'Permission', 'UserRole',
     'AuthIdentity',
     'MedicalProfile', 'Trainer', 'TrainerProfile', 'TrainerCourseProposal',
+    'TrainerPresentation',
     'ProgramBlock', 'EventRegistration',
     'RegistrationTransfer',
     'Certificate', 'LecturerCertificate',

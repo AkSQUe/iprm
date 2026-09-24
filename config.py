@@ -26,6 +26,17 @@ class Config:
     CERTIFICATE_FOLDER = os.environ.get('CERTIFICATE_FOLDER') or os.path.join(
         os.path.dirname(os.path.abspath(__file__)), 'certificates',
     )
+    # Презентації тренерів до заходів (TrainerPresentation). Приватні, як і
+    # сертифікати: поза app/static, віддаються лише маршрутом адмінки з
+    # перевіркою прав. Корінь проєкту + exclude у rsync --delete
+    # (.github/workflows/deploy.yml) -- інакше деплой стирав би завантажене.
+    TRAINER_PRESENTATION_FOLDER = os.environ.get('TRAINER_PRESENTATION_FOLDER') or os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), 'trainer_presentations',
+    )
+    # Презентація з відео легко важить десятки МБ: межа вища за глобальний
+    # MAX_CONTENT_LENGTH і діє лише на маршруті завантаження (IprmRequest в
+    # app/__init__.py; у nginx -- окрема location у iprm-app.conf).
+    TRAINER_PRESENTATION_MAX_BYTES = 50 * 1024 * 1024
     # Медіа-реєстр (MediaFile). Зберігається ПОЗА app/static -- щоб деплой
     # (rsync --delete) не зачіпав завантаження. На проді віддається nginx-alias
     # (/media/ -> {root}/media/), у dev/fallback -- Flask-роутом media.serve.
