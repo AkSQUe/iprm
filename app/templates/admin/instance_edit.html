@@ -381,6 +381,51 @@
     {% endif %}
   </div>
 
+  {% if can('trainers.view') %}
+  <div class="form-section" id="presentations">
+    <h3 class="admin-form__section-title">Презентації тренерів</h3>
+    {% if presentations %}
+    {# Файли, які тренери завантажили в кабінеті (/trainer/presentations).
+       Той самий маршрут завантаження, що в листі співробітникам. #}
+    <div class="admin-table-wrap">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Тренер</th>
+          <th>Файл</th>
+          <th>Завантажено</th>
+          <th>Лист співробітникам</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in presentations %}
+        <tr>
+          <td>{{ p.trainer.full_name if p.trainer else '—' }}</td>
+          <td>
+            <a href="{{ url_for('admin.trainer_presentation_download', presentation_id=p.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm">
+              {{ icon('download') }} {{ p.original_filename }}
+            </a>
+            {{ p.size_label }}
+          </td>
+          <td>{{ p.created_at | kyiv('%d.%m.%Y %H:%M') }}</td>
+          <td>
+            {% if p.notified_at %}
+            <span class="badge badge--success">Надіслано {{ p.notified_at | kyiv('%d.%m.%Y %H:%M') }}</span>
+            {% else %}
+            <span class="badge badge--warning">Лист не надіслано</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% else %}
+    <p class="admin-speakers__empty">Тренери ще не завантажили презентацій до цього заходу.</p>
+    {% endif %}
+  </div>
+  {% endif %}
+
   <form method="POST" action="{{ url_for('admin.instance_delete', instance_id=instance.id) }}" class="admin-form__danger-zone" data-confirm="Видалити проведення?" data-confirm-ok="Видалити проведення" data-confirm-danger>
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">Видалити проведення</button>

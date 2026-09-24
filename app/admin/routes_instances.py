@@ -472,6 +472,7 @@ def _render_instance_form(form, instance, preselected_course_id=None):
     помилки вже зникали з форми успадковані значення.
     """
     from app.services import lecturer_certificates as lc_svc
+    from app.services import trainer_presentation_service as tps
     from app.services import trainer_resume_service as rs
 
     certs = _lecturer_certs_by_trainer(instance) if instance else {}
@@ -487,6 +488,8 @@ def _render_instance_form(form, instance, preselected_course_id=None):
         issued_bpr=_issued_bpr(instance),
         lecturers=lecturers,
         lecturer_certs=certs,
+        # Презентації, які тренери завантажили до цієї дати з кабінету.
+        presentations=tps.for_instance(instance.id) if instance else [],
         # Сертифікат, виданий тренеру, якого зі складу вже прибрали (або який
         # дістався заходу успадкуванням, а курс потім переграли). Рядка в
         # переліку тренерів у нього немає, але сам документ існує, має номер

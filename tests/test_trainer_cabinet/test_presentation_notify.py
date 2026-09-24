@@ -102,3 +102,16 @@ def test_admin_download_of_missing_file_is_404(client):
     db.session.commit()
     switch_user(client, admin)
     assert client.get(f'/admin/trainers/presentations/{pres.id}/download').status_code == 404
+
+
+def test_instance_page_lists_presentations_with_download_links(client):
+    pres = _presentation('Слайди до заходу.pdf')
+    admin = make_user_with_role('admin', email='tpn-inst-admin@test.com')
+    db.session.commit()
+    switch_user(client, admin)
+    html = client.get(f'/admin/instances/{pres.instance_id}/edit').get_data(as_text=True)
+    assert 'Презентації тренерів' in html
+    assert 'Слайди до заходу.pdf' in html
+    assert f'/admin/trainers/presentations/{pres.id}/download' in html
+    # Лист не пішов (notified_at порожній) -- це видно тут.
+    assert 'Лист не надіслано' in html
