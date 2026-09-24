@@ -6,9 +6,10 @@
     визначає сервер (COLUMNS у trainer_resume_service), тож підписи тут
     беруться з реєстру, а не вписуються вручну.
 
-    Розмітка -- готовий компонент дизайн-системи `.modal` (modal.css +
-    modal.js, вже показаний у каталозі /admin/design-system): сторінка,
-    що підключає цей партіал, мусить підключити й modal.css/modal.js.
+    Розмітка -- готові компоненти дизайн-системи: `.modal` (modal.css +
+    modal.js) і групи вибору `.choice-cards` / `.choice-list` (choice.css),
+    обидва показані в каталозі /admin/design-system. Сторінка, що підключає
+    цей партіал, мусить підключити modal.css, choice.css і modal.js.
 
     Очікує в контексті:
     resume_columns      -- список ResumeColumn, available_columns(current_user)
@@ -22,7 +23,7 @@
   <div class="modal__backdrop" data-modal-close></div>
   <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="resume-columns-dialog-title">
     <div class="modal__head">
-      <h3 class="modal__title" id="resume-columns-dialog-title">Колонки резюме</h3>
+      <h3 class="modal__title" id="resume-columns-dialog-title">Вивантаження резюме</h3>
       <button type="button" class="modal__close" data-modal-close aria-label="Закрити">&times;</button>
     </div>
     <form method="post" action="{{ url_for('admin.trainers_resume_pdf') }}"
@@ -33,27 +34,34 @@
            першою й за замовчуванням: вона й іде в пакет документів до
            реєстру БПР. Запит без цього поля сервер віддає таблицею, як
            до появи форми. #}
-        <fieldset class="form-group">
+        <fieldset>
           <legend>Вигляд документа</legend>
-          <div class="form-checkbox">
-            <input type="radio" name="layout" value="form" id="resume-layout-form" checked>
-            <label for="resume-layout-form">Форма резюме (БПР) — окремий аркуш на кожного тренера</label>
-          </div>
-          <div class="form-checkbox">
-            <input type="radio" name="layout" value="table" id="resume-layout-table">
-            <label for="resume-layout-table">Зведена таблиця — усі тренери разом</label>
+          <div class="choice-cards">
+            <label class="choice-cards__option">
+              <input type="radio" name="layout" value="form" id="resume-layout-form" checked>
+              <span>Форма резюме (БПР)<span class="choice-cards__note">Окремий аркуш на кожного тренера</span></span>
+            </label>
+            <label class="choice-cards__option">
+              <input type="radio" name="layout" value="table" id="resume-layout-table">
+              <span>Зведена таблиця<span class="choice-cards__note">Усі тренери разом</span></span>
+            </label>
           </div>
         </fieldset>
-        <p class="form-hint">Оберіть, які поля анкети заповнити. У формі
-          невибрані рядки лишаються порожніми — для заповнення вручну.</p>
-        {% for column in resume_columns %}
-        <div class="form-checkbox">
-          <input type="checkbox" name="columns" value="{{ column.key }}"
-                 id="resume-col-{{ column.key }}"
-                 {% if column.key in resume_default_keys %}checked{% endif %}>
-          <label for="resume-col-{{ column.key }}">{{ column.label }}</label>
-        </div>
-        {% endfor %}
+        <fieldset>
+          <legend>Поля анкети</legend>
+          <p class="form-hint">Оберіть, які поля заповнити. У формі невибрані
+            рядки лишаються порожніми — для заповнення вручну.</p>
+          <div class="choice-list">
+            {% for column in resume_columns %}
+            <label class="choice-list__item" for="resume-col-{{ column.key }}">
+              <input type="checkbox" name="columns" value="{{ column.key }}"
+                     id="resume-col-{{ column.key }}"
+                     {% if column.key in resume_default_keys %}checked{% endif %}>
+              <span>{{ column.label }}</span>
+            </label>
+            {% endfor %}
+          </div>
+        </fieldset>
         {# Заповнюється resume-columns-dialog.js перед відкриттям вікна. #}
         <div id="resume-columns-ids"></div>
         {# Зі сторінки проведення маршрут додає номер заходу в імʼя файлу:

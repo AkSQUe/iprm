@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-i18n-tabs.css') }}?v={{ assets_version }}">
 {% if instance and lecturers %}<link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css') }}?v={{ assets_version }}">{% endif %}
+{% if instance and lecturers %}<link rel="stylesheet" href="{{ url_for('static', filename='css/choice.css') }}?v={{ assets_version }}">{% endif %}
 {% endblock %}
 
 {% block content %}

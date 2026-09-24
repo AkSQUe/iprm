@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-trainers.css') }}?v={{ assets_version }}">
 {% if trainers %}<link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css') }}?v={{ assets_version }}">{% endif %}
+{% if trainers %}<link rel="stylesheet" href="{{ url_for('static', filename='css/choice.css') }}?v={{ assets_version }}">{% endif %}
 {% endblock %}
 
 {% from 'admin/partials/_filter_bar.html' import filter_bar, empty_state  %}
