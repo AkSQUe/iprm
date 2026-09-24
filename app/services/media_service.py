@@ -14,6 +14,8 @@ from datetime import datetime, timezone
 from uuid import uuid4
 
 from flask import current_app
+from sqlalchemy import event
+from sqlalchemy.orm import Session
 
 from app.extensions import db
 from app.models.media_file import MediaFile
@@ -177,6 +179,40 @@ def _join(rel_dir, name):
     return f'{rel_dir}/{name}' if rel_dir else name
 
 
+# Журнал перейменувань поточної транзакції. rename_for_entity рухає файли на
+# диску ДО коміту (новий file_path іде в ту саму транзакцію), тож якщо коміт
+# падає, БД повертає старий шлях, а файл уже лежить під новим іменем:
+# зображення на сайті ламається, а media-prune-orphans згодом зносить файл.
+# Журнал живе в session.info: успішний коміт його очищає, а транзакція, що
+# скінчилась без коміту, повертає файли на місце. Так відкат покриває всі
+# місця виклику, зокрема ті, де коміт робить уже маршрут.
+_RENAME_JOURNAL = 'media_renames'
+
+
+def _journal_rename(old_abs, new_abs):
+    db.session.info.setdefault(_RENAME_JOURNAL, []).append((old_abs, new_abs))
+
+
+@event.listens_for(Session, 'after_commit')
+def _forget_renames(session):
+    session.info.pop(_RENAME_JOURNAL, None)
+
+
+@event.listens_for(Session, 'after_transaction_end')
+def _undo_renames(session, transaction):
+    if transaction.parent is not None:
+        return
+    moves = session.info.pop(_RENAME_JOURNAL, None)
+    for old_abs, new_abs in reversed(moves or []):
+        try:
+            if os.path.exists(new_abs) and not os.path.exists(old_abs):
+                os.rename(new_abs, old_abs)
+        except OSError:
+            logger.exception('Failed to undo media rename %s -> %s', old_abs, new_abs)
+    if moves:
+        logger.warning('Transaction rolled back: undid %d media rename(s)', len(moves))
+
+
 def rename_for_entity(media, slug, index=None):
     """Перейменувати фізичні файли media у читабельну схему {slug}-{usage}[-N].
 
@@ -206,6 +242,7 @@ def rename_for_entity(media, slug, index=None):
     try:
         if os.path.exists(old_abs):
             os.rename(old_abs, new_abs)
+            _journal_rename(old_abs, new_abs)
     except OSError:
         logger.exception('Failed to rename media %s main file', media.id)
         return {}  # media лишається з поточним іменем -- ФС↔БД консистентні
@@ -222,6 +259,7 @@ def rename_for_entity(media, slug, index=None):
         try:
             if os.path.exists(vsrc):
                 os.rename(vsrc, vdst)
+                _journal_rename(vsrc, vdst)
             mapping[_media_url(vpath)] = _media_url(nvp)
             new_variants[ctx] = nvp
         except OSError:

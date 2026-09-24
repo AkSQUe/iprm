@@ -111,6 +111,69 @@ class TestRenameForEntity:
         assert os.path.exists(m1.abs_path) and os.path.exists(m2.abs_path)
 
 
+class TestRenameUndoneOnRollback:
+    """rename_for_entity рухає файли до коміту. Якщо транзакція не
+    закомітилась, БД повертає старий file_path -- і файл мусить повернутись
+    під старе ім'я, інакше зображення на сайті зламане."""
+
+    def _committed(self, usage='photo'):
+        m, _ = media_service.create_from_upload(_png(), usage_type=usage)
+        db.session.commit()
+        return m, m.file_path, m.abs_path
+
+    def test_rollback_moves_files_back(self, media_root):
+        m, old_path, old_abs = self._committed()
+        old_variants = [os.path.join(media_root, *v.split('/'))
+                        for v in m.responsive_variants.values()]
+        media_service.rename_for_entity(m, 'ivan-petrenko')
+        new_abs = m.abs_path
+        assert os.path.exists(new_abs) and not os.path.exists(old_abs)
+
+        db.session.rollback()
+
+        assert os.path.exists(old_abs)
+        assert not os.path.exists(new_abs)
+        assert all(os.path.exists(v) for v in old_variants)
+        db.session.refresh(m)
+        assert m.file_path == old_path
+
+    def test_commit_keeps_new_names(self, media_root):
+        m, _, old_abs = self._committed()
+        media_service.rename_for_entity(m, 'ivan-petrenko')
+        db.session.commit()
+        db.session.rollback()  # наступна транзакція не чіпає вже закомічене
+        assert os.path.exists(m.abs_path)
+        assert m.file_path.endswith('ivan-petrenko-photo.webp')
+        assert not os.path.exists(old_abs)
+
+    def test_failed_commit_in_attach_course_media(self, media_root, monkeypatch):
+        """Реальне місце виклику: коміт падає, attach_course_media робить
+        rollback -- файл обкладинки лишається там, куди вказує БД."""
+        from uuid import uuid4
+        from app.models.course import Course
+        from app.services import course_service
+
+        m, old_path, old_abs = self._committed(usage='hero')
+        course = Course(title='Курс', slug=f'undo-{uuid4().hex[:6]}',
+                        event_type='course', is_active=True, hero_media_id=m.id)
+        db.session.add(course)
+        db.session.commit()
+
+        real_commit = db.session.commit
+
+        def failing_commit():
+            db.session.flush()
+            raise RuntimeError('db went away')
+
+        monkeypatch.setattr(db.session, 'commit', failing_commit)
+        course_service.attach_course_media(course)
+        monkeypatch.setattr(db.session, 'commit', real_commit)
+
+        db.session.refresh(m)
+        assert m.file_path == old_path
+        assert os.path.exists(old_abs)
+
+
 class TestPruneOrphans:
     def test_prunes_old_unattached_only(self, app, media_root):
         from datetime import timedelta
