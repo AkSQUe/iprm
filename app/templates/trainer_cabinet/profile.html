@@ -46,7 +46,9 @@
             {{ field(form.birth_date) }}
             {{ field(form.phone) }}
             {{ field(form.email) }}
-            {{ field(form.education, wide=True) }}
+            {# Освіта й спеціальність -- пара в один ряд: спеціальність справа. #}
+            {{ field(form.education) }}
+            {{ field(form.specialty) }}
             {{ field(form.position_titles, wide=True) }}
             {{ field(form.workplace, wide=True) }}
             {{ field(form.professional_certificates, wide=True) }}

@@ -41,6 +41,10 @@ class TrainerProfile(TimestampMixin, db.Model):
     full_name = db.Column(db.String(200))
     birth_date = db.Column(db.Date)
     education = db.Column(db.Text)
+    # Спеціальність за освітою -- окремо від освіти (заклади, роки): у
+    # таблиці резюме це своя колонка, у формі БПР -- підписаний рядок у
+    # клітинці освіти (окремого рядка бланк не має).
+    specialty = db.Column(db.String(255))
     position_titles = db.Column(db.Text)
     workplace = db.Column(db.Text)
     # Професійні сертифікати для резюме, яке подають до реєстру БПР. Один

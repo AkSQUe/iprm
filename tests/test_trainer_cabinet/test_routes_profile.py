@@ -234,3 +234,33 @@ def test_professional_certificates_is_saved(client):
     assert resp.status_code == 200
     db.session.refresh(trainer)
     assert trainer.profile.professional_certificates == text
+
+
+def test_specialty_is_saved_and_rendered_right_after_education(client):
+    """Спеціальність -- поруч з освітою (справа від неї в сітці анкети):
+    поле йде в розмітці одразу після освіти, обидва -- півширини."""
+    user = make_user()
+    trainer = make_trainer(user)
+    login(client, user)
+    resp = client.post('/trainer/profile', data=_data(specialty='Дерматовенерологія'),
+                       follow_redirects=True)
+    assert resp.status_code == 200
+    db.session.refresh(trainer)
+    assert trainer.profile.specialty == 'Дерматовенерологія'
+
+    html = client.get('/trainer/profile').get_data(as_text=True)
+    education_at = html.index('name="education"')
+    specialty_at = html.index('name="specialty"')
+    assert education_at < specialty_at < html.index('name="position_titles"')
+    assert 'value="Дерматовенерологія"' in html
+
+
+def test_specialty_is_optional_for_completeness(client):
+    """Нове поле не робить наявні анкети неповними."""
+    user = make_user()
+    trainer = make_trainer(user)
+    login(client, user)
+    client.post('/trainer/profile', data=_data(), follow_redirects=True)
+    db.session.refresh(trainer)
+    assert trainer.profile.specialty is None
+    assert trainer.profile.is_complete

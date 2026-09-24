@@ -7270,6 +7270,9 @@ msgstr "Add certificate"
 msgid "Професійні сертифікати (по одному в рядку)"
 msgstr "Professional certificates (one per line)"
 
+msgid "Спеціальність"
+msgstr "Specialty"
+
 msgid "Не вдалося прочитати дані форми. Оновіть сторінку й спробуйте ще раз."
 msgstr "Could not read the form data. Refresh the page and try again."
 

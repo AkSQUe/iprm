@@ -428,3 +428,15 @@ def test_return_textarea_has_visible_label(client):
     label_tag = html[html.rindex('<label', 0, label_pos):html.index('</label>', label_pos)]
     assert 'visually-hidden' in label_tag
     assert 'Коментар для тренера' in label_tag
+
+
+def test_questionnaire_shows_specialty_after_education(client):
+    from app.models.trainer_profile import TrainerProfile
+    _admin(client)
+    trainer = make_trainer(make_user())
+    db.session.add(TrainerProfile(trainer_id=trainer.id, education='КНМУ, 2004',
+                                  specialty='Дерматовенерологія'))
+    db.session.commit()
+    html = client.get(f'/admin/trainers/{trainer.id}/questionnaire').get_data(as_text=True)
+    assert 'Дерматовенерологія' in html
+    assert html.index('Освіта') < html.index('Спеціальність') < html.index('Посада та регалії')

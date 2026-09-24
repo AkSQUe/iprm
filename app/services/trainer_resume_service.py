@@ -50,6 +50,8 @@ COLUMNS = (
     ResumeColumn('full_name', 'ПІБ', _full_name, None),
     ResumeColumn('education', 'Освіта',
                  _profile_field('education'), None),
+    ResumeColumn('specialty', 'Спеціальність',
+                 _profile_field('specialty'), None),
     ResumeColumn('position_titles', 'Посада та регалії',
                  _profile_field('position_titles'), None),
     ResumeColumn('workplace', 'Місце роботи, місто',
@@ -71,7 +73,7 @@ COLUMNS = (
 # вивантаження форми мало б порожні «Засоби зв'язку». Дата народження тут
 # теж, але `normalize_keys` пропускає її лише тим, хто має trainers.finance.
 DEFAULT_KEYS = (
-    'full_name', 'birth_date', 'email', 'phone', 'education',
+    'full_name', 'birth_date', 'email', 'phone', 'education', 'specialty',
     'position_titles', 'workplace', 'professional_certificates',
 )
 
@@ -80,15 +82,21 @@ DEFAULT_KEYS = (
 # Підписи й порядок -- дослівно з форми. Дані -- з тих самих геттерів COLUMNS,
 # тож форма й таблиця не можуть розійтися в тому, що показують.
 # «Інші відомості» -- посада та регалії: окремого рядка для них форма не має.
+# Спеціальність -- так само без свого рядка, тож іде в рядок освіти.
 FORM_ROWS = (
     ('Прізвище, власне ім’я, по батькові (за наявності)', ('full_name',)),
     ('Дата народження', ('birth_date',)),
     ('Засоби зв’язку (електронна адреса, номер телефону)', ('email', 'phone')),
-    ('Освіта (рівень освіти та навчальні заклади)', ('education',)),
+    ('Освіта (рівень освіти та навчальні заклади)', ('education', 'specialty')),
     ('Місце роботи', ('workplace',)),
     ('Професійні сертифікати', ('professional_certificates',)),
     ('Інші відомості', ('position_titles',)),
 )
+
+
+# Підпис значення всередині рядка форми, де воно стоїть поруч з іншими:
+# «Дерматовенерологія» під назвою закладу читалась би як ще один заклад.
+FORM_CAPTIONS = {'specialty': 'Спеціальність: '}
 
 
 def available_columns(user):
@@ -165,9 +173,12 @@ def build_form(trainers, keys):
     for trainer in trainers:
         rows = []
         for label, row_keys in FORM_ROWS:
-            parts = [str(by_key[k].getter(trainer) or '').strip()
-                     for k in row_keys if k in picked]
-            rows.append((label, '\n'.join(p for p in parts if p)))
+            parts = []
+            for k in row_keys:
+                value = str(by_key[k].getter(trainer) or '').strip() if k in picked else ''
+                if value:
+                    parts.append(FORM_CAPTIONS.get(k, '') + value)
+            rows.append((label, '\n'.join(parts)))
         pages.append(rows)
     return pages
 

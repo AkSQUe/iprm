@@ -167,6 +167,29 @@ def test_form_fills_rows_from_the_questionnaire(app):
     assert values['Інші відомості'] == 'к.мед.н., доцент'
 
 
+def test_form_education_row_carries_the_specialty(app):
+    """Окремого рядка «Спеціальність» в офіційному бланку немає -- вона
+    йде в рядок освіти, з підписом, щоб не читалась як ще один заклад."""
+    trainer = _profiled_trainer('Спеціальний Т.', education='КНМУ, 2004',
+                                specialty='Дерматовенерологія')
+    values = dict(rs.build_form([trainer], ['education', 'specialty'])[0])
+    assert values['Освіта (рівень освіти та навчальні заклади)'].splitlines() == [
+        'КНМУ, 2004', 'Спеціальність: Дерматовенерологія']
+
+
+def test_form_education_row_without_specialty_has_no_empty_caption(app):
+    trainer = _profiled_trainer('Безспеціальний Т.', education='КНМУ, 2004')
+    values = dict(rs.build_form([trainer], ['education', 'specialty'])[0])
+    assert values['Освіта (рівень освіти та навчальні заклади)'] == 'КНМУ, 2004'
+
+
+def test_specialty_is_its_own_table_column(app):
+    trainer = _profiled_trainer('Табличний Т.', specialty='Косметологія')
+    column = {c.key: c for c in rs.COLUMNS}['specialty']
+    assert column.label == 'Спеціальність'
+    assert column.getter(trainer) == 'Косметологія'
+
+
 def test_form_contacts_row_joins_email_and_phone(app):
     trainer = _profiled_trainer('Контактний Т.', email='a@example.com',
                                 phone='+380500000000')
@@ -224,5 +247,5 @@ def test_default_keys_cover_the_official_form(app):
     """За замовчуванням -- усе, з чого складається офіційна форма, інакше
     перше ж вивантаження дало б форму з порожніми «Засобами зв’язку»."""
     assert {'full_name', 'birth_date', 'email', 'phone', 'education',
-            'workplace', 'professional_certificates',
+            'specialty', 'workplace', 'professional_certificates',
             'position_titles'} <= set(rs.DEFAULT_KEYS)
