@@ -688,3 +688,91 @@ def certificate_report(cert_id):
                       g.trainer.id, cert.number)
     flash(_('Повідомлення надіслано куратору'), 'success')
     return redirect(url_for('trainer_cabinet.certificates'))
+
+
+@trainer_cabinet_bp.route('/presentations')
+@trainer_required
+def presentations():
+    """Найближчі заходи тренера з його презентаціями й формою завантаження."""
+    from app.services import trainer_presentation_service as tps
+
+    instances = svc.upcoming_instances(g.trainer)
+    return render_template('trainer_cabinet/presentations.html',
+                           trainer=g.trainer,
+                           instances=instances,
+                           files=tps.for_trainer(g.trainer, [i.id for i in instances]),
+                           accept=tps.ACCEPT_ATTR,
+                           max_mb=tps.max_mb())
+
+
+@trainer_cabinet_bp.route('/presentations/<int:instance_id>/upload', methods=['POST'])
+@trainer_required
+# Файл до 50 МБ лягає на диск одразу: без ліміту одна вкладка засипала б
+# диск, а кожне завантаження ще й шле лист усім співробітникам.
+@limiter.limit('20 per hour')
+def presentation_upload(instance_id):
+    """Прийняти презентацію до свого майбутнього заходу й сповістити
+    співробітників. Межа тіла запиту для цього маршруту -- IprmRequest."""
+    from app.services import trainer_presentation_service as tps
+    from app.services.email_service import EmailService
+
+    instance = _own_instance(instance_id)
+    back = redirect(url_for('trainer_cabinet.presentations'))
+    # Минулий чи скасований захід відкривається за прямим URL, але файлів
+    # на нього не приймаємо: лист про презентацію до того, що вже пройшло,
+    # нікому не потрібен.
+    if instance.id not in {i.id for i in svc.upcoming_instances(g.trainer)}:
+        flash(_('Цей захід уже пройшов або скасований: презентацію не прийнято.'), 'error')
+        return back
+
+    presentation, error = tps.save_upload(g.trainer, instance, request.files.get('file'),
+                                          uploader=current_user)
+    if error:
+        flash(error, 'error')
+        return back
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        tps.discard_file(presentation)
+        logger.exception('Failed to persist trainer presentation for instance %s', instance.id)
+        flash(_('Не вдалося зберегти файл. Спробуйте ще раз.'), 'error')
+        return back
+    audit_logger.info('Trainer %s uploaded presentation %s for instance %s (%s bytes)',
+                      g.trainer.id, presentation.id, instance.id, presentation.size_bytes)
+
+    # Збій пошти не скасовує завантаження: файл уже збережено, а незнятий
+    # notified_at видно в адмінці на сторінці проведення.
+    try:
+        results = EmailService.send_trainer_presentation_notification(presentation)
+        if any(r is not None for r in results or []):
+            presentation.notified_at = utcnow()
+            db.session.commit()
+    except Exception:
+        db.session.rollback()
+        logger.exception('Trainer presentation %s: staff notification failed', presentation.id)
+    flash(_('Презентацію завантажено, співробітників сповіщено.')
+          if presentation.notified_at else _('Презентацію завантажено.'), 'success')
+    return back
+
+
+@trainer_cabinet_bp.route('/presentations/file/<int:presentation_id>/delete', methods=['POST'])
+@trainer_required
+def presentation_delete(presentation_id):
+    from app.models.trainer_presentation import TrainerPresentation
+    from app.services import trainer_presentation_service as tps
+
+    presentation = db.session.get(TrainerPresentation, presentation_id)
+    # 404, а не 403 -- як у _own_instance: чужого файлу для тренера немає.
+    if presentation is None or presentation.trainer_id != g.trainer.id:
+        abort(404)
+    try:
+        tps.delete(presentation)
+    except Exception:
+        db.session.rollback()
+        logger.exception('Failed to delete trainer presentation %s', presentation_id)
+        flash(_('Помилка при видаленні'), 'error')
+        return redirect(url_for('trainer_cabinet.presentations'))
+    audit_logger.info('Trainer %s deleted presentation %s', g.trainer.id, presentation_id)
+    flash(_('Презентацію видалено'), 'success')
+    return redirect(url_for('trainer_cabinet.presentations'))

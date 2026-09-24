@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Презентації до заходів | Кабінет тренера | ІПРМ') }}{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+{# auth.css -- базовий .form-input (поле файлу), account.css -- картка й
+   рядок файлу; розкладка сторінки -- page-trainer-presentations.css. #}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-trainer-presentations.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="apple-page">
+  <section class="iprm-section" aria-labelledby="trainer-presentations-title">
+    <div class="iprm-section__inner">
+      <a href="{{ url_for('trainer_cabinet.index') }}" class="iprm-back-link">{{ _('Кабінет тренера') }}</a>
+
+      <header class="apple-section-head">
+        <span class="iprm-eyebrow">{{ _('Кабінет тренера') }}</span>
+        <h1 id="trainer-presentations-title" class="iprm-section__title"><span class="apple-gradient-text">{{ _('Презентації до заходів') }}</span></h1>
+        <p class="iprm-section__subtitle">{{ _('Завантажте презентацію до свого заходу — її отримають координатори ІПРМ') }}</p>
+      </header>
+
+      {% if not instances %}
+      <div class="iprm-empty-state">
+        <p>{{ _('У вас немає найближчих заходів.') }}</p>
+      </div>
+      {% else %}
+      <ul class="trainer-presentations">
+        {% for instance in instances %}
+        {% set own_files = files.get(instance.id, []) %}
+        <li class="account-card trainer-presentations__event">
+          <p class="account-card__text iprm-card-meta">
+            <span>{% if instance.start_date %}{{ instance.start_date | kyiv('%d.%m.%Y') }}{% else %}{{ _('Дата уточнюється') }}{% endif %}</span>
+            {% if instance.city %}<span>{{ instance.city.name }}</span>{% endif %}
+          </p>
+          <h2 class="iprm-block-title">{{ instance.effective_title }}</h2>
+
+          {% if own_files %}
+          <ul class="trainer-presentations__files" aria-label="{{ _('Завантажені презентації') }}">
+            {% for file in own_files %}
+            <li class="account-online__row">
+              <div class="account-online__body">
+                <h3 class="account-online__title">{{ file.original_filename }}</h3>
+                <p class="account-online__meta">{{ file.size_label }} · {{ file.created_at | kyiv('%d.%m.%Y %H:%M') }}</p>
+              </div>
+              <form method="POST" action="{{ url_for('trainer_cabinet.presentation_delete', presentation_id=file.id) }}"
+                    class="account-online__action" data-single-submit
+                    data-confirm="{{ _('Видалити презентацію? Координатори вже отримали лист із посиланням — після видалення воно перестане працювати.') }}"
+                    data-confirm-ok="{{ _('Видалити') }}" data-confirm-danger>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="apple-btn apple-btn--secondary apple-btn--sm">{{ _('Видалити') }}</button>
+              </form>
+            </li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+
+          <form method="POST" enctype="multipart/form-data" data-single-submit
+                action="{{ url_for('trainer_cabinet.presentation_upload', instance_id=instance.id) }}"
+                class="trainer-presentations__upload">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="trainer-presentations__row">
+              <div class="form-group trainer-presentations__field">
+                <label for="presentation-file-{{ instance.id }}">{{ _('Файл презентації') }}</label>
+                <input type="file" name="file" id="presentation-file-{{ instance.id }}" class="form-input"
+                       accept="{{ accept }}" required aria-describedby="presentation-hint-{{ instance.id }}">
+              </div>
+              <button type="submit" class="apple-btn apple-btn--primary apple-btn--sm">{{ _('Завантажити презентацію') }}</button>
+            </div>
+            <p class="form-hint" id="presentation-hint-{{ instance.id }}">{{ _('PDF, PPTX, PPT, KEY або ODP, до %(mb)d МБ', mb=max_mb) }}</p>
+          </form>
+        </li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </div>
+  </section>
+</div>
+{% endblock %}

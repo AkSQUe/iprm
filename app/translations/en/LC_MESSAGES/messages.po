@@ -7330,3 +7330,68 @@ msgstr "Move down"
 
 msgid "Нове"
 msgstr "New"
+
+msgid "Оберіть файл презентації."
+msgstr "Choose a presentation file."
+
+msgid "Дозволені формати: PDF, PPTX, PPT, KEY, ODP."
+msgstr "Allowed formats: PDF, PPTX, PPT, KEY, ODP."
+
+msgid "Файл порожній."
+msgstr "The file is empty."
+
+msgid "Вміст файлу не відповідає його розширенню."
+msgstr "The file content does not match its extension."
+
+#, python-format
+msgid "Файл завеликий: не більше %(mb)d МБ."
+msgstr "The file is too large: %(mb)d MB maximum."
+
+msgid "Не вдалося зберегти файл. Спробуйте ще раз."
+msgstr "Could not save the file. Please try again."
+
+msgid "Презентації до заходів"
+msgstr "Event presentations"
+
+msgid "Завантаження презентації до вашого заходу"
+msgstr "Upload a presentation for your event"
+
+msgid "Презентації до заходів | Кабінет тренера | ІПРМ"
+msgstr "Event presentations | Trainer account | IPRM"
+
+msgid "Завантажте презентацію до свого заходу — її отримають координатори ІПРМ"
+msgstr "Upload a presentation for your event — IPRM coordinators will receive it"
+
+msgid "Завантажені презентації"
+msgstr "Uploaded presentations"
+
+msgid "Видалити презентацію? Координатори вже отримали лист із посиланням — після видалення воно перестане працювати."
+msgstr "Delete the presentation? Coordinators have already received an email with the link — it will stop working after deletion."
+
+msgid "Файл презентації"
+msgstr "Presentation file"
+
+msgid "Завантажити презентацію"
+msgstr "Upload presentation"
+
+#, python-format
+msgid "PDF, PPTX, PPT, KEY або ODP, до %(mb)d МБ"
+msgstr "PDF, PPTX, PPT, KEY or ODP, up to %(mb)d MB"
+
+msgid "Презентація до заходу"
+msgstr "Event presentation"
+
+msgid "Оберіть захід і завантажте презентацію — її отримають координатори ІПРМ."
+msgstr "Choose an event and upload a presentation — IPRM coordinators will receive it."
+
+msgid "Цей захід уже пройшов або скасований: презентацію не прийнято."
+msgstr "This event has already passed or was cancelled: the presentation was not accepted."
+
+msgid "Презентацію завантажено, співробітників сповіщено."
+msgstr "Presentation uploaded, staff notified."
+
+msgid "Презентацію завантажено."
+msgstr "Presentation uploaded."
+
+msgid "Презентацію видалено"
+msgstr "Presentation deleted"

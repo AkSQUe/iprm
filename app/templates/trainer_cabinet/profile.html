@@ -131,6 +131,16 @@
           <a href="{{ url_for('trainer_cabinet.proposal_new') }}" class="apple-btn apple-btn--outline apple-btn--sm">{{ _('Додати курс / доповідь') }}</a>
         </div>
       </section>
+
+      {# Презентація -- до конкретного заходу, тож завантаження живе на
+         сторінці заходів тренера; тут -- вхід до неї з анкети. #}
+      <section class="form-section reg-form-section" aria-labelledby="tp-presentations">
+        <h2 id="tp-presentations" class="form-section__title reg-form-section__title">{{ _('Презентація до заходу') }}</h2>
+        <p class="form-hint">{{ _('Оберіть захід і завантажте презентацію — її отримають координатори ІПРМ.') }}</p>
+        <div class="trainer-profile__add">
+          <a href="{{ url_for('trainer_cabinet.presentations') }}" class="apple-btn apple-btn--outline apple-btn--sm">{{ _('Завантажити презентацію') }}</a>
+        </div>
+      </section>
     </div>
   </section>
 </div>

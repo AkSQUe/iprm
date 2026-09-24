@@ -3,7 +3,7 @@ import logging
 import os
 import time
 
-from flask import Flask, request, url_for
+from flask import Flask, Request, current_app, request, url_for
 from flask_cors import CORS
 from config import config
 from app.extensions import db, login_manager, csrf, migrate, limiter, mail, babel
@@ -104,11 +104,43 @@ def _configure_logging(app):
     logging.getLogger('app').setLevel(log_level)
 
 
+class IprmRequest(Request):
+    """Запит із вищою межею тіла на окремих маршрутах завантаження.
+
+    Глобальний MAX_CONTENT_LENGTH (25 МБ) розрахований на фото, а
+    презентація з відео важить більше. Межу треба підняти ДО розбору форми,
+    а його першою робить CSRFProtect у before_request -- тож не у в'юсі, а
+    тут: правило маршруту (url_rule) відоме вже після зіставлення URL, до
+    будь-якого before_request. Мовні варіанти маршруту (/ru, /en) мають той
+    самий endpoint, тож покриваються разом. У nginx -- парна location
+    (deploy/nginx/snippets/iprm-app.conf).
+    """
+
+    # endpoint -> ключ конфігу з межею файлу; запас на multipart-обгортку.
+    LARGE_UPLOADS = {
+        'trainer_cabinet.presentation_upload': 'TRAINER_PRESENTATION_MAX_BYTES',
+    }
+    MULTIPART_SLACK = 1024 * 1024
+
+    @property
+    def max_content_length(self):
+        rule = self.url_rule
+        key = self.LARGE_UPLOADS.get(rule.endpoint) if rule is not None else None
+        if key and current_app:
+            return int(current_app.config[key]) + self.MULTIPART_SLACK
+        return Request.max_content_length.fget(self)
+
+    @max_content_length.setter
+    def max_content_length(self, value):
+        Request.max_content_length.fset(self, value)
+
+
 def create_app(config_name=None):
     if config_name is None:
         config_name = os.environ.get('FLASK_CONFIG', 'default')
 
     app = Flask(__name__)
+    app.request_class = IprmRequest
     app.config.from_object(config[config_name])
     _configure_logging(app)
 

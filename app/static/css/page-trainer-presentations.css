@@ -1,0 +1,52 @@
+/* Презентації до заходів у кабінеті тренера -- ЛИШЕ layout цієї сторінки.
+   Декор -- з дизайн-системи: картка заходу -- .account-card, рядок файлу --
+   .account-online__row, поле -- .form-input, дії -- .apple-btn. Жоден із
+   цих класів тут не перевизначається.
+   Єдиний споживач -- trainer_cabinet/presentations.html. */
+
+.trainer-presentations {
+  display: grid;
+  gap: 16px;
+  list-style: none;
+  margin: 0 0 24px;
+  padding: 0;
+}
+
+.trainer-presentations__event {
+  display: grid;
+  gap: 12px;
+}
+
+.trainer-presentations__files {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.trainer-presentations__upload {
+  display: grid;
+  gap: 6px;
+}
+
+/* Поле файлу й кнопка -- в один ряд, кнопка по нижньому краю поля;
+   підказка -- під рядом, щоб не зсувати кнопку. */
+.trainer-presentations__row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.trainer-presentations__field {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .trainer-presentations__row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
