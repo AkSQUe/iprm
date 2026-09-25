@@ -679,6 +679,12 @@ a {
   background: var(--iprm-surface-menu);
   border-bottom: 1px solid var(--iprm-border);
   box-shadow: var(--iprm-shadow-md);
+  /* Панель висить на фіксованій шапці, тож прокрутка сторінки її не рухає:
+     на телефоні в альбомній орієнтації нижні пункти були недосяжні. */
+  max-height: calc(100vh - var(--iprm-header-h));
+  max-height: calc(100dvh - var(--iprm-header-h));
+  overflow-y: auto;
+  overscroll-behavior: contain;
   /* Ховаємо панель ВИЩЕ за верх екрана. -120% рахується від висоти самої
      панелі й не враховує, що вона ще зміщена вниз на висоту шапки (top),
      тому нижні ~36px меню визирали над шапкою на кожній сторінці курсу --
@@ -2411,6 +2417,12 @@ select.form-input:-moz-focusring {
     border-bottom: 1px solid var(--iprm-border);
     padding: 16px 24px;
     z-index: 99;
+    /* Див. .iprm-header--anchors .iprm-header__nav: та сама панель на
+       фіксованій шапці, без власної прокрутки обрізалась знизу. */
+    max-height: calc(100vh - var(--iprm-header-h));
+    max-height: calc(100dvh - var(--iprm-header-h));
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
 
   .iprm-header__nav.open {

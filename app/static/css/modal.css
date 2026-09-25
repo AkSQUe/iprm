@@ -34,6 +34,9 @@
   position: relative;
   width: min(640px, 100%);
   max-height: calc(100vh - 48px);
+  /* dvh -- видима висота: у Safari на iPhone 100vh ховає низ вікна під
+     панеллю браузера. 100vh вище -- запасний для старих браузерів. */
+  max-height: calc(100dvh - 48px);
   display: flex;
   flex-direction: column;
   background: var(--iprm-white);
@@ -96,7 +99,10 @@
 
 @media (max-width: 640px) {
   .modal { padding: 12px; }
-  .modal__dialog { max-height: calc(100vh - 24px); }
+  .modal__dialog {
+    max-height: calc(100vh - 24px);
+    max-height: calc(100dvh - 24px);
+  }
   .modal__foot { flex-direction: column-reverse; }
   .modal__foot > * { width: 100%; }
 }

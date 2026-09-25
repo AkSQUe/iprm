@@ -2155,6 +2155,13 @@ a.admin-stat-card:focus-visible {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  /* Стеля на випадок без JS; точну межу за вільним місцем ставить
+     admin-row-menu.js. Без неї панель із формою в невисокому вікні
+     обрізалась, а кнопка сабміту лишалась за краєм екрана. */
+  max-height: calc(100vh - 16px);
+  max-height: calc(100dvh - 16px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .admin-actions-menu__items form {

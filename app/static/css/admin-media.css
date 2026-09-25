@@ -98,7 +98,7 @@
   position: absolute; inset: 0; background: rgba(0, 0, 0, 0.45);
 }
 .media-picker__dialog {
-  position: relative; z-index: 1; width: min(880px, 92vw); max-height: 86vh;
+  position: relative; z-index: 1; width: min(880px, 92vw); max-height: 86vh; max-height: 86dvh;
   display: flex; flex-direction: column;
   background: var(--iprm-white); border-radius: var(--iprm-radius-md);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3); overflow: hidden;

@@ -30,15 +30,24 @@
       right = Math.max(8, window.innerWidth - width - 8);
     }
     panel.style.right = right + 'px';
+    // Висоту міряємо без межі, що лишилась від попереднього відкриття.
+    panel.style.maxHeight = '';
     var ph = panel.offsetHeight;
-    if (r.bottom + 4 + ph > window.innerHeight && r.top - 4 - ph > 0) {
-      // Не влазить донизу -- відкриваємо вгору.
+    var below = window.innerHeight - r.bottom - 4 - 8;
+    var above = r.top - 4 - 8;
+    // Вниз -- якщо влазить або там не менше місця, ніж зверху. Коли не
+    // влазить ні туди, ні туди, панель обмежується вільним місцем і
+    // прокручується всередині, а не ховає кнопку сабміту за краєм екрана.
+    var up = ph > below && above > below;
+    if (up) {
       panel.style.top = 'auto';
       panel.style.bottom = (window.innerHeight - r.top + 4) + 'px';
     } else {
       panel.style.bottom = 'auto';
       panel.style.top = (r.bottom + 4) + 'px';
     }
+    var room = up ? above : below;
+    if (ph > room) panel.style.maxHeight = Math.max(120, room) + 'px';
   }
 
   // toggle не спливає -- слухаємо у фазі захоплення.
