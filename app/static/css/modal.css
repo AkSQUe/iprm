@@ -69,7 +69,20 @@
 
 .modal__close:hover { color: var(--iprm-text); }
 
+/* Форма між діалогом і тілом (перенесення, вивантаження резюме): як
+   flex-елемент вона має min-height:auto, не стискається нижче вмісту і
+   виштовхує тіло за межі вікна -- прокрутка тіла тоді не вмикається, а
+   кнопки внизу стають недосяжні. */
+.modal__dialog > form {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 .modal__body {
+  flex: 1 1 auto;
+  min-height: 0;
   padding: 0 24px;
   overflow-y: auto;
 }
