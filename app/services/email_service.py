@@ -19,6 +19,7 @@ import smtplib
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from threading import Thread
+from urllib.parse import quote
 
 from flask import current_app, render_template
 from flask_babel import force_locale, gettext as _
@@ -1037,6 +1038,63 @@ class EmailService:
                 'promo': promo,
             },
             trigger='payment',
+        )
+
+    # Три моменти, коли адмінові треба знати про замовлення онлайн-курсу.
+    # Типи подій -- ті самі, що в заходів: одержувачі налаштовуються одним
+    # правилом на обидва види продажу, а CHECK ck_email_logs_trigger не
+    # доводиться розширювати.
+    _ONLINE_ORDER_KINDS = {
+        'new': ('registration', 'Нове замовлення онлайн-курсу'),
+        'invoice': ('registration', 'Рахунок на оплату онлайн-курсу'),
+        'paid': ('payment', 'Оплата онлайн-курсу'),
+    }
+
+    @staticmethod
+    def _online_order_admin_context(enrollment, kind):
+        from app.models.site_settings import SiteSettings
+
+        _event_type, kind_label = EmailService._ONLINE_ORDER_KINDS[kind]
+        base = (SiteSettings.get().website_url or '').rstrip('/')
+        # Окремої сторінки замовлення в адмінці немає, а пошук списку йде
+        # за email -- він і відфільтровує рівно замовлення цієї людини.
+        email = enrollment.user.email if enrollment.user else ''
+        tail = f'/admin/online-orders?q={quote(email)}'
+        profile = enrollment.user.medical_profile if enrollment.user else None
+        return {
+            'kind': kind,
+            'kind_label': kind_label,
+            'enrollment': enrollment,
+            'course': enrollment.course,
+            'phone': profile.phone if profile else None,
+            'admin_url': f'{base}{tail}' if base else tail,
+        }
+
+    @staticmethod
+    def notify_admins_online_order(enrollment, kind):
+        """Адмінам: нове замовлення, узятий рахунок або оплата онлайн-курсу.
+
+        `kind` -- 'new', 'invoice' або 'paid'. Рахунок виділено окремо, бо
+        саме тоді гроші прийдуть переказом повз LiqPay, часто з розмитим
+        призначенням («сплата за онлайн курс»), і зіставити їх із
+        замовленням адмін може, лише знаючи, що таке замовлення чекає.
+        """
+        event_type, kind_label = EmailService._ONLINE_ORDER_KINDS[kind]
+        user = enrollment.user
+        who = ((user.full_name or user.email) if user is not None
+               else 'unknown')
+        amount = enrollment.payment_amount
+        if kind == 'paid':
+            prefix = (f'Оплата {format_amount(amount)} UAH'
+                      if amount and amount > 0 else 'Безкоштовний доступ')
+        else:
+            prefix = kind_label
+        title = enrollment.course.effective_title if enrollment.course else ''
+        return EmailService.notify_admins_with_template(
+            event_type=event_type,
+            subject=f'{prefix}: {title} – {who} ({enrollment.order_id})',
+            template_name='admin_online_order',
+            context=EmailService._online_order_admin_context(enrollment, kind),
         )
 
     @staticmethod

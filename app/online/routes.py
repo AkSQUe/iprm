@@ -212,6 +212,8 @@ def checkout(slug):
             if enrollment is None:
                 flash(_('Не вдалося оформити замовлення. Спробуйте ще раз.'), 'error')
                 return redirect(url_for('online.course_detail', slug=course.slug))
+        else:
+            _notify_admins(enrollment, 'new')
 
     if request.method == 'POST':
         _handle_promo(enrollment, course)
@@ -299,7 +301,21 @@ def _guest_checkout(course):
 
     logger.info('Guest checkout created %s for user %d (new=%s)',
                 enrollment.order_id, buyer.id, is_new_user)
+    _notify_admins(enrollment, 'new')
     return redirect(url_for('online.order', token=enrollment.order_token))
+
+
+def _notify_admins(enrollment, kind):
+    """Сповістити адмінів про замовлення. Best-effort: збій пошти не має
+    зупиняти покупку, яка вже зафіксована в базі."""
+    from app.services.email_service import EmailService
+
+    try:
+        EmailService.notify_admins_online_order(enrollment, kind)
+    except Exception:
+        db.session.rollback()
+        logger.exception('Failed to notify admins about %s (%s)',
+                         enrollment.order_id, kind)
 
 
 def _apply_buyer_data(user, form, is_new_user):
@@ -699,6 +715,19 @@ def _send_invoice(enrollment, back_url):
         logger.warning('Invoice for %s failed: %s', enrollment.order_id, exc)
         flash(_('Не вдалося сформувати рахунок. Напишіть нам.'), 'error')
         return redirect(back_url)
+
+    # Узятий рахунок -- знак, що гроші прийдуть переказом повз LiqPay і
+    # зарахувати їх доведеться руками. Адмінам -- лише за першим разом:
+    # спосіб оплати тут і відмітка «вже сповіщено», і те, що людина обрала.
+    if enrollment.payment_method != 'invoice':
+        enrollment.payment_method = 'invoice'
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            logger.exception('Failed to mark %s as invoice', enrollment.order_id)
+        else:
+            _notify_admins(enrollment, 'invoice')
 
     return send_file(
         io.BytesIO(pdf),

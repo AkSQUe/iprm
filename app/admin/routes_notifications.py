@@ -383,6 +383,19 @@ def notifications_templates():
     reg.user = user  # admin_event_notification renders registration.user
     reg_paid_promo.user = user
 
+    class MockOnlineCourse:
+        effective_title = 'Терапія аутологічною плазмою в естетичній медицині'
+
+    class MockOnlineOrder:
+        order_id = 'ONL-7'
+        payment_amount = 4500
+        has_discount = False
+        promo_code = None
+
+    online_course = MockOnlineCourse()
+    online_order = MockOnlineOrder()
+    online_order.user = user
+
     certificate = MockCertificate()
     comment = MockComment()
     post = MockPost()
@@ -572,6 +585,20 @@ def notifications_templates():
                                     event=event, registration=reg_paid_promo,
                                     kind_label='Підтверджена оплата',
                                     admin_url=mock_admin_url),
+        },
+        {
+            'key': 'admin-online-order',
+            'label': 'Admin-сповіщення: рахунок на онлайн-курс',
+            'template_name': 'admin_online_order.html',
+            'trigger': 'registration',
+            'subject': (f'Рахунок на оплату онлайн-курсу: {online_course.effective_title}'
+                        f' – {user.full_name} ({online_order.order_id})'),
+            'html': render_template('emails/admin_online_order.html',
+                                    kind='invoice',
+                                    kind_label='Рахунок на оплату онлайн-курсу',
+                                    enrollment=online_order, course=online_course,
+                                    phone='+380671234567',
+                                    admin_url=f'{preview_base}/admin/online-orders'),
         },
         {
             'key': 'materials-reminder',

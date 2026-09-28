@@ -1,0 +1,88 @@
+{% extends "emails/base.html" %}
+{% from "emails/_macros.html" import button_primary, detail_row, detail_row_link,
+    section_title, spacer %}
+
+{#- Замовлення онлайн-курсу: нове, узятий рахунок або оплата. Як і
+    admin_event_notification, лист має відповідати на питання без адмінки:
+    хто, який курс, скільки і яким способом. -#}
+
+{% set LW = '130px' %}
+
+{% block title %}{{ kind_label }}{% endblock %}
+
+{% block preview_text %}{{ kind_label }}: {{ course.effective_title if course else enrollment.order_id }}{% endblock %}
+
+{% block content %}
+    <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 26px; font-weight: 700; color: #17131D; line-height: 1.25;">
+        {{ kind_label }}
+    </h1>
+
+    {% if course %}
+    <p class="mobile-text" style="margin: 0 0 24px 0; font-size: 15px; color: #625A6D; line-height: 1.5;">
+        {{ course.effective_title }}
+    </p>
+    {% endif %}
+
+    {% if kind == 'invoice' %}
+    <p class="mobile-text" style="margin: 0 0 24px 0; font-size: 15px; color: #625A6D; line-height: 1.5;">
+        Покупець завантажив рахунок, тож гроші, найімовірніше, прийдуть
+        переказом на розрахунковий рахунок. Автоматично такий платіж не
+        зарахується: щойно він надійде, позначте замовлення оплаченим в
+        адмінці — тоді покупець отримає доступ до курсу.
+    </p>
+    {% endif %}
+
+    {{ section_title('Покупець') }}
+    <table role="presentation" style="width: 100%; margin-bottom: 24px; background-color: #F7F4FB; border: 1px solid #E9E4EF; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td style="padding: 20px 24px;">
+                {{ detail_row("Ім'я", (enrollment.user.full_name or enrollment.user.email) if enrollment.user else '–', LW) }}
+                {% if enrollment.user and enrollment.user.email %}
+                {{ detail_row_link('Email', enrollment.user.email, 'mailto:' ~ enrollment.user.email, LW) }}
+                {% endif %}
+                {% if phone %}
+                {{ detail_row_link('Телефон', phone, 'tel:' ~ phone | replace(' ', ''), LW) }}
+                {% endif %}
+                {{ detail_row('Замовлення', enrollment.order_id, LW) }}
+            </td>
+        </tr>
+    </table>
+
+    {{ section_title('Оплата') }}
+    <table role="presentation" style="width: 100%; margin-bottom: 24px; background-color: #F7F4FB; border: 1px solid #E9E4EF; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td style="padding: 20px 24px;">
+                {% if enrollment.payment_amount is not none %}
+                    {% if (enrollment.payment_amount | float) > 0 %}
+                        {{ detail_row('Сума', enrollment.payment_amount | money, LW) }}
+                    {% elif enrollment.has_discount %}
+                        {{ detail_row('Сума', 'Оплачено промокодом (0 UAH)', LW) }}
+                    {% else %}
+                        {{ detail_row('Сума', 'Безкоштовно', LW) }}
+                    {% endif %}
+                {% endif %}
+                {% if enrollment.has_discount %}
+                {{ detail_row('Знижка', '-' ~ (enrollment.discount_amount | money)
+                              ~ ' (було ' ~ (enrollment.amount_before_discount | money) ~ ')', LW) }}
+                {% endif %}
+                {% if enrollment.promo_code %}
+                {{ detail_row('Промокод', enrollment.promo_code.code ~ ' — ' ~ enrollment.promo_code.discount_label, LW) }}
+                {% endif %}
+                {% if kind == 'invoice' %}
+                {{ detail_row('Спосіб', 'Рахунок (переказ на IBAN)', LW) }}
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+
+    {% if admin_url %}
+    {{ button_primary('Відкрити в адмінці', admin_url) }}
+    {% endif %}
+
+    {{ spacer(8) }}
+
+    <p style="margin: 0; font-size: 13px; color: #6E667A; line-height: 1.5;">
+        Автоматичне сповіщення. Налаштувати одержувачів можна у
+        розділі «Сповіщення → Одержувачі» адмінки.
+    </p>
+{% endblock %}

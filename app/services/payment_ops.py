@@ -409,6 +409,17 @@ class PaymentOps:
                 db.session.rollback()
                 logger.exception('Failed to provision access for %s', order_id)
 
+            # Адмінам -- тут, а не в provision_and_notify: ту повторює
+            # джоба застряглих видач, і кожен повтор слав би ще один лист
+            # про ту саму оплату. Best-effort: пошта не чіпає ні оплату, ні
+            # доступ.
+            try:
+                from app.services.email_service import EmailService
+                EmailService.notify_admins_online_order(enrollment, 'paid')
+            except Exception:
+                db.session.rollback()
+                logger.exception('Failed to notify admins about %s', order_id)
+
         return True, 'ok'
 
     # ---- реєстрації на заходи (order_id REG-<id>) ----
