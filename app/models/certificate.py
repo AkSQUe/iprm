@@ -83,12 +83,26 @@ class Certificate(TimestampMixin, db.Model):
         * РРРР -- рік проведення заходу;
         * ПППП -- реєстраційний номер провайдера (4 цифри);
         * ЗЗЗЗЗЗЗ -- реєстраційний номер заходу БПР (7 цифр);
-        * УУУУУУ -- порядковий номер учасника (6 цифр).
+        * УУУУУУ -- порядковий номер учасника в межах заходу (6 цифр).
         """
-        return (
-            f'{year}-{str(provider).strip().zfill(4)}'
-            f'-{str(event).strip().zfill(7)}-{int(participant):06d}'
-        )
+        return f'{Certificate.format_prefix(year, provider, event)}-{int(participant):06d}'
+
+    @staticmethod
+    def format_prefix(year, provider, event):
+        """РРРР-ПППП-ЗЗЗЗЗЗЗ -- захід, у межах якого йде порядкова нумерація."""
+        return f'{year}-{str(provider).strip().zfill(4)}-{str(event).strip().zfill(7)}'
+
+    @staticmethod
+    def split_number(number):
+        """(префікс заходу, порядковий номер) або None для номера іншої форми.
+
+        Легасі-номери (напр. `IPRM-2026-000001`) четвертого сегмента не мають --
+        для них None, а не виняток: вони трапляються в реєстрі й досі.
+        """
+        parts = (number or '').strip().split('-')
+        if len(parts) != 4 or not all(part.isdigit() for part in parts):
+            return None
+        return '-'.join(parts[:3]), int(parts[3])
 
     @property
     def is_valid(self):

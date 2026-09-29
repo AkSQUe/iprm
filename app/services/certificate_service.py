@@ -547,78 +547,104 @@ def read_pdf_bytes(certificate):
 
 # ---- Нумерація ----
 #
-# Сегмент "номер учасника" видається монотонним лічильником у site_settings, а
-# не COUNT(*) по таблиці сертифікатів. COUNT мав два режими відмови, і обидва
-# стають досяжними, щойно видача перестає бути ручною:
-#   1) дві одночасні видачі отримували ОДНЕ значення, а retry-петля не
-#      сходилась -- вона перераховувала ту саму кількість, палила всі спроби
-#      і кидала RuntimeError;
-#   2) після видалення будь-якого сертифіката лічильник ішов НАЗАД, і колізія
-#      з уже виданим номером ставала постійною -- видача ламалась назовсім.
-_COUNTER_FIELDS = {
-    'participant': 'bpr_participant_counter',
-    'lecturer': 'bpr_lecturer_counter',
-}
+# Сегмент "номер учасника" -- порядковий номер У МЕЖАХ ЗАХОДУ: у кожного
+# префікса РРРР-ПППП-ЗЗЗЗЗЗЗ свій монотонний лічильник
+# (CertificateNumberCounter), з 000001 для учасників і 100001 для тренерів.
+#
+# Спершу тут був COUNT(*) по таблиці, потім -- один лічильник на весь сайт.
+# COUNT давав однакові номери одночасним видачам і йшов назад після
+# видалення; загальний лічильник це лікував, але номери заходу йшли не з
+# одиниці й перемішувались із сусідніми заходами. Лічильник на захід зберігає
+# обидва уроки: значення видаються під блокуванням і ніколи не повторюються.
+def _kind_offset(kind):
+    """Зсув діапазону номерів: тренерські живуть у 1xxxxx."""
+    from app.models.lecturer_certificate import LECTURER_NUMBER_OFFSET
+
+    return LECTURER_NUMBER_OFFSET if kind == 'lecturer' else 0
 
 
-def _allocate_number_segment(kind):
-    """Наступне значення лічильника номерів під блокуванням singleton-рядка.
+def _lock_numbering():
+    """Серіалізувати все, що видає або переписує номери сертифікатів.
 
-    `SELECT ... FOR UPDATE` по site_settings серіалізує лише конкурентні
-    видачі: звичайні читання налаштувань у Postgres на нього не натикаються
-    (MVCC). На SQLite SQLAlchemy FOR UPDATE не емітить -- це нормально, тести
-    однопотокові, а поведінка формули від цього не залежить.
+    Блокуємо singleton-рядок site_settings (`SELECT ... FOR UPDATE`), а не рядок
+    лічильника: рядка заходу до першої видачі ще не існує, і дві одночасні
+    перші видачі заходу обидві вставляли б його. Звичайні читання налаштувань
+    у Postgres на лок не натикаються (MVCC). На SQLite SQLAlchemy FOR UPDATE не
+    емітить -- тести однопотокові, і поведінка від цього не залежить.
 
-    `populate_existing()` тут ОБОВ'ЯЗКОВИЙ, а не гігієнічний. Рядок налаштувань
-    майже завжди вже лежить в identity map (його кладе і виклик нижче, і
-    контекст-процесор `site_settings` на кожному запиті), а для вже
-    завантаженої сутності SQLAlchemy за замовчуванням НЕ перезаписує атрибути
-    значеннями з нового рядка. Тобто без нього блокування бралося справно,
-    свіже значення приходило з БД -- і відкидалося, а лічильник рахувався від
-    того, що прочитали ДО блокування. Дві одночасні видачі отримували один
-    номер, і на `unique` по `number` одна з них падала -- рівно та гонка, від
-    якої нас мав захистити цей лок.
+    Лок живе до коміту транзакції, тож покриває і перевірку зайнятості номера,
+    і сам запис сертифіката.
     """
     from app.models.site_settings import SiteSettings
 
-    field = _COUNTER_FIELDS[kind]
     SiteSettings.get()  # гарантує наявність рядка id=1
+    (db.session.query(SiteSettings.id)
+     .filter(SiteSettings.id == 1)
+     .with_for_update()
+     .one())
+
+
+def _counter_row(prefix, kind):
+    """Рядок лічильника заходу (створюється за потреби). Лише під _lock_numbering.
+
+    `populate_existing()` ОБОВ'ЯЗКОВИЙ: рядок може вже лежати в identity map, а
+    для завантаженої сутності SQLAlchemy не перезаписує атрибути значеннями з
+    БД. Без нього лічильник рахувався б від значення, прочитаного до
+    блокування, і дві одночасні видачі отримали б один номер -- саме так уже
+    ламався попередній, загальний лічильник.
+    """
+    from app.models.certificate_number_counter import CertificateNumberCounter
+
     row = (
-        db.session.query(SiteSettings)
-        .filter(SiteSettings.id == 1)
-        .with_for_update()
+        db.session.query(CertificateNumberCounter)
+        .filter_by(prefix=prefix, kind=kind)
         .populate_existing()
-        .one()
+        .one_or_none()
     )
-    value = (getattr(row, field) or 0) + 1
-    setattr(row, field, value)
+    if row is None:
+        row = CertificateNumberCounter(prefix=prefix, kind=kind, last_value=0)
+        db.session.add(row)
+    return row
+
+
+def _allocate_number_segment(prefix, kind):
+    """Наступний порядковий номер заходу (без зсуву діапазону)."""
+    _lock_numbering()
+    row = _counter_row(prefix, kind)
+    row.last_value = (row.last_value or 0) + 1
     db.session.flush()
-    return value
+    return row.last_value
 
 
-def _next_free_number(year, provider, event, kind='participant', offset=0):
-    """Номер, якого ще немає в БД: тягнемо лічильник, доки не трапиться вільний.
+def _number_taken(number):
+    """Чи зайнятий номер хоч одним сертифікатом (учасника чи тренера)."""
+    from app.models.lecturer_certificate import LecturerCertificate
+
+    return (
+        db.session.query(Certificate.id).filter_by(number=number).first() is not None
+        or db.session.query(LecturerCertificate.id).filter_by(number=number).first()
+        is not None
+    )
+
+
+def _next_free_number(year, provider, event, kind='participant'):
+    """Номер, якого ще немає в БД: тягнемо лічильник заходу до вільного.
 
     Перевіряємо ПЕРЕД записом, а не ловимо IntegrityError з відкотом: rollback
     відкотив би й сам інкремент лічильника, і наступна ітерація взяла б те саме
-    значення -- тобто відтворила б рівно ту незбіжну петлю, від якої ми пішли.
+    значення.
 
-    Справжні гонки тут уже неможливі: конкурентні видачі серіалізує блокування
-    рядка налаштувань, тож кожна отримує власне значення лічильника. Ця петля
-    закриває інший випадок -- номер, що потрапив у таблицю в обхід лічильника
-    (ручна правка БД, перенесення даних). Пропуски в нумерації при цьому
-    допустимі: монотонність важливіша за щільність.
+    Конкурентні видачі серіалізує блокування, тож кожна отримує власне
+    значення. Петля закриває інший випадок -- номер, що потрапив у таблицю в
+    обхід лічильника (ручна правка БД, перенесення даних). Пропуски в
+    нумерації при цьому допустимі: неповторність важливіша за щільність.
     """
-    from app.models.lecturer_certificate import LecturerCertificate
-
+    prefix = Certificate.format_prefix(year, provider, event)
+    offset = _kind_offset(kind)
     for _attempt in range(5):
-        segment = offset + _allocate_number_segment(kind)
+        segment = offset + _allocate_number_segment(prefix, kind)
         number = Certificate.format_number(year, provider, event, segment)
-        taken = (
-            db.session.query(Certificate.id).filter_by(number=number).first()
-            or db.session.query(LecturerCertificate.id).filter_by(number=number).first()
-        )
-        if not taken:
+        if not _number_taken(number):
             return number
         logger.warning('Certificate number %s already taken, allocating next', number)
     raise RuntimeError('Не вдалося згенерувати унікальний номер сертифіката')
@@ -705,43 +731,21 @@ def _apply_snapshot(cert, registration, snapshot, issued_at, issued_by):
     cert.revoked_at = None
 
 
-def _renumbered(old_number, year, provider, event_num):
-    """Номер за поточними даними, але зі СТАРИМ порядковим сегментом.
+def _reissue_number(old_number, year, provider, event_num, kind):
+    """Номер для перевидачі за поточними даними заходу.
 
-    Перевидача виправляє те, що виправив адмін (номер заходу, рік), і не
-    чіпає порядковий номер: інакше лічильник витрачався б на кожну правку,
-    а в нумерації лишались би дірки під уже недійсними номерами.
+    Захід той самий (префікс РРРР-ПППП-ЗЗЗЗЗЗЗ не змінився) -- номер лишається:
+    він уже названий людині, а повторна перевидача не має палити лічильник.
+    Захід інший (адмін виправив номер заходу чи рік) -- наступний вільний номер
+    НОВОГО заходу: порядковий номер має сенс лише в межах свого заходу, і
+    перенесений туди старий сегмент або лишив би дірку, або зіткнувся б з
+    чужим номером.
     """
-    parts = (old_number or '').split('-')
-    if len(parts) != 4 or not parts[3].isdigit():
-        raise ValueError(
-            f'Номер сертифіката "{old_number}" має незвичний формат -- '
-            'перевидати автоматично не можна.'
-        )
-    return Certificate.format_number(year, provider, event_num, int(parts[3]))
-
-
-def _ensure_number_free(number, skip_certificate_id=None, skip_lecturer_id=None):
-    """Впасти, якщо номер уже за кимось іншим (обидві таблиці).
-
-    Мовчки брати наступний вільний тут не можна: у штатному потоці номери
-    видає лічильник і колізій немає, тож збіг означає ручну правку БД --
-    і адмін мусить побачити її, а не отримати ще один несподіваний номер.
-    """
-    from app.models.lecturer_certificate import LecturerCertificate
-
-    query = db.session.query(Certificate.id).filter(Certificate.number == number)
-    if skip_certificate_id is not None:
-        query = query.filter(Certificate.id != skip_certificate_id)
-    taken = query.first()
-    if taken is None:
-        query = db.session.query(LecturerCertificate.id).filter(
-            LecturerCertificate.number == number)
-        if skip_lecturer_id is not None:
-            query = query.filter(LecturerCertificate.id != skip_lecturer_id)
-        taken = query.first()
-    if taken is not None:
-        raise ValueError(f'Номер {number} уже зайнятий іншим сертифікатом.')
+    parsed = Certificate.split_number(old_number)
+    if parsed is not None and parsed[0] == Certificate.format_prefix(
+            year, provider, event_num):
+        return old_number
+    return _next_free_number(year, provider, event_num, kind=kind)
 
 
 def _discard_stale_pdf(path, keep):
@@ -815,8 +819,9 @@ def reissue_certificate(registration, issued_by=None):
     свідомо не переписує номер виданого (він уже названий людині), тож
     виправлення доходить лише цим окремим явним шляхом.
 
-    Що змінюється: номер заходу й рік у номері, усі знімки даних, файл PDF.
-    Що НЕ змінюється: порядковий сегмент учасника (див. `_renumbered`).
+    Що змінюється: усі знімки даних і файл PDF; номер -- лише коли змінився
+    сам захід (номер заходу чи рік), і тоді порядковий береться вже з
+    нумерації нового заходу (див. `_reissue_number`).
     """
     cert = registration.certificate
     if cert is None:
@@ -829,14 +834,13 @@ def reissue_certificate(registration, issued_by=None):
     issued_at = utcnow()
     provider, event_num = _bpr_number_inputs(registration.instance)
     year = (snapshot.event_date or issued_at).year
-    number = _renumbered(cert.number, year, provider, event_num)
+    number = _reissue_number(cert.number, year, provider, event_num, 'participant')
 
     # Шлях запам'ятовуємо ДО зміни номера: pdf_path зібраний з номера, тож
     # після присвоєння старий файл уже не знайти.
     stale_path = certificate_abs_path(cert)
     previous_number = cert.number
     if number != cert.number:
-        _ensure_number_free(number, skip_certificate_id=cert.id)
         cert.number = number
         cert.pdf_path = f'{year}/{number}.pdf'
 
@@ -862,12 +866,10 @@ def issue_lecturer_certificate(instance, trainer, issued_by=None):
     лекцію особисто -- ідемпотентність тому на парі (instance_id, trainer_id),
     а не на самому проведенні: повторна видача ТОМУ Ж тренеру повертає той
     самий номер, а видача ІНШОМУ тренеру того самого заходу створює власний
-    запис. Номер тренера у діапазоні 1xxxxx (окремий лічильник). Тип заходу
-    зберігаємо у родовому відмінку.
+    запис. Номер тренера -- у діапазоні 1xxxxx свого заходу (окремий
+    лічильник). Тип заходу зберігаємо у родовому відмінку.
     """
-    from app.models.lecturer_certificate import (
-        LECTURER_NUMBER_OFFSET, LecturerCertificate,
-    )
+    from app.models.lecturer_certificate import LecturerCertificate
 
     # ДО запиту, а не після: інакше `trainer.id` нижче впаде AttributeError-ом
     # на порожньому тренері замість зрозумілого ValueError.
@@ -889,10 +891,7 @@ def issue_lecturer_certificate(instance, trainer, issued_by=None):
     lc = LecturerCertificate(instance_id=instance.id)
     _apply_lecturer_snapshot(lc, instance, trainer, points, issued_at, issued_by)
 
-    lc.number = _next_free_number(
-        year, provider, event_num,
-        kind='lecturer', offset=LECTURER_NUMBER_OFFSET,
-    )
+    lc.number = _next_free_number(year, provider, event_num, kind='lecturer')
     db.session.add(lc)
     try:
         db.session.flush()
@@ -975,11 +974,10 @@ def reissue_lecturer_certificate(instance, trainer, issued_by=None):
     provider, event_num = _bpr_number_inputs(instance)
     issued_at = utcnow()
     year = (instance.start_date or issued_at).year
-    number = _renumbered(lc.number, year, provider, event_num)
+    number = _reissue_number(lc.number, year, provider, event_num, 'lecturer')
 
     previous_number = lc.number
     if number != lc.number:
-        _ensure_number_free(number, skip_lecturer_id=lc.id)
         lc.number = number
 
     _apply_lecturer_snapshot(lc, instance, trainer, points, issued_at, issued_by)

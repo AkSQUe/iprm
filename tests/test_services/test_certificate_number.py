@@ -1,16 +1,13 @@
-"""Нумерація сертифікатів: монотонний лічильник замість COUNT(*).
+"""Нумерація сертифікатів: порядковий номер у межах заходу.
 
-Сегмент «номер учасника» раніше брався як COUNT(*) + 1 по таблиці сертифікатів.
-За ручної видачі (три сертифікати за весь час) це не проявлялось, але автовидача
-після тестування робить обидва режими відмови досяжними:
+Сегмент «номер учасника» спершу брався як COUNT(*) + 1 (однакові номери
+одночасним видачам, відкат назад після видалення), потім -- одним лічильником
+на весь сайт (номери заходу йшли не з одиниці й перемішувались із сусідніми).
+Тепер лічильник свій у кожного префікса РРРР-ПППП-ЗЗЗЗЗЗЗ.
 
-1. дві одночасні видачі брали ОДНЕ значення, а retry не сходився -- після
-   rollback він перераховував ту саму кількість;
-2. після видалення сертифіката лічильник ішов НАЗАД, і колізія з уже виданим
-   номером ставала постійною.
-
-Тут перевіряємо, що номер тепер монотонний, не залежить від видалень і що
-повторна видача відкликаного сертифіката не перенумеровує його.
+Тут перевіряємо, що нумерація в кожного заходу своя й починається з одиниці,
+що вона монотонна й не залежить від видалень, і що повторна видача
+відкликаного сертифіката не перенумеровує його.
 """
 from datetime import datetime, timedelta, timezone
 from itertools import count
@@ -20,11 +17,9 @@ import pytest
 
 from app.extensions import db
 from app.models.certificate import Certificate
+from app.models.certificate_number_counter import CertificateNumberCounter
 from app.models.course import Course
 from app.models.course_instance import CourseInstance
-from app.models.lecturer_certificate import (
-    LECTURER_NUMBER_OFFSET, LecturerCertificate,
-)
 from app.models.registration import EventRegistration
 from app.models.site_settings import SiteSettings
 from app.models.user import User
@@ -36,8 +31,7 @@ PROVIDER = '2738'
 # `issue_certificate` комітить сам (PDF пишеться до коміту), тож створені ним
 # рядки переживають відкат фікстури db_session і видні наступним тестам. Щоб
 # тести не залежали від порядку, кожна реєстрація отримує ВЛАСНИЙ номер заходу
-# БПР -- тоді номери сертифікатів різних тестів не можуть зіткнутися, бо
-# відрізняються третім сегментом.
+# БПР -- а з ним і власний лічильник, що починається з нуля.
 _event_numbers = count(1000000)
 
 # Відрізнити "номер не передали" від явного None (кейс "номер заходу не задано").
@@ -46,11 +40,9 @@ _AUTO = object()
 
 @pytest.fixture(autouse=True)
 def bpr_settings(app):
-    """Провайдер БПР заданий, лічильники з нуля."""
+    """Провайдер БПР заданий."""
     settings = SiteSettings.get()
     settings.bpr_provider_number = PROVIDER
-    settings.bpr_participant_counter = 0
-    settings.bpr_lecturer_counter = 0
     db.session.flush()
     return settings
 
@@ -95,6 +87,14 @@ def _registration(cpd_points=12, event_num=_AUTO):
     return reg
 
 
+def _counter(reg, kind='participant'):
+    """Значення лічильника заходу цієї реєстрації (0 -- рядка ще немає)."""
+    prefix = Certificate.format_prefix(
+        reg.instance.start_date.year, PROVIDER, reg.instance.course.bpr_event_number)
+    row = db.session.get(CertificateNumberCounter, (prefix, kind))
+    return row.last_value if row else 0
+
+
 # --- формат ------------------------------------------------------------------
 
 def test_format_pads_segments():
@@ -107,38 +107,95 @@ def test_format_pads_short_provider_and_event():
         '2026-0027-0000974-000001'
 
 
-# --- лічильник ---------------------------------------------------------------
+@pytest.mark.parametrize('number, expected', [
+    ('2026-2738-1028974-000004', ('2026-2738-1028974', 4)),
+    ('2026-2738-1028974-100001', ('2026-2738-1028974', 100001)),
+    (' 2026-2738-1028974-000005 ', ('2026-2738-1028974', 5)),
+    ('IPRM-2026-000001', None),
+    ('2026-2738-1028974', None),
+    ('', None),
+    (None, None),
+])
+def test_split_number(number, expected):
+    assert Certificate.split_number(number) == expected
 
-def test_counter_is_monotonic(app):
-    got = [certificate_service._allocate_number_segment('participant')
-           for _ in range(3)]
-    assert got == [1, 2, 3]
+
+# --- лічильник заходу --------------------------------------------------------
+
+def test_each_event_starts_from_one(app, no_pdf):
+    """Головна вимога: номер учасника рахується в межах заходу, а не сайту."""
+    first_event = [
+        certificate_service.issue_certificate(_registration(event_num='1400001'))
+        for _ in range(3)
+    ]
+    second_event = certificate_service.issue_certificate(
+        _registration(event_num='1400002'))
+
+    assert [c.number[-6:] for c in first_event] == ['000001', '000002', '000003']
+    assert second_event.number.endswith('-1400002-000001')
 
 
-def test_counters_are_independent(app):
-    certificate_service._allocate_number_segment('participant')
-    certificate_service._allocate_number_segment('participant')
-    assert certificate_service._allocate_number_segment('lecturer') == 1
+def test_late_certificate_continues_its_own_event(app, no_pdf):
+    """Сценарій зі звіту: дописаний до минулого заходу сертифікат бере
+    наступний номер СВОГО заходу, а не номер з-за хвоста наступного."""
+    past = [_registration(event_num='1400011') for _ in range(3)]
+    for reg in past[:2]:
+        certificate_service.issue_certificate(reg)
+    for _ in range(4):
+        certificate_service.issue_certificate(_registration(event_num='1400012'))
+
+    late = certificate_service.issue_certificate(past[2])
+
+    assert late.number.endswith('-1400011-000003')
+
+
+def test_year_is_part_of_the_event(app, no_pdf):
+    """Той самий номер заходу в інший рік -- інший префікс, нумерація з одиниці."""
+    certificate_service.issue_certificate(_registration(event_num='1400021'))
+    other_year = _registration(event_num='1400021')
+    other_year.instance.start_date = datetime(2025, 3, 1, tzinfo=timezone.utc)
+    db.session.flush()
+
+    cert = certificate_service.issue_certificate(other_year)
+
+    assert cert.number == '2025-2738-1400021-000001'
+
+
+def test_participant_and_lecturer_counters_are_independent(app):
+    year = datetime.now(timezone.utc).year
+    event_num = str(next(_event_numbers))
+    participant = certificate_service._next_free_number(year, PROVIDER, event_num)
+    lecturer = certificate_service._next_free_number(
+        year, PROVIDER, event_num, kind='lecturer')
+    assert participant.endswith('-000001')
+    assert lecturer.endswith('-100001')
 
 
 def test_counter_survives_deletion(app, no_pdf):
-    """Головний регрес: COUNT(*) після видалення йшов назад назовсім."""
-    first = certificate_service.issue_certificate(_registration())
+    """Видалений сертифікат не віддає свій номер наступній людині:
+    перший уже міг піти в реєстр."""
+    event_num = str(next(_event_numbers))
+    first = certificate_service.issue_certificate(_registration(event_num=event_num))
     number = first.number
     db.session.delete(first)
     db.session.flush()
 
-    second = certificate_service.issue_certificate(_registration())
+    second_reg = _registration(event_num=event_num)
+    second = certificate_service.issue_certificate(second_reg)
     assert second.number != number, 'номер повторився після видалення'
-    assert SiteSettings.get().bpr_participant_counter == 2
+    assert _counter(second_reg) == 2
 
 
-def test_backfilled_counter_continues_numbering(app, no_pdf, bpr_settings):
-    """Бекфіл міграції = максимальний наявний сегмент; далі 000004."""
-    bpr_settings.bpr_participant_counter = 3
+def test_backfilled_counter_continues_numbering(app, no_pdf):
+    """Бекфіл міграції = максимальний наявний сегмент заходу; далі 000004."""
+    reg = _registration()
+    prefix = Certificate.format_prefix(
+        reg.instance.start_date.year, PROVIDER, reg.instance.course.bpr_event_number)
+    db.session.add(CertificateNumberCounter(prefix=prefix, kind='participant',
+                                            last_value=3))
     db.session.flush()
 
-    cert = certificate_service.issue_certificate(_registration())
+    cert = certificate_service.issue_certificate(reg)
     assert cert.number.endswith('-000004')
 
 
@@ -161,18 +218,6 @@ def test_taken_number_is_skipped(app, no_pdf):
 
     cert = certificate_service.issue_certificate(reg)
     assert cert.number.endswith('-000002')
-
-
-def test_lecturer_number_does_not_collide_with_participant(app):
-    year = datetime.now(timezone.utc).year
-    event_num = str(next(_event_numbers))
-    participant = certificate_service._next_free_number(year, PROVIDER, event_num)
-    lecturer = certificate_service._next_free_number(
-        year, PROVIDER, event_num,
-        kind='lecturer', offset=LECTURER_NUMBER_OFFSET,
-    )
-    assert participant.endswith('-000001')
-    assert lecturer.endswith('-100001')
 
 
 # --- повторна видача ---------------------------------------------------------
@@ -198,7 +243,7 @@ def test_reissue_of_revoked_keeps_number_and_path(app, no_pdf):
     assert again.pdf_path == pdf_path
     assert again.revoked is False
     # Лічильник не витрачено: нового номера не виділяли.
-    assert SiteSettings.get().bpr_participant_counter == 1
+    assert _counter(reg) == 1
 
 
 def test_issue_is_idempotent_for_valid_certificate(app, no_pdf):
@@ -206,7 +251,7 @@ def test_issue_is_idempotent_for_valid_certificate(app, no_pdf):
     first = certificate_service.issue_certificate(reg)
     second = certificate_service.issue_certificate(reg)
     assert first.id == second.id
-    assert SiteSettings.get().bpr_participant_counter == 1
+    assert _counter(reg) == 1
 
 
 def test_pdf_path_year_follows_event_not_issue_date(app, no_pdf):
@@ -235,65 +280,52 @@ def test_missing_event_number_raises(app, no_pdf):
 
 
 def test_failed_issue_does_not_burn_counter(app, no_pdf):
-    """Перевірка БПР-полів стоїть ДО виділення номера."""
+    """Перевірка БПР-полів стоїть ДО виділення номера: рядок лічильника
+    навіть не з'являється."""
+    before = CertificateNumberCounter.query.count()
     with pytest.raises(ValueError):
         certificate_service.issue_certificate(_registration(event_num=None))
-    assert SiteSettings.get().bpr_participant_counter == 0
+    assert CertificateNumberCounter.query.count() == before
 
 
-# --- блокування рядка налаштувань -------------------------------------------
+# --- свіже значення з-під блокування ----------------------------------------
 #
-# `with_for_update()` брав лок справно, але значення, прочитане під ним,
-# відкидалося: рядок site_settings уже лежить в identity map (його кладе і сам
-# `SiteSettings.get()` перед запитом, і контекст-процесор на кожному запиті), а
-# для вже завантаженої сутності SQLAlchemy без `populate_existing()` не
-# перезаписує атрибути. Лічильник рахувався від значення, прочитаного ДО
-# блокування, тож дві одночасні видачі отримували один номер і одна падала на
-# `unique` по `number`.
+# Рядок лічильника може вже лежати в identity map, а для завантаженої сутності
+# SQLAlchemy без `populate_existing()` не перезаписує атрибути. Лічильник тоді
+# рахувався б від значення, прочитаного ДО блокування, і дві одночасні видачі
+# отримали б один номер -- так уже ламався попередній, загальний лічильник.
 #
 # Конкурентність тут не імітуємо -- достатньо зафіксувати механіку: якщо рядок
 # у БД змінився в обхід ORM, читання під блокуванням мусить це побачити.
 
 def test_locked_read_sees_value_from_db_not_from_session(app):
     from sqlalchemy import text
-    from app.services.certificate_service import _allocate_number_segment
 
-    settings = SiteSettings.get()
-    settings.bpr_participant_counter = 100
+    prefix = f'2026-{PROVIDER}-{next(_event_numbers)}'
+    row = CertificateNumberCounter(prefix=prefix, kind='participant', last_value=100)
+    db.session.add(row)
     db.session.commit()
+    assert row.last_value == 100  # рядок лежить у сесії
 
-    SiteSettings.get()  # кладемо рядок у сесію, як це робить будь-який запит
-    db.session.execute(text(
-        'UPDATE site_settings SET bpr_participant_counter = 500 WHERE id = 1'))
+    db.session.execute(
+        text('UPDATE certificate_number_counters SET last_value = 500 '
+             'WHERE prefix = :p AND kind = :k'),
+        {'p': prefix, 'k': 'participant'},
+    )
 
-    assert _allocate_number_segment('participant') == 501, (
+    assert certificate_service._allocate_number_segment(prefix, 'participant') == 501, (
         'лічильник порахований від значення в сесії, а не з-під блокування'
     )
 
 
-def test_locked_read_is_fresh_for_lecturer_counter_too(app):
-    from sqlalchemy import text
-    from app.services.certificate_service import _allocate_number_segment
-
-    SiteSettings.get().bpr_lecturer_counter = 7
-    db.session.commit()
-
-    SiteSettings.get()
-    db.session.execute(text(
-        'UPDATE site_settings SET bpr_lecturer_counter = 42 WHERE id = 1'))
-
-    assert _allocate_number_segment('lecturer') == 43
-
-
 def test_allocation_persists_incremented_value(app):
     """Значення мусить лягти в рядок, інакше наступна видача візьме те саме."""
-    from app.services.certificate_service import _allocate_number_segment
+    prefix = f'2026-{PROVIDER}-{next(_event_numbers)}'
 
-    SiteSettings.get().bpr_participant_counter = 0
-    db.session.commit()
-
-    first = _allocate_number_segment('participant')
-    second = _allocate_number_segment('participant')
+    first = certificate_service._allocate_number_segment(prefix, 'lecturer')
+    second = certificate_service._allocate_number_segment(prefix, 'lecturer')
 
     assert (first, second) == (1, 2)
-    assert SiteSettings.get().bpr_participant_counter == 2
+    db.session.expire_all()
+    row = db.session.get(CertificateNumberCounter, (prefix, 'lecturer'))
+    assert row.last_value == 2

@@ -47,7 +47,6 @@ def admin(app):
 def bpr_ready(app):
     settings = SiteSettings.get()
     settings.bpr_provider_number = '2738'
-    settings.bpr_participant_counter = 0
     db.session.flush()
     return settings
 

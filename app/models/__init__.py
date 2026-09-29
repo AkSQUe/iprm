@@ -13,6 +13,7 @@ from app.models.registration import EventRegistration
 from app.models.registration_transfer import RegistrationTransfer
 from app.models.certificate import Certificate
 from app.models.lecturer_certificate import LecturerCertificate
+from app.models.certificate_number_counter import CertificateNumberCounter
 from app.models.clinic import Clinic
 from app.models.email_log import EmailLog
 from app.models.email_attachment import EmailAttachment
@@ -61,7 +62,7 @@ __all__ = [
     'TrainerPresentation',
     'ProgramBlock', 'EventRegistration',
     'RegistrationTransfer',
-    'Certificate', 'LecturerCertificate',
+    'Certificate', 'LecturerCertificate', 'CertificateNumberCounter',
     'Clinic', 'EmailLog', 'EmailAttachment', 'EmailSettings', 'EmailSuppression', 'NotificationRule',
     'PaymentTransaction', 'RefundRequest', 'SiteSettings', 'ErrorLog',
     'Course', 'CourseInstance', 'InstanceTariff', 'CourseTariff',

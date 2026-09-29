@@ -36,8 +36,6 @@ def bpr_settings(app):
     """Провайдер БПР заданий, лічильники з нуля -- як у test_certificate_number.py."""
     settings = SiteSettings.get()
     settings.bpr_provider_number = PROVIDER
-    settings.bpr_participant_counter = 0
-    settings.bpr_lecturer_counter = 0
     db.session.flush()
     return settings
 

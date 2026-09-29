@@ -5,8 +5,9 @@
 (issue_certificate свідомо не переписує номер), тож для виправлення
 потрібен окремий явний шлях: reissue_*.
 
-Порядковий сегмент учасника при цьому ЗБЕРІГАЄТЬСЯ -- міняється лише те,
-що виправив адмін (номер заходу, рік, знімки даних).
+Номер при цьому міняється лише разом із самим заходом (номер заходу чи
+рік): тоді порядковий береться з нумерації НОВОГО заходу, бо має сенс лише в
+межах свого. Той самий захід -- номер той самий.
 """
 import os
 from datetime import datetime, timedelta, timezone
@@ -129,18 +130,43 @@ def test_reissue_picks_up_corrected_instance_number(app, provider, fake_pdf,
     assert _event_segment(cert.number) == '1031500'
 
 
-def test_reissue_keeps_participant_segment(app, provider, fake_pdf, cert_folder):
-    instance = _instance(_course('1028974'))
-    reg = _registration(instance)
+def test_reissue_into_another_event_takes_its_numbering(app, provider, fake_pdf,
+                                                       cert_folder):
+    """Другий сертифікат заходу A, перенесений у свіжий захід B, стає там
+    першим -- а не тягне з собою свій старий порядковий 000002."""
+    course = _course('1500001')
+    instance = _instance(course)
+    first, second = _registration(instance), _registration(instance)
     db.session.commit()
-    cert = certificate_service.issue_certificate(reg)
-    issued_segment = _participant_segment(cert.number)
+    certificate_service.issue_certificate(first)
+    assert _participant_segment(
+        certificate_service.issue_certificate(second).number) == '000002'
 
-    instance.bpr_event_number = '1031500'
+    instance.bpr_event_number = '1500002'
     db.session.commit()
-    cert = certificate_service.reissue_certificate(reg)
+    cert = certificate_service.reissue_certificate(second)
 
-    assert _participant_segment(cert.number) == issued_segment
+    assert cert.number.endswith('-1500002-000001')
+
+
+def test_reissue_continues_numbering_of_the_target_event(app, provider, fake_pdf,
+                                                         cert_folder):
+    """У заході B уже є два сертифікати -- перенесений стає третім."""
+    target = _instance(_course('1500012'))
+    for _ in range(2):
+        reg = _registration(target)
+        db.session.commit()
+        certificate_service.issue_certificate(reg)
+    moved_instance = _instance(_course('1500011'))
+    moved = _registration(moved_instance)
+    db.session.commit()
+    certificate_service.issue_certificate(moved)
+
+    moved_instance.bpr_event_number = '1500012'
+    db.session.commit()
+    cert = certificate_service.reissue_certificate(moved)
+
+    assert cert.number.endswith('-1500012-000003')
 
 
 def test_reissue_refreshes_snapshots(app, provider, fake_pdf, cert_folder):
@@ -222,25 +248,26 @@ def test_reissue_requires_an_issued_certificate(app, provider, fake_pdf,
         certificate_service.reissue_certificate(reg)
 
 
-def test_reissue_refuses_when_new_number_is_taken(app, provider, fake_pdf,
-                                                  cert_folder):
-    """Чужий номер не перезаписуємо мовчки -- це вже ручна правка БД."""
-    course = _course('1028974')
-    first = _registration(_instance(course, event_number='1031500'))
-    second_instance = _instance(course, event_number='1028974')
-    second = _registration(second_instance)
+def test_reissue_skips_a_number_taken_past_the_counter(app, provider, fake_pdf,
+                                                      cert_folder):
+    """Номер, що потрапив у новий захід в обхід лічильника (ручна правка БД),
+    перевидача обходить, а не перезаписує."""
+    course = _course('1500021')
+    squatter_reg = _registration(_instance(course, event_number='1500022'))
+    moved_instance = _instance(course)
+    moved = _registration(moved_instance)
     db.session.commit()
-    first_cert = certificate_service.issue_certificate(first)
-    second_cert = certificate_service.issue_certificate(second)
+    squatter = certificate_service.issue_certificate(squatter_reg)
+    certificate_service.issue_certificate(moved)
 
-    # Займаємо номер, який дістанеться другому після виправлення.
-    year, prov, _event, participant = second_cert.number.split('-')
-    first_cert.number = f'{year}-{prov}-1031500-{participant}'
-    second_instance.bpr_event_number = '1031500'
+    # Займаємо 000002 -- наступний, який видав би лічильник заходу 1500022.
+    squatter.number = squatter.number[:-6] + '000002'
+    moved_instance.bpr_event_number = '1500022'
     db.session.commit()
 
-    with pytest.raises(ValueError, match='зайнятий'):
-        certificate_service.reissue_certificate(second)
+    cert = certificate_service.reissue_certificate(moved)
+
+    assert cert.number.endswith('-1500022-000003')
 
 
 def test_reissue_refuses_revoked_certificate(app, provider, fake_pdf, cert_folder):
@@ -317,18 +344,27 @@ def test_lecturer_reissue_picks_up_corrected_number(app, provider, fake_pdf,
     assert _event_segment(cert.number) == '1031500'
 
 
-def test_lecturer_reissue_keeps_lecturer_number_range(app, provider, fake_pdf,
-                                                      cert_folder):
-    """Лекторський діапазон 1xxxxx зберігається разом із порядковим сегментом."""
-    instance, trainer = _lecturer_instance('1028974')
-    issued = certificate_service.issue_lecturer_certificate(instance, trainer).number
-    instance.bpr_event_number = '1031500'
+def test_lecturer_reissue_takes_lecturer_range_of_the_new_event(
+        app, provider, fake_pdf, cert_folder):
+    """У новому заході тренер отримує перший номер ТРЕНЕРСЬКОГО діапазону."""
+    instance, trainer = _lecturer_instance('1500031')
+    certificate_service.issue_lecturer_certificate(instance, trainer)
+    instance.bpr_event_number = '1500032'
     db.session.commit()
 
     cert = certificate_service.reissue_lecturer_certificate(instance, trainer)
 
-    assert _participant_segment(cert.number) == _participant_segment(issued)
-    assert _participant_segment(cert.number).startswith('1')
+    assert cert.number.endswith('-1500032-100001')
+
+
+def test_lecturer_reissue_in_the_same_event_keeps_the_number(
+        app, provider, fake_pdf, cert_folder):
+    instance, trainer = _lecturer_instance('1500041')
+    issued = certificate_service.issue_lecturer_certificate(instance, trainer).number
+
+    cert = certificate_service.reissue_lecturer_certificate(instance, trainer)
+
+    assert cert.number == issued
 
 
 def test_lecturer_reissue_refreshes_snapshots(app, provider, fake_pdf, cert_folder):
