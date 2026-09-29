@@ -998,6 +998,187 @@ def reissue_lecturer_certificate(instance, trainer, issued_by=None):
     return lc
 
 
+# ---- Перенумерація заходу ----
+#
+# Разова дія адміна з картки проведення: сертифікати, видані ще за загальним
+# лічильником (або під номером заходу, який потім виправили), отримують
+# порядкові номери свого заходу з одиниці. Поштучна перевидача цього не
+# зробить: у тому самому заході вона номер свідомо зберігає.
+RenumberItem = namedtuple('RenumberItem', 'kind cert old_number new_number')
+
+
+def _segments_held_by_others(prefix, own_participant_ids, own_lecturer_ids):
+    """Порядкові номери заходу `prefix`, які тримають сертифікати ІНШИХ проведень."""
+    from app.models.lecturer_certificate import LecturerCertificate
+
+    held = set()
+    for model, own in ((Certificate, own_participant_ids),
+                       (LecturerCertificate, own_lecturer_ids)):
+        rows = (db.session.query(model.id, model.number)
+                .filter(model.number.startswith(f'{prefix}-'))
+                .all())
+        for cert_id, number in rows:
+            parsed = Certificate.split_number(number)
+            if cert_id not in own and parsed is not None and parsed[0] == prefix:
+                held.add(parsed[1])
+    return held
+
+
+def renumber_plan(instance):
+    """Номери, які отримають сертифікати проведення при нумерації з одиниці.
+
+    Повертає RenumberItem для КОЖНОГО сертифіката проведення (учасники, потім
+    тренери, у порядку видачі); змінюються ті, де old_number != new_number.
+    ValueError -- якщо для номера бракує даних БПР.
+
+    Номери, які в тому самому заході тримають сертифікати інших проведень,
+    обходимо: дві дати з успадкованим від курсу номером заходу для реєстру --
+    один захід, і чужі документи в ньому переписувати не можна. Відкликані
+    сертифікати нумеруються разом з рештою: свій номер вони тримають і
+    повернуть його при повторній видачі.
+    """
+    from app.models.lecturer_certificate import LecturerCertificate
+    from app.models.registration import EventRegistration
+
+    provider, event_num = _bpr_number_inputs(instance)
+    year = (instance.start_date or utcnow()).year
+    prefix = Certificate.format_prefix(year, provider, event_num)
+
+    participants = (
+        Certificate.query
+        .join(EventRegistration, Certificate.registration_id == EventRegistration.id)
+        .filter(EventRegistration.instance_id == instance.id)
+        .order_by(Certificate.id)
+        .all()
+    )
+    lecturers = (
+        LecturerCertificate.query
+        .filter_by(instance_id=instance.id)
+        .order_by(LecturerCertificate.id)
+        .all()
+    )
+    held = _segments_held_by_others(
+        prefix, {c.id for c in participants}, {c.id for c in lecturers})
+
+    plan = []
+    for kind, certs in (('participant', participants), ('lecturer', lecturers)):
+        segment = _kind_offset(kind)
+        for cert in certs:
+            segment += 1
+            while segment in held:
+                segment += 1
+            plan.append(RenumberItem(
+                kind, cert, cert.number,
+                Certificate.format_number(year, provider, event_num, segment),
+            ))
+    return plan
+
+
+def _reset_counters(prefix):
+    """Лічильники заходу = найбільший порядковий, що в ньому зараз зайнятий.
+
+    Після перенумерації лічильник свідомо може піти НАЗАД: номери з хвоста,
+    які сертифікати заходу тримали до неї, більше нікому не належать, і
+    наступна видача продовжить щільну нумерацію, а не почне з-за них.
+    """
+    from app.models.lecturer_certificate import LECTURER_NUMBER_OFFSET
+
+    segments = _segments_held_by_others(prefix, set(), set())
+    participant = [s for s in segments if s < LECTURER_NUMBER_OFFSET]
+    lecturer = [s - LECTURER_NUMBER_OFFSET for s in segments
+                if s > LECTURER_NUMBER_OFFSET]
+    for kind, values in (('participant', participant), ('lecturer', lecturer)):
+        _counter_row(prefix, kind).last_value = max(values, default=0)
+
+
+def renumber_instance_certificates(instance, issued_by=None):
+    """Перенумерувати сертифікати проведення за `renumber_plan`.
+
+    Повертає змінені RenumberItem (порожній список -- усе вже по порядку).
+    Змінений сертифікат -- нова версія документа: оновлюються номер і дата
+    видачі, решта знімків лишається як була. PDF учасника під старим номером
+    прибираємо, а новий малюється при першому ж читанні (`read_pdf_bytes`) --
+    лист з ним відправляє вже маршрут. Сертифікат тренера повертається в
+    чергу розсилки, як і після поштучної перевидачі.
+    """
+    # Лок ДО плану: паралельна видача не має встигнути взяти номер, який
+    # план уже роздав.
+    _lock_numbering()
+    plan = renumber_plan(instance)
+    changed = [item for item in plan if item.old_number != item.new_number]
+    if not changed:
+        db.session.commit()
+        return []
+
+    stale_paths = [certificate_abs_path(item.cert)
+                   for item in changed if item.kind == 'participant']
+
+    # Спершу тимчасові номери: unique по number перевіряється на кожному
+    # рядку, а не в кінці транзакції, тож обмін (цьому 000001, а 000001
+    # поки тримає сусід із того ж заходу) без проміжного кроку впав би.
+    for item in changed:
+        item.cert.number = f'renumber-{item.kind}-{item.cert.id}'
+    db.session.flush()
+
+    issued_at = utcnow()
+    for item in changed:
+        cert = item.cert
+        cert.number = item.new_number
+        if item.kind == 'participant':
+            cert.pdf_path = f'{item.new_number[:4]}/{item.new_number}.pdf'
+            if cert.revoked:
+                continue
+        else:
+            # Нова дата видачі -- це й новий ключ листа тренеру
+            # (lecturer_certificate_idempotency_key), без нього розсилка
+            # вважала б виправлену версію вже надісланою.
+            cert.emailed_at = None
+            cert.downloaded_at = None
+        cert.issued_at = issued_at
+        cert.issued_by_id = issued_by.id if issued_by else None
+
+    _reset_counters(Certificate.split_number(changed[0].new_number)[0])
+    db.session.commit()
+
+    for path in stale_paths:
+        _discard_stale_pdf(path, keep=None)
+    logger.info(
+        'Certificates of instance=%s renumbered by=%s: %s',
+        instance.id, issued_by.email if issued_by else 'system',
+        ', '.join(f'{i.old_number}->{i.new_number}' for i in changed),
+    )
+    return changed
+
+
+def email_certificates_in_background(certificate_ids):
+    """Надіслати учасникам їхні сертифікати у фоновому потоці.
+
+    Перенумерація чіпає весь захід разом, а кожен PDF WeasyPrint малює
+    секунду-дві: синхронно запит упирався б у таймаут воркера. Лист --
+    best-effort, як і в поштучній перевидачі: збій одного не зупиняє решту,
+    а переслати можна з картки реєстрації.
+    """
+    import threading
+
+    app = current_app._get_current_object()
+    ids = list(certificate_ids)
+
+    def _run():
+        from app.services.email_service import EmailService
+
+        with app.app_context():
+            for cert_id in ids:
+                try:
+                    cert = db.session.get(Certificate, cert_id)
+                    if cert is not None and not cert.revoked:
+                        EmailService.send_certificate(cert)
+                except Exception:
+                    db.session.rollback()
+                    logger.exception('Failed to email renumbered certificate %s', cert_id)
+
+    threading.Thread(target=_run, name='certificate-mail', daemon=True).start()
+
+
 def render_lecturer_pdf(lecturer_cert, font_config=None):
     """PDF серта тренера зі збереженого запису (рендер за знімками)."""
     return render_adhoc_pdf(

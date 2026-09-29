@@ -201,7 +201,8 @@
             &mdash; під номером заходу
             {{ issued_bpr.numbers | join(', ') }}.
             Зміна номера вплине лише на НОВІ видачі: вже видані сертифікати
-            зберігають свій номер.
+            зберігають свій номер, доки їх не перенумерувати (блок
+            «Нумерація сертифікатів» нижче).
           </div>
           {% endif %}
         </div>
@@ -380,6 +381,58 @@
     <p class="admin-speakers__empty">Лектора не задано -- додайте тренерів заходу вище.</p>
     {% endif %}
   </div>
+
+  {% if renumber and can('certificates.manage') %}
+  {# Блок з'являється лише тоді, коли номери заходу не йдуть по порядку:
+     сертифікати видані ще за загальним лічильником або під номером заходу,
+     який потім виправили. Поштучна перевидача цього не лікує -- у тому
+     самому заході вона номер свідомо зберігає. #}
+  <div class="form-section" id="certificate-numbers">
+    <h3 class="admin-form__section-title">Нумерація сертифікатів</h3>
+    <p class="admin-form__section-hint">
+      Порядкові номери сертифікатів цього заходу йдуть не по порядку. Після
+      перенумерації вони підуть з одиниці: учасники з 000001, тренери з 100001.
+      Учасники отримають оновлений сертифікат на email.
+    </p>
+    <div class="admin-table-wrap">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Кому</th>
+          <th>Зараз</th>
+          <th>Стане</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in renumber %}
+        <tr>
+          <td>
+            {% if item.kind == 'lecturer' %}
+            {{ item.cert.trainer.full_name if item.cert.trainer else item.cert.recipient_name }}
+            <span class="badge badge--info">тренер</span>
+            {% else %}
+            {{ item.cert.recipient_name }}
+            {% if item.cert.revoked %}<span class="badge badge--draft">відкликано</span>{% endif %}
+            {% endif %}
+          </td>
+          <td>{{ item.old_number }}</td>
+          <td>{{ item.new_number }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    <form method="POST" action="{{ url_for('admin.instance_certificates_renumber', instance_id=instance.id) }}"
+          class="admin-mt-sm"
+          data-confirm="Перенумерувати сертифікати заходу? Номери вже виданих документів зміняться, учасники отримають оновлений сертифікат на email."
+          data-confirm-ok="Перенумерувати">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm">
+        {{ icon('refresh') }} Перенумерувати
+      </button>
+    </form>
+  </div>
+  {% endif %}
 
   {% if can('trainers.view') %}
   <div class="form-section" id="presentations">

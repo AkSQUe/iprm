@@ -173,6 +173,23 @@ def _issued_bpr(instance):
     return {'count': count, 'numbers': numbers} if count else None
 
 
+def _renumber_preview(instance):
+    """Номери, які змінить перенумерація заходу, -- або None.
+
+    None і тоді, коли все вже по порядку, і коли для номера бракує даних БПР:
+    блок з кнопкою потрібен лише там, де є що виправляти.
+    """
+    from app.services import certificate_service
+
+    if instance is None or instance.id is None:
+        return None
+    try:
+        plan = certificate_service.renumber_plan(instance)
+    except ValueError:
+        return None
+    return [item for item in plan if item.old_number != item.new_number] or None
+
+
 _INSTANCES_PER_PAGE = 25
 
 
@@ -486,6 +503,7 @@ def _render_instance_form(form, instance, preselected_course_id=None):
         # Застереження біля поля номера заходу: у щойно створеної дати
         # сертифікатів немає за визначенням, але шаблон один на обидва режими.
         issued_bpr=_issued_bpr(instance),
+        renumber=_renumber_preview(instance),
         lecturers=lecturers,
         lecturer_certs=certs,
         # Презентації, які тренери завантажили до цієї дати з кабінету.
@@ -696,6 +714,53 @@ def instance_lecturer_certificate_reissue(instance_id):
                       current_user.email, lc.number, instance_id, lc.trainer_id)
     return send_file(io.BytesIO(pdf), mimetype='application/pdf',
                      as_attachment=True, download_name=f'lecturer-{lc.number}.pdf')
+
+
+@admin_bp.route('/instances/<int:instance_id>/certificates/renumber', methods=['POST'])
+@permission_required('certificates.manage')
+def instance_certificates_renumber(instance_id):
+    """Перенумерувати сертифікати заходу з одиниці й розіслати оновлені.
+
+    Номери вже виданих документів міняються, тож дія окрема і з
+    підтвердженням -- так само, як поштучна перевидача.
+    """
+    from app.services import certificate_service as cs
+
+    instance = db.session.get(CourseInstance, instance_id)
+    if not instance:
+        flash('Проведення не знайдено', 'error')
+        return redirect(url_for('admin.instances_list'))
+    back = redirect(url_for('admin.instance_edit', instance_id=instance_id))
+
+    try:
+        changed = cs.renumber_instance_certificates(instance, issued_by=current_user)
+    except ValueError as exc:
+        db.session.rollback()
+        flash(str(exc), 'error')
+        return back
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception('certificate renumber failed instance=%s', instance_id)
+        flash('Не вдалося перенумерувати сертифікати', 'error')
+        return back
+
+    if not changed:
+        flash('Номери сертифікатів уже йдуть по порядку -- змінювати нічого', 'info')
+        return back
+
+    audit_logger.info(
+        'Admin %s renumbered certificates of instance %s: %s', current_user.email,
+        instance_id, ', '.join(f'{i.old_number}->{i.new_number}' for i in changed),
+    )
+    to_mail = [i.cert.id for i in changed
+               if i.kind == 'participant' and not i.cert.revoked]
+    if to_mail:
+        cs.email_certificates_in_background(to_mail)
+    flash(
+        f'Перенумеровано сертифікатів: {len(changed)}. Учасникам надсилаються '
+        'оновлені PDF, тренерам -- з найближчою розсилкою.', 'success',
+    )
+    return back
 
 
 @admin_bp.route('/instances/<int:instance_id>/status', methods=['POST'])
