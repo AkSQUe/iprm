@@ -162,7 +162,7 @@ def create_or_reactivate(user_id, instance, form_data, existing=None, tariff=Non
         # правило дати оплати, а не прямим присвоєнням.
         existing.payment_status = 'unpaid'
         existing.payment_id = None
-        existing.paid_at = None
+        existing.clear_paid_at()
         reg = existing
     else:
         reg = EventRegistration(

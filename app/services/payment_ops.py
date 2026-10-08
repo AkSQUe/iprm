@@ -9,7 +9,7 @@ from datetime import datetime, time, timedelta, timezone
 from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
 
 from app.extensions import db
-from app.models.mixins import utcnow
+from app.models.mixins import PAID_AT_DATE, PAID_AT_DATETIME, utcnow
 from app.models.registration import EventRegistration
 from app.models.payment_transaction import PaymentTransaction
 from app.utils import KYIV, to_kyiv
@@ -208,24 +208,74 @@ def parse_order_id(order_id):
 # без дати не потрапляв у жоден місячний звіт.
 
 def paid_moment(paid_on=None, now=None):
-    """Момент оплати для дати з виписки (`date`) або None -- "зараз".
+    """(момент, точність) оплати для дати з виписки (`date`) або None.
 
-    Сьогоднішня дата -- теж "зараз". Минула -- полудень за Києвом, а не
-    північ: 00:00 за Києвом -- це 21:00 чи 22:00 UTC попередньої доби, і
-    оплата 1-го числа, прочитана в UTC, лягла б у попередній місяць.
+    Без дати і з сьогоднішньою датою -- "зараз", точність 'datetime'.
+    Минула дата -- полудень за Києвом і точність 'date': часу ми не знаємо,
+    і споживач мусить це бачити. Полудень, а не північ: 00:00 за Києвом --
+    це 21:00 чи 22:00 UTC попередньої доби, і оплата 1-го числа, прочитана
+    в UTC, лягла б у попередній місяць.
 
     Дата в майбутньому -- ValueError: так оплата лягла б у місяць, якого
     ще не було.
     """
     now = now or datetime.now(timezone.utc)
     if paid_on is None:
-        return now
+        return now, PAID_AT_DATETIME
     today = to_kyiv(now).date()
     if paid_on > today:
         raise ValueError('Дата оплати не може бути в майбутньому')
     if paid_on == today:
-        return now
-    return datetime.combine(paid_on, time(12), tzinfo=KYIV).astimezone(timezone.utc)
+        return now, PAID_AT_DATETIME
+    moment = datetime.combine(paid_on, time(12), tzinfo=KYIV).astimezone(timezone.utc)
+    return moment, PAID_AT_DATE
+
+
+def liqpay_end_date(payload):
+    """Коли LiqPay завершив платіж: `end_date` (мілісекунди Unix, UTC).
+
+    None, якщо поля немає або воно непридатне.
+    """
+    raw = (payload or {}).get('end_date')
+    if raw in (None, ''):
+        return None
+    try:
+        return datetime.fromtimestamp(int(raw) / 1000, tz=timezone.utc)
+    except (TypeError, ValueError, OverflowError, OSError):
+        logger.warning('LiqPay: unusable end_date %r', raw)
+        return None
+
+
+def liqpay_paid_moment(payload):
+    """(момент, 'datetime') оплати з відповіді LiqPay.
+
+    Момент -- `end_date`, а не мить, коли до нас дійшов callback: callback
+    буває запізнілим, а звірка зависних платежів (reconcile_pending)
+    приходить і за години. Без придатного `end_date` -- "зараз".
+    """
+    return (liqpay_end_date(payload) or datetime.now(timezone.utc),
+            PAID_AT_DATETIME)
+
+
+def refresh_paid_at_from_liqpay(reg, status_data):
+    """Замінити дату оплати реєстрації точним часом із відповіді LiqPay.
+
+    Для оплат, яким дату дозаповнили днем (точність 'date'): у LiqPay є
+    справжній момент. Caller уже перевірив, що статус успішний і end_date
+    є. Пише рядок журналу (source='status_check') з усією відповіддю.
+    Мутує сесію без commit.
+    """
+    reg.set_paid_at(liqpay_end_date(status_data), PAID_AT_DATETIME)
+    _log_transaction(
+        reg_id=reg.id,
+        order_id=f'REG-{reg.id}',
+        mapped_status='paid',
+        source='status_check',
+        liqpay_status=status_data.get('status'),
+        payment_id=str(status_data.get('payment_id') or '') or None,
+        amount=status_data.get('amount'),
+        raw_payload=status_data,
+    )
 
 
 def _current_actor():
@@ -260,24 +310,25 @@ def apply_manual_payment_status(reg, new_status, paid_on=None, actor=None,
     змінилось.
     """
     old_status = reg.payment_status or 'unpaid'
-    old_paid_at = reg.paid_at
+    old_paid = (reg.paid_at, reg.paid_at_precision)
 
     if new_status == 'paid':
         stored_day = to_kyiv(reg.paid_at).date() if reg.paid_at else None
         if paid_on is not None and paid_on != stored_day:
-            reg.paid_at = paid_moment(paid_on)
+            reg.set_paid_at(*paid_moment(paid_on))
         elif reg.paid_at is None and old_status != 'paid':
-            reg.paid_at = paid_moment()
+            reg.set_paid_at(*paid_moment())
     elif new_status in ('unpaid', 'pending'):
-        reg.paid_at = None
+        reg.clear_paid_at()
     reg.payment_status = new_status
 
-    if old_status == new_status and reg.paid_at == old_paid_at:
+    if old_status == new_status and (reg.paid_at, reg.paid_at_precision) == old_paid:
         return False
 
     payload = {
         'previous_status': old_status,
         'paid_at': reg.paid_at.isoformat() if reg.paid_at else None,
+        'paid_at_precision': reg.paid_at_precision,
         'actor': actor or _current_actor(),
     }
     if note:
@@ -447,7 +498,7 @@ class PaymentOps:
             enrollment.payment_id = payment_id
 
         if new_status == 'paid':
-            enrollment.paid_at = datetime.now(timezone.utc)
+            enrollment.set_paid_at(*liqpay_paid_moment(raw_payload))
             enrollment.status = 'active'
         elif new_status == 'refunded':
             enrollment.status = 'cancelled'
@@ -545,7 +596,7 @@ class PaymentOps:
             reg.payment_id = payment_id
 
         if new_status == 'paid':
-            reg.paid_at = datetime.now(timezone.utc)
+            reg.set_paid_at(*liqpay_paid_moment(raw_payload))
             reg.status = 'confirmed'
             # Призначити порядковий номер місця per-instance. Робимо до
             # commit, щоб номер опинився в одній транзакції з статусом.

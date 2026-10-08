@@ -148,7 +148,7 @@ class TestParticipantForm:
 
     def test_edit_form_shows_stored_date(self, client, admin, reg):
         reg.payment_status = 'paid'
-        reg.paid_at = datetime(2026, 9, 10, 9, tzinfo=timezone.utc)
+        reg.set_paid_at(datetime(2026, 9, 10, 9, tzinfo=timezone.utc), 'datetime')
         db.session.commit()
         _login(client, admin)
 
@@ -191,3 +191,4 @@ def test_marked_row_reaches_partner_cursor_with_date(client, admin, reg,
     assert row is not None
     assert row['payment_status'] == 'paid'
     assert row['paid_at'] is not None
+    assert row['paid_at_precision'] == 'datetime'

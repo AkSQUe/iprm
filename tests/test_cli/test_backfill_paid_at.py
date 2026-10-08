@@ -75,6 +75,7 @@ def test_apply_sets_date_bumps_updated_at_and_logs(app, legacy_paid):
     assert result.exit_code == 0, result.output
     reg = _reload(legacy_paid)
     assert to_kyiv(reg.paid_at).date().isoformat() == '2026-09-15'
+    assert reg.paid_at_precision == 'date'
     assert ensure_utc(reg.updated_at) > OLD_UPDATED_AT
     txns = _manual_txns(reg)
     assert len(txns) == 1
@@ -88,7 +89,7 @@ def test_listing_without_dates_shows_missing(app, legacy_paid):
 
 
 def test_existing_date_is_not_overwritten(app, legacy_paid):
-    legacy_paid.paid_at = datetime(2026, 9, 1, 9, tzinfo=timezone.utc)
+    legacy_paid.set_paid_at(datetime(2026, 9, 1, 9, tzinfo=timezone.utc), 'datetime')
     db.session.commit()
 
     _run(app, '--date', f'{legacy_paid.id}=2026-09-15', '--apply')

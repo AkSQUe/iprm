@@ -56,7 +56,7 @@ def paid_reg(app, admin):
         user_id=admin.id, instance_id=instance.id,
         phone='+380000000000', specialty='Лікар', workplace='Клініка',
         status='confirmed', payment_status='paid',
-        payment_amount=Decimal('1000'), paid_at=utcnow(),
+        payment_amount=Decimal('1000'), paid_at=utcnow(), paid_at_precision='datetime',
     )
     db.session.add(item)
     db.session.flush()

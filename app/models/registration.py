@@ -6,7 +6,8 @@ from sqlalchemy import func as sa_func
 
 from app.extensions import db
 from app.models.mixins import (
-    TimestampMixin, BigIntPK, DiscountedMixin, RefundableMixin, utcnow,
+    TimestampMixin, BigIntPK, DiscountedMixin, PaidAtMixin, RefundableMixin,
+    paid_at_precision_check, utcnow,
 )
 
 
@@ -14,8 +15,8 @@ from app.models.mixins import (
 COMPLETION_TOKEN_TTL_DAYS = 30
 
 
-class EventRegistration(TimestampMixin, RefundableMixin, DiscountedMixin,
-                        db.Model):
+class EventRegistration(TimestampMixin, PaidAtMixin, RefundableMixin,
+                        DiscountedMixin, db.Model):
     """Реєстрація на CourseInstance.
 
     Ім'я класу (EventRegistration) і таблиці (event_registrations)
@@ -61,7 +62,7 @@ class EventRegistration(TimestampMixin, RefundableMixin, DiscountedMixin,
     )
     payment_amount = db.Column(db.Numeric(10, 2))
     payment_id = db.Column(db.String(255))
-    paid_at = db.Column(db.DateTime(timezone=True))
+    # paid_at і paid_at_precision -- у PaidAtMixin.
 
     # Повернення коштів -- колонки й правила у RefundableMixin.
 
@@ -203,6 +204,7 @@ class EventRegistration(TimestampMixin, RefundableMixin, DiscountedMixin,
             "payment_method IN ('liqpay', 'invoice')",
             name='ck_registrations_payment_method',
         ),
+        paid_at_precision_check('ck_registrations_paid_at_precision'),
         db.CheckConstraint(
             'experience_years >= 0',
             name='ck_registrations_experience_non_negative',

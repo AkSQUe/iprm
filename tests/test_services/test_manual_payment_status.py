@@ -15,6 +15,7 @@ import pytest
 from app.extensions import db
 from app.models.course import Course
 from app.models.course_instance import CourseInstance
+from app.models.mixins import PAID_AT_DATE, PAID_AT_DATETIME
 from app.models.payment_transaction import PaymentTransaction
 from app.models.registration import EventRegistration
 from app.models.user import User
@@ -49,6 +50,7 @@ def _reg(payment_status='unpaid', paid_at=None, amount=1500):
         phone='+380501112233', specialty='S', workplace='W',
         status='confirmed', payment_status=payment_status,
         payment_amount=amount, payment_method='invoice', paid_at=paid_at,
+        paid_at_precision='datetime' if paid_at else None,
     )
     db.session.add(reg)
     db.session.flush()
@@ -75,6 +77,7 @@ class TestRule:
 
         assert reg.payment_status == 'paid'
         assert ensure_utc(reg.paid_at) >= before - timedelta(seconds=1)
+        assert reg.paid_at_precision == PAID_AT_DATETIME
         txns = _manual_txns(reg)
         assert len(txns) == 1
         assert txns[0].mapped_status == 'paid'
@@ -86,6 +89,7 @@ class TestRule:
         reg = _reg('paid', paid_at=datetime(2026, 9, 10, 9, tzinfo=timezone.utc))
         apply_manual_payment_status(reg, 'unpaid')
         assert reg.paid_at is None
+        assert reg.paid_at_precision is None
         assert _manual_txns(reg)[-1].mapped_status == 'unpaid'
 
     def test_paid_to_pending_clears_date(self, app):
@@ -99,6 +103,7 @@ class TestRule:
         reg = _reg('paid', paid_at=paid_at)
         apply_manual_payment_status(reg, 'refunded')
         assert ensure_utc(reg.paid_at) == paid_at
+        assert reg.paid_at_precision == PAID_AT_DATETIME
 
     def test_paid_to_paid_does_not_overwrite(self, app):
         paid_at = datetime(2026, 9, 10, 9, tzinfo=timezone.utc)
@@ -130,19 +135,71 @@ class TestRule:
         apply_manual_payment_status(reg, 'paid', paid_on=day)
         expected = datetime.combine(day, time(12), tzinfo=KYIV)
         assert ensure_utc(reg.paid_at) == expected.astimezone(timezone.utc)
+        assert reg.paid_at_precision == PAID_AT_DATE
+        assert _manual_txns(reg)[0].raw_payload['paid_at_precision'] == PAID_AT_DATE
 
-    def test_first_of_month_stays_in_its_month_in_utc(self, app):
-        """Північ за Києвом -- це вчорашній вечір в UTC: оплата 1-го числа
-        лягла б у попередній місяць."""
-        moment = paid_moment(date(2026, 10, 1),
-                             now=datetime(2026, 10, 8, tzinfo=timezone.utc))
-        assert moment.astimezone(timezone.utc).date() == date(2026, 10, 1)
+    def test_correcting_the_day_changes_precision(self, app):
+        """Позначка "зараз", потім дата з виписки: час стає невідомим."""
+        reg = _reg()
+        apply_manual_payment_status(reg, 'paid')
+        apply_manual_payment_status(
+            reg, 'paid', paid_on=_kyiv_today() - timedelta(days=3))
+        assert reg.paid_at_precision == PAID_AT_DATE
 
     def test_future_date_is_rejected(self, app):
         reg = _reg()
         with pytest.raises(ValueError):
             apply_manual_payment_status(
                 reg, 'paid', paid_on=_kyiv_today() + timedelta(days=2))
+
+
+class TestPaidMoment:
+    NOW = datetime(2026, 10, 8, 7, 15, tzinfo=timezone.utc)
+
+    def test_without_date_is_now_with_time(self):
+        assert paid_moment(now=self.NOW) == (self.NOW, PAID_AT_DATETIME)
+
+    def test_today_is_now_with_time(self):
+        assert paid_moment(date(2026, 10, 8), now=self.NOW) == (
+            self.NOW, PAID_AT_DATETIME)
+
+    def test_past_day_is_noon_kyiv_without_time(self):
+        moment, precision = paid_moment(date(2026, 9, 15), now=self.NOW)
+        assert moment == datetime(2026, 9, 15, 12, tzinfo=KYIV)
+        assert precision == PAID_AT_DATE
+
+    def test_first_of_month_stays_in_its_month_in_utc(self):
+        """Північ за Києвом -- це вчорашній вечір в UTC: оплата 1-го числа
+        лягла б у попередній місяць."""
+        moment, _ = paid_moment(date(2026, 10, 1), now=self.NOW)
+        assert moment.astimezone(timezone.utc).date() == date(2026, 10, 1)
+
+    def test_future_day_is_rejected(self):
+        with pytest.raises(ValueError):
+            paid_moment(date(2026, 10, 10), now=self.NOW)
+
+
+class TestPrecisionCheck:
+    """CHECK у БД -- остання лінія: дата без точності і точність без дати."""
+
+    def test_precision_without_date_is_rejected(self, app):
+        reg = _reg()
+        reg.paid_at_precision = PAID_AT_DATE
+        with pytest.raises(Exception):
+            db.session.flush()
+        db.session.rollback()
+
+    def test_date_without_precision_is_rejected(self, app):
+        reg = _reg()
+        reg.paid_at = datetime(2026, 9, 10, 9, tzinfo=timezone.utc)
+        with pytest.raises(Exception):
+            db.session.flush()
+        db.session.rollback()
+
+    def test_unknown_precision_is_rejected_in_python(self, app):
+        reg = _reg()
+        with pytest.raises(ValueError):
+            reg.set_paid_at(datetime(2026, 9, 10, 9, tzinfo=timezone.utc), 'hour')
 
 
 class TestParticipantService:
@@ -189,6 +246,7 @@ class TestParticipantService:
 
         assert reg.payment_status == 'unpaid'
         assert reg.paid_at is None
+        assert reg.paid_at_precision is None
         assert _manual_txns(reg) == []
 
     def test_date_from_form_is_kept(self, app):
@@ -198,6 +256,7 @@ class TestParticipantService:
             self._data(reg.instance_id, payment_status='paid', paid_on=day),
             reg=reg)
         assert to_kyiv(reg.paid_at).date() == day
+        assert reg.paid_at_precision == PAID_AT_DATE
 
     def test_future_date_is_a_participant_error(self, app):
         reg = _reg()
@@ -227,6 +286,7 @@ class TestFreeRegistration:
         assert is_free is True
         assert reg.payment_status == 'paid'
         assert reg.paid_at is not None
+        assert reg.paid_at_precision == PAID_AT_DATETIME
         assert [t.mapped_status for t in _manual_txns(reg)] == ['paid']
 
     def test_reactivated_free_registration_gets_paid_at(self, app):
@@ -247,6 +307,7 @@ class TestFreeRegistration:
         assert reg.id == old.id
         assert reg.payment_status == 'paid'
         assert reg.paid_at is not None
+        assert reg.paid_at_precision == PAID_AT_DATETIME
         assert [t.mapped_status for t in _manual_txns(reg)] == ['paid']
 
     def test_paid_event_registration_stays_unpaid(self, app):
@@ -258,4 +319,5 @@ class TestFreeRegistration:
         assert is_free is False
         assert reg.payment_status == 'unpaid'
         assert reg.paid_at is None
+        assert reg.paid_at_precision is None
         assert _manual_txns(reg) == []

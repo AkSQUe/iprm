@@ -153,7 +153,7 @@ def _paid_enrollment(buyer, course, ttl_hours=72):
     enrollment = OnlineEnrollment(
         user_id=buyer.id, online_course_id=course.id,
         payment_amount=Decimal('4500'), payment_status='paid', status='active',
-        paid_at=utcnow(),
+        paid_at=utcnow(), paid_at_precision='datetime',
     )
     db.session.add(enrollment)
     db.session.flush()

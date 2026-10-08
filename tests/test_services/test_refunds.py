@@ -72,7 +72,7 @@ def paid_reg(app, user, instance):
         user_id=user.id, instance_id=instance.id,
         phone='+380000000000', specialty='Лікар', workplace='Клініка',
         status='confirmed', payment_status='paid',
-        payment_amount=Decimal('1000'), paid_at=utcnow(),
+        payment_amount=Decimal('1000'), paid_at=utcnow(), paid_at_precision='datetime',
     )
     db.session.add(item)
     db.session.flush()
@@ -92,7 +92,7 @@ def paid_enrollment(app, user):
     item = OnlineEnrollment(
         user_id=user.id, online_course_id=course.id,
         payment_amount=Decimal('4000'), payment_status='paid',
-        status='active', paid_at=utcnow(),
+        status='active', paid_at=utcnow(), paid_at_precision='datetime',
     )
     db.session.add(item)
     db.session.flush()

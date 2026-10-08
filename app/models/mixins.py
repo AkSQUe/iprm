@@ -72,6 +72,56 @@ class DiscountedMixin:
         return (self.payment_amount or 0) + self.discount_amount
 
 
+# Точність дати оплати. 'datetime' -- момент відомий (LiqPay, ручна позначка
+# "зараз"); 'date' -- відомий лише день (дата з виписки, записана полуднем за
+# Києвом). Без неї споживач (MM Medic, XLSX) показує вигаданий полудень як
+# справжній час платежу.
+PAID_AT_DATETIME = 'datetime'
+PAID_AT_DATE = 'date'
+PAID_AT_PRECISIONS = (PAID_AT_DATETIME, PAID_AT_DATE)
+
+
+def paid_at_precision_check(name):
+    """CHECK: точність заповнена тоді й лише тоді, коли заповнена дата.
+
+    `IS NOT NULL` перед `IN` -- не зайвий: `NULL IN (...)` дає NULL, а
+    CHECK відкидає рядок лише на FALSE. Без нього дата без точності
+    проходила б.
+    """
+    return db.CheckConstraint(paid_at_precision_sql(), name=name)
+
+
+def paid_at_precision_sql():
+    """Умова CHECK-а точності -- спільна для моделі й міграції."""
+    allowed = ', '.join(f"'{value}'" for value in PAID_AT_PRECISIONS)
+    return (
+        '(paid_at IS NULL AND paid_at_precision IS NULL) OR '
+        '(paid_at IS NOT NULL AND paid_at_precision IS NOT NULL '
+        f'AND paid_at_precision IN ({allowed}))'
+    )
+
+
+class PaidAtMixin:
+    """Дата оплати замовлення разом із її точністю.
+
+    Пишеться лише парою -- set_paid_at / clear_paid_at: дата без точності
+    відкидається CHECK-ом (paid_at_precision_check), і пряме присвоєння
+    paid_at впало б на першому ж flush.
+    """
+    paid_at = db.Column(db.DateTime(timezone=True))
+    paid_at_precision = db.Column(db.String(8))
+
+    def set_paid_at(self, moment, precision):
+        if precision not in PAID_AT_PRECISIONS:
+            raise ValueError(f'Невідома точність дати оплати: {precision!r}')
+        self.paid_at = moment
+        self.paid_at_precision = precision
+
+    def clear_paid_at(self):
+        self.paid_at = None
+        self.paid_at_precision = None
+
+
 class RefundableMixin:
     """Повернення коштів за замовлення (реєстрація на захід чи онлайн-курс).
 

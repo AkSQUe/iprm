@@ -285,6 +285,9 @@ def list_registrations():
                 float(reg.payment_amount) if reg.payment_amount is not None else None
             ),
             'paid_at': _iso(reg.paid_at),
+            # 'datetime' -- момент відомий; 'date' -- лише день (час у paid_at
+            # тоді умовний полудень за Києвом). None -- дати немає.
+            'paid_at_precision': reg.paid_at_precision,
             'attended': bool(reg.attended),
             'cpd_points_awarded': _points(reg.cpd_points_awarded),
             # Знімок анкети на момент реєстрації: людина могла відтоді
@@ -475,6 +478,7 @@ def list_online_enrollments():
             ),
             'currency': course.currency,
             'paid_at': _iso(enrollment.paid_at),
+            'paid_at_precision': enrollment.paid_at_precision,  # як у /registrations
             # Чи людина вже реально почала навчання -- єдина ознака
             # «присутності», яка тут взагалі можлива.
             'access_opened_at': _iso(enrollment.access_last_opened_at),

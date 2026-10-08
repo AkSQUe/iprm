@@ -81,7 +81,7 @@ def paid_reg(app, buyer):
         user_id=buyer.id, instance_id=instance.id,
         phone='+380000000000', specialty='Лікар', workplace='Клініка',
         status='confirmed', payment_status='paid',
-        payment_amount=Decimal('1000'), paid_at=utcnow(),
+        payment_amount=Decimal('1000'), paid_at=utcnow(), paid_at_precision='datetime',
     )
     db.session.add(item)
     db.session.commit()
@@ -256,7 +256,7 @@ def test_request_id_from_another_order_is_ignored(client, admin, buyer, paid_reg
         user_id=buyer.id, instance_id=other_instance.id,
         phone='+380000000001', specialty='Лікар', workplace='Клініка',
         status='confirmed', payment_status='paid',
-        payment_amount=Decimal('500'), paid_at=utcnow(),
+        payment_amount=Decimal('500'), paid_at=utcnow(), paid_at_precision='datetime',
     )
     db.session.add(other_reg)
     db.session.commit()

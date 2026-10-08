@@ -579,7 +579,7 @@ class TestPendingProvisioning:
         db.session.add(item)
         db.session.flush()
         item.created_at = utcnow() - timedelta(hours=created_ago_h)
-        item.paid_at = utcnow() - timedelta(minutes=paid_ago_min)
+        item.set_paid_at(utcnow() - timedelta(minutes=paid_ago_min), 'datetime')
         db.session.flush()
         return item
 
@@ -602,7 +602,7 @@ class TestPendingProvisioning:
     def test_order_without_paid_at_falls_back_to_created_at(self, user, course):
         """У давніх і проставлених руками замовлень paid_at може бути порожнім."""
         stuck = self._paid(user, course, created_ago_h=2, paid_ago_min=0)
-        stuck.paid_at = None
+        stuck.clear_paid_at()
         db.session.flush()
 
         assert stuck in sintegrum_access.pending_provisioning()

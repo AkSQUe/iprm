@@ -261,6 +261,21 @@ class TestOnlineEnrollmentsEndpoint:
         assert row['payment_amount'] == 4500.0
         assert row['first_name'] == 'Ольга'
 
+    def test_paid_at_comes_with_its_precision(self, client):
+        """'date' -- у paid_at лише день, час умовний."""
+        from datetime import datetime, timezone
+
+        course = _course()
+        item = self._enrollment(
+            course, paid_at=datetime(2026, 9, 15, 9, tzinfo=timezone.utc),
+            paid_at_precision='date')
+
+        payload = _get(client, '/api/v1/online-enrollments').get_json()
+        row = next(r for r in payload['items'] if r['id'] == item.id)
+
+        assert row['paid_at'].startswith('2026-09-15T09:00:00')
+        assert row['paid_at_precision'] == 'date'
+
     def test_access_token_and_url_are_never_exposed(self, client):
         course = _course()
         item = self._enrollment(course)

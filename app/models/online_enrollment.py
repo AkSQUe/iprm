@@ -14,7 +14,8 @@ import secrets
 
 from app.extensions import db
 from app.models.mixins import (
-    TimestampMixin, BigIntPK, DiscountedMixin, RefundableMixin, utcnow,
+    TimestampMixin, BigIntPK, DiscountedMixin, PaidAtMixin, RefundableMixin,
+    paid_at_precision_check, utcnow,
 )
 from app.utils import ensure_utc
 
@@ -33,8 +34,8 @@ STATUSES = (STATUS_PENDING, STATUS_ACTIVE, STATUS_CANCELLED)
 PAYMENT_STATUSES = ('unpaid', 'pending', 'paid', 'refunded')
 
 
-class OnlineEnrollment(TimestampMixin, RefundableMixin, DiscountedMixin,
-                       db.Model):
+class OnlineEnrollment(TimestampMixin, PaidAtMixin, RefundableMixin,
+                       DiscountedMixin, db.Model):
     __tablename__ = 'online_enrollments'
 
     id = db.Column(BigIntPK, primary_key=True)
@@ -62,7 +63,7 @@ class OnlineEnrollment(TimestampMixin, RefundableMixin, DiscountedMixin,
     payment_method = db.Column(
         db.String(20), default='liqpay', server_default='liqpay', nullable=False,
     )
-    paid_at = db.Column(db.DateTime(timezone=True))
+    # paid_at і paid_at_precision -- у PaidAtMixin.
 
     # Повернення коштів -- колонки й правила у RefundableMixin.
 
@@ -123,6 +124,7 @@ class OnlineEnrollment(TimestampMixin, RefundableMixin, DiscountedMixin,
             "payment_status IN ('unpaid', 'pending', 'paid', 'refunded')",
             name='ck_online_enrollments_payment_status',
         ),
+        paid_at_precision_check('ck_online_enrollments_paid_at_precision'),
         db.CheckConstraint(
             'payment_amount >= 0 OR payment_amount IS NULL',
             name='ck_online_enrollments_amount_non_negative',
