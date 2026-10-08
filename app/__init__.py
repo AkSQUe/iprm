@@ -103,6 +103,21 @@ def _configure_logging(app):
     app.logger.setLevel(log_level)
     logging.getLogger('app').setLevel(log_level)
 
+    # 'audit' -- поза деревом 'app', тож рівень і обробник вище його не
+    # стосуються. Без власних він жив на WARNING без обробника, і всі
+    # audit_logger.info (хто змінив оплату, статус, видав сертифікат)
+    # мовчки зникали -- у журналі сервера їх не було жодного.
+    # propagate лишається: caplog у тестах слухає кореневий логер, а в проді
+    # у кореневого обробників немає, тож дублів не буде. Прапорець на
+    # обробнику -- щоб повторний create_app (тести) не множив рядки.
+    audit = logging.getLogger('audit')
+    audit.setLevel(logging.INFO)
+    if not any(getattr(h, '_iprm_audit', False) for h in audit.handlers):
+        audit_handler = logging.StreamHandler()
+        audit_handler.setFormatter(handler.formatter)
+        audit_handler._iprm_audit = True
+        audit.addHandler(audit_handler)
+
 
 class IprmRequest(Request):
     """Запит із вищою межею тіла на окремих маршрутах завантаження.
