@@ -1,0 +1,127 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Виручка й зобов'язання | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% from 'admin/partials/_filter_bar.html' import filter_bar, stat_cards, empty_state %}
+{% from 'partials/_money.html' import money %}
+
+{#- Таблиця підсумків за заходами/курсами. Без дати виконання: у заходу це
+    "дату не задано", у курсу -- "доступ не видано". -#}
+{% macro groups_table(groups) %}
+<div class="admin-table-wrap">
+<table class="admin-table">
+  <thead>
+    <tr><th>Тип</th><th>Захід / курс</th><th>Виконано</th><th>Оплат</th><th>Сума</th></tr>
+  </thead>
+  <tbody>
+    {% for g in groups %}
+    <tr>
+      <td>{{ g.kind_label }}</td>
+      <td>{{ g.title }}</td>
+      <td>
+        {% if g.fulfilled_at %}{{ g.fulfilled_at | kyiv('%d.%m.%Y') }}
+        {% elif g.kind == 'online' %}<span class="admin-text-muted">доступ не видано</span>
+        {% else %}<span class="admin-text-muted">дату не задано</span>{% endif %}
+      </td>
+      <td>{{ g.count }}</td>
+      <td><strong>{{ money(g.amount) }}</strong></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endmacro %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout admin-layout--wide">
+
+    <div class="admin-hero">
+      <div>
+        <div class="admin-breadcrumb">
+          <a href="{{ url_for('admin.courses_list') }}" class="admin-breadcrumb__link">Панель</a>
+          <span class="admin-breadcrumb__sep">/</span>
+          <span class="admin-breadcrumb__current">Виручка й зобов'язання</span>
+        </div>
+        <h1 class="admin-hero__title">Виручка й зобов'язання</h1>
+        <p class="admin-hero__subtitle">
+          Виручка — оплати, за якими ми вже виконали зобов'язання: захід відбувся
+          або доступ до онлайн-курсу видано. Зобов'язання — оплати, що надійшли,
+          а навчання ще попереду.
+        </p>
+      </div>
+    </div>
+
+    {% include 'partials/flash_messages.html' %}
+
+    {{ filter_bar(
+         endpoint='admin.revenue_report',
+         values={'month': month_value},
+         fields=[{'name': 'month', 'label': 'Місяць', 'placeholder': 'Поточний місяць',
+                  'options': month_options}],
+         export_endpoint='admin.revenue_export' if can('revenue.export') else None,
+    ) }}
+
+    {{ stat_cards([
+         {'value': money(report.revenue_total), 'label': 'Виручка: ' ~ month_label, 'mod': 'accent'},
+         {'value': money(report.revenue_events_total), 'label': 'з неї заходи'},
+         {'value': money(report.revenue_online_total), 'label': 'з неї онлайн-курси'},
+         {'value': money(report.liabilities_total),
+          'label': ("Зобов'язання на " ~ as_of_label) if report.is_current
+                   else "Зобов'язання на кінець місяця",
+          'mod': 'warning'},
+       ], cols=4) }}
+
+    {% if report.undated %}
+    <div class="alert alert--warning">
+      {{ icon('error') }}
+      <strong class="alert__title">Оплати без дати не враховано ({{ report.undated | length }})</strong>
+      <p>{{ report.undated | join(', ') }}. Без дати оплату не віднести до жодного
+         місяця. Дату ставить форма учасника або <code>flask backfill-paid-at</code>.</p>
+    </div>
+    {% endif %}
+
+    <div class="form-section">
+      <h2 class="admin-form__section-title">
+        Виручка: виконано {% if report.is_current %}з початку місяця по {{ as_of_label }}{% else %}у {{ month_label | lower }}{% endif %}
+      </h2>
+      <p class="form-hint">
+        Виручка належить місяцю, коли відбувся захід або видано доступ, а не
+        місяцю оплати. Суми — сплачене мінус уже повернене; межі місяця — за
+        київським часом. Окремі оплати з учасниками — у файлі xlsx.
+      </p>
+      {% if report.revenue_groups %}
+        {{ groups_table(report.revenue_groups) }}
+      {% else %}
+        {% call empty_state(icon_name='event_busy', title='Виконаних оплат немає') %}
+          <p>У цьому місяці не відбулося жодного оплаченого заходу і не видано доступу до курсу.</p>
+        {% endcall %}
+      {% endif %}
+    </div>
+
+    <div class="form-section">
+      <h2 class="admin-form__section-title">
+        Зобов'язання {% if report.is_current %}на {{ as_of_label }}{% else %}на кінець місяця{% endif %}
+      </h2>
+      <p class="form-hint">
+        Гроші вже надійшли, а навчання ще не відбулося. До заходу учасник має
+        право на повернення за Політикою, тож ці суми — наш борг, а не виручка.
+      </p>
+      {% if report.liability_groups %}
+        {{ groups_table(report.liability_groups) }}
+      {% else %}
+        {% call empty_state(icon_name='event_available', title="Зобов'язань немає") %}
+          <p>Усі оплати, що надійшли до цієї дати, вже відпрацьовано.</p>
+        {% endcall %}
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+{% endblock %}

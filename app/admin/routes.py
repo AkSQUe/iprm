@@ -21,6 +21,7 @@ from app.admin import routes_apple_signin  # noqa: F401
 from app.admin import routes_sintegrum  # noqa: F401
 from app.admin import routes_online_courses  # noqa: F401
 from app.admin import routes_online_orders  # noqa: F401
+from app.admin import routes_revenue  # noqa: F401
 from app.admin import routes_stubs  # noqa: F401
 from app.admin import routes_users  # noqa: F401
 from app.admin import routes_certificates  # noqa: F401

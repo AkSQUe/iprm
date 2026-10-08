@@ -131,6 +131,27 @@ def _add_filters_sheet(wb, applied_filters, table_name) -> None:
     _apply_table_style(ws, cols, table_name, last_row)
 
 
+def _fill_list_sheet(ws, cols, labels, widths, rows, table_name, row_fills=None):
+    """Аркуш-таблиця звіту: заголовок, рядки, зебра, ширини, формати, фільтр."""
+    _style_header(ws, cols, labels)
+
+    for row_idx, values in enumerate(rows, start=2):
+        for col_idx, value in enumerate(values, start=1):
+            write_cell(ws, row_idx, col_idx, value).alignment = WRAP
+
+    last_row = ws.max_row
+    _apply_zebra(ws, len(cols), first_data_row=2, last_data_row=last_row)
+
+    # Заливки статусів -- ПІСЛЯ зебри, щоб колір статусу її перекривав.
+    for row_idx, fills in enumerate(row_fills or [], start=2):
+        for key, fill in (fills or {}).items():
+            ws.cell(row=row_idx, column=cols.index(key) + 1).fill = fill
+
+    _set_column_widths(ws, cols, widths)
+    _apply_number_formats(ws, cols, last_row)
+    _apply_table_style(ws, cols, table_name, last_row)
+
+
 def build_list_xlsx(sheet_title, cols, labels, widths, rows, table_name,
                     applied_filters=None, row_fills=None) -> io.BytesIO:
     """Список адмінки -> xlsx: аркуш-таблиця + (за потреби) аркуш «Фільтри».
@@ -152,23 +173,7 @@ def build_list_xlsx(sheet_title, cols, labels, widths, rows, table_name,
     wb = Workbook()
     ws = wb.active
     ws.title = sheet_title
-    _style_header(ws, cols, labels)
-
-    for row_idx, values in enumerate(rows, start=2):
-        for col_idx, value in enumerate(values, start=1):
-            write_cell(ws, row_idx, col_idx, value).alignment = WRAP
-
-    last_row = ws.max_row
-    _apply_zebra(ws, len(cols), first_data_row=2, last_data_row=last_row)
-
-    # Заливки статусів -- ПІСЛЯ зебри, щоб колір статусу її перекривав.
-    for row_idx, fills in enumerate(row_fills or [], start=2):
-        for key, fill in (fills or {}).items():
-            ws.cell(row=row_idx, column=cols.index(key) + 1).fill = fill
-
-    _set_column_widths(ws, cols, widths)
-    _apply_number_formats(ws, cols, last_row)
-    _apply_table_style(ws, cols, table_name, last_row)
+    _fill_list_sheet(ws, cols, labels, widths, rows, table_name, row_fills)
 
     if applied_filters:
         _add_filters_sheet(wb, applied_filters, f'{table_name}Filters')
@@ -754,3 +759,63 @@ def export_instances_report_xlsx(instances, reg_counts, occupied_map=None,
         _INST_REPORT_WIDTHS, rows, 'tblInstancesReport',
         applied_filters=applied_filters, row_fills=row_fills,
     )
+
+
+_FINANCE_COLS = ['kind', 'order_id', 'title', 'fulfilled_at', 'participant',
+                 'email', 'payment_method', 'payment_date', 'paid_at_precision',
+                 'payment_amount', 'refunded_amount', 'net_amount']
+_FINANCE_LABELS = {
+    'kind': 'Тип', 'order_id': 'Замовлення', 'title': 'Захід / курс',
+    'fulfilled_at': 'Виконано (захід / доступ)', 'participant': 'Учасник',
+    'email': 'Email', 'payment_method': 'Спосіб оплати',
+    'payment_date': 'Дата оплати', 'paid_at_precision': 'Точність дати',
+    'payment_amount': 'Сплачено (грн)', 'refunded_amount': 'Повернено (грн)',
+    'net_amount': 'Сума (грн)',
+}
+_FINANCE_WIDTHS = {
+    'kind': 12, 'order_id': 12, 'title': 44, 'fulfilled_at': 18,
+    'participant': 28, 'email': 28, 'payment_method': 22, 'payment_date': 18,
+    'paid_at_precision': 14, 'payment_amount': 14, 'refunded_amount': 14,
+    'net_amount': 14,
+}
+_PRECISION_LABELS = {'datetime': 'дата й час', 'date': 'лише дата'}
+
+
+def _finance_rows(rows):
+    return [[
+        row.kind_label,
+        row.order_id,
+        row.title,
+        _to_kyiv_naive(row.fulfilled_at) if row.fulfilled_at else None,
+        row.participant,
+        row.email,
+        row.payment_method,
+        _to_kyiv_naive(row.paid_at) if row.paid_at else None,
+        _PRECISION_LABELS.get(row.paid_at_precision, row.paid_at_precision or ''),
+        float(row.payment_amount),
+        float(row.refunded_amount) if row.refunded_amount else None,
+        float(row.amount),
+    ] for row in rows]
+
+
+def export_finance_report_xlsx(report, applied_filters=None) -> io.BytesIO:
+    """Виручка й зобов'язання за місяць -> xlsx: по аркушу на кожну.
+
+    Два аркуші, а не одна таблиця з колонкою «розділ»: бухгалтер звіряє їх
+    окремо, і сума кожного аркуша має збігатися з карткою на сторінці.
+    """
+    wb = Workbook()
+    revenue = wb.active
+    revenue.title = 'Виручка'
+    _fill_list_sheet(revenue, _FINANCE_COLS, _FINANCE_LABELS, _FINANCE_WIDTHS,
+                     _finance_rows(report.revenue), 'tblFinanceRevenue')
+    liabilities = wb.create_sheet("Зобов'язання")
+    _fill_list_sheet(liabilities, _FINANCE_COLS, _FINANCE_LABELS, _FINANCE_WIDTHS,
+                     _finance_rows(report.liabilities), 'tblFinanceLiabilities')
+    if applied_filters:
+        _add_filters_sheet(wb, applied_filters, 'tblFinanceFilters')
+
+    out = io.BytesIO()
+    wb.save(out)
+    out.seek(0)
+    return out

@@ -94,7 +94,7 @@
     </div>
     {% endif %}
 
-    {% if can_any('registrations.view', 'online_orders.view', 'promo_codes.view', 'referrals.view', 'refund_requests.view', 'certificates.view', 'cert_generator.view') %}
+    {% if can_any('registrations.view', 'online_orders.view', 'revenue.view', 'promo_codes.view', 'referrals.view', 'refund_requests.view', 'certificates.view', 'cert_generator.view') %}
     <div class="admin-sidebar__group">
       <p class="admin-sidebar__group-title">Продажі</p>
       {% if can('registrations.view') %}
@@ -110,6 +110,12 @@
       <a href="{{ url_for('admin.online_orders_list') }}" class="admin-sidebar__link{% if ep in ('admin.online_orders_list',) %} admin-sidebar__link--active{% endif %}">
         {{ icon('receipt_long') }}
         <span class="admin-sidebar__text">Онлайн-курси: замовлення</span>
+      </a>
+      {% endif %}
+      {% if can('revenue.view') %}
+      <a href="{{ url_for('admin.revenue_report') }}" class="admin-sidebar__link{% if ep in ('admin.revenue_report',) %} admin-sidebar__link--active{% endif %}">
+        {{ icon('table_view') }}
+        <span class="admin-sidebar__text">Виручка й зобов'язання</span>
       </a>
       {% endif %}
       {% if can('promo_codes.view') %}

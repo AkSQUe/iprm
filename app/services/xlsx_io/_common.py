@@ -116,6 +116,10 @@ NUMBER_FORMATS = {
     'discount_amount': FMT_CURRENCY_UAH,
     'cpd_points_awarded': FMT_POINTS,
     'experience_years': FMT_INT,
+    # Звіт виручки й зобов'язань
+    'fulfilled_at': FMT_DATETIME,
+    'payment_date': FMT_DATETIME,
+    'net_amount': FMT_CURRENCY_UAH,
 }
 
 # ----- Color fills для enum-полів ------------------------------------

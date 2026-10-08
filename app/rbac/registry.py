@@ -95,6 +95,11 @@ MODULES = (
            endpoint='admin.referrals_overview'),
     Module('refund_requests', 'Заявки на повернення', 'sales', ('view', 'manage', 'export'),
            endpoint='admin.refund_requests_list'),
+    # Виручка й зобов'язання -- підсумки грошей компанії. Окремо від
+    # registrations: бачити список учасників і бачити фінансовий результат --
+    # різні рівні доступу.
+    Module('revenue', "Виручка й зобов'язання", 'sales', ('view', 'export'),
+           endpoint='admin.revenue_report'),
     Module('certificates', 'Сертифікати', 'sales', ('view', 'manage', 'export'),
            endpoint='admin.certificates'),
     Module('cert_generator', 'Генератор сертифікатів', 'sales', _VM,
@@ -270,7 +275,9 @@ ROLES = (
              # 'materials' свідомо НЕ входить: до поділу груп цей модуль лежав
              # у 'system', і спостерігач резервування матеріалів не бачив.
              # Перелік груп змінився, набір прав ролі -- ні.
+             # revenue.view -- геть: фінансовий результат компанії не
+             # "перегляд розділу", його видають свідомо.
              _views_in('dashboard', 'learning', 'requests', 'sales', 'audience',
-                       'site', 'catalogs')),
+                       'site', 'catalogs') - _expand('revenue.view')),
 )
 ROLES_BY_NAME = {r.name: r for r in ROLES}
