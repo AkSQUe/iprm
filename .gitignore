@@ -1,5 +1,6 @@
 # Keys and secrets
 keys/
+key/
 
 # Python
 __pycache__/
