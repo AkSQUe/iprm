@@ -95,6 +95,9 @@ def test_requisites_change_audited_and_curator_notified(client, caplog, curator_
     trainer = make_trainer(user, name='Петренко П.')
     login(client, user)
     client.post('/trainer/profile', data=_data())
+    # Журнал audit пишеться завжди, тож у caplog уже лежить запис першого
+    # заповнення -- рахуємо лише те, що дала друга зміна.
+    caplog.clear()
     with mock.patch.object(EmailService, 'send_email') as send, \
             caplog.at_level(logging.INFO, logger='audit'):
         resp = client.post('/trainer/profile', data=_data(fop_iban=_NEW_IBAN))
@@ -116,6 +119,7 @@ def test_unchanged_requisites_neither_audited_nor_emailed(client, caplog, curato
     make_trainer(user)
     login(client, user)
     client.post('/trainer/profile', data=_data())
+    caplog.clear()  # див. test_requisites_change_audited_and_curator_notified
     with mock.patch.object(EmailService, 'send_email') as send, \
             caplog.at_level(logging.INFO, logger='audit'):
         client.post('/trainer/profile', data=_data(phone='+380501112233'))

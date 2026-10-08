@@ -7,7 +7,7 @@
 """
 import logging
 
-from app import create_app
+from app import _configure_logging
 
 
 def _audit_handlers():
@@ -23,9 +23,12 @@ def test_audit_has_its_own_handler(app):
     assert len(_audit_handlers()) == 1
 
 
-def test_repeated_app_creation_does_not_duplicate_lines(app):
-    create_app('testing')
-    create_app('testing')
+def test_repeated_setup_does_not_duplicate_lines(app):
+    """Саме налаштування логів, а не create_app: кожен зайвий застосунок
+    реєструє ще й глобальні слухачі БД, і сусідні тести бачать подію
+    партнеру двічі-тричі."""
+    _configure_logging(app)
+    _configure_logging(app)
     assert len(_audit_handlers()) == 1
 
 
