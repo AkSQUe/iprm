@@ -664,7 +664,8 @@ xlsx-вигрузка проведень (`export_instances_xlsx`) має кол
 | `payment_status` | String(20) | Статус оплати: unpaid, pending, paid, refunded |
 | `payment_amount` | Numeric(10,2) | Сума оплати |
 | `payment_id` | String(255) | ID платежу (LiqPay) |
-| `paid_at` | DateTime (UTC) | Дата оплати. LiqPay -- момент callback-у; ручна позначка (випадайка, форма учасника, xlsx, безкоштовна реєстрація) -- `payment_ops.apply_manual_payment_status`: перехід у paid ставить дату (з форми -- полудень за Києвом, щоб 1-ше число не лягло в попередній місяць в UTC; інакше "зараз"), назад у unpaid/pending знімає, refunded лишає, paid -> paid не чіпає. MM Medic відбирає оплати за місяць саме за цим полем. Старі рядки без дати -- `flask backfill-paid-at` |
+| `paid_at` | DateTime (UTC) | Дата оплати (PaidAtMixin, пишеться лише парою з точністю -- `set_paid_at` / `clear_paid_at`). LiqPay -- `end_date` платежу з payload, без нього "зараз"; ручна позначка (випадайка, форма учасника, xlsx, безкоштовна реєстрація) -- `payment_ops.apply_manual_payment_status`: перехід у paid ставить дату (з форми -- полудень за Києвом, щоб 1-ше число не лягло в попередній місяць в UTC; інакше "зараз"), назад у unpaid/pending знімає, refunded лишає, paid -> paid не чіпає. MM Medic відбирає оплати за місяць саме за цим полем. Старі рядки без дати -- `flask backfill-paid-at`; точний час LiqPay для дозаповнених днем -- `flask refresh-liqpay-paid-at` |
+| `paid_at_precision` | String(8) | Точність `paid_at`: `datetime` -- момент відомий, `date` -- лише день (час -- умовний полудень за Києвом). Заповнена тоді й лише тоді, коли заповнена дата (CHECK `ck_registrations_paid_at_precision`). Константи -- `app.models.mixins.PAID_AT_*`. Віддається в API поруч із `paid_at` |
 | `refunded_amount` | Numeric(10,2), NOT NULL, default 0 | RefundableMixin. Накопичувальна сума повернень; `payment_status` стає `refunded`, лише коли вона дорівнює `payment_amount` |
 | `refunded_at` | DateTime (UTC) | RefundableMixin. Коли проведено ОСТАННЄ повернення |
 | `refund_reason` | String(500) | RefundableMixin. Підстава останнього повернення (Політика п. 6.2) |
@@ -1011,7 +1012,7 @@ Singleton-модель для зберігання SMTP-налаштувань �
 | `status` | String(20) | pending / active / cancelled |
 | `payment_status` | String(20) | unpaid / pending / paid / refunded |
 | `payment_amount` | Numeric(10,2) | Сума, зафіксована при оформленні |
-| `payment_id`, `payment_method`, `paid_at` | | Реквізити платежу |
+| `payment_id`, `payment_method`, `paid_at`, `paid_at_precision` | | Реквізити платежу; точність дати -- як у EventRegistration (CHECK `ck_online_enrollments_paid_at_precision`) |
 | `refunded_amount` | Numeric(10,2), NOT NULL, default 0 | RefundableMixin. Накопичувальна сума повернень; `payment_status` стає `refunded`, лише коли вона дорівнює `payment_amount` |
 | `refunded_at` | DateTime (UTC) | RefundableMixin. Коли проведено ОСТАННЄ повернення |
 | `refund_reason` | String(500) | RefundableMixin. Підстава останнього повернення (Політика п. 6.2) |
@@ -1039,7 +1040,7 @@ Singleton-модель для зберігання SMTP-налаштувань �
 
 Ручні зміни статусу чи дати оплати реєстрації теж пишуться сюди, з
 `source='manual'`, сумою `payment_amount` і `raw_payload` =
-`{previous_status, paid_at, actor[, note]}` -- `actor` це email адміна або
+`{previous_status, paid_at, paid_at_precision, actor[, note]}` -- `actor` це email адміна або
 `cli:backfill-paid-at`. Так у журналі видно, хто і коли позначив рахунок
 оплаченим.
 
