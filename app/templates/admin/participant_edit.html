@@ -168,6 +168,12 @@
           {{ form.payment_status(class="form-input", id="payment_status") }}
         </div>
         <div class="form-group">
+          <label for="paid_on">Дата оплати</label>
+          {{ form.paid_on(class="form-input", id="paid_on") }}
+          <div class="form-hint">{{ form.paid_on.description }}</div>
+          {% for error in form.paid_on.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="form-group">
           <label for="payment_amount">Сума оплати (UAH)</label>
           {{ form.payment_amount(class="form-input", id="payment_amount", step="0.01") }}
           <div class="form-hint">{{ form.payment_amount.description }}</div>

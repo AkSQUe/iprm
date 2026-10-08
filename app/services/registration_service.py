@@ -131,7 +131,6 @@ def create_or_reactivate(user_id, instance, form_data, existing=None, tariff=Non
     price = base_price - discount
     is_free = price == 0
     new_status = 'confirmed' if is_free else 'pending'
-    new_payment = 'paid' if is_free else 'unpaid'
     # Безкоштовні події оплачуються одразу -- спосіб оплати не релевантний.
     # Для решти дефолт бере поточні налаштування сайту, а не константу:
     # коли онлайн-оплату вимкнено, писати в рядок 'liqpay' означало б
@@ -158,7 +157,10 @@ def create_or_reactivate(user_id, instance, form_data, existing=None, tariff=Non
         # виграла б над тарифом і дала їй чужі бали БПР.
         existing.participation_format = tariff.event_format if tariff else None
         existing.status = new_status
-        existing.payment_status = new_payment
+        # Реактивація починає оплату з нуля: старий платіж належав
+        # скасованій участі. Безкоштовна стає paid нижче -- через спільне
+        # правило дати оплати, а не прямим присвоєнням.
+        existing.payment_status = 'unpaid'
         existing.payment_id = None
         existing.paid_at = None
         reg = existing
@@ -178,7 +180,7 @@ def create_or_reactivate(user_id, instance, form_data, existing=None, tariff=Non
             # саме тариф каже, онлайн людина чи очно, а не формат заходу.
             participation_format=tariff.event_format if tariff else None,
             status=new_status,
-            payment_status=new_payment,
+            payment_status='unpaid',
             referral_code=referral_code or None,
         )
         db.session.add(reg)
@@ -202,11 +204,15 @@ def create_or_reactivate(user_id, instance, form_data, existing=None, tariff=Non
         # коду (FK SET NULL) і без чистки спотворював би суму до знижки.
         promo_service.detach(reg, reason='Реєстрацію оформлено без промокоду')
 
-    # Для безкоштовних подій -- одразу присвоюємо номер місця, бо немає
-    # окремого 'paid'-транзишн (платіж не очікується). Робиться ДО commit
-    # caller-ом; flush щоб reg отримав id.
+    # Безкоштовна участь оплачена в момент реєстрації: paid, дата оплати й
+    # рядок журналу -- одним правилом з ручною позначкою, інакше MM Medic
+    # не бачить її у звіті за місяць. Номер місця -- одразу, бо окремого
+    # 'paid'-переходу (платежу) не буде. Робиться ДО commit caller-ом;
+    # flush, щоб reg отримав id.
     if is_free:
         db.session.flush()
+        from app.services.payment_ops import apply_manual_payment_status
+        apply_manual_payment_status(reg, 'paid', note='free registration')
         try:
             assign_place_number(reg)
         except Exception:

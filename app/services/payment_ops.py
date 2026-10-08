@@ -5,13 +5,14 @@ Single code path for all payment status transitions.
 Uses row-level locking to prevent race conditions.
 """
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, time, timedelta, timezone
 from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
 
 from app.extensions import db
 from app.models.mixins import utcnow
 from app.models.registration import EventRegistration
 from app.models.payment_transaction import PaymentTransaction
+from app.utils import KYIV, to_kyiv
 
 logger = logging.getLogger(__name__)
 audit_logger = logging.getLogger('audit')
@@ -195,6 +196,101 @@ def parse_order_id(order_id):
             except (ValueError, IndexError):
                 return kind, None
     return None, None
+
+
+# ---- ручна зміна статусу оплати реєстрації ----
+#
+# LiqPay-шлях -- PaymentOps.update_payment_status: там дата оплати -- момент
+# callback-у, а переходи обмежені ALLOWED_TRANSITIONS. Решта шляхів
+# (випадайка в таблиці реєстрацій, форма учасника і xlsx-імпорт через неї,
+# безкоштовна реєстрація) ставить статус напряму -- і довго робила це без
+# дати й без запису в журнал. MM Medic відбирає оплати за paid_at, тож рядок
+# без дати не потрапляв у жоден місячний звіт.
+
+def paid_moment(paid_on=None, now=None):
+    """Момент оплати для дати з виписки (`date`) або None -- "зараз".
+
+    Сьогоднішня дата -- теж "зараз". Минула -- полудень за Києвом, а не
+    північ: 00:00 за Києвом -- це 21:00 чи 22:00 UTC попередньої доби, і
+    оплата 1-го числа, прочитана в UTC, лягла б у попередній місяць.
+
+    Дата в майбутньому -- ValueError: так оплата лягла б у місяць, якого
+    ще не було.
+    """
+    now = now or datetime.now(timezone.utc)
+    if paid_on is None:
+        return now
+    today = to_kyiv(now).date()
+    if paid_on > today:
+        raise ValueError('Дата оплати не може бути в майбутньому')
+    if paid_on == today:
+        return now
+    return datetime.combine(paid_on, time(12), tzinfo=KYIV).astimezone(timezone.utc)
+
+
+def _current_actor():
+    """Email адміна з поточного запиту або None (CLI, фон, анонім)."""
+    try:
+        from flask_login import current_user
+        if current_user and current_user.is_authenticated:
+            return current_user.email
+    except Exception:
+        pass
+    return None
+
+
+def apply_manual_payment_status(reg, new_status, paid_on=None, actor=None,
+                                note=None):
+    """Єдине правило дати оплати для ручних змін статусу реєстрації.
+
+    * перехід у paid ставить paid_at (paid_on або зараз), якщо дати ще нема;
+    * явна paid_on, відмінна від збереженої дати, її замінює: це дата з
+      виписки, вона точніша за момент позначки;
+    * paid -> paid без нової дати нічого не чіпає -- повторне збереження
+      форми не має пересувати оплату в інший місяць;
+    * назад у unpaid/pending дата знімається: це виправлення помилки, оплати
+      не було;
+    * refunded дату лишає: оплата відбулась, повернення -- окрема подія.
+
+    Кожна зміна статусу чи дати -- рядок у журналі транзакцій
+    (source='manual'): хто, коли, з якого статусу і на яку дату. Мутує
+    сесію без commit. Реєстрація мусить мати id -- нову спершу flush.
+
+    Кидає ValueError на дату в майбутньому. Повертає True, якщо щось
+    змінилось.
+    """
+    old_status = reg.payment_status or 'unpaid'
+    old_paid_at = reg.paid_at
+
+    if new_status == 'paid':
+        stored_day = to_kyiv(reg.paid_at).date() if reg.paid_at else None
+        if paid_on is not None and paid_on != stored_day:
+            reg.paid_at = paid_moment(paid_on)
+        elif reg.paid_at is None and old_status != 'paid':
+            reg.paid_at = paid_moment()
+    elif new_status in ('unpaid', 'pending'):
+        reg.paid_at = None
+    reg.payment_status = new_status
+
+    if old_status == new_status and reg.paid_at == old_paid_at:
+        return False
+
+    payload = {
+        'previous_status': old_status,
+        'paid_at': reg.paid_at.isoformat() if reg.paid_at else None,
+        'actor': actor or _current_actor(),
+    }
+    if note:
+        payload['note'] = note
+    _log_transaction(
+        reg_id=reg.id,
+        order_id=f'REG-{reg.id}',
+        mapped_status=new_status,
+        source='manual',
+        amount=reg.payment_amount,
+        raw_payload=payload,
+    )
+    return True
 
 
 class PaymentOps:

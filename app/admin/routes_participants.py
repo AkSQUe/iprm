@@ -25,7 +25,7 @@ from app.models.user import User
 from app.services import participant_service, promo_service, xlsx_io
 from app.services.participant_service import ParticipantError
 from app.services.promo_service import PromoError
-from app.utils import ensure_utc
+from app.utils import ensure_utc, to_kyiv
 
 logger = logging.getLogger(__name__)
 audit_logger = logging.getLogger('audit')
@@ -91,6 +91,7 @@ def _form_to_data(form, instance_id):
         'specializations': list(form.specializations.data or []),
         'status': form.status.data,
         'payment_status': form.payment_status.data,
+        'paid_on': form.paid_on.data,
         'payment_amount': form.payment_amount.data,
         'attended': form.attended.data,
         'cpd_points_awarded': form.cpd_points_awarded.data,
@@ -303,6 +304,9 @@ def _form_from_registration(reg):
         'specializations': (profile.specializations if profile else []) or [],
         'status': reg.status,
         'payment_status': reg.payment_status,
+        # Київська дата: повторне збереження тієї самої дати оплату не
+        # пересуває (apply_manual_payment_status порівнює саме її).
+        'paid_on': to_kyiv(reg.paid_at).date() if reg.paid_at else None,
         # Показуємо суму ДО знижки: інакше повторне збереження форми
         # застосувало б відсоток удруге, вже до зменшеної суми.
         'payment_amount': reg.amount_before_discount,

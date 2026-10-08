@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime, timezone
 
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
@@ -12,7 +12,7 @@ from wtforms.validators import (
     ValidationError, Regexp,
 )
 from app.utils import (
-    normalize_name, normalize_phone, UA_PHONE_RE, CYRILLIC_NAME_RE,
+    normalize_name, normalize_phone, to_kyiv, UA_PHONE_RE, CYRILLIC_NAME_RE,
 )
 from app.admin.fields import PointsField, TrainerSelectField
 from app.models.course import Course
@@ -1199,6 +1199,12 @@ class ParticipantForm(FlaskForm):
         default='unpaid',
         validators=[DataRequired()],
     )
+    paid_on = DateField(
+        'Дата оплати',
+        validators=[Optional()],
+        description='Дата з банківської виписки. Порожньо -- сьогодні. '
+                    'Враховується лише для статусу «Оплачено».',
+    )
     payment_amount = DecimalField(
         'Сума оплати (UAH)',
         validators=[Optional(), NumberRange(min=0)],
@@ -1244,6 +1250,12 @@ class ParticipantForm(FlaskForm):
             raise ValidationError('Дата народження не може бути в майбутньому')
         if field.data.year < 1900:
             raise ValidationError('Некоректний рік народження')
+
+    def validate_paid_on(self, field):
+        # "Сьогодні" -- київська доба: о 01:00 за Києвом UTC-дата ще
+        # вчорашня, і сьогоднішня виписка виглядала б майбутньою.
+        if field.data is not None and field.data > to_kyiv(datetime.now(timezone.utc)).date():
+            raise ValidationError('Дата оплати не може бути в майбутньому')
 
 
 class CourseQuizForm(FlaskForm):

@@ -214,7 +214,8 @@ def registration_status(reg_id):
 @permission_required('registrations.manage')
 def registration_payment(reg_id):
     """Змінити статус оплати (inline-select у таблиці). При переході в 'paid'
-    призначаємо номер місця (узгоджено з participant_service)."""
+    призначаємо номер місця (узгоджено з participant_service). Дату оплати
+    й запис у журнал транзакцій веде apply_manual_payment_status."""
     xhr = _wants_json()
     reg = db.session.get(EventRegistration, reg_id)
     if not reg:
@@ -230,7 +231,9 @@ def registration_payment(reg_id):
         return _redirect_after_action(reg)
 
     old_ps = reg.payment_status
-    reg.payment_status = new_ps
+    # Дата оплати тут -- "зараз": точну дату з виписки ставить форма учасника.
+    from app.services.payment_ops import apply_manual_payment_status
+    apply_manual_payment_status(reg, new_ps)
     if new_ps == 'paid' and reg.status != 'cancelled' and reg.place_number is None:
         try:
             from app.services import registration_service

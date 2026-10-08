@@ -22,7 +22,7 @@ from app.models.medical_profile import MedicalProfile
 from app.models.registration import EventRegistration
 from app.data.specializations import labels_for_codes
 from app.models.user import User
-from app.services import registration_service
+from app.services import payment_ops, registration_service
 
 logger = logging.getLogger(__name__)
 
@@ -195,12 +195,29 @@ def apply_registration_fields(reg, data, profile):
     reg.experience_years = data.get('experience_years')
     reg.license_number = _strip_or_none(data.get('license_number'))
     reg.status = data.get('status') or 'confirmed'
-    reg.payment_status = data.get('payment_status') or 'unpaid'
+    # payment_status тут НЕ ставимо: його разом із датою оплати й записом у
+    # журнал ставить _apply_payment_status, коли реєстрація вже має id.
     reg.payment_amount = data.get('payment_amount')
     reg.attended = bool(data.get('attended'))
     reg.cpd_points_awarded = data.get('cpd_points_awarded')
     reg.participation_format = data.get('participation_format')
     reg.admin_notes = _strip_or_none(data.get('admin_notes'))
+
+
+def _apply_payment_status(reg, data):
+    """Статус оплати з форми/xlsx -- через спільне правило дати оплати.
+
+    data['paid_on'] -- дата з виписки (форма учасника); без неї перехід у
+    paid ставить поточний момент. Дата в майбутньому -- ParticipantError,
+    а не 500: форма ловить її валідатором, але xlsx і інші виклики -- ні.
+    """
+    try:
+        payment_ops.apply_manual_payment_status(
+            reg, data.get('payment_status') or 'unpaid',
+            paid_on=data.get('paid_on'),
+        )
+    except ValueError as exc:
+        raise ParticipantError(str(exc)) from exc
 
 
 def _maybe_assign_place(reg):
@@ -219,7 +236,7 @@ def upsert_participant(data, reg=None, on_duplicate='error'):
         data: нормалізований dict (instance_id, last_name, first_name,
             middle_name, email, phone, participant_type, birth_date,
             education, workplace, position, specializations[list codes],
-            status, payment_status, payment_amount, attended,
+            status, payment_status, paid_on (date|None), payment_amount, attended,
             cpd_points_awarded, participation_format, experience_years,
             license_number, admin_notes).
         reg: наявний EventRegistration для редагування, або None (створення).
@@ -247,6 +264,7 @@ def upsert_participant(data, reg=None, on_duplicate='error'):
         profile = sync_user_and_profile(user, data)
         apply_registration_fields(reg, data, profile)
         db.session.flush()
+        _apply_payment_status(reg, data)
         _maybe_assign_place(reg)
         return reg, False
 
@@ -279,6 +297,7 @@ def upsert_participant(data, reg=None, on_duplicate='error'):
 
     apply_registration_fields(target, data, profile)
     db.session.flush()
+    _apply_payment_status(target, data)
     _maybe_assign_place(target)
 
     return target, existing is None
