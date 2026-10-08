@@ -1077,3 +1077,92 @@ def partner_relink(email, issuer, dry_run):
         AuthIdentity.attach_partner(user, issuer)
     db.session.commit()
     click.echo('Готово. Вхід -- через "Забули пароль".')
+
+
+@click.command('backfill-paid-at')
+@click.option('--date', 'dates', multiple=True, metavar='REG_ID=YYYY-MM-DD',
+              help='Дата оплати для реєстрації; повторюється на кожен рядок.')
+@click.option('--apply', 'do_apply', is_flag=True,
+              help='Записати. Без прапорця лише показує план.')
+@with_appcontext
+def backfill_paid_at(dates, do_apply):
+    """Дозаповнити дату оплати реєстраціям, позначеним "Оплачено" без неї.
+
+    До 10.2026 ручна позначка оплати (рахунки, форма учасника, безкоштовні
+    реєстрації) ставила paid без paid_at, і MM Medic не бачив такі оплати
+    у звіті за місяць. Дату НЕ вигадуємо: лише та, що передана явно -- з
+    банківської виписки або з рядка логу "changed reg <id> payment: ... ->
+    paid". Дата реєстрації чи updated_at поклала б платіж не в той місяць.
+
+    Без --date показує всі оплачені реєстрації без дати. Пише через ORM і
+    спільне правило apply_manual_payment_status: оновлюється updated_at
+    (курсор updated_since для MM Medic), а кожна зміна лягає в журнал
+    транзакцій із source='manual'. Рядок, що вже має дату, не чіпає.
+    """
+    from datetime import datetime
+
+    from app.extensions import db
+    from app.models.registration import EventRegistration
+    from app.services.payment_ops import (
+        apply_manual_payment_status, paid_moment,
+    )
+
+    plan = {}
+    for raw in dates:
+        reg_id, _sep, day = raw.partition('=')
+        try:
+            plan[int(reg_id)] = datetime.strptime(day.strip(), '%Y-%m-%d').date()
+        except ValueError:
+            raise click.BadParameter(
+                f'{raw!r}: очікується REG_ID=YYYY-MM-DD', param_hint='--date')
+
+    if not plan:
+        missing = (
+            EventRegistration.query
+            .filter(EventRegistration.payment_status == 'paid',
+                    EventRegistration.paid_at.is_(None))
+            .order_by(EventRegistration.id).all()
+        )
+        click.echo(f'Оплачених без дати: {len(missing)}')
+        for reg in missing:
+            click.echo(f'  {reg.id}  {reg.payment_method:<8} '
+                       f'{reg.payment_amount}  оновлено {reg.updated_at:%Y-%m-%d}')
+        return
+
+    errors = []
+    todo = []
+    for reg_id, day in sorted(plan.items()):
+        reg = db.session.get(EventRegistration, reg_id)
+        if reg is None:
+            errors.append(f'{reg_id}: реєстрацію не знайдено')
+        elif reg.payment_status != 'paid':
+            errors.append(f'{reg_id}: статус оплати {reg.payment_status!r}, а не paid')
+        elif reg.paid_at is not None:
+            click.echo(f'  {reg_id}: дата вже є ({reg.paid_at:%Y-%m-%d}), пропуск')
+        else:
+            try:
+                paid_moment(day)
+            except ValueError as exc:
+                errors.append(f'{reg_id}: {exc}')
+            else:
+                todo.append((reg, day))
+
+    for line in errors:
+        click.echo(f'  ПОМИЛКА {line}', err=True)
+    for reg, day in todo:
+        click.echo(f'  {reg.id}: paid_at <- {day:%Y-%m-%d}')
+    if errors:
+        # Половина партії в БД і половина в голові -- гірше, ніж нічого:
+        # виправте помилки й запустіть усе разом.
+        raise click.ClickException('Є помилки, нічого не записано.')
+    if not do_apply:
+        click.echo('Без --apply: нічого не записано.')
+        return
+
+    for reg, day in todo:
+        apply_manual_payment_status(
+            reg, 'paid', paid_on=day,
+            actor='cli:backfill-paid-at', note='backfill paid_at',
+        )
+    db.session.commit()
+    click.echo(f'Записано: {len(todo)}')
