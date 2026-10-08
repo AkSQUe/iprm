@@ -664,7 +664,7 @@ xlsx-вигрузка проведень (`export_instances_xlsx`) має кол
 | `payment_status` | String(20) | Статус оплати: unpaid, pending, paid, refunded |
 | `payment_amount` | Numeric(10,2) | Сума оплати |
 | `payment_id` | String(255) | ID платежу (LiqPay) |
-| `paid_at` | DateTime (UTC) | Дата оплати |
+| `paid_at` | DateTime (UTC) | Дата оплати. LiqPay -- момент callback-у; ручна позначка (випадайка, форма учасника, xlsx, безкоштовна реєстрація) -- `payment_ops.apply_manual_payment_status`: перехід у paid ставить дату (з форми -- полудень за Києвом, щоб 1-ше число не лягло в попередній місяць в UTC; інакше "зараз"), назад у unpaid/pending знімає, refunded лишає, paid -> paid не чіпає. MM Medic відбирає оплати за місяць саме за цим полем. Старі рядки без дати -- `flask backfill-paid-at` |
 | `refunded_amount` | Numeric(10,2), NOT NULL, default 0 | RefundableMixin. Накопичувальна сума повернень; `payment_status` стає `refunded`, лише коли вона дорівнює `payment_amount` |
 | `refunded_at` | DateTime (UTC) | RefundableMixin. Коли проведено ОСТАННЄ повернення |
 | `refund_reason` | String(500) | RefundableMixin. Підстава останнього повернення (Політика п. 6.2) |
@@ -1036,6 +1036,12 @@ Singleton-модель для зберігання SMTP-налаштувань �
 ## PaymentTransaction
 
 Журнал платіжних транзакцій LiqPay. Зберігає деталі кожної спроби оплати.
+
+Ручні зміни статусу чи дати оплати реєстрації теж пишуться сюди, з
+`source='manual'`, сумою `payment_amount` і `raw_payload` =
+`{previous_status, paid_at, actor[, note]}` -- `actor` це email адміна або
+`cli:backfill-paid-at`. Так у журналі видно, хто і коли позначив рахунок
+оплаченим.
 
 Журнал СПІЛЬНИЙ для обох типів замовлень: заповнене рівно одне з полів
 `registration_id` / `enrollment_id`, це закріплено CHECK-ом
