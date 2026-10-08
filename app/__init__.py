@@ -255,7 +255,7 @@ def create_app(config_name=None):
     from app.cli import (
         seed_courses, seed_plazmogel, seed_course_gallery, media_prune_orphans,
         backup_group, legal_docx, meta_reemit_leads, partner_relink,
-        backfill_paid_at,
+        backfill_paid_at, refresh_liqpay_paid_at,
     )
     app.cli.add_command(seed_courses)
     app.cli.add_command(seed_plazmogel)
@@ -266,6 +266,7 @@ def create_app(config_name=None):
     app.cli.add_command(meta_reemit_leads)
     app.cli.add_command(partner_relink)
     app.cli.add_command(backfill_paid_at)
+    app.cli.add_command(refresh_liqpay_paid_at)
 
     from app import rbac as _rbac
     _rbac.init_app(app)

@@ -1166,3 +1166,95 @@ def backfill_paid_at(dates, do_apply):
         )
     db.session.commit()
     click.echo(f'Записано: {len(todo)}')
+
+
+@click.command('refresh-liqpay-paid-at')
+@click.option('--id', 'reg_ids', multiple=True, type=int, metavar='REG_ID',
+              help='Реєстрація; повторюється. Без --id -- усі LiqPay-оплати '
+                   'з датою без часу або без дати.')
+@click.option('--apply', 'do_apply', is_flag=True,
+              help='Записати. Без прапорця лише показує план.')
+@with_appcontext
+def refresh_liqpay_paid_at(reg_ids, do_apply):
+    """Поставити LiqPay-оплатам точний час платежу з самого LiqPay.
+
+    Дозаповнені днем (paid_at_precision='date') оплати мають вигаданий
+    полудень, хоча справжній момент LiqPay знає: це `end_date` у відповіді
+    на запит статусу REG-<id>. Команда питає LiqPay про кожну реєстрацію і,
+    якщо платіж успішний і end_date є, ставить його з точністю 'datetime'.
+
+    Без --apply друкує план "було -> стане". Помилка LiqPay по одному рядку
+    друкується з номером і решту не зупиняє. Пише через ORM (оновлюється
+    updated_at -- курсор updated_since для MM Medic) і кожну зміну заносить
+    у журнал транзакцій із source='status_check' і відповіддю LiqPay.
+    """
+    from app.extensions import db
+    from app.models.mixins import PAID_AT_DATE
+    from app.models.registration import EventRegistration
+    from app.services.liqpay import get_liqpay_service
+    from app.services.payment_ops import (
+        STATUS_MAP, liqpay_end_date, refresh_paid_at_from_liqpay,
+    )
+    from app.utils import kyiv_dt
+
+    service = get_liqpay_service()
+    if not service.is_configured:
+        raise click.ClickException('LiqPay не налаштовано: ключів немає.')
+
+    query = EventRegistration.query.filter(EventRegistration.payment_status == 'paid')
+    if reg_ids:
+        query = query.filter(EventRegistration.id.in_(reg_ids))
+    else:
+        query = query.filter(
+            EventRegistration.payment_method == 'liqpay',
+            db.or_(EventRegistration.paid_at_precision == PAID_AT_DATE,
+                   EventRegistration.paid_at.is_(None)),
+        )
+    regs = query.order_by(EventRegistration.id).all()
+    missing = sorted(set(reg_ids) - {reg.id for reg in regs})
+    click.echo(f'До перевірки: {len(regs)}')
+
+    errors = [f'{reg_id}: не знайдено або не оплачено' for reg_id in missing]
+    changed = 0
+    for reg in regs:
+        order_id = f'REG-{reg.id}'
+        try:
+            data = service.check_status(order_id)
+        except Exception as exc:
+            errors.append(f'{reg.id}: LiqPay -- {exc}')
+            continue
+        if not data:
+            errors.append(f'{reg.id}: LiqPay не відповів')
+            continue
+        status = data.get('status')
+        if STATUS_MAP.get(status) != 'paid':
+            detail = data.get('err_description') or data.get('err_code') or ''
+            errors.append(f'{reg.id}: у LiqPay статус {status!r} {detail}'.rstrip())
+            continue
+        end_date = liqpay_end_date(data)
+        if end_date is None:
+            errors.append(f'{reg.id}: у відповіді LiqPay немає end_date')
+            continue
+
+        was = (kyiv_dt(reg.paid_at, '%Y-%m-%d %H:%M:%S')
+               + f' ({reg.paid_at_precision})') if reg.paid_at else 'немає'
+        click.echo(f'  {reg.id}: {was} -> '
+                   f'{kyiv_dt(end_date, "%Y-%m-%d %H:%M:%S")} (datetime)')
+        if not do_apply:
+            continue
+        try:
+            refresh_paid_at_from_liqpay(reg, data)
+            db.session.commit()
+            changed += 1
+        except Exception as exc:
+            db.session.rollback()
+            errors.append(f'{reg.id}: запис -- {exc}')
+
+    for line in errors:
+        click.echo(f'  ПОМИЛКА {line}', err=True)
+    if do_apply:
+        click.echo(f'Записано: {changed}')
+    else:
+        click.echo('Без --apply: нічого не записано.')
+    if errors:
+        raise click.ClickException(f'Рядків з помилкою: {len(errors)}')
