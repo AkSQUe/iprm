@@ -5,6 +5,7 @@ from flask import abort, flash, redirect, render_template, request, url_for
 from flask_login import current_user
 
 from app.admin import _listing, admin_bp
+from app.admin.routes_trainers import _audit_account_link
 from app.extensions import db
 from app.models.trainer_application import TrainerApplication
 from app.rbac import permission_required
@@ -124,6 +125,9 @@ def trainer_application_create_trainer(application_id):
         return _back(item.id)
     audit_logger.info('Admin %s created trainer %s from TrainerApplication #%s',
                       current_user.email, trainer.id, item.id)
+    # Автоприв'язка відкриває людині кабінет так само, як ручна в картці
+    # тренера, тож і в журналі вона має лишити той самий рядок.
+    _audit_account_link(trainer, None)
     if warning:
         flash(warning, 'warning')
     flash('Тренера створено неактивним: заповніть картку й увімкніть показ на сайті', 'success')

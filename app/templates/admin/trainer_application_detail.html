@@ -43,11 +43,13 @@
     <div class="admin-form__grid">
       <div class="form-group">
           <label>Телефон</label>
-          <div class="form-input admin-field-readonly"><a href="tel:{{ application.phone }}">{{ application.phone }}</a></div>
+          {# Без .admin-field-readonly: його pointer-events: none гасить посилання,
+             а картку відкривають саме щоб подзвонити чи написати. #}
+          <div class="form-input"><a href="tel:{{ application.phone | replace(' ', '') }}">{{ application.phone }}</a></div>
         </div>
       <div class="form-group">
           <label>Email</label>
-          <div class="form-input admin-field-readonly"><a href="mailto:{{ application.email }}">{{ application.email }}</a></div>
+          <div class="form-input"><a href="mailto:{{ application.email }}">{{ application.email }}</a></div>
         </div>
       {% if application.city %}
         <div class="form-group">
@@ -62,13 +64,13 @@
       {% if application.workplace %}
         <div class="form-group">
           <label>Місце роботи та посада</label>
-          <div class="form-input admin-field-readonly">{{ application.workplace }}</div>
+          <div class="form-input admin-field-readonly admin-multiline">{{ application.workplace }}</div>
         </div>
         {% endif %}
       {% if application.social_links %}
         <div class="form-group">
           <label>Соцмережі або сайт</label>
-          <div class="form-input admin-field-readonly">{{ application.social_links }}</div>
+          <div class="form-input admin-field-readonly admin-multiline">{{ application.social_links }}</div>
         </div>
         {% endif %}
     </div>
@@ -80,7 +82,7 @@
       {% for label, value in application.answer_rows %}
       <div class="form-group admin-form__full">
           <label>{{ label }}</label>
-          <div class="form-input admin-field-readonly">{{ value or '–' }}</div>
+          <div class="form-input admin-field-readonly admin-multiline">{{ value or '–' }}</div>
         </div>
       {% endfor %}
     </div>
@@ -88,7 +90,7 @@
 
   <div class="form-section">
     <h3 class="admin-form__section-title">Що хоче викладати</h3>
-    <p>{{ application.topic }}</p>
+    <p class="admin-multiline">{{ application.topic }}</p>
   </div>
 
   {% if can('trainer_applications.manage') %}

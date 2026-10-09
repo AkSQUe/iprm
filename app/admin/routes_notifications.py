@@ -575,7 +575,7 @@ def notifications_templates():
             'key': 'trainer-application',
             'label': 'Заявка кандидата в тренери: команді',
             'template_name': 'trainer_application_notification.html',
-            'trigger': 'course_request',
+            'trigger': 'trainer_application',
             'subject': 'Нова заявка кандидата в тренери',
             'html': render_template('emails/trainer_application_notification.html',
                                     application=MockTrainerApplication(),

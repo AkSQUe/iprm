@@ -128,3 +128,130 @@ def test_email_preview_lists_trainer_application(client, admin):
     switch_user(client, admin)
     html = client.get('/admin/notifications/templates').get_data(as_text=True)
     assert 'Заявка кандидата в тренери' in html
+
+
+# --- картка: живі контакти й переноси рядків -------------------------------
+
+def _class_chain_of(html, needle):
+    """Класи всіх елементів, усередині яких стоїть needle (від кореня до нього)."""
+    from html.parser import HTMLParser
+
+    class _Parser(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.stack, self.found = [], None
+
+        def handle_starttag(self, tag, attrs):
+            attrs = dict(attrs)
+            if self.found is None and tag == 'a' and needle in (attrs.get('href') or ''):
+                self.found = [cls for _, cls in self.stack] + [attrs.get('class') or '']
+            if tag not in ('br', 'img', 'input', 'meta', 'link', 'hr'):
+                self.stack.append((tag, attrs.get('class') or ''))
+
+        def handle_endtag(self, tag):
+            for i in range(len(self.stack) - 1, -1, -1):
+                if self.stack[i][0] == tag:
+                    del self.stack[i:]
+                    break
+
+    parser = _Parser()
+    parser.feed(html)
+    return parser.found
+
+
+def test_contact_links_are_clickable(client, admin, application):
+    """.admin-field-readonly має pointer-events: none -- посилання в ньому мертві."""
+    switch_user(client, admin)
+    html = client.get(f'/admin/trainer-applications/{application.id}').get_data(as_text=True)
+    for needle in ('tel:+380671112233', f'mailto:{application.email}'):
+        chain = _class_chain_of(html, needle)
+        assert chain is not None, needle
+        assert not any('admin-field-readonly' in cls.split() for cls in chain), needle
+
+
+def test_multiline_answers_keep_line_breaks(client, admin, application):
+    application.workplace = 'Клініка А\nКлініка Б'
+    application.topic = 'Перша тема\nДруга тема'
+    db.session.commit()
+    switch_user(client, admin)
+    html = client.get(f'/admin/trainer-applications/{application.id}').get_data(as_text=True)
+    assert 'admin-multiline">Клініка А\nКлініка Б<' in html
+    assert 'admin-multiline">Перша тема\nДруга тема<' in html
+
+
+def test_multiline_text_is_escaped(client, admin, application):
+    application.topic = '<script>alert(1)</script>'
+    db.session.commit()
+    switch_user(client, admin)
+    html = client.get(f'/admin/trainer-applications/{application.id}').get_data(as_text=True)
+    assert '<script>alert(1)</script>' not in html
+
+
+# --- «Створити тренера»: потрібні ОБИДВА права ------------------------------
+
+@pytest.mark.parametrize('role', ['manager', 'content_editor'])
+def test_create_trainer_needs_both_permissions(client, application, role):
+    """manager має лише trainer_applications.*, content_editor -- лише trainers.manage."""
+    application.status = 'approved'
+    db.session.commit()
+    user = make_user_with_role(role)
+    db.session.commit()
+    switch_user(client, user)
+    count = Trainer.query.count()
+    resp = client.post(f'/admin/trainer-applications/{application.id}/create-trainer')
+    assert resp.status_code == 403
+    db.session.refresh(application)
+    assert application.trainer_id is None
+    assert Trainer.query.count() == count
+
+
+def test_manager_sees_no_create_button(client, application):
+    application.status = 'approved'
+    db.session.commit()
+    user = make_user_with_role('manager')
+    db.session.commit()
+    switch_user(client, user)
+    resp = client.get(f'/admin/trainer-applications/{application.id}')
+    assert resp.status_code == 200
+    assert 'create-trainer' not in resp.get_data(as_text=True)
+
+
+# --- аудит автоприв'язки акаунта -------------------------------------------
+
+def _audit(caplog):
+    return [r.getMessage() for r in caplog.records if r.name == 'audit']
+
+
+def test_auto_linked_account_is_audited(client, admin, application, caplog):
+    import logging
+    from app.models.user import User
+    user = User.create_with_password(application.email, 'password123', first_name='О',
+                                     last_name='П', email_confirmed=True)
+    application.status = 'approved'
+    db.session.commit()
+    switch_user(client, admin)
+    with caplog.at_level(logging.INFO, logger='audit'):
+        client.post(f'/admin/trainer-applications/{application.id}/create-trainer')
+    db.session.refresh(application)
+    trainer = db.session.get(Trainer, application.trainer_id)
+    assert trainer.user_id == user.id
+    assert (f'Admin {admin.email} linked user {user.id} to trainer {trainer.id} (was None)'
+            in _audit(caplog))
+
+
+def test_no_account_no_link_audit(client, admin, application, caplog):
+    import logging
+    application.status = 'approved'
+    db.session.commit()
+    switch_user(client, admin)
+    with caplog.at_level(logging.INFO, logger='audit'):
+        client.post(f'/admin/trainer-applications/{application.id}/create-trainer')
+    assert not [m for m in _audit(caplog) if 'linked user' in m]
+
+
+def test_email_preview_has_own_trigger(client, admin):
+    switch_user(client, admin)
+    html = client.get('/admin/notifications/templates').get_data(as_text=True)
+    start = html.index('<strong>Шаблон:</strong> trainer_application_notification.html')
+    trigger_line = html[start:].split('<strong>Тригер:</strong>', 1)[1].split('</span>', 1)[0]
+    assert trigger_line.strip() == 'trainer_application'
