@@ -32,6 +32,8 @@ class SiteSettings(TranslatableMixin, TimestampMixin, db.Model):
     # Публічні брендові тексти; юридичні/банківські реквізити -- лише укр.
     __translatable__ = (
         'company_name', 'company_full_name', 'address', 'city', 'business_hours',
+        'recruit_teaser_title', 'recruit_teaser_text', 'recruit_page_title',
+        'recruit_page_intro', 'recruit_page_benefits', 'recruit_page_closing',
     )
 
     id = db.Column(db.Integer, primary_key=True, default=1)
@@ -118,6 +120,17 @@ class SiteSettings(TranslatableMixin, TimestampMixin, db.Model):
         db.String(255), nullable=False, default='', server_default='',
     )
     trainer_contract_uploaded_at = db.Column(db.DateTime(timezone=True))
+
+    # Запрошення тренерів: заклик на головній і сторінка /trainers/join.
+    # Порожнє поле -- дефолтний текст із app/data/trainer_recruit.py (його
+    # переклади -- у звичайному каталозі .po), як у trainer_faq_html: правка
+    # дефолту в коді доходить до сайту, доки адмін текст не змінював.
+    recruit_teaser_title = db.Column(db.Text, nullable=False, default='', server_default='')
+    recruit_teaser_text = db.Column(db.Text, nullable=False, default='', server_default='')
+    recruit_page_title = db.Column(db.Text, nullable=False, default='', server_default='')
+    recruit_page_intro = db.Column(db.Text, nullable=False, default='', server_default='')
+    recruit_page_benefits = db.Column(db.Text, nullable=False, default='', server_default='')
+    recruit_page_closing = db.Column(db.Text, nullable=False, default='', server_default='')
 
     # LiqPay. Public key -- відкритий ідентифікатор, plaintext. Private
     # key -- секрет з доступом до коштів; зберігаємо Fernet-зашифрованим

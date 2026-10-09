@@ -30,6 +30,7 @@ from app.models.instance_tariff import InstanceTariff
 from app.models.course_tariff import CourseTariff
 from app.models.course_request import CourseRequest, CourseRequestAudit
 from app.models.b2b_request import B2BRequest
+from app.models.trainer_application import TrainerApplication  # noqa: F401
 from app.models.webhook_delivery import WebhookDelivery
 from app.models.blog_post import BlogPost
 from app.models.blog_comment import BlogComment
@@ -66,7 +67,7 @@ __all__ = [
     'Clinic', 'EmailLog', 'EmailAttachment', 'EmailSettings', 'EmailSuppression', 'NotificationRule',
     'PaymentTransaction', 'RefundRequest', 'SiteSettings', 'ErrorLog',
     'Course', 'CourseInstance', 'InstanceTariff', 'CourseTariff',
-    'CourseRequest', 'CourseRequestAudit', 'B2BRequest',
+    'CourseRequest', 'CourseRequestAudit', 'B2BRequest', 'TrainerApplication',
     'WebhookDelivery', 'BlogPost', 'BlogComment', 'MediaFile',
     'DatabaseBackup',
     'MaterialReservation', 'MaterialReservationItem', 'MaterialReservationStatus',
