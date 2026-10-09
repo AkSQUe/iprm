@@ -349,6 +349,11 @@ def create_app(config_name=None):
     from app.services.specialties import names as specialty_names
     app.jinja_env.globals['specialty_names'] = specialty_names
 
+    # Тексти заклику «стати тренером» -- партіал (головна, /trainers) бере їх
+    # сам: SiteSettings.recruit_* або перекладений дефолт.
+    from app.services.trainer_recruitment import recruit_text
+    app.jinja_env.globals['recruit_text'] = recruit_text
+
     # Глобал icon('<name>') -- рендерить Material Symbols іконку через кодпойнт
     # (self-hosted субсет-шрифт). Див. app/icons.py.
     from app.icons import render_icon, ICON_CODEPOINTS

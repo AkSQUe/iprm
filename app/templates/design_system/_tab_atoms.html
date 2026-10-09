@@ -277,9 +277,18 @@
             <input type="text" class="form-input" placeholder="Широке поле">
             <div class="form-hint">Підказка для поля</div>
           </div>
+          <fieldset class="form-fieldset form-section__full">
+            <legend class="form-legend">Питання з вибором <span class="required">*</span></legend>
+            <div class="choice-cards">
+              <label class="choice-cards__option"><input type="radio" name="ds-fieldset-demo" checked><span>Перший варіант</span></label>
+              <label class="choice-cards__option"><input type="radio" name="ds-fieldset-demo"><span>Другий варіант</span></label>
+              <label class="choice-cards__option"><input type="radio" name="ds-fieldset-demo"><span>Третій варіант</span></label>
+            </div>
+          </fieldset>
         </div>
       </div>
     </div>
+    <p class="ds-hint">Група варіантів у картці форми -- <code class="ds-code">fieldset.form-fieldset</code> з <code class="ds-code">legend.form-legend</code>: підпис групи бере вигляд із того самого правила, що й підписи полів (<code class="ds-code">.form-section .form-group label</code>), а <code class="ds-code">.form-fieldset</code> лише скидає браузерні рамку, відступи й min-width. Варіанти -- <code class="ds-code">.choice-cards</code> (розділ «Групи вибору»). Споживач -- анкета кандидата <code class="ds-code">/trainers/join</code>.</p>
     <p class="ds-hint">bg: var(--iprm-white) / border: var(--iprm-border) / без тіні (форма -- площина, як і в адмінці) / padding: 28px / grid: 2col / input: 10px 14px / focus: accent ring. Межа -- не декор: без неї в тёмній темі картка зливалась із тлом сторінки (там --iprm-white, --iprm-card-bg і тло body однакові). Адмінка малює свою картку (.admin-with-sidebar .form-section, admin.css).</p>
   </div>
 

@@ -63,6 +63,7 @@
    онлайн-курс, тут). page-home.css нижче лише уточнює його розклад під
    Головну (.page-home .iprm-roi*), базові правила звідси. #}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/roi-calculator.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/recruit-cta.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/page-home.css') }}?v={{ assets_version }}">
 {% endblock %}
 
@@ -240,6 +241,8 @@
       <div class="home-section-cta apple-reveal">
         <a href="{{ url_for('trainers.trainer_list') }}" class="apple-btn apple-btn--secondary apple-btn--arrow">{{ _('Усі тренери') }}</a>
       </div>
+
+      {% include 'partials/_recruit_cta.html' %}
     </div>
   </section>
   {% endif %}

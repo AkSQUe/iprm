@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% from 'partials/schema/_breadcrumbs.html' import breadcrumbs with context %}
+
+{# title і description -- фіксовані SEO-рядки, а не заголовок запрошення:
+   той редагує адмін (SiteSettings.recruit_page_title), і довжину сніпета
+   (title 30-60, description 120-160) ніщо б не стерегло. #}
+{% block title %}{{ _('Стати тренером ІПРМ: запрошення для практикуючих лікарів') }}{% endblock %}
+{% block meta_description %}{{ _('Практикуєте PRP- та плазмотерапію й готові ділитися досвідом? Станьте тренером ІПРМ: виступи перед колегами, власні курси й гідна винагорода.') }}{% endblock %}
+
+{% block jsonld %}
+{{ super() }}
+{{ breadcrumbs([
+  (_('Тренери'), url_for('trainers.trainer_list', _external=True)),
+  (_('Стати тренером'), ''),
+]) }}
+{% endblock %}
+{% block recaptcha %}{% include 'partials/_recaptcha.html' %}{% endblock %}
+
+{% block extra_css %}
+{# auth.css -- .form-group, .form-consent/.form-checkbox; choice.css -- варіанти
+   відповіді (.choice-cards). Самі поля й картки форми -- у common.css. #}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/choice.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-trainer-join.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{# Поле анкети з підписом і помилками. `attrs` -- тип і автозаповнення:
+   браузер підставить ім'я, телефон і email із профілю. #}
+{% macro text_field(field, attrs={}, full=false, rows=3) %}
+<div class="form-group{% if full %} form-section__full{% endif %}">
+  <label for="{{ field.id }}">{{ field.label.text }}{% if field.flags.required %} <span class="required">*</span>{% endif %}</label>
+  {% if field.type == 'TextAreaField' %}
+  {{ field(class="form-input" + (" is-invalid" if field.errors else ""), rows=rows, **attrs) }}
+  {% else %}
+  {{ field(class="form-input" + (" is-invalid" if field.errors else ""), **attrs) }}
+  {% endif %}
+  {% for error in field.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+</div>
+{% endmacro %}
+
+{% block content %}
+<div class="apple-page page-trainer-join">
+  <div class="iprm-hero-wrap">
+    <section class="iprm-hero" aria-labelledby="join-title">
+      <div class="iprm-hero__content">
+        <span class="iprm-eyebrow">{{ _('Стати тренером') }}</span>
+        <h1 id="join-title" class="iprm-hero__title">{{ title }}</h1>
+        {% for block in intro %}
+        <p class="iprm-hero__subtitle">{% for line in block %}{{ line }}{% if not loop.last %}<br>{% endif %}{% endfor %}</p>
+        {% endfor %}
+        {% if not sent %}
+        <div class="iprm-hero__actions">
+          <a href="#application" class="apple-btn apple-btn--primary">{{ _('Заповнити анкету') }}</a>
+        </div>
+        {% endif %}
+      </div>
+    </section>
+  </div>
+
+  {% if benefits %}
+  <section class="iprm-section" aria-labelledby="join-benefits-title">
+    <div class="iprm-section__inner">
+      <h2 id="join-benefits-title" class="iprm-section__title apple-reveal">{{ _('Тренерство в ІПРМ — це можливість') }}</h2>
+      <div class="apple-features-grid">
+        {% for item in benefits %}
+        <div class="apple-feature-card apple-reveal"><p>{{ item }}</p></div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  {% if closing %}
+  <section class="iprm-section iprm-section--compact" aria-label="{{ _('Запрошення') }}">
+    <div class="iprm-section__inner page-trainer-join__closing">
+      {% for block in closing %}
+      <p class="iprm-section__subtitle">{% for line in block %}{{ line }}{% if not loop.last %}<br>{% endif %}{% endfor %}</p>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <section id="application" class="iprm-section apple-section-gray" aria-labelledby="join-form-title">
+    <div class="iprm-section__inner page-trainer-join__form-wrap">
+      {% if sent %}
+      <div class="iprm-empty-state" role="status">
+        <h2 id="join-form-title" class="iprm-section__title">{{ _('Дякуємо!') }}</h2>
+        <p>{{ _('Заявку отримано. Ми зв\'яжемося з вами найближчим часом.') }}</p>
+      </div>
+      {% else %}
+      <h2 id="join-form-title" class="iprm-section__title">{{ _('Анкета кандидата') }}</h2>
+      <form method="post" action="{{ url_for('trainers.join') }}#application" class="page-trainer-join__form"
+            data-validate data-single-submit data-recaptcha-action="trainer_join" novalidate>
+        {{ form.hidden_tag() }}
+        <div class="iprm-honeypot" aria-hidden="true">
+          <label for="website">{{ _('Не заповнюйте це поле') }}</label>
+          {{ form.website(id='website', tabindex='-1', autocomplete='off') }}
+        </div>
+
+        <div class="form-section">
+          <h3 class="form-section__title">{{ _('Про себе') }}</h3>
+          <div class="form-section__grid">
+            {{ text_field(form.full_name, {'autocomplete': 'name'}, full=true) }}
+            {{ text_field(form.phone, {'type': 'tel', 'autocomplete': 'tel'}) }}
+            {{ text_field(form.email, {'type': 'email', 'autocomplete': 'email'}) }}
+            {{ text_field(form.city, {'autocomplete': 'address-level2'}) }}
+            {{ text_field(form.specialty) }}
+            {{ text_field(form.workplace, full=true) }}
+            {{ text_field(form.social_links, full=true) }}
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3 class="form-section__title">{{ _('Досвід у плазмотерапії') }}</h3>
+          <div class="form-section__grid">
+            {% for q in questions %}
+            {% set field = form['q_' ~ q.key] %}
+            {% if q.kind == 'choice' %}
+            <fieldset class="form-fieldset form-section__full">
+              <legend class="form-legend">{{ field.label.text }} <span class="required">*</span></legend>
+              <div class="choice-cards" data-required-group="radio" data-hint="{{ _('Оберіть один із варіантів') }}">
+                {% for option in field %}
+                <label class="choice-cards__option">{{ option() }}<span>{{ option.label.text }}</span></label>
+                {% endfor %}
+              </div>
+              {% for error in field.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+            </fieldset>
+            {% else %}
+            {{ text_field(field, full=true) }}
+            {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3 class="form-section__title">{{ _('Що хочете викладати') }}</h3>
+          {{ text_field(form.topic, rows=4) }}
+          <div class="form-consent">
+            <div class="form-checkbox">
+              {{ form.consent(id='consent') }}
+              <label for="consent">{{ form.consent.label.text }} (<a href="{{ url_for('main.privacy') }}" target="_blank" rel="noopener">{{ _('політика конфіденційності') }}</a>)</label>
+            </div>
+            {% for error in form.consent.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+          </div>
+        </div>
+
+        <div class="page-trainer-join__submit">
+          <button type="submit" class="apple-btn apple-btn--primary">{{ _('Надіслати анкету') }}</button>
+        </div>
+      </form>
+      {% endif %}
+    </div>
+  </section>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/apple-reveal.js') }}" defer></script>
+{% endblock %}

@@ -2004,7 +2004,8 @@ form[data-single-submit][data-submitting='true'] input[type='submit'] {
   margin-bottom: 0;
 }
 
-.form-section .form-group label {
+.form-section .form-group label,
+.form-section .form-legend {
   display: block;
   font-size: 13px;
   font-weight: 600;
@@ -2012,8 +2013,28 @@ form[data-single-submit][data-submitting='true'] input[type='submit'] {
   margin-bottom: 6px;
 }
 
-.form-section .form-group label .required {
+.form-section .form-group label .required,
+.form-section .form-legend .required {
   color: var(--iprm-accent);
+}
+
+/* .form-fieldset + .form-legend -- група варіантів (radio, checkbox) усередині
+   картки форми: питання, на яке відповідають вибором, а не текстом. Підпис
+   групи -- це <legend>, а не <label> (той підписує одне поле), тож селектор
+   `.form-group label` його не бачить; вигляд легенда бере з ТОГО САМОГО
+   правила, що й підписи полів (селектор вище), і правка підпису доходить до
+   обох. Тут лише скидання браузерного fieldset: рамка, відступи і
+   min-width: min-content, через який група з довгими варіантами
+   розпирала б картку на вузькому екрані. */
+.form-fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.form-legend {
+  padding: 0;
 }
 
 .form-section .form-input {

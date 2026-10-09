@@ -1,0 +1,9 @@
+{# Заклик «стати тренером»: головна (секція тренерів) і /trainers. Тексти --
+   SiteSettings.recruit_teaser_* або дефолт (app/data/trainer_recruit.py). #}
+<div class="iprm-recruit-cta apple-reveal">
+  <p class="iprm-recruit-cta__title">{{ recruit_text('recruit_teaser_title') }}</p>
+  <p class="iprm-recruit-cta__text">{{ recruit_text('recruit_teaser_text') }}</p>
+  <div class="iprm-recruit-cta__actions">
+    <a href="{{ url_for('trainers.join') }}" class="apple-btn apple-btn--primary">{{ _('Долучитися') }}</a>
+  </div>
+</div>

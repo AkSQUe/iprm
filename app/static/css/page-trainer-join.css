@@ -1,0 +1,23 @@
+/* Сторінка «Стати тренером» (/trainers/join): лише розкладка. Вигляд
+   полів, карток форми й варіантів відповіді -- з дизайн-системи
+   (common.css, auth.css, choice.css). */
+.page-trainer-join__closing {
+  max-width: 760px;
+  text-align: center;
+}
+
+.page-trainer-join__form-wrap {
+  max-width: 720px;
+}
+
+/* Картки анкети стоять стовпчиком з одним ритмом. */
+.page-trainer-join__form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.page-trainer-join__submit {
+  display: flex;
+  justify-content: center;
+}

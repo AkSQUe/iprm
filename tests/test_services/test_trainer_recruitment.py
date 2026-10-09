@@ -52,7 +52,6 @@ def test_custom_setting_wins(app):
     assert svc.recruit_text('recruit_page_title', settings) == 'Свій заголовок'
 
 
-@pytest.mark.xfail(reason='переклади -- Task 3', strict=True)
 def test_default_is_translated_for_english(app):
     settings = SiteSettings.get()
     settings.recruit_page_title = ''

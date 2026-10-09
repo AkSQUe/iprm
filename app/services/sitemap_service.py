@@ -34,6 +34,7 @@ STATIC_URLS = [
     ('online.course_list', '0.8', 'weekly'),
     ('main.labs', '0.8', 'weekly'),
     ('trainers.trainer_list', '0.8', 'weekly'),
+    ('trainers.join', '0.6', 'monthly'),
     ('blog.index', '0.7', 'weekly'),
     ('clinics.clinic_list', '0.8', 'monthly'),
     ('main.contact', '0.7', 'monthly'),

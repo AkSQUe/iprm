@@ -6,6 +6,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/trainers.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/recruit-cta.css') }}?v={{ assets_version }}">
 {% endblock %}
 
 {% block jsonld %}
@@ -60,6 +61,13 @@
         </div>
         {% endif %}
       </div>
+    </div>
+  </section>
+
+  <!-- ===== СТАТИ ТРЕНЕРОМ ===== -->
+  <section class="iprm-section iprm-section--compact" aria-label="{{ _('Стати тренером') }}">
+    <div class="iprm-section__inner">
+      {% include 'partials/_recruit_cta.html' %}
     </div>
   </section>
 
