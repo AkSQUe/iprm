@@ -1,0 +1,40 @@
+{% extends "emails/base.html" %}
+{% from "emails/_macros.html" import button_primary, detail_row, spacer %}
+
+{% block title %}Нова заявка кандидата в тренери{% endblock %}
+
+{% block preview_text %}{{ application.full_name }} -- {{ application.specialty }}{% endblock %}
+
+{% block content %}
+    <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #17131D; line-height: 1.25;">
+        Нова заявка кандидата в тренери
+    </h1>
+
+    <p class="mobile-text" style="margin: 0 0 24px 0; font-size: 15px; color: #625A6D; line-height: 1.5;">
+        Анкета зі сторінки «Стати тренером». Зв'яжіться з кандидатом і змініть статус заявки в адмінці.
+    </p>
+
+    <table role="presentation" style="width: 100%; margin-bottom: 24px; background-color: #F7F4FB; border: 1px solid #E9E4EF; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td style="padding: 20px 24px;">
+                <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #17131D; line-height: 1.3;">
+                    {{ application.full_name }}
+                </p>
+                {{ detail_row("Телефон", application.phone) }}
+                {{ detail_row("Email", application.email) }}
+                {% if application.city %}{{ detail_row("Місто", application.city) }}{% endif %}
+                {{ detail_row("Спеціальність", application.specialty) }}
+                {% if application.workplace %}{{ detail_row("Місце роботи та посада", application.workplace) }}{% endif %}
+                {% if application.social_links %}{{ detail_row("Соцмережі або сайт", application.social_links) }}{% endif %}
+                {% for label, value in application.answer_rows %}
+                {{ detail_row(label, value or '–') }}
+                {% endfor %}
+                {{ detail_row("Тема", application.topic) }}
+            </td>
+        </tr>
+    </table>
+
+    {{ button_primary("Відкрити заявку в адмінці", admin_url) }}
+
+    {{ spacer(16) }}
+{% endblock %}

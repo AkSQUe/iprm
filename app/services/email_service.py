@@ -1742,6 +1742,28 @@ class EmailService:
         )
 
     @staticmethod
+    def send_trainer_application_notification(application):
+        """Команді: кандидат подав анкету на /trainers/join.
+
+        Власний тригер 'trainer_application': на спільному 'course_request'
+        60-секундний dedup за адресою+тригером ковтав би лист, що прийшов у
+        ту саму хвилину, що й заявка на курс. Одержувачі -- правило
+        /admin/notifications/recipients (за замовчуванням Дмитро Бараш).
+        """
+        from app.models.site_settings import SiteSettings
+        base = (SiteSettings.get().website_url or '').rstrip('/')
+        tail = f'/admin/trainer-applications/{application.id}'
+        return EmailService.notify_admins_with_template(
+            event_type='trainer_application',
+            subject=f'Нова заявка кандидата в тренери: {application.full_name}',
+            template_name='trainer_application_notification',
+            context={
+                'application': application,
+                'admin_url': f'{base}{tail}' if base else tail,
+            },
+        )
+
+    @staticmethod
     def send_trainer_proposal_notification(proposal):
         """Тренер надіслав пропозицію курсу -- лист на email для договорів.
 
