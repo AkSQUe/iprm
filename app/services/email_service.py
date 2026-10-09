@@ -1747,7 +1747,9 @@ class EmailService:
 
         Власний тригер 'trainer_application': на спільному 'course_request'
         60-секундний dedup за адресою+тригером ковтав би лист, що прийшов у
-        ту саму хвилину, що й заявка на курс. Одержувачі -- правило
+        ту саму хвилину, що й заявка на курс. Ключ ідемпотентності на заявку
+        прибирає і це вікно: дві різні заявки поспіль -- два листи, повторний
+        виклик для тієї самої заявки листа не дублює. Одержувачі -- правило
         /admin/notifications/recipients (за замовчуванням Дмитро Бараш).
         """
         from app.models.site_settings import SiteSettings
@@ -1755,12 +1757,16 @@ class EmailService:
         tail = f'/admin/trainer-applications/{application.id}'
         return EmailService.notify_admins_with_template(
             event_type='trainer_application',
-            subject=f'Нова заявка кандидата в тренери: {application.full_name}',
+            # ПІБ приходить з публічної форми: сирий перенос рядка в Subject -- це
+            # вставка заголовка листа, а не просто негарний перенос.
+            subject=('Нова заявка кандидата в тренери: '
+                     f'{normalize_whitespace(application.full_name)}'),
             template_name='trainer_application_notification',
             context={
                 'application': application,
                 'admin_url': f'{base}{tail}' if base else tail,
             },
+            idempotency_key=f'trainer_application:{application.id}',
         )
 
     @staticmethod
@@ -2141,13 +2147,18 @@ class EmailService:
     @staticmethod
     def notify_admins_with_template(event_type, subject, template_name,
                                     context, registration=None,
-                                    new_status=None):
+                                    new_status=None, idempotency_key=None):
         """Admin-нотифікація з event-specific шаблоном і власним subject.
 
         Використовується для course_request (з шаблоном
         course_request_notification.html, що передує цьому рефактору
         і має власний дизайн). Caller повністю контролює subject і
         context; ми лише резолвимо адресатів і шлемо.
+
+        idempotency_key -- основа ключа для _send_to_recipients. Без нього
+        (за замовчуванням) лишається 60-секундний dedup на адресу+тригер, і
+        дві різні події поспіль злилися б в один лист; caller, у якого кожна
+        подія має власний id, передає ключ від нього.
         """
         from app.services.notification_recipients import resolve
 
@@ -2163,6 +2174,7 @@ class EmailService:
             context=context,
             trigger=event_type,
             registration_id=registration.id if registration is not None else None,
+            idempotency_key=idempotency_key,
         )
 
     @staticmethod

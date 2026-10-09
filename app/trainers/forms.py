@@ -11,6 +11,7 @@ from wtforms import BooleanField, RadioField, StringField, TextAreaField
 from wtforms.validators import DataRequired, Email, InputRequired, Length, Optional
 
 from app.data.trainer_application_questions import QUESTIONS
+from app.utils import normalize_whitespace
 
 # Власні повідомлення, а не дефолт WTForms: той англійською ("This field is
 # required.") і без перекладу показувався б на українській сторінці.
@@ -19,7 +20,10 @@ _CHOOSE = _l('Оберіть один із варіантів')
 
 
 class _BaseTrainerApplicationForm(FlaskForm):
-    full_name = StringField(_l('ПІБ'), validators=[DataRequired(message=_REQUIRED), Length(max=200)])
+    # filters -- до валідації: ПІБ іде в тему листа команді (Subject), а
+    # перенос рядка там -- вставка нового заголовка, не просто вигляд.
+    full_name = StringField(_l('ПІБ'), filters=[normalize_whitespace],
+                            validators=[DataRequired(message=_REQUIRED), Length(max=200)])
     phone = StringField(_l('Телефон'), validators=[DataRequired(message=_REQUIRED), Length(max=20)])
     email = StringField(_l('Email'), validators=[
         DataRequired(message=_REQUIRED), Email(message=_l('Вкажіть валідний email')),

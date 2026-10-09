@@ -201,3 +201,82 @@ def test_account_of_another_trainer_not_linked(app):
     trainer, warning = svc.create_trainer(_application(email=email))
     assert trainer.user_id is None
     assert warning
+
+
+# --- лист на КОЖНУ заявку: без злиття у 60-секундному dedup -----------------
+
+@pytest.fixture
+def smtp_stage(monkeypatch):
+    """Увімкнена пошта без мережі; лічимо, скільки листів дійшло до SMTP-етапу.
+
+    Мокаємо рівень потоку/SMTP, а не send_email: dedup, ідемпотентність і
+    INSERT у email_logs мають відпрацювати по-справжньому.
+    """
+    from app.models.notification_rule import NotificationRule
+    from app.services import email_service
+    from app.services.email_service import EmailService
+    cfg = {
+        'server': 'smtp.example.com', 'port': 587, 'use_ssl': False, 'use_tls': True,
+        'username': 'u@example.com', 'password': 'x', 'is_enabled': True,
+        'has_password': True, 'sender': 'u@example.com',
+    }
+    sent = []
+
+    class _SyncThread:
+        def __init__(self, target, args=(), **_kw):
+            self._target, self._args = target, args
+
+        def start(self):
+            self._target(*self._args)
+
+    monkeypatch.setattr(email_service, '_get_smtp_config', lambda app: cfg)
+    monkeypatch.setattr(email_service, 'Thread', _SyncThread)
+    monkeypatch.setattr(EmailService, '_send_in_thread',
+                        staticmethod(lambda app, msg, log_id, smtp_cfg: sent.append(log_id)))
+    monkeypatch.setattr(EmailService, '_check_circuit_breaker', staticmethod(lambda: False))
+
+    rule = db.session.get(NotificationRule, 'trainer_application') or NotificationRule(
+        event_type='trainer_application')
+    rule.enabled = True
+    rule.notify_admins = False
+    rule.extra_emails = [f'dmytro-{_uid()}@example.com']
+    db.session.add(rule)
+    db.session.commit()
+    return sent
+
+
+def test_two_applications_within_dedup_window_both_reach_smtp(smtp_stage):
+    from app.models.email_log import EmailLog
+    from app.services.email_service import EmailService
+    first = _application(full_name='Перший Кандидат')
+    second = _application(full_name='Другий Кандидат')
+    assert EmailService.send_trainer_application_notification(first) != [None]
+    assert EmailService.send_trainer_application_notification(second) != [None]
+    assert len(smtp_stage) == 2
+    logs = EmailLog.query.filter(EmailLog.id.in_(smtp_stage)).all()
+    assert {log.trigger for log in logs} == {'trainer_application'}
+
+
+def test_same_application_twice_sends_once(smtp_stage):
+    from app.services.email_service import EmailService
+    item = _application()
+    EmailService.send_trainer_application_notification(item)
+    EmailService.send_trainer_application_notification(item)
+    assert len(smtp_stage) == 1
+
+
+def test_subject_has_no_raw_newline_even_if_name_does(app, monkeypatch):
+    """Форма нормалізує ПІБ, але сервіс не довіряє цьому: рядок міг потрапити
+    в БД в обхід форми, а сирий \r\n у Subject -- вставка заголовка листа."""
+    from app.services.email_service import EmailService
+    item = _application(full_name='Іваненко\r\nBcc: attacker@evil.com')
+    sent = []
+    monkeypatch.setattr(EmailService, '_send_to_recipients',
+                        staticmethod(lambda recipients, **kw: sent.append(kw) or []))
+    monkeypatch.setattr('app.services.notification_recipients.resolve',
+                        lambda *a, **kw: ['dmytro@example.com'])
+    EmailService.send_trainer_application_notification(item)
+    subject = sent[0]['subject']
+    assert '\r' not in subject and '\n' not in subject
+    assert subject == 'Нова заявка кандидата в тренери: Іваненко Bcc: attacker@evil.com'
+    assert sent[0]['idempotency_key'] == f'trainer_application:{item.id}'

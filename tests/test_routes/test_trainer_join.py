@@ -120,3 +120,48 @@ def test_english_page_uses_translated_texts(client):
     assert 'How long have you been using PRP and plasma therapy?' in html
     assert 'Training at IPRM is a chance to' in html
     assert 'Ваш досвід може стати цінним для інших' not in html
+
+
+# --- reCAPTCHA і збій збереження --------------------------------------------
+
+def test_failed_recaptcha_saves_nothing(client, monkeypatch):
+    calls = []
+    monkeypatch.setattr('app.services.trainer_recruitment.notify', calls.append)
+    monkeypatch.setattr('app.trainers.routes.verify_recaptcha', lambda **kw: False)
+    payload = _payload()
+    resp = client.post('/trainers/join', data=payload)
+    assert resp.status_code == 200
+    assert TrainerApplication.query.filter_by(email=payload['email']).count() == 0
+    assert calls == []
+
+
+def test_commit_failure_saves_nothing_and_does_not_notify(client, monkeypatch):
+    calls = []
+    monkeypatch.setattr('app.services.trainer_recruitment.notify', calls.append)
+
+    real_commit = db.session.commit
+
+    def boom():
+        # Падає лише коміт заявки: до маршруту застосунок сам комітить
+        # (SiteSettings.get у before_request), і той коміт має пройти.
+        if any(isinstance(obj, TrainerApplication) for obj in db.session.new):
+            raise RuntimeError('db down')
+        return real_commit()
+
+    monkeypatch.setattr(db.session, 'commit', boom)
+    payload = _payload()
+    resp = client.post('/trainers/join', data=payload)
+    monkeypatch.undo()
+    assert resp.status_code == 200
+    # Анкета показана знову (а не «Дякуємо»): кандидат бачить, що не пішло.
+    assert 'name="q_plasma_years"' in resp.get_data(as_text=True)
+    assert calls == []
+    assert TrainerApplication.query.filter_by(email=payload['email']).count() == 0
+
+
+def test_newline_in_full_name_is_collapsed(client, monkeypatch):
+    monkeypatch.setattr('app.services.trainer_recruitment.notify', lambda a: None)
+    payload = _payload(full_name='Іваненко\r\nІван  Петрович')
+    assert client.post('/trainers/join', data=payload).status_code == 302
+    item = TrainerApplication.query.filter_by(email=payload['email']).one()
+    assert item.full_name == 'Іваненко Іван Петрович'
