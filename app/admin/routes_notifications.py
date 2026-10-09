@@ -362,6 +362,22 @@ def notifications_templates():
         team_size_label = '6–10 осіб'
         created_at = datetime(2026, 4, 11, 11, 0, tzinfo=timezone.utc)
 
+    class MockTrainerApplication:
+        id = 1
+        full_name = 'Петренко Олена Іванівна'
+        phone = '+380671112233'
+        email = 'olena@example.com'
+        city = 'Львів'
+        specialty = 'Гінекологія'
+        workplace = "Клініка «Здоров'я», лікар-гінеколог"
+        social_links = 'https://instagram.com/dr.olena'
+        topic = 'PRP у гінекології: показання й протоколи'
+        answer_rows = [
+            ('Як давно ви використовуєте PRP- та плазмотерапію?', 'Понад 5 років'),
+            ('Скільки пробірок (процедур) у середньому за день?', '6-10'),
+            ('Чи є досвід виступів або викладання?', 'Конференції'),
+        ]
+
     class MockAppliedPromo:
         code = 'ФАРМА-2026'
         discount_label = '20%'
@@ -554,6 +570,16 @@ def notifications_templates():
             'subject': 'Нова B2B-заявка',
             'html': render_template('emails/b2b_request_notification.html',
                                     request_obj=b2b_request, admin_url=mock_admin_url),
+        },
+        {
+            'key': 'trainer-application',
+            'label': 'Заявка кандидата в тренери: команді',
+            'template_name': 'trainer_application_notification.html',
+            'trigger': 'course_request',
+            'subject': 'Нова заявка кандидата в тренери',
+            'html': render_template('emails/trainer_application_notification.html',
+                                    application=MockTrainerApplication(),
+                                    admin_url=mock_admin_url),
         },
         {
             'key': 'blog-comment',

@@ -1,0 +1,86 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Кандидати в тренери | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% from 'admin/partials/_filter_bar.html' import filter_bar, pager, empty_state %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout admin-layout--wide">
+
+  <div class="admin-hero">
+    <div>
+      <div class="admin-breadcrumb">
+        <a href="{{ url_for('admin.dashboard') }}" class="admin-breadcrumb__link">Панель</a>
+        <span class="admin-breadcrumb__sep">/</span>
+        <span class="admin-breadcrumb__current">Кандидати в тренери</span>
+      </div>
+      <h1 class="admin-hero__title">Кандидати в тренери</h1>
+      <p class="admin-hero__subtitle">Анкети зі сторінки «Стати тренером». Нових: {{ new_count }}</p>
+    </div>
+    <div class="admin-hero__actions">
+      <a href="{{ url_for('trainers.join') }}" class="btn-admin btn-admin--secondary" target="_blank" rel="noopener">{{ icon('open_in_new') }} Сторінка на сайті</a>
+    </div>
+  </div>
+
+  {% include 'partials/flash_messages.html' %}
+
+  {{ filter_bar(
+       endpoint='admin.trainer_applications_list',
+       values=filters,
+       search={'name': 'q', 'placeholder': 'Пошук за ПІБ, email, телефоном, спеціальністю, темою'},
+       fields=[
+         {'name': 'status', 'label': 'Статус', 'placeholder': 'Усі статуси', 'options': status_options},
+         {'name': 'date_from', 'label': 'Отримані з', 'type': 'date'},
+         {'name': 'date_to', 'label': 'Отримані по', 'type': 'date'},
+         {'name': 'per_page', 'label': 'Рядків на сторінці', 'placeholder': '50 (типово)', 'options': per_page_options, 'narrowing': False},
+       ],
+     ) }}
+
+  {% if applications %}
+  <div class="admin-table-wrap">
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Отримано</th>
+        <th>Кандидат</th>
+        <th>Спеціальність</th>
+        <th>Контакти</th>
+        <th>Статус</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in applications %}
+      <tr>
+        <td>{{ item.created_at | kyiv if item.created_at else '–' }}</td>
+        <td><a href="{{ url_for('admin.trainer_application_detail', application_id=item.id) }}">{{ item.full_name }}</a></td>
+        <td>{{ item.specialty }}</td>
+        <td><a href="tel:{{ item.phone }}">{{ item.phone }}</a><br><a href="mailto:{{ item.email }}">{{ item.email }}</a></td>
+        <td><span class="badge badge--{{ item.status_badge }}">{{ item.status_label }}</span>{% if item.trainer_id %} <span class="badge badge--active">тренер</span>{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  {% call empty_state('admin.trainer_applications_list',
+                      filter_args,
+                      narrow_args={'page': pagination.page if pagination.page > 1 else none,
+                                   'per_page': False},
+                      icon_name='school',
+                      title='Заявок поки немає') %}
+    <p>Анкети зі сторінки «Стати тренером» з'являться тут</p>
+  {% endcall %}
+  {% endif %}
+
+  {{ pager('admin.trainer_applications_list', pagination, filter_args) }}
+
+  </div>
+</div>
+{% endblock %}

@@ -64,7 +64,7 @@
     </div>
     {% endif %}
 
-    {% if can_any('course_requests.view', 'b2b_requests.view', 'meta_leads.view') %}
+    {% if can_any('course_requests.view', 'b2b_requests.view', 'trainer_applications.view', 'meta_leads.view') %}
     <div class="admin-sidebar__group">
       <p class="admin-sidebar__group-title">Заявки</p>
       {% if can('course_requests.view') %}
@@ -77,6 +77,12 @@
       <a href="{{ url_for('admin.b2b_requests_list') }}" class="admin-sidebar__link{% if ep in ('admin.b2b_requests_list', 'admin.b2b_request_update') %} admin-sidebar__link--active{% endif %}">
         {{ icon('domain') }}
         <span class="admin-sidebar__text">B2B-заявки</span>
+      </a>
+      {% endif %}
+      {% if can('trainer_applications.view') %}
+      <a href="{{ url_for('admin.trainer_applications_list') }}" class="admin-sidebar__link{% if ep in ('admin.trainer_applications_list', 'admin.trainer_application_detail', 'admin.trainer_application_update', 'admin.trainer_application_create_trainer') %} admin-sidebar__link--active{% endif %}">
+        {{ icon('school') }}
+        <span class="admin-sidebar__text">Кандидати в тренери</span>
       </a>
       {% endif %}
       {% if can('meta_leads.view') %}

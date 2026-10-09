@@ -1,0 +1,121 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}{{ application.full_name }} | Кандидати в тренери | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+  <div class="admin-hero">
+    <div>
+      <div class="admin-breadcrumb">
+        <a href="{{ url_for('admin.trainer_applications_list') }}" class="admin-breadcrumb__link">Кандидати в тренери</a>
+        <span class="admin-breadcrumb__sep">/</span>
+        <span class="admin-breadcrumb__current">{{ application.full_name }}</span>
+      </div>
+      <h1 class="admin-hero__title">{{ application.full_name }}</h1>
+      <p class="admin-hero__subtitle">
+        <span class="badge badge--{{ application.status_badge }}">{{ application.status_label }}</span>
+        Отримано {{ application.created_at | kyiv }}{% if application.locale != 'uk' %} &middot; мова сторінки: {{ application.locale }}{% endif %}
+      </p>
+    </div>
+    <div class="admin-hero__actions">
+      {% if application.trainer %}
+      <a href="{{ url_for('admin.trainer_edit', trainer_id=application.trainer_id) }}" class="btn-admin btn-admin--secondary">{{ icon('co_present') }} Картка тренера</a>
+      {% elif application.status == 'approved' and can('trainer_applications.manage') and can('trainers.manage') %}
+      <form method="POST" action="{{ url_for('admin.trainer_application_create_trainer', application_id=application.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn-admin btn-admin--primary">{{ icon('person_add') }} Створити тренера</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+
+  {% include 'partials/flash_messages.html' %}
+
+  <div class="form-section">
+    <h3 class="admin-form__section-title">Контакти</h3>
+    <div class="admin-form__grid">
+      <div class="form-group">
+          <label>Телефон</label>
+          <div class="form-input admin-field-readonly"><a href="tel:{{ application.phone }}">{{ application.phone }}</a></div>
+        </div>
+      <div class="form-group">
+          <label>Email</label>
+          <div class="form-input admin-field-readonly"><a href="mailto:{{ application.email }}">{{ application.email }}</a></div>
+        </div>
+      {% if application.city %}
+        <div class="form-group">
+          <label>Місто</label>
+          <div class="form-input admin-field-readonly">{{ application.city }}</div>
+        </div>
+        {% endif %}
+      <div class="form-group">
+          <label>Спеціальність</label>
+          <div class="form-input admin-field-readonly">{{ application.specialty }}</div>
+        </div>
+      {% if application.workplace %}
+        <div class="form-group">
+          <label>Місце роботи та посада</label>
+          <div class="form-input admin-field-readonly">{{ application.workplace }}</div>
+        </div>
+        {% endif %}
+      {% if application.social_links %}
+        <div class="form-group">
+          <label>Соцмережі або сайт</label>
+          <div class="form-input admin-field-readonly">{{ application.social_links }}</div>
+        </div>
+        {% endif %}
+    </div>
+  </div>
+
+  <div class="form-section">
+    <h3 class="admin-form__section-title">Досвід у плазмотерапії</h3>
+    <div class="admin-form__grid">
+      {% for label, value in application.answer_rows %}
+      <div class="form-group admin-form__full">
+          <label>{{ label }}</label>
+          <div class="form-input admin-field-readonly">{{ value or '–' }}</div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="form-section">
+    <h3 class="admin-form__section-title">Що хоче викладати</h3>
+    <p>{{ application.topic }}</p>
+  </div>
+
+  {% if can('trainer_applications.manage') %}
+  <form method="POST" action="{{ url_for('admin.trainer_application_update', application_id=application.id) }}" class="admin-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="form-section">
+      <h3 class="admin-form__section-title">Робота із заявкою</h3>
+      <div class="admin-form__grid">
+        <div class="form-group">
+          <label for="status">Статус</label>
+          <select name="status" id="status" class="form-input">
+            {% for code, label in status_options %}
+            <option value="{{ code }}"{% if application.status == code %} selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group admin-form__full">
+          <label for="admin_notes">Нотатки</label>
+          <textarea name="admin_notes" id="admin_notes" class="form-input" rows="4" maxlength="4000">{{ application.admin_notes or '' }}</textarea>
+        </div>
+      </div>
+    </div>
+    <div class="admin-form__actions">
+      <button type="submit" class="btn-admin btn-admin--primary">{{ icon('check') }} Зберегти</button>
+    </div>
+  </form>
+  {% endif %}
+  </div>
+</div>
+{% endblock %}
