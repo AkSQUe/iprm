@@ -19,7 +19,7 @@
         <span class="admin-breadcrumb__current">Для тренерів</span>
       </div>
       <h1 class="admin-hero__title">Для тренерів</h1>
-      <p class="admin-hero__subtitle">Договір і часті питання в кабінеті тренера</p>
+      <p class="admin-hero__subtitle">Запрошення тренерів, договір і часті питання в кабінеті тренера</p>
     </div>
   </div>
 
@@ -36,6 +36,27 @@
   <form method="POST" class="admin-form" enctype="multipart/form-data">
     {{ form.hidden_tag() }}
     {% include 'admin/partials/_form_errors.html' %}
+
+    <div class="form-section" id="recruit">
+      <h3 class="admin-form__section-title">Запрошення тренерів</h3>
+      <p class="admin-form__section-hint">
+        Заклик на головній і в <a href="{{ url_for('trainers.trainer_list') }}" target="_blank" rel="noopener">/trainers</a>,
+        сторінка <a href="{{ url_for('trainers.join') }}" target="_blank" rel="noopener">«Стати тренером»</a>.
+        Переклади ru/en -- кнопка «Переклади» в <a href="{{ url_for('admin.settings') }}">налаштуваннях сайту</a>
+        (з'являються, коли текст змінено тут).
+      </p>
+      <div class="admin-form__grid">
+        {% for name in ['recruit_teaser_title', 'recruit_teaser_text', 'recruit_page_title', 'recruit_page_intro', 'recruit_page_benefits', 'recruit_page_closing'] %}
+        {% set field = form[name] %}
+        <div class="form-group admin-form__full">
+          <label for="{{ name }}">{{ field.label.text }}</label>
+          {{ field(class="form-input" + (" is-invalid" if field.errors else ""), id=name, rows=2 if name in ('recruit_teaser_title', 'recruit_teaser_text', 'recruit_page_title') else 7) }}
+          {% if field.description %}<small class="form-hint">{{ field.description }}</small>{% endif %}
+          {% for error in field.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
 
     <div class="form-section" id="faq">
       <h3 class="admin-form__section-title">Часті питання</h3>

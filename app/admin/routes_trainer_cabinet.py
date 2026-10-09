@@ -7,6 +7,7 @@ from flask_login import current_user
 
 from app.admin import admin_bp
 from app.admin.forms import ProposalReturnForm, TrainerSettingsForm
+from app.data.trainer_recruit import DEFAULTS as RECRUIT_DEFAULTS
 from app.extensions import db
 from app.models.site_settings import SiteSettings
 from app.models.trainer import Trainer
@@ -148,6 +149,8 @@ def settings_trainers():
     if request.method == 'GET':
         form.faq_html.data = svc.faq_source(site)
         form.contract_email.data = site.trainer_contract_email
+        for name, default in RECRUIT_DEFAULTS.items():
+            getattr(form, name).data = getattr(site, name) or default
 
     if form.validate_on_submit():
         upload = form.contract_pdf.data
@@ -176,6 +179,15 @@ def settings_trainers():
         faq = (form.faq_html.data or '').strip().replace('\r\n', '\n').replace('\r', '\n')
         site.trainer_faq_html = '' if faq == DEFAULT_TRAINER_FAQ_HTML.strip() else faq
         site.trainer_contract_email = (form.contract_email.data or '').strip().lower()
+        # Той самий прийом, що з FAQ: незмінений дефолт зберігаємо порожнім,
+        # щоб правка дефолту в коді (і його переклади в .po) доходили до сайту.
+        # Поле, якого немає в запиті, не чіпаємо: старий клієнт без цих полів
+        # не повинен стирати збережені тексти.
+        for name, default in RECRUIT_DEFAULTS.items():
+            if name not in request.form:
+                continue
+            value = (getattr(form, name).data or '').strip().replace('\r\n', '\n').replace('\r', '\n')
+            setattr(site, name, '' if value == default.strip() else value)
         db.session.commit()
         audit_logger.info('Admin %s updated trainer settings', current_user.email)
         flash('Налаштування для тренерів збережено', 'success')

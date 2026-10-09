@@ -1351,6 +1351,27 @@ class ProposalReturnForm(FlaskForm):
 
 class TrainerSettingsForm(FlaskForm):
     """Налаштування «Для тренерів»: текст FAQ, email для договорів, сам PDF."""
+    recruit_teaser_title = TextAreaField(
+        'Заклик: заголовок', validators=[Optional(), Length(max=300)],
+        description='Смуга під тренерами на головній і в /trainers. Порожнє -- текст за замовчуванням.',
+    )
+    recruit_teaser_text = TextAreaField(
+        'Заклик: рядок під заголовком', validators=[Optional(), Length(max=500)],
+    )
+    recruit_page_title = TextAreaField(
+        'Сторінка «Стати тренером»: заголовок', validators=[Optional(), Length(max=300)],
+    )
+    recruit_page_intro = TextAreaField(
+        'Сторінка: вступ', validators=[Optional(), Length(max=4000)],
+        description='Простий текст. Абзац -- через порожній рядок.',
+    )
+    recruit_page_benefits = TextAreaField(
+        'Сторінка: переваги', validators=[Optional(), Length(max=2000)],
+        description='По одній на рядок -- кожна стає карткою.',
+    )
+    recruit_page_closing = TextAreaField(
+        'Сторінка: закриття', validators=[Optional(), Length(max=2000)],
+    )
     faq_html = TextAreaField(
         'Текст «Частих питань»',
         validators=[Optional()],

@@ -39,6 +39,12 @@ FIELD_LABELS = {
     'company_name': 'Назва компанії', 'company_full_name': 'Повна назва',
     'address': 'Адреса', 'business_hours': 'Години роботи',
     'topic': 'Тема',
+    'recruit_teaser_title': 'Заклик тренерів: заголовок',
+    'recruit_teaser_text': 'Заклик тренерів: рядок',
+    'recruit_page_title': '«Стати тренером»: заголовок',
+    'recruit_page_intro': '«Стати тренером»: вступ',
+    'recruit_page_benefits': '«Стати тренером»: переваги',
+    'recruit_page_closing': '«Стати тренером»: закриття',
 }
 
 
