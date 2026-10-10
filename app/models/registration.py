@@ -6,8 +6,8 @@ from sqlalchemy import func as sa_func
 
 from app.extensions import db
 from app.models.mixins import (
-    TimestampMixin, BigIntPK, DiscountedMixin, PaidAtMixin, RefundableMixin,
-    paid_at_precision_check, utcnow,
+    TimestampMixin, BigIntPK, CancellableMixin, DiscountedMixin, PaidAtMixin,
+    RefundableMixin, paid_at_precision_check, utcnow,
 )
 
 
@@ -15,7 +15,7 @@ from app.models.mixins import (
 COMPLETION_TOKEN_TTL_DAYS = 30
 
 
-class EventRegistration(TimestampMixin, PaidAtMixin, RefundableMixin,
+class EventRegistration(TimestampMixin, PaidAtMixin, RefundableMixin, CancellableMixin,
                         DiscountedMixin, db.Model):
     """Реєстрація на CourseInstance.
 

@@ -14,8 +14,8 @@ import secrets
 
 from app.extensions import db
 from app.models.mixins import (
-    TimestampMixin, BigIntPK, DiscountedMixin, PaidAtMixin, RefundableMixin,
-    paid_at_precision_check, utcnow,
+    TimestampMixin, BigIntPK, CancellableMixin, DiscountedMixin, PaidAtMixin,
+    RefundableMixin, paid_at_precision_check, utcnow,
 )
 from app.utils import ensure_utc
 
@@ -34,7 +34,7 @@ STATUSES = (STATUS_PENDING, STATUS_ACTIVE, STATUS_CANCELLED)
 PAYMENT_STATUSES = ('unpaid', 'pending', 'paid', 'refunded')
 
 
-class OnlineEnrollment(TimestampMixin, PaidAtMixin, RefundableMixin,
+class OnlineEnrollment(TimestampMixin, PaidAtMixin, RefundableMixin, CancellableMixin,
                        DiscountedMixin, db.Model):
     __tablename__ = 'online_enrollments'
 

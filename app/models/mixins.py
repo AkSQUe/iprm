@@ -1,6 +1,8 @@
 from datetime import datetime, timezone
 from decimal import Decimal
 
+from sqlalchemy import event, inspect
+
 from app.extensions import db
 from app.i18n import DEFAULT_LANGUAGE, PREFIXED_LANGUAGES, apply_json_overrides
 
@@ -120,6 +122,42 @@ class PaidAtMixin:
     def clear_paid_at(self):
         self.paid_at = None
         self.paid_at_precision = None
+
+
+#: Статус скасованого замовлення -- однаковий у реєстрації й онлайн-курсу.
+CANCELLED = 'cancelled'
+
+
+class CancellableMixin:
+    """Коли замовлення скасовано -- момент, а не лише статус.
+
+    Потрібен фінзвіту (app.services.finance_report): оплата, від якої
+    учасник відмовився без повернення, стає виручкою саме на дату
+    скасування (рішення власника 10.10.2026). Статус цього моменту не
+    зберігав, а `updated_at` зсувається з будь-якою наступною правкою.
+
+    Ставиться слухачами нижче на КОЖНУ зміну статусу -- адмінкою, повним
+    поверненням (payment_ops), імпортом: шлях, який забув би це зробити
+    сам, тут неможливий. Повернення зі скасованого стану дату знімає.
+    """
+    cancelled_at = db.Column(db.DateTime(timezone=True))
+
+
+@event.listens_for(CancellableMixin, 'before_insert', propagate=True)
+def _cancelled_on_insert(mapper, connection, target):
+    if target.status == CANCELLED and target.cancelled_at is None:
+        target.cancelled_at = utcnow()
+
+
+@event.listens_for(CancellableMixin, 'before_update', propagate=True)
+def _cancelled_on_update(mapper, connection, target):
+    history = inspect(target).attrs.status.history
+    if not history.has_changes():
+        return
+    if target.status != CANCELLED:
+        target.cancelled_at = None
+    elif CANCELLED not in (history.deleted or ()):
+        target.cancelled_at = utcnow()
 
 
 class RefundableMixin:
