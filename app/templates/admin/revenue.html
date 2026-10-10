@@ -11,7 +11,9 @@
 {% from 'partials/_money.html' import money %}
 
 {#- Таблиця підсумків за заходами/курсами. Без дати виконання: у заходу це
-    "дату не задано", у курсу -- "доступ не видано". -#}
+    "дату не задано", у курсу -- "доступ не видано", у відмови -- заявка на
+    повернення ще чекає рішення. Відмови -- окремими рядками з датою
+    повернення чи скасування (finance_report._group_key). -#}
 {% macro groups_table(groups) %}
 <div class="admin-table-wrap">
 <table class="admin-table">
@@ -22,9 +24,10 @@
     {% for g in groups %}
     <tr>
       <td>{{ g.kind_label }}</td>
-      <td>{{ g.title }}</td>
+      <td>{{ g.title }}{% if g.withdrawn %}<br><span class="admin-text-muted">відмова учасника</span>{% endif %}</td>
       <td>
         {% if g.fulfilled_at %}{{ g.fulfilled_at | kyiv('%d.%m.%Y') }}
+        {% elif g.withdrawn %}<span class="admin-text-muted">чекає рішення про повернення</span>
         {% elif g.kind == 'online' %}<span class="admin-text-muted">доступ не видано</span>
         {% else %}<span class="admin-text-muted">дату не задано</span>{% endif %}
       </td>
@@ -53,7 +56,9 @@
         <p class="admin-hero__subtitle">
           Виручка — оплати, за якими ми вже виконали зобов'язання: захід відбувся
           або доступ до онлайн-курсу видано. Зобов'язання — оплати, що надійшли,
-          а навчання ще попереду.
+          а навчання ще попереду. Якщо учасник відмовився, утримане стає
+          виручкою на дату повернення, а без повернення — на дату скасування;
+          поки заявка на повернення чекає рішення, уся сума — зобов'язання.
         </p>
       </div>
     </div>

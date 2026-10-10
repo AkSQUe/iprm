@@ -20,6 +20,20 @@
   без дати її не віднести ні до виручки, ні до зобов'язань на кінець
   місяця.
 
+Відмова учасника (погоджено 10.10.2026) -- статус «скасовано» або
+задоволена заявка на повернення за Політикою (не різниця тарифу при
+перенесенні):
+
+* поки заявка учасника чекає рішення -- уся сума зобов'язання;
+* повернення було -- утримане стає виручкою на дату повернення
+  (refunded_at), а не заходу: закритий місяць після звірки вже не
+  змінюється;
+* повернення не було -- виручка на дату скасування (cancelled_at).
+
+Дату виконання рахує ОДНА функція -- `fulfilled_at`. Її ж віддає API
+партнеру (mm-medic): два звіти про ті самі гроші мусять сходитись, а
+дві копії правила вже розійшлись одного разу.
+
 Межі місяця -- київські: о 00:30 1-го числа за Києвом UTC-дата ще
 попередня, і оплата лягла б не в той місяць.
 """
@@ -33,7 +47,11 @@ from sqlalchemy.orm import joinedload
 
 from app.extensions import db
 from app.models.course_instance import CourseInstance
+from app.models.mixins import CANCELLED
 from app.models.online_enrollment import OnlineEnrollment
+from app.models.refund_request import (
+    STATUS_APPROVED, STATUS_NEW, RefundRequest,
+)
 from app.models.registration import EventRegistration
 from app.models.user import User
 from app.utils import KYIV, ensure_utc
@@ -41,6 +59,62 @@ from app.utils import KYIV, ensure_utc
 KIND_EVENT = 'event'
 KIND_ONLINE = 'online'
 KIND_LABELS = {KIND_EVENT: 'Захід', KIND_ONLINE: 'Онлайн-курс'}
+
+#: Код заявки, що НЕ є відмовою учасника: різниця тарифу при перенесенні
+#: (transfer_service). Решта кодів -- сітка Політики (refund_policy).
+TRANSFER_DIFF = 'transfer_diff'
+
+
+def _withdrawal_requests(requests):
+    return [item for item in requests or () if item.quoted_code != TRANSFER_DIFF]
+
+
+def fulfilled_at(order, requests=()):
+    """Коли зобов'язання за оплаченим замовленням виконано (або буде).
+
+    ``order`` -- EventRegistration чи OnlineEnrollment; ``requests`` -- його
+    заявки на повернення (`refund_requests_for`). ``None`` -- не виконано і
+    дати немає: заявка чекає рішення, у заходу немає дати, доступ не видано.
+
+    Єдине місце правила: звіт виручки й API для mm-medic беруть дату
+    звідси, тож розійтися не можуть. Правила -- у докстрінгу модуля.
+    """
+    withdrawal = _withdrawal_requests(requests)
+    if any(item.status == STATUS_NEW for item in withdrawal):
+        return None
+    approved = [item.decided_at for item in withdrawal
+                if item.status == STATUS_APPROVED and item.decided_at]
+    if order.status == CANCELLED or approved:
+        if order.refunded_total > 0 and order.refunded_at is not None:
+            return order.refunded_at
+        return order.cancelled_at or (max(approved) if approved else None)
+    if hasattr(order, 'online_course_id'):
+        return order.provisioned_at
+    instance = order.instance
+    return (instance.end_date or instance.start_date) if instance else None
+
+
+def is_withdrawn(order, requests=()):
+    """Відмова учасника: скасовано або заявку за Політикою задоволено."""
+    return order.status == CANCELLED or any(
+        item.status == STATUS_APPROVED for item in _withdrawal_requests(requests))
+
+
+def refund_requests_for(registration_ids=(), enrollment_ids=()):
+    """Заявки на повернення пачкою: {('reg'|'onl', id): [заявки]}."""
+    clauses = []
+    if registration_ids:
+        clauses.append(RefundRequest.registration_id.in_(list(registration_ids)))
+    if enrollment_ids:
+        clauses.append(RefundRequest.enrollment_id.in_(list(enrollment_ids)))
+    found = {}
+    if not clauses:
+        return found
+    for item in RefundRequest.query.filter(or_(*clauses)):
+        key = (('reg', item.registration_id) if item.registration_id is not None
+               else ('onl', item.enrollment_id))
+        found.setdefault(key, []).append(item)
+    return found
 
 
 @dataclass
@@ -58,6 +132,7 @@ class FinanceRow:
     paid_at_precision: str
     payment_amount: Decimal
     refunded_amount: Decimal
+    withdrawn: bool = False
 
     @property
     def amount(self):
@@ -75,6 +150,7 @@ class FinanceGroup:
     kind: str
     title: str
     fulfilled_at: datetime
+    withdrawn: bool = False
     count: int = 0
     amount: Decimal = Decimal('0')
 
@@ -130,7 +206,7 @@ def _groups(rows):
         group = groups.get(row.group_key)
         if group is None:
             group = groups[row.group_key] = FinanceGroup(
-                row.kind, row.title, row.fulfilled_at)
+                row.kind, row.title, row.fulfilled_at, row.withdrawn)
         group.count += 1
         group.amount += row.amount
     far = datetime.max.replace(tzinfo=timezone.utc)
@@ -166,44 +242,56 @@ def _person(user):
     return (user.full_name or '').strip(), user.email or ''
 
 
-def _registration_rows(query):
-    rows = []
-    for reg in query:
-        instance = reg.instance
-        name, email = _person(reg.user)
-        rows.append(FinanceRow(
-            kind=KIND_EVENT,
-            order_id=f'REG-{reg.id}',
-            group_key=(KIND_EVENT, reg.instance_id),
-            title=instance.effective_title if instance else '',
-            fulfilled_at=(instance.end_date or instance.start_date) if instance else None,
-            participant=name, email=email,
-            payment_method=reg.payment_method_label,
-            paid_at=reg.paid_at, paid_at_precision=reg.paid_at_precision,
-            payment_amount=_money(reg.payment_amount),
-            refunded_amount=_money(reg.refunded_amount),
-        ))
-    return rows
+def _group_key(kind, owner_id, withdrawn, done):
+    """Ключ групи. Відмови -- ще й за київським днем виконання: дата в
+    них -- повернення чи скасування, своя в кожного, а група показує одну."""
+    if not withdrawn:
+        return (kind, owner_id, False, None)
+    day = ensure_utc(done).astimezone(KYIV).date() if done else None
+    return (kind, owner_id, True, day)
 
 
-def _enrollment_rows(query):
-    rows = []
-    for item in query:
-        name, email = _person(item.user)
-        rows.append(FinanceRow(
-            kind=KIND_ONLINE,
-            order_id=item.order_id,
-            group_key=(KIND_ONLINE, item.online_course_id),
-            title=item.course.effective_title if item.course else '',
-            fulfilled_at=item.provisioned_at,
-            participant=name, email=email,
-            payment_method=dict(EventRegistration.PAYMENT_METHODS).get(
-                item.payment_method, item.payment_method),
-            paid_at=item.paid_at, paid_at_precision=item.paid_at_precision,
-            payment_amount=_money(item.payment_amount),
-            refunded_amount=_money(item.refunded_amount),
-        ))
-    return rows
+def _registration_row(reg, requests):
+    """Рядок звіту. Відмови -- окремою групою: дата їхнього виконання --
+    повернення чи скасування, а не заходу, і в одній групі з учасниками
+    вона б губилась."""
+    instance = reg.instance
+    name, email = _person(reg.user)
+    withdrawn = is_withdrawn(reg, requests)
+    done = fulfilled_at(reg, requests)
+    return FinanceRow(
+        kind=KIND_EVENT,
+        order_id=f'REG-{reg.id}',
+        group_key=_group_key(KIND_EVENT, reg.instance_id, withdrawn, done),
+        title=instance.effective_title if instance else '',
+        fulfilled_at=done,
+        participant=name, email=email,
+        payment_method=reg.payment_method_label,
+        paid_at=reg.paid_at, paid_at_precision=reg.paid_at_precision,
+        payment_amount=_money(reg.payment_amount),
+        refunded_amount=_money(reg.refunded_amount),
+        withdrawn=withdrawn,
+    )
+
+
+def _enrollment_row(item, requests):
+    name, email = _person(item.user)
+    withdrawn = is_withdrawn(item, requests)
+    done = fulfilled_at(item, requests)
+    return FinanceRow(
+        kind=KIND_ONLINE,
+        order_id=item.order_id,
+        group_key=_group_key(KIND_ONLINE, item.online_course_id, withdrawn, done),
+        title=item.course.effective_title if item.course else '',
+        fulfilled_at=done,
+        participant=name, email=email,
+        payment_method=dict(EventRegistration.PAYMENT_METHODS).get(
+            item.payment_method, item.payment_method),
+        paid_at=item.paid_at, paid_at_precision=item.paid_at_precision,
+        payment_amount=_money(item.payment_amount),
+        refunded_amount=_money(item.refunded_amount),
+        withdrawn=withdrawn,
+    )
 
 
 def _paid(model):
@@ -222,42 +310,53 @@ def build_report(month, now=None):
     as_of = min(end, now)
     report = FinanceReport(month=month, as_of=as_of)
 
-    event_end = func.coalesce(CourseInstance.end_date, CourseInstance.start_date)
     regs = (
         db.session.query(EventRegistration)
-        .join(CourseInstance, CourseInstance.id == EventRegistration.instance_id)
         .options(joinedload(EventRegistration.user).joinedload(User.medical_profile),
                  joinedload(EventRegistration.instance)
                  .joinedload(CourseInstance.course))
         .filter(*_paid(EventRegistration))
+        .order_by(EventRegistration.id)
+        .all()
     )
     online = (
         db.session.query(OnlineEnrollment)
         .options(joinedload(OnlineEnrollment.user).joinedload(User.medical_profile),
                  joinedload(OnlineEnrollment.course))
         .filter(*_paid(OnlineEnrollment))
+        .order_by(OnlineEnrollment.id)
+        .all()
     )
+    # Дата виконання залежить від заявок на повернення, тож відбір -- у
+    # Python за `fulfilled_at`, а не SQL-ом за датою заходу: правило одне на
+    # звіт і API. Оплачених рядків сотні.
+    requests = refund_requests_for([reg.id for reg in regs],
+                                   [item.id for item in online])
+    rows = ([_registration_row(reg, requests.get(('reg', reg.id), ()))
+             for reg in regs]
+            + [_enrollment_row(item, requests.get(('onl', item.id), ()))
+               for item in online])
 
-    report.revenue = (
-        _registration_rows(regs.filter(event_end >= start, event_end < as_of)
-                           .order_by(event_end, EventRegistration.id))
-        + _enrollment_rows(online.filter(OnlineEnrollment.provisioned_at >= start,
-                                         OnlineEnrollment.provisioned_at < as_of)
-                           .order_by(OnlineEnrollment.provisioned_at,
-                                     OnlineEnrollment.id))
-    )
+    far = datetime.max.replace(tzinfo=timezone.utc)
+
+    def done(row):
+        return ensure_utc(row.fulfilled_at)
+
+    def order(row):
+        return (done(row) or far, row.kind, row.order_id)
+
+    report.revenue = sorted(
+        (row for row in rows
+         if done(row) is not None and start <= done(row) < as_of),
+        key=order)
     # Зобов'язання на межу звіту: гроші вже прийшли, а виконання ще попереду
-    # (або дати заходу немає зовсім -- тоді воно не виконане ніколи, і це
-    # теж треба бачити).
-    report.liabilities = (
-        _registration_rows(regs.filter(EventRegistration.paid_at < as_of,
-                                       or_(event_end.is_(None), event_end >= as_of))
-                           .order_by(event_end, EventRegistration.id))
-        + _enrollment_rows(online.filter(OnlineEnrollment.paid_at < as_of,
-                                         or_(OnlineEnrollment.provisioned_at.is_(None),
-                                             OnlineEnrollment.provisioned_at >= as_of))
-                           .order_by(OnlineEnrollment.id))
-    )
+    # (або дати немає зовсім -- тоді воно не виконане, і це теж треба
+    # бачити).
+    report.liabilities = sorted(
+        (row for row in rows
+         if ensure_utc(row.paid_at) < as_of
+         and (done(row) is None or done(row) >= as_of)),
+        key=order)
     report.undated = [
         f'REG-{reg_id}' for (reg_id,) in db.session.query(EventRegistration.id).filter(
             EventRegistration.payment_status == 'paid',

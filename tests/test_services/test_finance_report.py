@@ -204,6 +204,105 @@ class TestOnline:
         assert item.order_id in _ids(build_report(SEPT, now=NOW).liabilities)
 
 
+def _request(reg, status, code='standard', decided_at=None):
+    from app.models.refund_request import RefundRequest
+
+    item = RefundRequest(registration_id=reg.id, user_id=reg.user_id,
+                         reason='Не зможу', status=status, quoted_code=code,
+                         decided_at=decided_at)
+    db.session.add(item)
+    db.session.flush()
+    return item
+
+
+class TestWithdrawal:
+    """Відмова учасника (погоджено 10.10.2026): утримане -- виручка на дату
+    повернення, без повернення -- на дату скасування; поки заявка чекає
+    рішення, уся сума -- зобов'язання. Різниця тарифу при перенесенні
+    відмовою не є."""
+
+    EVENT = datetime(2026, 9, 12, 15, tzinfo=timezone.utc)
+    PAID = datetime(2026, 8, 20, tzinfo=timezone.utc)
+
+    def _cancelled(self, cancelled_at, refunded=0, refunded_at=None):
+        reg = _reg(_instance(self.EVENT), paid_at=self.PAID, refunded=refunded)
+        reg.status = 'cancelled'
+        db.session.flush()
+        reg.cancelled_at = cancelled_at
+        reg.refunded_at = refunded_at
+        db.session.flush()
+        return reg
+
+    def test_no_refund_is_revenue_on_cancellation_day(self, app):
+        reg = self._cancelled(datetime(2026, 8, 28, tzinfo=timezone.utc))
+        order = f'REG-{reg.id}'
+
+        assert order in _ids(build_report(date(2026, 8, 1), now=NOW).revenue)
+        assert order not in _ids(build_report(SEPT, now=NOW).revenue)
+
+    def test_partial_refund_is_revenue_on_refund_day(self, app):
+        """Скасовано 10.09, повернули половину 05.10: утримане -- виручка
+        жовтня, а на кінець вересня вся сума ще зобов'язання."""
+        reg = self._cancelled(datetime(2026, 9, 10, tzinfo=timezone.utc), refunded=500,
+                              refunded_at=datetime(2026, 10, 5, 9, tzinfo=timezone.utc))
+        order = f'REG-{reg.id}'
+
+        september = build_report(SEPT, now=NOW)
+        october = build_report(OCT, now=NOW)
+
+        assert order not in _ids(september.revenue)
+        assert order in _ids(september.liabilities)
+        row = next(r for r in october.revenue if r.order_id == order)
+        assert row.amount == Decimal('500')
+
+    def test_pending_request_is_a_liability_even_after_the_event(self, app):
+        reg = _reg(_instance(self.EVENT), paid_at=self.PAID)
+        _request(reg, 'new')
+        order = f'REG-{reg.id}'
+
+        report = build_report(SEPT, now=NOW)
+
+        assert order not in _ids(report.revenue)
+        assert order in _ids(report.liabilities)
+
+    def test_approved_partial_refund_without_cancel_is_a_withdrawal(self, app):
+        """Повернення за Політикою, а статус лишився «підтверджено»: людина
+        однаково відмовилась -- виручка на дату повернення, не заходу."""
+        reg = _reg(_instance(self.EVENT), paid_at=self.PAID, refunded=500)
+        reg.refunded_at = datetime(2026, 10, 5, tzinfo=timezone.utc)
+        _request(reg, 'approved', decided_at=datetime(2026, 10, 5, tzinfo=timezone.utc))
+        order = f'REG-{reg.id}'
+
+        assert order not in _ids(build_report(SEPT, now=NOW).revenue)
+        assert order in _ids(build_report(OCT, now=NOW).revenue)
+
+    def test_transfer_difference_is_not_a_withdrawal(self, app):
+        reg = _reg(_instance(self.EVENT), paid_at=self.PAID)
+        _request(reg, 'new', code='transfer_diff')
+
+        assert f'REG-{reg.id}' in _ids(build_report(SEPT, now=NOW).revenue)
+
+    def test_rejected_request_changes_nothing(self, app):
+        reg = _reg(_instance(self.EVENT), paid_at=self.PAID)
+        _request(reg, 'rejected', decided_at=datetime(2026, 9, 1, tzinfo=timezone.utc))
+
+        assert f'REG-{reg.id}' in _ids(build_report(SEPT, now=NOW).revenue)
+
+    def test_withdrawals_are_a_separate_group(self, app):
+        inst = _instance(self.EVENT)
+        _reg(inst, paid_at=self.PAID)
+        gone = _reg(inst, paid_at=self.PAID)
+        gone.status = 'cancelled'
+        db.session.flush()
+        gone.cancelled_at = datetime(2026, 9, 3, tzinfo=timezone.utc)
+        db.session.flush()
+
+        groups = [g for g in build_report(SEPT, now=NOW).revenue_groups
+                  if g.title == inst.effective_title]
+
+        assert sorted(g.withdrawn for g in groups) == [False, True]
+
+
 def test_totals_add_up(app):
     paid = datetime(2026, 9, 5, tzinfo=timezone.utc)
     _reg(_instance(datetime(2026, 9, 12, tzinfo=timezone.utc)), paid, amount=1000)

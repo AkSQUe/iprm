@@ -766,7 +766,7 @@ _FINANCE_COLS = ['kind', 'order_id', 'title', 'fulfilled_at', 'participant',
                  'payment_amount', 'refunded_amount', 'net_amount']
 _FINANCE_LABELS = {
     'kind': 'Тип', 'order_id': 'Замовлення', 'title': 'Захід / курс',
-    'fulfilled_at': 'Виконано (захід / доступ)', 'participant': 'Учасник',
+    'fulfilled_at': 'Виконано (захід / доступ / відмова)', 'participant': 'Учасник',
     'email': 'Email', 'payment_method': 'Спосіб оплати',
     'payment_date': 'Дата оплати', 'paid_at_precision': 'Точність дати',
     'payment_amount': 'Сплачено (грн)', 'refunded_amount': 'Повернено (грн)',

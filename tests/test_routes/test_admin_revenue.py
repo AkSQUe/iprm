@@ -115,3 +115,21 @@ def test_export_needs_its_own_permission(client):
     user = make_user_with_role('viewer', f'rev-{_uid()}@test.com')
     _login(client, user)
     assert client.get('/admin/revenue/export').status_code in (302, 403)
+
+
+def test_withdrawal_waiting_for_decision_is_named(client, admin, paid_past_and_future):
+    """Відмова, чия заявка на повернення чекає рішення, -- зобов'язання, і
+    сторінка каже чому, а не «дату не задано»."""
+    from app.models.refund_request import RefundRequest
+
+    month, (done, _owed) = paid_past_and_future
+    done.status = 'cancelled'
+    db.session.add(RefundRequest(registration_id=done.id, user_id=done.user_id,
+                                 reason='Не зможу', status='new', quoted_code='standard'))
+    db.session.commit()
+    _login(client, admin)
+
+    html = client.get(f'/admin/revenue?month={month}').get_data(as_text=True)
+
+    assert 'відмова учасника' in html
+    assert 'чекає рішення про повернення' in html
