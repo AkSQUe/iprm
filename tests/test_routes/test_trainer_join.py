@@ -2,6 +2,7 @@
 from uuid import uuid4
 
 import pytest
+from markupsafe import Markup
 
 from app.extensions import db
 from app.models.trainer_application import TrainerApplication
@@ -38,7 +39,9 @@ def test_page_renders_in_every_language(client, prefix):
 
 
 def test_page_shows_alyona_text_by_default(client):
-    html = client.get('/trainers/join').get_data(as_text=True)
+    # Видимий текст, а не сира розмітка: останнє слово заголовка сторінка
+    # загортає в градієнтний <span>, і в HTML він уже не суцільний рядок.
+    html = Markup(client.get('/trainers/join').get_data(as_text=True)).striptags()
     assert 'Ваш досвід може стати цінним для інших' in html
     assert 'Виступати перед професійною аудиторією' in html
 
@@ -115,7 +118,7 @@ def test_teaser_on_home_and_trainers_list(client):
 
 
 def test_english_page_uses_translated_texts(client):
-    html = client.get('/en/trainers/join').get_data(as_text=True)
+    html = Markup(client.get('/en/trainers/join').get_data(as_text=True)).striptags()
     assert 'Your experience can be valuable to others' in html
     assert 'How long have you been using PRP and plasma therapy?' in html
     assert 'Training at IPRM is a chance to' in html

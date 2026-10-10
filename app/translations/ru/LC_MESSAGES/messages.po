@@ -7483,11 +7483,9 @@ msgstr "Практикуете PRP- и плазмотерапию и готов�
 msgid "Стати тренером"
 msgstr "Стать тренером"
 
-msgid "Тренерство в ІПРМ — це можливість"
-msgstr "Тренерство в ИПРМ — это возможность"
+msgid "Тренерство в ІПРМ — це <span class=\"apple-gradient-text\">можливість</span>"
+msgstr "Тренерство в ИПРМ — это <span class=\"apple-gradient-text\">возможность</span>"
 
-msgid "Запрошення"
-msgstr "Приглашение"
 
 msgid "Дякуємо!"
 msgstr "Спасибо!"
@@ -7495,8 +7493,17 @@ msgstr "Спасибо!"
 msgid "Заявку отримано. Ми зв'яжемося з вами найближчим часом."
 msgstr "Заявка получена. Мы свяжемся с вами в ближайшее время."
 
-msgid "Анкета кандидата"
-msgstr "Анкета кандидата"
+msgid "Анкета <span class=\"apple-gradient-text\">кандидата</span>"
+msgstr "Анкета <span class=\"apple-gradient-text\">кандидата</span>"
+
+msgid "Чому варто"
+msgstr "Почему стоит"
+
+msgid "Приєднатися"
+msgstr "Присоединиться"
+
+msgid "Анкету надіслано"
+msgstr "Анкета отправлена"
 
 msgid "Про себе"
 msgstr "О себе"

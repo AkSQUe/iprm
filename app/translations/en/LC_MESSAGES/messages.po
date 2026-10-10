@@ -7524,11 +7524,9 @@ msgstr "Practising PRP and plasma therapy and ready to share your experience? Be
 msgid "Стати тренером"
 msgstr "Become a trainer"
 
-msgid "Тренерство в ІПРМ — це можливість"
-msgstr "Training at IPRM is a chance to"
+msgid "Тренерство в ІПРМ — це <span class=\"apple-gradient-text\">можливість</span>"
+msgstr "Training at IPRM is a <span class=\"apple-gradient-text\">chance</span> to"
 
-msgid "Запрошення"
-msgstr "Invitation"
 
 msgid "Дякуємо!"
 msgstr "Thank you!"
@@ -7536,8 +7534,17 @@ msgstr "Thank you!"
 msgid "Заявку отримано. Ми зв'яжемося з вами найближчим часом."
 msgstr "Application received. We will contact you shortly."
 
-msgid "Анкета кандидата"
-msgstr "Application form"
+msgid "Анкета <span class=\"apple-gradient-text\">кандидата</span>"
+msgstr "Application <span class=\"apple-gradient-text\">form</span>"
+
+msgid "Чому варто"
+msgstr "Why join"
+
+msgid "Приєднатися"
+msgstr "Join us"
+
+msgid "Анкету надіслано"
+msgstr "Application sent"
 
 msgid "Про себе"
 msgstr "About you"

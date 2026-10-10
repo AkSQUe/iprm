@@ -1,5 +1,6 @@
 """Тексти запрошення тренерів редагуються в «Налаштуваннях для тренерів»."""
 import pytest
+from markupsafe import Markup
 
 from app.data.trainer_recruit import DEFAULTS
 from app.extensions import db
@@ -47,7 +48,8 @@ def test_unchanged_default_is_stored_empty(client, admin):
 def test_custom_text_is_stored_and_shown_on_page(client, admin):
     _post(client, recruit_page_title='Станьте голосом плазмотерапії')
     assert SiteSettings.get().recruit_page_title == 'Станьте голосом плазмотерапії'
-    html = client.get('/trainers/join').get_data(as_text=True)
+    # Видимий текст: останнє слово заголовка загорнуте в градієнтний <span>.
+    html = Markup(client.get('/trainers/join').get_data(as_text=True)).striptags()
     assert 'Станьте голосом плазмотерапії' in html
 
 

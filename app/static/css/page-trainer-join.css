@@ -1,13 +1,21 @@
 /* Сторінка «Стати тренером» (/trainers/join): лише розкладка. Вигляд
-   полів, карток форми й варіантів відповіді -- з дизайн-системи
-   (common.css, auth.css, choice.css). */
-.page-trainer-join__closing {
+   полів, карток форми, переліку переваг і варіантів відповіді -- з
+   дизайн-системи (apple-pages.css, common.css, auth.css, choice.css). */
+
+/* Перелік переваг -- стовпчик шириною ліда, а не на всю секцію: рядок
+   тези на 1200px читався б як таблиця. */
+.page-trainer-join__narrow {
   max-width: 760px;
-  text-align: center;
+  margin: 0 auto;
 }
 
 .page-trainer-join__form-wrap {
   max-width: 720px;
+}
+
+/* Лід анкети -- адмінський текст із кількох абзаців в одному блоці ліда. */
+.page-trainer-join__lede p + p {
+  margin-top: 12px;
 }
 
 /* Картки анкети стоять стовпчиком з одним ритмом. */
@@ -17,7 +25,8 @@
   gap: 24px;
 }
 
-.page-trainer-join__submit {
+/* Кнопка відправки анкети і кнопка після неї -- по центру колонки. */
+.page-trainer-join__actions {
   display: flex;
   justify-content: center;
 }

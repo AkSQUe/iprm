@@ -44,7 +44,10 @@
     <section class="iprm-hero" aria-labelledby="join-title">
       <div class="iprm-hero__content">
         <span class="iprm-eyebrow">{{ _('Стати тренером') }}</span>
-        <h1 id="join-title" class="iprm-hero__title">{{ title }}</h1>
+        {# Заголовок редагує адмін, тож градієнтне останнє слово відрізаємо
+           при рендері -- той самий прийом, що в hero курсу й клініки. #}
+        {% set title_words = title.rsplit(' ', 1) %}
+        <h1 id="join-title" class="iprm-hero__title">{% if title_words | length > 1 %}{{ title_words[0] }} <span class="apple-gradient-text">{{ title_words[1] }}</span>{% else %}<span class="apple-gradient-text">{{ title }}</span>{% endif %}</h1>
         {% for block in intro %}
         <p class="iprm-hero__subtitle">{% for line in block %}{{ line }}{% if not loop.last %}<br>{% endif %}{% endfor %}</p>
         {% endfor %}
@@ -60,22 +63,17 @@
   {% if benefits %}
   <section class="iprm-section" aria-labelledby="join-benefits-title">
     <div class="iprm-section__inner">
-      <h2 id="join-benefits-title" class="iprm-section__title apple-reveal">{{ _('Тренерство в ІПРМ — це можливість') }}</h2>
-      <div class="apple-features-grid">
-        {% for item in benefits %}
-        <div class="apple-feature-card apple-reveal"><p>{{ item }}</p></div>
-        {% endfor %}
+      <div class="apple-section-head apple-reveal">
+        <span class="iprm-eyebrow">{{ _('Чому варто') }}</span>
+        <h2 id="join-benefits-title" class="iprm-section__title">{{ _('Тренерство в ІПРМ — це <span class="apple-gradient-text">можливість</span>') }}</h2>
       </div>
-    </div>
-  </section>
-  {% endif %}
-
-  {% if closing %}
-  <section class="iprm-section iprm-section--compact" aria-label="{{ _('Запрошення') }}">
-    <div class="iprm-section__inner page-trainer-join__closing">
-      {% for block in closing %}
-      <p class="iprm-section__subtitle">{% for line in block %}{{ line }}{% if not loop.last %}<br>{% endif %}{% endfor %}</p>
-      {% endfor %}
+      <div class="page-trainer-join__narrow">
+        <ul class="iprm-benefit-list iprm-benefit-list--stack">
+          {% for item in benefits %}
+          <li class="apple-reveal">{{ item }}</li>
+          {% endfor %}
+        </ul>
+      </div>
     </div>
   </section>
   {% endif %}
@@ -83,12 +81,28 @@
   <section id="application" class="iprm-section apple-section-gray" aria-labelledby="join-form-title">
     <div class="iprm-section__inner page-trainer-join__form-wrap">
       {% if sent %}
-      <div class="iprm-empty-state" role="status">
-        <h2 id="join-form-title" class="iprm-section__title">{{ _('Дякуємо!') }}</h2>
-        <p>{{ _('Заявку отримано. Ми зв\'яжемося з вами найближчим часом.') }}</p>
+      <div class="apple-section-head" role="status">
+        <span class="iprm-eyebrow">{{ _('Анкету надіслано') }}</span>
+        <h2 id="join-form-title" class="iprm-section__title"><span class="apple-gradient-text">{{ _('Дякуємо!') }}</span></h2>
+        <p class="iprm-section__subtitle">{{ _('Заявку отримано. Ми зв\'яжемося з вами найближчим часом.') }}</p>
+      </div>
+      <div class="page-trainer-join__actions">
+        <a href="{{ url_for('trainers.trainer_list') }}" class="apple-btn apple-btn--outline">{{ _('Усі тренери') }}</a>
       </div>
       {% else %}
-      <h2 id="join-form-title" class="iprm-section__title">{{ _('Анкета кандидата') }}</h2>
+      {# Заключне запрошення -- лід анкети, а не окрема секція: без заголовка
+         воно висіло між переліком і формою як осиротілий абзац. #}
+      <div class="apple-section-head">
+        <span class="iprm-eyebrow">{{ _('Приєднатися') }}</span>
+        <h2 id="join-form-title" class="iprm-section__title">{{ _('Анкета <span class="apple-gradient-text">кандидата</span>') }}</h2>
+        {% if closing %}
+        <div class="iprm-section__subtitle page-trainer-join__lede">
+          {% for block in closing %}
+          <p>{% for line in block %}{{ line }}{% if not loop.last %}<br>{% endif %}{% endfor %}</p>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
       <form method="post" action="{{ url_for('trainers.join') }}#application" class="page-trainer-join__form"
             data-validate data-single-submit data-recaptcha-action="trainer_join" novalidate>
         {{ form.hidden_tag() }}
@@ -144,7 +158,7 @@
           </div>
         </div>
 
-        <div class="page-trainer-join__submit">
+        <div class="page-trainer-join__actions">
           <button type="submit" class="apple-btn apple-btn--primary">{{ _('Надіслати анкету') }}</button>
         </div>
       </form>
