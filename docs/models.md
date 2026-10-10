@@ -669,6 +669,7 @@ xlsx-вигрузка проведень (`export_instances_xlsx`) має кол
 | `refunded_amount` | Numeric(10,2), NOT NULL, default 0 | RefundableMixin. Накопичувальна сума повернень; `payment_status` стає `refunded`, лише коли вона дорівнює `payment_amount` |
 | `refunded_at` | DateTime (UTC) | RefundableMixin. Коли проведено ОСТАННЄ повернення |
 | `refund_reason` | String(500) | RefundableMixin. Підстава останнього повернення (Політика п. 6.2) |
+| `cancelled_at` | DateTime (UTC) | CancellableMixin. Коли замовлення перейшло в `cancelled`; ставиться слухачем моделі на будь-якому шляху і знімається при відновленні. Фінзвіт бере його як дату виручки для відмови без повернення. API (`/registrations`, `/online-enrollments`) віддає не саме поле, а похідне `fulfilled_at` (`finance_report.fulfilled_at`) і `refunded_amount` |
 | `promo_code_id` | FK -> promo_codes.id (SET NULL) | Застосований промокод |
 | `discount_amount` | Numeric(10,2) | Знімок знижки (payment_amount уже без неї) |
 | `attended` | Boolean | Чи відвідав захід |
@@ -1017,6 +1018,7 @@ Singleton-модель для зберігання SMTP-налаштувань �
 | `refunded_amount` | Numeric(10,2), NOT NULL, default 0 | RefundableMixin. Накопичувальна сума повернень; `payment_status` стає `refunded`, лише коли вона дорівнює `payment_amount` |
 | `refunded_at` | DateTime (UTC) | RefundableMixin. Коли проведено ОСТАННЄ повернення |
 | `refund_reason` | String(500) | RefundableMixin. Підстава останнього повернення (Політика п. 6.2) |
+| `cancelled_at` | DateTime (UTC) | CancellableMixin. Коли замовлення перейшло в `cancelled`; ставиться слухачем моделі на будь-якому шляху і знімається при відновленні. Фінзвіт бере його як дату виручки для відмови без повернення. API (`/registrations`, `/online-enrollments`) віддає не саме поле, а похідне `fulfilled_at` (`finance_report.fulfilled_at`) і `refunded_amount` |
 | `promo_code_id` | FK -> promo_codes.id (SET NULL) | Застосований промокод |
 | `discount_amount` | Numeric(10,2) | Знімок знижки (payment_amount уже після неї) |
 | `sintegrum_student_id` | Integer | Під майбутню звірку прогресу (зараз порожній) |

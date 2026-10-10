@@ -33,6 +33,7 @@ from app.models.course_request import CourseRequest
 from app.models.medical_profile import MedicalProfile
 from app.models.registration import EventRegistration
 from app.models.user import User
+from app.services import finance_report
 
 MAX_PER_PAGE = 200
 DEFAULT_PER_PAGE = 100
@@ -262,6 +263,11 @@ def list_registrations():
     if error:
         return error
 
+    # Дата виконання -- з фінзвіту (одна функція на звіт і API), заявки на
+    # повернення -- одним запитом на сторінку.
+    page_requests = finance_report.refund_requests_for(
+        registration_ids=[reg.id for reg, *_rest in pagination.items])
+
     items = []
     for reg, instance, user, profile in pagination.items:
         items.append({
@@ -288,6 +294,14 @@ def list_registrations():
             # 'datetime' -- момент відомий; 'date' -- лише день (час у paid_at
             # тоді умовний полудень за Києвом). None -- дати немає.
             'paid_at_precision': reg.paid_at_precision,
+            # Часткові повернення статусу оплати не змінюють: без суми партнер
+            # рахував би своїм те, що вже повернуто.
+            'refunded_amount': float(reg.refunded_total),
+            # Коли зобов'язання виконано (або буде) -- правило фінзвіту
+            # `finance_report.fulfilled_at`: захід, відмова, повернення.
+            # None -- не виконано й дати немає. Майбутня дата -- ще попереду.
+            'fulfilled_at': _iso(finance_report.fulfilled_at(
+                reg, page_requests.get(('reg', reg.id), ()))),
             'attended': bool(reg.attended),
             'cpd_points_awarded': _points(reg.cpd_points_awarded),
             # Знімок анкети на момент реєстрації: людина могла відтоді
@@ -454,6 +468,9 @@ def list_online_enrollments():
     if error:
         return error
 
+    page_requests = finance_report.refund_requests_for(
+        enrollment_ids=[item.id for item, *_rest in pagination.items])
+
     items = []
     for enrollment, course, user, profile in pagination.items:
         items.append({
@@ -479,6 +496,9 @@ def list_online_enrollments():
             'currency': course.currency,
             'paid_at': _iso(enrollment.paid_at),
             'paid_at_precision': enrollment.paid_at_precision,  # як у /registrations
+            'refunded_amount': float(enrollment.refunded_total),  # як у /registrations
+            'fulfilled_at': _iso(finance_report.fulfilled_at(
+                enrollment, page_requests.get(('onl', enrollment.id), ()))),
             # Чи людина вже реально почала навчання -- єдина ознака
             # «присутності», яка тут взагалі можлива.
             'access_opened_at': _iso(enrollment.access_last_opened_at),

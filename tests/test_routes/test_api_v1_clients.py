@@ -181,6 +181,63 @@ class TestRegistrations:
         # Знімок анкети на момент реєстрації, а не поточний профіль.
         assert row['specialty'] == 'Гінекологія'
 
+    def _paid_registration(self, starts_at, **kwargs):
+        user = _user()
+        course = Course(title='Курс', slug=f'c-{_uid()}', event_type='course',
+                        base_price=1000, is_active=True, created_by=user.id)
+        db.session.add(course)
+        db.session.flush()
+        inst = CourseInstance(course_id=course.id, status='published',
+                              event_format='offline', price=1000, start_date=starts_at)
+        db.session.add(inst)
+        db.session.flush()
+        reg = EventRegistration(
+            user_id=user.id, instance_id=inst.id, phone='+380671112233',
+            specialty='S', workplace='W', status='confirmed', payment_status='paid',
+            payment_amount=1000, **kwargs)
+        db.session.add(reg)
+        db.session.commit()
+        return reg
+
+    def _row(self, client, reg):
+        data = client.get('/api/v1/registrations?per_page=200',
+                          headers=HEADERS).get_json()
+        return next(i for i in data['items'] if i['id'] == reg.id)
+
+    def test_fulfilment_and_refund_come_from_the_finance_rule(
+            self, client, partner_settings):
+        """Партнер рахує зобов'язання тим самим правилом, що й фінзвіт:
+        дата виконання -- `finance_report.fulfilled_at`, сума -- за вирахуванням
+        часткових повернень (погоджено 10.10.2026)."""
+        starts = datetime(2026, 9, 12, 10, tzinfo=timezone.utc)
+        reg = self._paid_registration(starts, refunded_amount=250)
+
+        row = self._row(client, reg)
+
+        assert row['fulfilled_at'].startswith('2026-09-12T10:00:00')
+        assert row['refunded_amount'] == 250.0
+
+    def test_pending_withdrawal_has_no_fulfilment(self, client, partner_settings):
+        from app.models.refund_request import RefundRequest
+
+        reg = self._paid_registration(datetime(2026, 9, 12, tzinfo=timezone.utc))
+        db.session.add(RefundRequest(registration_id=reg.id, user_id=reg.user_id,
+                                     reason='Не зможу', status='new',
+                                     quoted_code='standard'))
+        db.session.commit()
+
+        assert self._row(client, reg)['fulfilled_at'] is None
+
+    def test_cancelled_without_refund_is_fulfilled_on_cancellation(
+            self, client, partner_settings):
+        reg = self._paid_registration(datetime(2026, 9, 12, tzinfo=timezone.utc))
+        reg.status = 'cancelled'
+        db.session.commit()
+        reg.cancelled_at = datetime(2026, 9, 3, 8, tzinfo=timezone.utc)
+        db.session.commit()
+
+        assert self._row(client, reg)['fulfilled_at'].startswith('2026-09-03T08:00:00')
+
     def test_participant_identity_is_included(self, client, partner_settings):
         """Ім'я й пошта живуть на картці, а не в реєстрації.
 

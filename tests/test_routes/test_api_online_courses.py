@@ -276,6 +276,21 @@ class TestOnlineEnrollmentsEndpoint:
         assert row['paid_at'].startswith('2026-09-15T09:00:00')
         assert row['paid_at_precision'] == 'date'
 
+    def test_fulfilment_is_when_access_was_given(self, client):
+        """Онлайн-курс виконано, коли доступ ВИДАНО (provisioned_at), а не
+        коли людина його відкрила -- правило фінзвіту, погоджене 10.10.2026."""
+        from datetime import datetime, timezone
+
+        given = datetime(2026, 9, 15, 9, tzinfo=timezone.utc)
+        item = self._enrollment(_course(), provisioned_at=given,
+                                refunded_amount=Decimal('500'))
+
+        payload = _get(client, '/api/v1/online-enrollments').get_json()
+        row = next(r for r in payload['items'] if r['id'] == item.id)
+
+        assert row['fulfilled_at'].startswith('2026-09-15T09:00:00')
+        assert row['refunded_amount'] == 500.0
+
     def test_access_token_and_url_are_never_exposed(self, client):
         course = _course()
         item = self._enrollment(course)
