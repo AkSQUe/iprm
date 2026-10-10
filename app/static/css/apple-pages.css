@@ -1195,6 +1195,13 @@ html {
   gap: 12px;
 }
 
+/* Стовпчик: пункти читаються згори вниз. Для переліку тез різної довжини,
+   кількість яких задає адмін: сітка з auto-fit на 5 пунктах дає 3+2 або
+   4+1, і останній рядок висить напівпорожнім. */
+.apple-page .iprm-benefit-list--stack {
+  grid-template-columns: 1fr;
+}
+
 .apple-page .iprm-benefit-list li {
   position: relative;
   padding: 14px 16px 14px 48px;
@@ -1215,7 +1222,10 @@ html {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: var(--iprm-accent);
+  /* Заливка -- токен кнопки, не --iprm-accent: у тёмній темі акцент стає
+     світлим бузком (#b48cff), і біла галочка на ньому давала 2.58 -- нижче
+     порога 3.0 для графіки. На --iprm-btn-bg: 6.7 світла, 5.04 тёмна. */
+  background: var(--iprm-btn-bg);
 }
 
 .apple-page .iprm-benefit-list li::after {
