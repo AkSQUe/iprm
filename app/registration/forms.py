@@ -19,8 +19,8 @@ class EventRegistrationForm(FlaskForm):
     отримання сертифіката, а не реєстрації. Рішення 08.07.2026.
     """
     # ----- ПІБ -----
-    # last_name + first_name беруться з User (signup), але показуємо їх на
-    # формі для редагування. Якщо змінились -- оновимо User у роуті.
+    # Гість вводить ПІБ сам. Залогіненому з уже заповненим ПІБ роут
+    # підставляє його з User і полів не показує (identity_locked).
     last_name = StringField(
         _l('Прізвище'),
         validators=[DataRequired(message=_l('Прізвище обов\'язкове')), Length(max=100)],

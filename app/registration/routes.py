@@ -290,6 +290,23 @@ def register_instance(instance_id):
         initial.update({k: v for k, v in prefill.items() if v})
     form = EventRegistrationForm(data=initial, require_email=is_guest)
 
+    # Залогінений реєструє САМЕ СЕБЕ: ПІБ береться з акаунта, а форма
+    # показує його лише для читання. Поки поля були редагованими, менеджерка
+    # вписала туди клієнта й перейменувала власний акаунт (23.10.2026).
+    # Акаунт без ПІБ (партнерський, OAuth без імені) поля лишає -- інакше
+    # реєстрацію не було б як завершити. Надіслане клієнтом ігноруємо.
+    identity_locked = bool(buyer is not None
+                           and buyer.last_name and buyer.first_name)
+    if identity_locked:
+        form.last_name.data = buyer.last_name
+        form.first_name.data = buyer.first_name
+
+    # Співробітнику -- шлях реєстрації клієнта, яким він мав би скористатись.
+    staff_add_url = None
+    if buyer is not None and buyer.has_permission('registrations.manage'):
+        staff_add_url = url_for('admin.participant_create_for_instance',
+                                instance_id=instance.id)
+
     # Знижка, яку показуємо у зведенні при повторному рендері форми.
     promo = None
 
@@ -299,6 +316,8 @@ def register_instance(instance_id):
             form=form, event=EventAdapter(instance),
             tariffs=tariffs, selected_tariff=selected_tariff,
             profile_complete=_profile_complete(buyer),
+            identity_locked=identity_locked,
+            staff_add_url=staff_add_url,
             promo=promo,
             promo_check_url=url_for('registration.promo_check',
                                     instance_id=instance.id),
@@ -363,10 +382,9 @@ def register_instance(instance_id):
             # 1) Слім-синхронізація: ПІБ у User + телефон у MedicalProfile.
             #    МОЗ-анкета живе в кабінеті (auth.certificate_data).
             #    Наявний акаунт (залогінений або знайдений за email гостя)
-            #    своїх даних не втрачає -- заповнюємо лише порожнє.
-            _sync_medical_profile_from_form(
-                buyer, form, overwrite=(is_guest and is_new_user) or not is_guest,
-            )
+            #    своїх даних не втрачає -- заповнюємо лише порожнє. Свіжий
+            #    телефон однаково лягає в саму реєстрацію (reg.phone).
+            _sync_medical_profile_from_form(buyer, form, overwrite=is_new_user)
 
             # 2) Створити CourseRegistration. Снапшот МОЗ-полів -- з
             #    MedicalProfile, якщо той уже заповнений; інакше порожній

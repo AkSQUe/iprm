@@ -7519,3 +7519,22 @@ msgstr "Отправить анкету"
 
 msgid "Долучитися"
 msgstr "Присоединиться"
+
+
+#: app/templates/registration/register.html
+#, python-format
+msgid "Ви реєструєте себе: %(name)s"
+msgstr "Вы регистрируете себя: %(name)s"
+
+#: app/templates/registration/register.html
+#, python-format
+msgid "Реєстрація й сертифікат будуть на ваше ім'я (%(email)s). Щоб зареєструвати іншу людину, вийдіть з кабінету і заповніть форму її даними."
+msgstr "Регистрация и сертификат будут на ваше имя (%(email)s). Чтобы зарегистрировать другого человека, выйдите из кабинета и заполните форму его данными."
+
+#: app/templates/registration/register.html
+msgid "Співробітнику:"
+msgstr "Сотруднику:"
+
+#: app/templates/registration/register.html
+msgid "додати учасника в адмінці"
+msgstr "добавить участника в админке"

@@ -7560,3 +7560,22 @@ msgstr "Send application"
 
 msgid "Долучитися"
 msgstr "Join"
+
+
+#: app/templates/registration/register.html
+#, python-format
+msgid "Ви реєструєте себе: %(name)s"
+msgstr "You are registering yourself: %(name)s"
+
+#: app/templates/registration/register.html
+#, python-format
+msgid "Реєстрація й сертифікат будуть на ваше ім'я (%(email)s). Щоб зареєструвати іншу людину, вийдіть з кабінету і заповніть форму її даними."
+msgstr "The registration and certificate will be in your name (%(email)s). To register someone else, log out of your account and fill in the form with their details."
+
+#: app/templates/registration/register.html
+msgid "Співробітнику:"
+msgstr "For staff:"
+
+#: app/templates/registration/register.html
+msgid "додати учасника в адмінці"
+msgstr "add a participant in the admin panel"

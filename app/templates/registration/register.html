@@ -180,7 +180,24 @@
         Будь ласка, вказуйте контактні дані саме учасника заходу.
         {% endtrans %}
       </p>
+      {# Залогінений реєструє лише себе: ПІБ з акаунта, без полів. Редаговані
+         поля з підказкою «дані саме учасника» спокушали вписати туди іншу
+         людину -- і акаунт перейменовувався на неї. #}
+      {% if identity_locked %}
+      <div class="alert alert--info">
+        <span class="alert__title">{{ _('Ви реєструєте себе: %(name)s', name=current_user.full_name) }}</span>
+        {% trans trimmed email=current_user.email %}
+        Реєстрація й сертифікат будуть на ваше ім'я ({{ email }}).
+        Щоб зареєструвати іншу людину, вийдіть з кабінету і заповніть форму її даними.
+        {% endtrans %}
+        {% if staff_add_url %}
+        {{ _('Співробітнику:') }}
+        <a href="{{ staff_add_url }}">{{ _('додати учасника в адмінці') }}</a>.
+        {% endif %}
+      </div>
+      {% endif %}
       <div class="form-section__grid">
+        {% if not identity_locked %}
         <div class="form-group">
           <label for="last_name">{{ _('Прізвище') }} <span class="required">*</span></label>
           {{ form.last_name(class="form-input" + (" is-invalid" if form.last_name.errors else ""), id="last_name", required=true) }}
@@ -192,6 +209,7 @@
           {{ form.first_name(class="form-input" + (" is-invalid" if form.first_name.errors else ""), id="first_name", required=true) }}
           {% for e in form.first_name.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
         </div>
+        {% endif %}
 
         {# Email питаємо лише в гостя: залогіненому він відомий з акаунта,
            а зайве поле у воронці коштує конверсії. Саме на цю адресу піде

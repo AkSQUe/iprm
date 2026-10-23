@@ -98,6 +98,76 @@ def test_logged_in_user_does_not_see_email_field(client):
     assert 'Уже маєте кабінет' not in html
 
 
+# --- залогінений реєструє себе ----------------------------------------------
+# Інцидент 23.10.2026: менеджерка відкрила публічну форму, будучи в
+# кабінеті, вписала в поля ПІБ і телефон клієнта -- і перейменувала власний
+# акаунт на клієнта, а реєстрація лягла на неї саму.
+
+def test_logged_in_user_sees_own_identity_instead_of_name_fields(client):
+    user = User.create_with_password(
+        f'me-{uuid4().hex[:6]}@test.com', 'password123',
+        first_name='Яна', last_name='Власна', email_confirmed=True)
+    db.session.commit()
+    with client.session_transaction() as s:
+        s['_user_id'] = str(user.id)
+
+    html = client.get(_url(_instance())).get_data(as_text=True)
+    assert 'name="last_name"' not in html
+    assert 'name="first_name"' not in html
+    assert 'Ви реєструєте себе' in html
+    assert 'Власна' in html
+
+
+def test_logged_in_user_name_is_not_overwritten_by_posted_data(client):
+    user = User.create_with_password(
+        f'me-{uuid4().hex[:6]}@test.com', 'password123',
+        first_name='Яна', last_name='Власна', email_confirmed=True)
+    db.session.commit()
+    with client.session_transaction() as s:
+        s['_user_id'] = str(user.id)
+
+    inst = _instance()
+    resp = client.post(_url(inst), data=_payload(
+        last_name='Клієнт', first_name='Олександр', phone='+380633091846'))
+    assert resp.status_code == 302
+
+    db.session.expire_all()
+    user = db.session.get(User, user.id)
+    assert (user.last_name, user.first_name) == ('Власна', 'Яна')
+    reg = EventRegistration.query.filter_by(instance_id=inst.id).one()
+    assert reg.user_id == user.id
+    assert reg.phone == '+380633091846'
+
+
+def test_logged_in_user_without_name_still_fills_it(client):
+    """Акаунт без ПІБ (партнерський, OAuth без імені) лишає поля на формі,
+    інакше реєстрацію не було б як завершити."""
+    user = User.create_with_password(
+        f'me-{uuid4().hex[:6]}@test.com', 'password123', email_confirmed=True)
+    db.session.commit()
+    with client.session_transaction() as s:
+        s['_user_id'] = str(user.id)
+
+    inst = _instance()
+    assert 'name="last_name"' in client.get(_url(inst)).get_data(as_text=True)
+    client.post(_url(inst), data=_payload(last_name='Нова', first_name='Людина'))
+    db.session.expire_all()
+    user = db.session.get(User, user.id)
+    assert (user.last_name, user.first_name) == ('Нова', 'Людина')
+
+
+def test_staff_sees_link_to_add_participant_in_admin(client):
+    from tests.support.rbac import make_user_with_role
+    manager = make_user_with_role('manager', first_name='Яна', last_name='Менеджер')
+    db.session.commit()
+    with client.session_transaction() as s:
+        s['_user_id'] = str(manager.id)
+
+    inst = _instance()
+    html = client.get(_url(inst)).get_data(as_text=True)
+    assert f'/admin/instances/{inst.id}/participants/new' in html
+
+
 # --- покупка ----------------------------------------------------------------
 
 def test_guest_purchase_creates_user_and_registration(client):
