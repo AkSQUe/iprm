@@ -1192,9 +1192,9 @@ a.admin-stat-card:focus-visible {
   font-size: 24px;
 }
 
-/* Шпилька: закріплює розкриту панель. Сама по собі кнопка ні на що не
-   впливає -- розкриття по наведенню робить CSS нижче, а шпилька лише
-   вимикає стан спокою. На планшеті й телефоні панель -- горизонтальна
+/* Шпилька: закріплює панель розкритою. Розкриття по наведенню робить CSS
+   нижче, а шпилька лише вимикає стан спокою -- тому вона ж і єдиний спосіб
+   розкрити смугу дотиком. На планшеті й телефоні панель -- горизонтальна
    стрічка, закріплювати там нема чого (правило в @media нижче ховає). */
 .admin-sidebar__pin {
   display: flex;
@@ -1240,11 +1240,16 @@ a.admin-stat-card:focus-visible {
 /* ==========================================================================
    Смуга іконок -> розкриття по наведенню -> закріплення
    --------------------------------------------------------------------------
-   Стан спокою описаний ОДНИМ селектором: не закріплено, курсора немає,
-   фокуса всередині немає. Розкриття -- це просто невиконання цієї умови,
-   тому наведення не проходить через JS: немає ні мерехтіння, ні гонок
-   таймерів, ні стану, який можна розсинхронізувати з розміткою. JS
-   відповідає рівно за одне -- за шпильку.
+   Стан спокою описаний ОДНИМ селектором: не закріплено, не peek, курсора
+   немає, фокуса всередині немає. Розкриття -- це просто невиконання цієї
+   умови, тому наведення не проходить через JS: немає ні мерехтіння, ні
+   гонок таймерів, ні стану, який можна розсинхронізувати з розміткою. JS
+   відповідає за шпильку і за peek.
+
+   .admin-sidebar--peek -- «розкрита під курсором» на НОВІЙ сторінці:
+   людина клацнула пункт розкритої панелі, а свіжа сторінка :hover ще не
+   знає. Клас ставить admin-sidebar.js і знімає першим рухом миші; у стані
+   спокою він рівноправний із закріпленням, але вміст не розсуває.
 
    :focus-within тут не прикраса. Без нього дійти до меню табом було б
    неможливо: фокус їхав би по посиланнях, яких не видно.
@@ -1270,9 +1275,9 @@ a.admin-stat-card:focus-visible {
    Розкриття: спершу їде край, підпис проявляється навздогін.
 
    На сенсорних екранах :hover просто ніколи не збігається, тож панель
-   лишається смугою. Шпилька в смузі схована разом із написами, тож
-   розкрити панель дотиком можна лише фокусом -- на десктопній ширині
-   (>= 1025px) це прийнятно, бо там є курсор.
+   лишається смугою, а розкриває її шпилька -- тому в смузі вона видима
+   (по центру, над іконками), а не гасне разом із написами. Інакше на
+   планшеті в ландшафті (>= 1025px) розкрити меню не було б чим.
 
    Нижче 1025px діє горизонтальна стрічка (див. RESPONSIVE) -- смуги там
    немає, і жодне правило звідси туди не заходить.
@@ -1364,20 +1369,37 @@ a.admin-stat-card:focus-visible {
      так, будь-яке прискорення на кінцях дає «моргання». */
   .admin-sidebar__text,
   .admin-sidebar__group-title,
-  .admin-sidebar__pin,
   .admin-sidebar__link .badge {
     opacity: 1;
     transition: opacity var(--iprm-sb-fade) linear
                 calc(var(--iprm-sb-delay) + var(--iprm-sb-lead));
   }
 
+  /* Шпилька не гасне, а з'їжджає в центр смуги (правило стану спокою).
+     Зсув -- translate, бо місце шпильки в ряду бренду й так рухається
+     разом із відступом бренду; фон і колір перелічені знову, бо цей
+     transition перетирає базовий. */
+  .admin-sidebar__pin {
+    transition: translate var(--iprm-sb-dur) var(--iprm-sb-ease) var(--iprm-sb-delay),
+                background 0.2s var(--iprm-sb-ease),
+                color 0.2s var(--iprm-sb-ease);
+  }
+
   /* Обрізати тут нічого не треба: напис бренду ріже сам себе (overflow у
-     базовому правилі), шпилька в смузі стоїть на 12..40 при полі 0..40,
+     базовому правилі), шпилька в смузі стоїть на 6..34 при полі 0..40,
      а підписи ріже підкладка пункта. Зайвий overflow тут з'їдав би
      фокусну обвідку шпильки й посилань. */
-  .admin-sidebar__brand,
   .admin-sidebar__group {
     transition: padding var(--iprm-sb-dur) var(--iprm-sb-ease) var(--iprm-sb-delay);
+  }
+
+  /* Явна ширина, а не auto: у смузі ряд бренду стискається до 40px --
+     колонки пунктів, -- а з auto у ширину не вийде анімація. 100% при
+     border-box -- те саме, що auto. */
+  .admin-sidebar__brand {
+    width: 100%;
+    transition: padding var(--iprm-sb-dur) var(--iprm-sb-ease) var(--iprm-sb-delay),
+                width var(--iprm-sb-dur) var(--iprm-sb-ease) var(--iprm-sb-delay);
   }
 
   /* Базове правило дає посиланню `transition: all 0.2s` -- тут воно
@@ -1424,7 +1446,7 @@ a.admin-stat-card:focus-visible {
   /* ---- Стан спокою ---- */
 
   /* Згортання: край чекає, поки згасне підпис. */
-  .admin-sidebar:not(.admin-sidebar--pinned):not(:hover):not(:focus-within) {
+  .admin-sidebar:not(.admin-sidebar--pinned, .admin-sidebar--peek):not(:hover):not(:focus-within) {
     width: var(--iprm-admin-rail-w);
     margin-right: 0;
     transition: width var(--iprm-sb-dur) var(--iprm-sb-ease)
@@ -1436,11 +1458,22 @@ a.admin-stat-card:focus-visible {
   /* Нуль, а не відступ: підкладка 40x40 сама по собі дорівнює вмісту
      смуги, тож будь-який відступ групи тут або розширив би смугу, або
      стиснув би підкладку. */
-  .admin-sidebar:not(.admin-sidebar--pinned):not(:hover):not(:focus-within) .admin-sidebar__brand,
-  .admin-sidebar:not(.admin-sidebar--pinned):not(:hover):not(:focus-within) .admin-sidebar__group {
+  .admin-sidebar:not(.admin-sidebar--pinned, .admin-sidebar--peek):not(:hover):not(:focus-within) .admin-sidebar__brand,
+  .admin-sidebar:not(.admin-sidebar--pinned, .admin-sidebar--peek):not(:hover):not(:focus-within) .admin-sidebar__group {
     padding-left: 0;
     padding-right: 0;
     transition: padding var(--iprm-sb-dur) var(--iprm-sb-ease)
+                calc(var(--iprm-sb-delay) + var(--iprm-sb-lead));
+  }
+
+  /* Ряд бренду в смузі -- рівно колонка пунктів (0..40), а не все поле
+     смуги: поле залежить від того, чи займає місце смуга прокрутки
+     (накладні на Mac -- ні), а колонка пунктів -- ні. */
+  .admin-sidebar:not(.admin-sidebar--pinned, .admin-sidebar--peek):not(:hover):not(:focus-within) .admin-sidebar__brand {
+    width: 40px;
+    transition: padding var(--iprm-sb-dur) var(--iprm-sb-ease)
+                calc(var(--iprm-sb-delay) + var(--iprm-sb-lead)),
+                width var(--iprm-sb-dur) var(--iprm-sb-ease)
                 calc(var(--iprm-sb-delay) + var(--iprm-sb-lead));
   }
 
@@ -1458,7 +1491,7 @@ a.admin-stat-card:focus-visible {
 
      Вкладеним пунктам скидаємо їхній лівий відступ 32px -- у смузі він
      збив би іконку з ряду. */
-  .admin-sidebar:not(.admin-sidebar--pinned):not(:hover):not(:focus-within) .admin-sidebar__link {
+  .admin-sidebar:not(.admin-sidebar--pinned, .admin-sidebar--peek):not(:hover):not(:focus-within) .admin-sidebar__link {
     width: 40px;
     padding-left: 8px;
     padding-right: 8px;
@@ -1470,34 +1503,52 @@ a.admin-stat-card:focus-visible {
                 color 0.2s var(--iprm-sb-ease);
   }
 
-  /* Згортання: підписи гаснуть ПЕРШИМИ, без паузи на випередження.
-     Шпилька тут разом із ними: закріплювати можна лише те, що видно, а
-     в смузі меню й так закрите. */
-  .admin-sidebar:not(.admin-sidebar--pinned):not(:hover):not(:focus-within) .admin-sidebar__text,
-  .admin-sidebar:not(.admin-sidebar--pinned):not(:hover):not(:focus-within) .admin-sidebar__group-title,
-  .admin-sidebar:not(.admin-sidebar--pinned):not(:hover):not(:focus-within) .admin-sidebar__pin,
-  .admin-sidebar:not(.admin-sidebar--pinned):not(:hover):not(:focus-within) .admin-sidebar__link .badge {
+  /* Згортання: підписи гаснуть ПЕРШИМИ, без паузи на випередження. */
+  .admin-sidebar:not(.admin-sidebar--pinned, .admin-sidebar--peek):not(:hover):not(:focus-within) .admin-sidebar__text,
+  .admin-sidebar:not(.admin-sidebar--pinned, .admin-sidebar--peek):not(:hover):not(:focus-within) .admin-sidebar__group-title,
+  .admin-sidebar:not(.admin-sidebar--pinned, .admin-sidebar--peek):not(:hover):not(:focus-within) .admin-sidebar__link .badge {
     opacity: 0;
     transition: opacity var(--iprm-sb-fade) linear var(--iprm-sb-delay);
   }
 
+  /* Шпилька в смузі -- по центру, на одній осі з іконками пунктів (центр
+     20px колонки 0..40). Без зсуву вона стоїть притиснута до правого краю
+     ряду бренду, на 12..40: ряд -- space-between, а напис бренду
+     стиснувся до нуля. (40 - 28) / 2 = 6, тож зсув -6px. */
+  .admin-sidebar:not(.admin-sidebar--pinned, .admin-sidebar--peek):not(:hover):not(:focus-within) .admin-sidebar__pin {
+    translate: -6px 0;
+    transition: translate var(--iprm-sb-dur) var(--iprm-sb-ease)
+                calc(var(--iprm-sb-delay) + var(--iprm-sb-lead)),
+                background 0.2s var(--iprm-sb-ease),
+                color 0.2s var(--iprm-sb-ease);
+  }
+
   /* Заголовок групи лишається порожнім проміжком -- саме він і розділяє
-     групи іконок, тож ховається він згасанням, а не display: none.
-     Погашена шпилька так само не має ловити кліки. */
-  .admin-sidebar:not(.admin-sidebar--pinned):not(:hover):not(:focus-within) .admin-sidebar__group-title,
-  .admin-sidebar:not(.admin-sidebar--pinned):not(:hover):not(:focus-within) .admin-sidebar__pin {
+     групи іконок, тож ховається він згасанням, а не display: none. */
+  .admin-sidebar:not(.admin-sidebar--pinned, .admin-sidebar--peek):not(:hover):not(:focus-within) .admin-sidebar__group-title {
     pointer-events: none;
   }
 
   /* Крапка проявляється, коли рух уже скінчився: підпис до того часу
      згас, пігулка бейджа поїхала за край, стрибати нема чому. */
-  .admin-sidebar:not(.admin-sidebar--pinned):not(:hover):not(:focus-within) .admin-sidebar__link:has(.badge)::after {
+  .admin-sidebar:not(.admin-sidebar--pinned, .admin-sidebar--peek):not(:hover):not(:focus-within) .admin-sidebar__link:has(.badge)::after {
     opacity: 1;
     transition-delay: calc(var(--iprm-sb-delay) + var(--iprm-sb-lead) + var(--iprm-sb-dur));
   }
 
-  .admin-sidebar:not(.admin-sidebar--pinned):not(:hover):not(:focus-within) .admin-sidebar__link--active:has(.badge)::after {
+  .admin-sidebar:not(.admin-sidebar--pinned, .admin-sidebar--peek):not(:hover):not(:focus-within) .admin-sidebar__link--active:has(.badge)::after {
     background: var(--iprm-on-accent);
+  }
+
+  /* Peek на свіжій сторінці стає одразу, без руху: панель має виглядати
+     так, ніби й не згорталась. Клас живе два кадри (admin-sidebar.js).
+     Селектори на клас вагоміші за базові правила розкритого стану, чиї
+     переходи тут і спрацювали б. */
+  .admin-sidebar--instant,
+  .admin-sidebar--instant :is(.admin-sidebar__brand, .admin-sidebar__group, .admin-sidebar__link, .admin-sidebar__text, .admin-sidebar__group-title, .admin-sidebar__pin, .admin-sidebar__pin-icon),
+  .admin-sidebar--instant .admin-sidebar__link .badge,
+  .admin-sidebar--instant .admin-sidebar__link:has(.badge)::after {
+    transition: none;
   }
 }
 
