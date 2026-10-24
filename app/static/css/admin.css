@@ -1107,9 +1107,12 @@ a.admin-stat-card:focus-visible {
 
 /* ========== SIDEBAR ========== */
 .admin-sidebar {
+  /* Змінною, бо від неї рахується, на скільки розкрита незакріплена панель
+     заходить на вміст (див. стан накладання нижче). */
+  --iprm-admin-sidebar-w: 260px;
   flex-shrink: 0;
   padding: 24px 0;
-  width: 260px;
+  width: var(--iprm-admin-sidebar-w);
   background: var(--iprm-white);
   border-right: 1px solid var(--iprm-border);
   position: sticky;
@@ -1246,8 +1249,15 @@ a.admin-stat-card:focus-visible {
    :focus-within тут не прикраса. Без нього дійти до меню табом було б
    неможливо: фокус їхав би по посиланнях, яких не видно.
 
-   Панель -- flex-елемент поруч із .admin-layout { flex: 1 }, тож контент
-   розсувається сам, без другого набору правил на margin.
+   Незакріплена панель розкривається ПОВЕРХ вмісту, як у mm-medic: наведення
+   не має переверстувати таблицю праворуч. Панель -- flex-елемент поруч із
+   .admin-layout { flex: 1 }, і місце в потоці вона займає width +
+   margin-right. Розкрита незакріплена панель тримає від'ємний margin-right
+   рівно на різницю з шириною смуги, тож сума лишається шириною смуги, а
+   решта панелі лягає на вміст. Ширина й відступ їдуть ОДНАКОВИМИ
+   переходами (тривалість, крива, пауза), тому їхня сума стала на кожному
+   кадрі й вміст не ворушиться. Розсуває вміст лише закріплена панель --
+   раз на закріплення чи відкріплення.
 
    РУХ РОЗВЕДЕНО В ЧАСІ, і саме тому переходи оголошені ДВІЧІ: у базових
    правилах (їх бере розкриття) і ще раз у стані спокою (їх бере
@@ -1311,8 +1321,19 @@ a.admin-stat-card:focus-visible {
        іконки з'їхали б рівно на різницю. */
     scrollbar-width: thin;
     scrollbar-color: var(--iprm-border) transparent;
-    /* Розкриття: край рушає одразу. */
-    transition: width var(--iprm-sb-dur) var(--iprm-sb-ease) var(--iprm-sb-delay);
+    /* Над вмістом сторінки, бо розкрита панель на нього заходить: вище за
+       його випадні меню (50) і липкі шапки таблиць, нижче за шапку сайту
+       (999-1001) і модалки. */
+    z-index: 60;
+    /* Розкриття: край рушає одразу. margin-right -- тим самим переходом,
+       що й width, див. вступ до блоку. */
+    transition: width var(--iprm-sb-dur) var(--iprm-sb-ease) var(--iprm-sb-delay),
+                margin-right var(--iprm-sb-dur) var(--iprm-sb-ease) var(--iprm-sb-delay);
+  }
+
+  /* Розкрита незакріплена панель у потоці займає лише смугу. */
+  .admin-sidebar:not(.admin-sidebar--pinned) {
+    margin-right: calc(var(--iprm-admin-rail-w) - var(--iprm-admin-sidebar-w));
   }
 
   .admin-sidebar::-webkit-scrollbar {
@@ -1405,7 +1426,10 @@ a.admin-stat-card:focus-visible {
   /* Згортання: край чекає, поки згасне підпис. */
   .admin-sidebar:not(.admin-sidebar--pinned):not(:hover):not(:focus-within) {
     width: var(--iprm-admin-rail-w);
+    margin-right: 0;
     transition: width var(--iprm-sb-dur) var(--iprm-sb-ease)
+                calc(var(--iprm-sb-delay) + var(--iprm-sb-lead)),
+                margin-right var(--iprm-sb-dur) var(--iprm-sb-ease)
                 calc(var(--iprm-sb-delay) + var(--iprm-sb-lead));
   }
 
