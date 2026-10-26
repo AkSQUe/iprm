@@ -36,12 +36,23 @@ def _wants_json():
 
 
 def _populate_choices(form, preselected_course_id=None, instance=None):
+    # Курс самого проведення -- навіть вимкнений. Без нього в <select> немає
+    # варіанта з поточним значенням, браузер підставляє перший за алфавітом,
+    # і будь-яке збереження форми мовчки переносить дату на чужий курс, а з
+    # ним і тест (так 26.10.2026 дата 24.10 опинилась у «BioSmart Dentistry»).
+    # Збережене значення, а не form.data -- з тієї ж причини, що й у
+    # спеціальностей нижче.
+    current_course_id = instance.course_id if instance else None
     courses = (
-        Course.query.filter_by(is_active=True)
+        Course.query
+        .filter(or_(Course.is_active.is_(True), Course.id == current_course_id))
         .order_by(Course.title)
         .all()
     )
-    form.course_id.choices = [(c.id, c.title) for c in courses]
+    form.course_id.choices = [
+        (c.id, c.title if c.is_active else f'{c.title} (вимкнений)')
+        for c in courses
+    ]
     if preselected_course_id and not form.course_id.data:
         form.course_id.data = preselected_course_id
 
