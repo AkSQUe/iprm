@@ -88,6 +88,18 @@ def test_completion_normalizes_name(client, reg):
     assert (saved.last_name, saved.first_name) == ('Iванов', 'Петро')
 
 
+def test_completion_keeps_participation_format(client, reg):
+    """Формат участі ставить менеджер, і форма за токеном його не показує.
+    Раніше вона передавала дані без нього, і завершення реєстрації стирало
+    формат -- на гібридному заході учасник отримував офлайн-бали замість
+    онлайнових (26.10.2026, 12 балів замість 8)."""
+    reg.participation_format = 'online'
+    db.session.commit()
+    resp = client.post(_url(reg), data=_payload())
+    assert resp.status_code == 302
+    assert db.session.get(EventRegistration, reg.id).participation_format == 'online'
+
+
 @pytest.mark.parametrize('field', ['last_name', 'first_name'])
 def test_completion_rejects_empty_name(client, reg, field):
     resp = client.post(_url(reg), data=_payload(**{field: ''}))

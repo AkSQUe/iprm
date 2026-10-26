@@ -205,6 +205,8 @@ def _process_create(form, instance):
     успіху або None (треба відрендерити форму)."""
     data = _form_to_data(form, instance.id)
     try:
+        participant_service.require_participation_format(
+            instance, data['participation_format'])
         reg, _created = participant_service.upsert_participant(
             data, reg=None, on_duplicate='error',
         )
@@ -347,6 +349,8 @@ def participant_edit(reg_id):
         # значенням із форми.
         paid_snapshot = _money_snapshot(reg)
         try:
+            participant_service.require_participation_format(
+                instance, data['participation_format'], reg=reg)
             participant_service.upsert_participant(data, reg=reg)
             _apply_promo_from_form(form, reg, instance,
                                    paid_snapshot=paid_snapshot)

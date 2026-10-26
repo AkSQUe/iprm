@@ -780,6 +780,9 @@ def complete_registration(token):
             'payment_amount': reg.payment_amount,
             'attended': reg.attended,
             'cpd_points_awarded': reg.cpd_points_awarded,
+            # Без нього завершення реєстрації стирало формат, вибраний
+            # менеджером, і гібридний учасник отримував офлайн-бали.
+            'participation_format': reg.participation_format,
             'experience_years': reg.experience_years,
             'license_number': reg.license_number,
             'admin_notes': reg.admin_notes,

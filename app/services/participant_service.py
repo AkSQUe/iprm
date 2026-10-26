@@ -204,6 +204,31 @@ def apply_registration_fields(reg, data, profile):
     reg.admin_notes = _strip_or_none(data.get('admin_notes'))
 
 
+def require_participation_format(instance, participation_format, reg=None):
+    """Кинути ParticipantError, якщо формат участі довелося б вгадувати.
+
+    На гібридному заході бали БПР залежать від формату, а без формату й
+    без тарифу `effective_participation_format` мовчки рахує участь очною --
+    так онлайн-учасник отримав 12 балів замість 8. Тариф з форматом знімає
+    питання: «За тарифом» тоді чесний вибір.
+
+    Викликають лише форми адмінки, а не сам upsert: xlsx-імпорт і форма за
+    токеном несуть старі гібридні рядки без формату, і там людина, що
+    зберігає, не може його виправити.
+    """
+    if instance is None or instance.event_format != 'hybrid':
+        return
+    if participation_format in ('online', 'offline'):
+        return
+    tariff = reg.tariff if reg is not None else None
+    if tariff is not None and tariff.event_format in ('online', 'offline'):
+        return
+    raise ParticipantError(
+        'Захід гібридний: оберіть формат участі -- «Онлайн» чи «Офлайн». '
+        'Від нього залежить кількість балів БПР.'
+    )
+
+
 def _apply_payment_status(reg, data):
     """Статус оплати з форми/xlsx -- через спільне правило дати оплати.
 
