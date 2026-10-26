@@ -1,0 +1,16 @@
+{# Пошук над довгим .choice-list: варіанти фільтруються під час набору.
+
+   Прогресивне покращення: обгортка приходить з [hidden], показує її лише
+   js/choice-filter.js -- без скрипта це було б поле, що нічого не робить.
+   У поля немає name: у сабміт форми воно не потрапляє.
+
+   list_id    -- id списку .choice-list, який фільтруємо;
+   empty_text -- рядок, що з'являється в списку, коли збігів немає.
+   Споживач підключає choice.css і js/choice-filter.js. #}
+{% macro choice_filter(list_id, placeholder, empty_text) -%}
+<div class="choice-filter" data-choice-filter data-empty-text="{{ empty_text }}" hidden>
+  <input type="search" class="form-input" aria-controls="{{ list_id }}"
+         aria-label="{{ placeholder }}" placeholder="{{ placeholder }}"
+         autocomplete="off" spellcheck="false" enterkeyhint="search">
+</div>
+{%- endmacro %}

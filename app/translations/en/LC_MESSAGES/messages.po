@@ -5752,8 +5752,11 @@ msgstr ""
 msgid "Особисті дані"
 msgstr "Personal details"
 
-msgid "Можна обрати декілька. Пошук — Ctrl+F у браузері."
-msgstr "You can select several. Search with Ctrl+F in your browser."
+msgid "Пошук спеціалізації"
+msgstr "Search specializations"
+
+msgid "Нічого не знайдено. Спробуйте коротше слово або оберіть «Інша спеціалізація»."
+msgstr "Nothing found. Try a shorter word or choose “Other specialization”."
 
 #, python-format
 msgid ""

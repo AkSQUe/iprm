@@ -83,6 +83,7 @@
 {# Мокап програми має бути живим: компонент, який у каталозі не клікається,
    наступний перевіряє на справжній сторінці або пише заново. #}
 <script src="{{ url_for('static', filename='js/course-program.js') }}?v={{ assets_version }}" defer></script>
+<script src="{{ url_for('static', filename='js/choice-filter.js') }}?v={{ assets_version }}" defer></script>
 {% endblock %}
 
 {% block content %}

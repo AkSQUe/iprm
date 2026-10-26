@@ -1,5 +1,6 @@
 {# Таб <<Атоми>>: примітиви, кнопки, бейджі, алерти, форми, порожній стан.
    Різано з колишнього _content.html копіюванням -- текст підказок і заголовків не переписаний. #}
+{% from 'partials/_choice_filter.html' import choice_filter %}
   <div class="ds-section" id="primitives">
     <p class="ds-label">Foundations</p>
     <h2 class="ds-title">Примітиви еталона</h2>
@@ -469,8 +470,10 @@
 
         <div class="form-section reg-form-section">
           <h3 class="form-section__title reg-form-section__title">Спеціалізації <span class="required">*</span></h3>
-          <p class="reg-form-section__hint">Можна обрати декілька. Пошук -- Ctrl+F у браузері.</p>
-          <div class="choice-list choice-list--scroll" data-required-group="checkbox">
+          <p class="reg-form-section__hint">Можна обрати декілька.</p>
+          {{ choice_filter('ds-spec-list', 'Пошук спеціалізації',
+                           'Нічого не знайдено. Спробуйте коротше слово або оберіть «Інша спеціалізація».') }}
+          <div id="ds-spec-list" class="choice-list choice-list--scroll" data-required-group="checkbox">
             <label class="choice-list__item">
               <input type="checkbox" name="ds-spec" checked>
               <span>Дерматологія</span>
@@ -478,6 +481,22 @@
             <label class="choice-list__item">
               <input type="checkbox" name="ds-spec">
               <span>Косметологія</span>
+            </label>
+            <label class="choice-list__item">
+              <input type="checkbox" name="ds-spec">
+              <span>Кардіологія</span>
+            </label>
+            <label class="choice-list__item">
+              <input type="checkbox" name="ds-spec">
+              <span>Фізична терапія</span>
+            </label>
+            <label class="choice-list__item">
+              <input type="checkbox" name="ds-spec">
+              <span>Ерготерапія</span>
+            </label>
+            <label class="choice-list__item">
+              <input type="checkbox" name="ds-spec">
+              <span>Інша спеціалізація</span>
             </label>
           </div>
         </div>
@@ -523,7 +542,12 @@
           <tr>
             <td class="admin-cell-title">choice-list--scroll</td>
             <td>choice.css -- auth, registration</td>
-            <td>data-spec-list + data-required-group="checkbox" -- потрібна хоча б одна галочка; список довгий, тому --scroll обмежує висоту, а підказка радить Ctrl+F.</td>
+            <td>data-spec-list + data-required-group="checkbox" -- потрібна хоча б одна галочка; список довгий, тому --scroll обмежує висоту, а над ним стоїть .choice-filter.</td>
+          </tr>
+          <tr>
+            <td class="admin-cell-title">choice-filter</td>
+            <td>choice.css + js/choice-filter.js -- auth, registration</td>
+            <td>Макрос partials/_choice_filter.html; поле знаходить список за aria-controls, тож у списку мусить бути id. Приходить з [hidden] і з'являється лише зі скриптом. Слова запиту порівнюються першими 5 літерами: «терапевт» знаходить «Фізична терапія». Спробуйте тут: «терапевт», «кардіолог».</td>
           </tr>
           <tr>
             <td class="admin-cell-title">reg-moh-notice</td>
@@ -601,7 +625,7 @@
           </fieldset>
         </form>
       </div>
-      <p class="ds-hint">choice.css -- один компонент на публіку й адмінку: реєстрація і дані сертифіката (тип учасника, спеціальності) та діалог вивантаження резюме тренерів (partials/_resume_columns_dialog.html). Обраний варіант підсвічує CSS (:has), не JS. __note -- пояснення другим рядком, щоб назва варіанта лишалась короткою. Модифікатор --scroll обмежує висоту для довгого переліку (спеціальності, Ctrl+F); короткий список без нього показується цілком -- у модалці інакше вийшла б прокрутка всередині прокрутки.</p>
+      <p class="ds-hint">choice.css -- один компонент на публіку й адмінку: реєстрація і дані сертифіката (тип учасника, спеціальності) та діалог вивантаження резюме тренерів (partials/_resume_columns_dialog.html). Обраний варіант підсвічує CSS (:has), не JS. __note -- пояснення другим рядком, щоб назва варіанта лишалась короткою. Модифікатор --scroll обмежує висоту для довгого переліку (спеціальності, над ним -- пошук .choice-filter); короткий список без нього показується цілком -- у модалці інакше вийшла б прокрутка всередині прокрутки.</p>
     </div>
   </div>
 

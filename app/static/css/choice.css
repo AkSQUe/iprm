@@ -13,7 +13,10 @@
    .choice-list   -- сітка прапорців в одній вставці; --scroll обмежує
                      висоту для довгих переліків (спеціальності), короткий
                      список (поля анкети) показується цілком, без прокрутки
-                     всередині модалки, що й так прокручується. */
+                     всередині модалки, що й так прокручується.
+   .choice-filter -- поле пошуку над довгим .choice-list (макрос
+                     partials/_choice_filter.html + js/choice-filter.js);
+                     __empty -- рядок «нічого не знайдено» в самому списку. */
 
 /* ---------- Картки-варіанти ---------- */
 .choice-cards {
@@ -97,6 +100,19 @@
 
 .choice-list__item input[type="checkbox"] {
   accent-color: var(--iprm-accent);
+}
+
+.choice-list__empty {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 6px 8px;
+  font-size: 0.875rem;
+  color: var(--iprm-text-secondary);
+}
+
+/* ---------- Пошук над списком ---------- */
+.choice-filter {
+  margin-bottom: 8px;
 }
 
 @media (max-width: 640px) {

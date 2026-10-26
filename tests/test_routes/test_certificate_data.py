@@ -261,6 +261,18 @@ def test_no_dangling_aria_without_notice(client, user):
     assert 'aria-describedby' not in client.get(URL).get_data(as_text=True)
 
 
+def test_specialization_search_targets_the_list(client, user):
+    """Пошук спеціалізації знаходить список за aria-controls -- без id у
+    списку поле з'явилось би, але нічого б не фільтрувало. Сам скрипт теж
+    має бути на сторінці: без нього поле лишається [hidden]."""
+    _login(client, user)
+    html = client.get(URL).get_data(as_text=True)
+    assert 'data-choice-filter' in html
+    assert 'aria-controls="spec-list"' in html
+    assert 'id="spec-list"' in html
+    assert 'js/choice-filter.js' in html
+
+
 # ---- лист про зміну ПІБ ------------------------------------------------------
 #
 # ПІБ -- identity-дані. Власник акаунта має дізнатись про зміну навіть тоді,

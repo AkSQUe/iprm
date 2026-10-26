@@ -2,6 +2,7 @@
 {% from 'partials/_money.html' import money %}
 {% from 'partials/_location_badge.html' import location_badge %}
 {% from 'partials/_bpr_points.html' import points_by_format %}
+{% from 'partials/_choice_filter.html' import choice_filter %}
 
 {% block title %}{{ _('Завершення реєстрації | ІПРМ') }}{% endblock %}
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
@@ -141,8 +142,10 @@
     {# ----- Спеціалізації ----- #}
     <div class="form-section reg-form-section">
       <h3 class="form-section__title reg-form-section__title">{{ _('Спеціалізації') }} <span class="required">*</span></h3>
-      <p class="reg-form-section__hint">{{ _('Можна обрати декілька. Пошук — Ctrl+F у браузері.') }}</p>
-      <div class="choice-list choice-list--scroll" data-spec-list data-required-group="checkbox" data-hint="{{ _('Оберіть хоча б одну спеціалізацію') }}">
+      <p class="reg-form-section__hint">{{ _('Можна обрати декілька.') }}</p>
+      {{ choice_filter('spec-list', _('Пошук спеціалізації'),
+                       _('Нічого не знайдено. Спробуйте коротше слово або оберіть «Інша спеціалізація».')) }}
+      <div id="spec-list" class="choice-list choice-list--scroll" data-spec-list data-required-group="checkbox" data-hint="{{ _('Оберіть хоча б одну спеціалізацію') }}">
         {% set selected_specs = form.specializations.data or [] %}
         {% for code, label in form.specializations.choices %}
         <label class="choice-list__item">
@@ -175,4 +178,8 @@
   </form>
 
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/choice-filter.js') }}?v={{ assets_version }}" defer></script>
 {% endblock %}
