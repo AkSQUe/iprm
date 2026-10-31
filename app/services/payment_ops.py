@@ -610,10 +610,9 @@ class PaymentOps:
 
         if new_status == 'paid':
             reg.set_paid_at(*(paid_at or liqpay_paid_moment(raw_payload)))
-            # Підвищуємо лише до оплати: запізнілий переказ не повертає
-            # проведений захід (completed) у confirmed і не воскрешає
-            # скасований.
-            if reg.status in ('pending', 'confirmed'):
+            # Запізнілий переказ не повертає проведений захід (completed) у
+            # confirmed; решта статусів поводиться як раніше.
+            if reg.status != 'completed':
                 reg.status = 'confirmed'
             # Призначити порядковий номер місця per-instance. Робимо до
             # commit, щоб номер опинився в одній транзакції з статусом.

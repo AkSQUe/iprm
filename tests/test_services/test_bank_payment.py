@@ -335,3 +335,16 @@ def test_bank_confirmation_sets_invoice_method_for_registration(
                                 'bt-method').status == 'paid'
     db.session.refresh(reg)
     assert reg.payment_method == 'invoice'
+
+
+def test_card_payment_on_cancelled_registration_behaves_as_before(
+        app, user, instance, sent):
+    """Шлях картки скасованих не чіпаємо: як і раніше, оплата піднімає статус."""
+    from app.services.payment_ops import PaymentOps
+    reg = _make_reg(user, instance, status='cancelled')
+    ok, _ = PaymentOps(None).update_payment_status(
+        reg, 'paid', amount=Decimal('1500'), source='callback', raw_payload={})
+    assert ok
+    db.session.refresh(reg)
+    assert reg.payment_status == 'paid'
+    assert reg.status == 'confirmed'
