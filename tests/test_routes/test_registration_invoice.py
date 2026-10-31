@@ -104,3 +104,64 @@ class TestInvoiceDownload:
         assert resp.mimetype == 'application/pdf'
         assert resp.data == b'%PDF-1.4 test'
         mock_render.assert_called_once()
+
+
+class TestInvoiceContent:
+    """Призначення платежу, номер REG-/ONL- і QR у документах рахунка."""
+
+    def test_pdf_context_has_purpose_number_and_qr(self, app, user, instance):
+        from app.services.invoice_service import _invoice_template_ctx
+
+        reg = _make_reg(user, instance)
+        ctx = _invoice_template_ctx(reg)
+
+        assert ctx['number'] == f'REG-{reg.id}'
+        assert ctx['purpose'].startswith(f'Оплата згідно рахунку № REG-{reg.id} від ')
+        assert ctx['purpose'].endswith('за User Inv')
+        assert ctx['qr_data_uri'].startswith('data:image/svg+xml')
+
+    def test_qr_skipped_on_bad_iban(self, app, user, instance):
+        from app.models.site_settings import SiteSettings
+        from app.services.invoice_service import (
+            _invoice_template_ctx, render_invoice_pdf,
+        )
+
+        SiteSettings.get().bank_iban = 'UA12'
+        reg = _make_reg(user, instance)
+
+        assert _invoice_template_ctx(reg)['qr_data_uri'] is None
+        assert render_invoice_pdf(reg)[:4] == b'%PDF'
+
+    def test_html_shows_purpose_and_number(self, app, user, instance):
+        from flask import render_template
+        from app.services.invoice_service import _invoice_template_ctx
+
+        reg = _make_reg(user, instance)
+        ctx = _invoice_template_ctx(reg)
+        html = render_template('invoices/invoice.html', **ctx)
+
+        assert f'REG-{reg.id}' in html
+        assert ctx['purpose'] in html
+        assert 'Скануйте в застосунку банку' in html
+
+    def test_pdf_renders(self, app, user, instance):
+        from app.services.invoice_service import render_invoice_pdf
+
+        assert len(render_invoice_pdf(_make_reg(user, instance))) > 0
+
+    def test_xlsx_has_purpose_row(self, app, user, instance):
+        from openpyxl import load_workbook
+        from app.services.invoice_service import build_invoice_xlsx
+
+        reg = _make_reg(user, instance)
+        ws = load_workbook(build_invoice_xlsx(reg)).active
+        values = [str(c.value) for row in ws.iter_rows() for c in row if c.value]
+
+        assert any(f'Оплата згідно рахунку № REG-{reg.id}' in v for v in values)
+        assert any(v.startswith(f'№ REG-{reg.id} від') for v in values)
+
+    def test_filename_uses_order_ref(self, app, user, instance):
+        from app.services.invoice_service import invoice_filename
+
+        reg = _make_reg(user, instance)
+        assert f'REG-{reg.id}' in invoice_filename(reg, 'pdf')

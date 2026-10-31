@@ -60,6 +60,13 @@
     }
     .pay-card .label { color: #1d1d1f; }
 
+    /* Реквізити зліва, платіжний QR справа. */
+    .pay-card__body { display: flex; align-items: center; justify-content: space-between; }
+    .pay-card__details { flex: 1 1 auto; }
+    .pay-qr { flex: 0 0 auto; width: 34mm; margin-left: 5mm; text-align: center; }
+    .pay-qr__img { display: block; width: 34mm; height: 34mm; }
+    .pay-qr__caption { font-size: 6.5pt; color: #6e6e73; margin-top: 1mm; }
+
     .party-name { font-weight: 700; font-size: 10pt; color: #1d1d1f; }
     .party-line { font-size: 8.5pt; color: #424245; margin-top: 0.5mm; }
     .party-line em { font-style: italic; color: #6e6e73; }
@@ -152,12 +159,23 @@
 
     <div class="pay-card">
       <div class="label">Реквізити для оплати</div>
-      <table class="bank-grid">
-        <tr><td>Отримувач</td><td>{{ supplier.name }}</td></tr>
-        <tr><td>Код ЄДРПОУ</td><td>{{ supplier.edrpou }}</td></tr>
-        <tr><td>Банк отримувача</td><td>{{ supplier.bank }}</td></tr>
-        <tr><td>Рахунок (IBAN)</td><td>{{ supplier.iban }}</td></tr>
-      </table>
+      <div class="pay-card__body">
+        <div class="pay-card__details">
+          <table class="bank-grid">
+            <tr><td>Отримувач</td><td>{{ supplier.name }}</td></tr>
+            <tr><td>Код ЄДРПОУ</td><td>{{ supplier.edrpou }}</td></tr>
+            <tr><td>Банк отримувача</td><td>{{ supplier.bank }}</td></tr>
+            <tr><td>Рахунок (IBAN)</td><td>{{ supplier.iban }}</td></tr>
+            <tr><td>Призначення платежу</td><td>{{ purpose }}</td></tr>
+          </table>
+        </div>
+        {% if qr_data_uri %}
+        <div class="pay-qr">
+          <img class="pay-qr__img" src="{{ qr_data_uri }}" alt="QR-код для оплати">
+          <div class="pay-qr__caption">Скануйте в застосунку банку</div>
+        </div>
+        {% endif %}
+      </div>
     </div>
 
     <div class="section">

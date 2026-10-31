@@ -20,6 +20,8 @@ from openpyxl.worksheet.properties import PageSetupProperties
 from app.models.mixins import utcnow
 from app.models.site_settings import SiteSettings
 from app.services.number_to_words_ua import number_to_words_ua
+from app.services.payment_purpose import build_payment_purpose, order_ref
+from app.services.payment_qr import build_nbu_qr_payload, qr_svg_data_uri
 from app.utils import ensure_utc
 
 logger = logging.getLogger(__name__)
@@ -100,7 +102,8 @@ def _enrollment_invoice_context(enrollment):
         payer = (enrollment.user.full_name or '').strip() or enrollment.user.email or ''
     return {
         'settings': settings,
-        'number': enrollment.id,
+        'number': order_ref(enrollment),
+        'purpose': build_payment_purpose(enrollment),
         'date': enrollment.created_at,
         'item_name': f'Онлайн-курс: {title}',
         'amount': Decimal(enrollment.payment_amount or 0),
@@ -122,7 +125,8 @@ def _invoice_context(reg):
         payer = (reg.user.full_name or '').strip() or reg.user.email or ''
     return {
         'settings': settings,
-        'number': reg.id,
+        'number': order_ref(reg),
+        'purpose': build_payment_purpose(reg),
         'date': reg.created_at,
         'item_name': item_name,
         'amount': Decimal(reg.payment_amount or 0),
@@ -200,6 +204,7 @@ def build_invoice_xlsx(reg) -> io.BytesIO:
         ('Код ЄДРПОУ', s.edrpou or ''),
         ('Банк отримувача', s.bank_name or ''),
         ('Рахунок (IBAN)', s.bank_iban or ''),
+        ('Призначення платежу', ctx['purpose']),
     ]:
         ws.merge_cells(f'A{r}:B{r}')
         ws.merge_cells(f'C{r}:F{r}')
@@ -211,6 +216,8 @@ def build_invoice_xlsx(reg) -> io.BytesIO:
         ws[f'C{r}'].alignment = _WRAP
         for c in range(1, 7):
             ws.cell(row=r, column=c).fill = _FILL_SECTION
+        if label == 'Призначення платежу':
+            ws.row_dimensions[r].height = 28
         r += 1
     r += 1
 
@@ -297,6 +304,26 @@ def _money(value):
     return s.replace(',', ' ').replace('.', ',')
 
 
+def _payment_qr_data_uri(settings, amount, purpose):
+    """SVG-QR для оплати або None, якщо реквізити не годяться для QR.
+
+    Некоректний IBAN чи ЄДРПОУ в налаштуваннях не повинен ламати сам рахунок:
+    документ без QR лишається чинним, а QR, який банк відхилить, -- ні.
+    """
+    try:
+        payload = build_nbu_qr_payload(
+            recipient_name=settings.company_full_name or 'ІПРМ',
+            iban=settings.bank_iban,
+            amount=amount,
+            purpose=purpose,
+            recipient_code=settings.edrpou,
+        )
+        return qr_svg_data_uri(payload)
+    except ValueError as exc:
+        logger.warning('Payment QR skipped: %s', exc)
+        return None
+
+
 def _invoice_template_ctx(reg):
     """Підготувати дані для HTML-шаблона рахунка."""
     ctx = _invoice_context(reg)
@@ -315,6 +342,8 @@ def _invoice_template_ctx(reg):
             'tax_status': s.tax_status or '',
         },
         'payer': ctx['payer'],
+        'purpose': ctx['purpose'],
+        'qr_data_uri': _payment_qr_data_uri(s, amount, ctx['purpose']),
         'item_name': ctx['item_name'],
         'amount_str': _money(amount),
         'amount_words': words,
@@ -360,7 +389,7 @@ def invoice_filename(reg, ext):
     last_name = _safe_filename_part(last_name) or 'учасник'
 
     amount = int(Decimal(reg.payment_amount or 0))
-    parts = ['Рахунок', last_name, f'{amount}грн']
+    parts = ['Рахунок', order_ref(reg), last_name, f'{amount}грн']
     # getattr, а не пряме звертання: у замовлення онлайн-курсу проведення
     # немає й бути не може -- курс проходять у власному темпі, тож дати в
     # назві файлу просто не буде.
