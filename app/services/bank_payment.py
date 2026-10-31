@@ -17,6 +17,8 @@ from datetime import datetime
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Optional
 
+from sqlalchemy.exc import SQLAlchemyError
+
 from app.extensions import db
 from app.models.mixins import PAID_AT_DATETIME
 from app.models.online_enrollment import OnlineEnrollment
@@ -78,6 +80,11 @@ def confirm_bank_payment(order_ref: str, amount: Decimal, transacted_at: datetim
     Порядок перевірок значущий: спершу «чи це наше замовлення», потім
     «чи цю операцію вже зараховано» (повтор не є помилкою), потім стани,
     у яких гроші зараховувати не можна, і лише тоді -- сама оплата.
+
+    Обов'язок викликача: після повернення завершити сесію
+    (`db.session.rollback()`). Рядок замовлення заблоковано FOR UPDATE, а
+    ранні відмови сесію не відкочують -- без цього блокування висітиме до
+    кінця запиту. Після успішного commit rollback нічого не скасовує.
     """
     kind, object_id = parse_order_id(order_ref or '')
     if kind not in ('registration', 'enrollment') or object_id is None:
@@ -113,16 +120,25 @@ def confirm_bank_payment(order_ref: str, amount: Decimal, transacted_at: datetim
     ops = PaymentOps(None)
     update = (ops.update_payment_status if kind == 'registration'
               else ops.update_enrollment_status)
-    ok, message = update(
-        order, 'paid', amount=amount, source=SOURCE_BANK,
-        raw_payload={
-            'bank_tx_ref': bank_tx_ref,
-            'transacted_at': transacted_at.isoformat(),
-            'actor': actor,
-        },
-        paid_at=(transacted_at, PAID_AT_DATETIME),
-        txn_ref=bank_tx_ref,
-    )
+    try:
+        ok, message = update(
+            order, 'paid', amount=amount, source=SOURCE_BANK,
+            raw_payload={
+                'bank_tx_ref': bank_tx_ref,
+                'transacted_at': transacted_at.isoformat(),
+                'actor': actor,
+            },
+            paid_at=(transacted_at, PAID_AT_DATETIME),
+            txn_ref=bank_tx_ref,
+        )
+    except SQLAlchemyError:
+        # Автоflush усередині PaymentOps упирається в унікальний індекс
+        # bank_tx_ref раніше, ніж спрацює його власний try: ту саму операцію
+        # встиг записати паралельний запит. Виняток виходить то як
+        # IntegrityError, то як PendingRollbackError на наступному запиті
+        # зламаної сесії, тому ловимо загальний клас.
+        db.session.rollback()
+        ok, message = False, 'db error'
     if ok:
         return BankPaymentResult(STATUS_PAID, None, order_ref)
 
@@ -130,4 +146,8 @@ def confirm_bank_payment(order_ref: str, amount: Decimal, transacted_at: datetim
                    order_ref, bank_tx_ref, message)
     if message == 'amount mismatch':
         return _refuse(order_ref, 'amount_mismatch')
+    # Унікальний індекс на bank_tx_ref відсік запис, що проскочив повз
+    # _already_logged: PaymentOps відкотив сесію, і переможець уже видимий.
+    if _already_logged(bank_tx_ref):
+        return BankPaymentResult(STATUS_DUPLICATE, None, order_ref)
     return _refuse(order_ref, 'db_error')

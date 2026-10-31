@@ -249,6 +249,10 @@ def create_app(config_name=None):
     app.register_blueprint(mm_status_bp)
     csrf.exempt(mm_status_bp)
 
+    from app.api.mm_bank_payment import mm_bank_payment_bp
+    app.register_blueprint(mm_bank_payment_bp)
+    csrf.exempt(mm_bank_payment_bp)
+
     from app.api.meta_leads import meta_leads_bp
     app.register_blueprint(meta_leads_bp)
     csrf.exempt(meta_leads_bp)

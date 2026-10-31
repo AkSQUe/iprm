@@ -185,6 +185,7 @@ def test_confirms_online_enrollment(app, user):
     )
     db.session.add(enr)
     db.session.flush()
+    enr_id, course_id = enr.id, course.id
     try:
         r = confirm_bank_payment(f'ONL-{enr.id}', Decimal('4500'), MOMENT, 'bt-onl')
         assert (r.status, r.reason) == ('paid', None)
@@ -197,6 +198,34 @@ def test_confirms_online_enrollment(app, user):
         assert txn.payment_id == 'bt-onl'
     finally:
         db.session.rollback()
-        OnlineEnrollment.query.delete()
-        OnlineCourse.query.delete()
+        OnlineEnrollment.query.filter_by(id=enr_id).delete()
+        OnlineCourse.query.filter_by(id=course_id).delete()
         db.session.commit()
+
+
+def test_concurrent_same_ref_integrity_error_is_duplicate(
+        app, user, instance, sent, monkeypatch):
+    """Той самий bank_tx_ref, що проскочив повз перевірку, не є помилкою БД:
+    унікальний індекс його відсікає, а відповідь -- duplicate."""
+    from app.services import bank_payment
+
+    other = User.create_with_password(
+        f'bank-{_uid()}@test.com', 'password123', first_name='O', last_name='U',
+    )
+    db.session.flush()
+    first = _make_reg(user, instance)
+    second = _make_reg(other, instance)
+    assert confirm_bank_payment(f'REG-{first.id}', Decimal('1500'), MOMENT,
+                                'bt-race').status == 'paid'
+
+    real = bank_payment._already_logged
+    seen = []
+
+    def blind_once(ref):
+        seen.append(ref)
+        return False if len(seen) == 1 else real(ref)
+
+    monkeypatch.setattr(bank_payment, '_already_logged', blind_once)
+    r = confirm_bank_payment(f'REG-{second.id}', Decimal('1500'), MOMENT,
+                             'bt-race')
+    assert (r.status, r.reason) == ('duplicate', None)

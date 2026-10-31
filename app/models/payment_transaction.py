@@ -41,6 +41,13 @@ class PaymentTransaction(TimestampMixin, db.Model):
             'ix_payment_transactions_reg_created',
             'registration_id', 'created_at',
         ),
+        # Одна банківська операція -- один рядок журналу. Для інших джерел
+        # payment_id не унікальний (LiqPay повторює його в callback).
+        db.Index(
+            'uq_payment_transactions_bank_ref', 'payment_id', unique=True,
+            postgresql_where=db.text("source = 'bank'"),
+            sqlite_where=db.text("source = 'bank'"),
+        ),
         db.CheckConstraint(
             "source IN ('callback', 'status_check', 'refund', 'manual', 'bank')",
             name='ck_payment_transactions_source',
