@@ -7,7 +7,8 @@
 платіж не має права чіпати.
 
 Ідемпотентність тримає журнал: рядок `source='bank'` із тим самим
-`bank_tx_ref` означає, що цю операцію вже зараховано. Рядок записаного
+`bank_tx_ref` означає, що цю операцію вже зараховано. Тому самому замовленню
+це `duplicate`, іншому -- відмова `tx_used_elsewhere`. Рядок записаного
 замовлення блокується на час перевірки, тож два однакові запити одночасно
 не пройдуть обидва.
 """
@@ -41,8 +42,9 @@ class BankPaymentResult:
 
     status: 'paid' | 'duplicate' | 'refused'
     reason: для 'refused' -- 'bad_ref' | 'not_found' | 'already_paid' |
-            'cancelled' | 'refunded' | 'amount_mismatch' | 'db_error';
-            інакше None.
+            'cancelled' | 'refunded' | 'amount_mismatch' |
+            'tx_used_elsewhere' (операцію вже зараховано до ІНШОГО
+            замовлення) | 'db_error'; інакше None.
     """
     status: str
     reason: Optional[str]
@@ -66,10 +68,24 @@ def _cents(value):
     return Decimal(str(value)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
 
-def _already_logged(bank_tx_ref):
-    return db.session.query(PaymentTransaction.id).filter_by(
-        source=SOURCE_BANK, payment_id=bank_tx_ref,
-    ).first() is not None
+def _logged_owner(bank_tx_ref):
+    """Кому зараховано цю банківську операцію: (registration_id, enrollment_id)
+    або None, якщо операції в журналі ще немає."""
+    return db.session.query(
+        PaymentTransaction.registration_id, PaymentTransaction.enrollment_id,
+    ).filter_by(source=SOURCE_BANK, payment_id=bank_tx_ref).first()
+
+
+def _logged_outcome(owner, kind, object_id, order_ref):
+    """Відповідь для вже зарахованої операції: те саме замовлення -- повтор
+    (duplicate), інше -- відмова, бо рядок виписки не може закрити два
+    замовлення (менеджер міг відвʼязати хибний збіг і привʼязати рядок
+    до правильної реєстрації)."""
+    registration_id, enrollment_id = owner
+    owner_id = registration_id if kind == 'registration' else enrollment_id
+    if owner_id == object_id:
+        return BankPaymentResult(STATUS_DUPLICATE, None, order_ref)
+    return _refuse(order_ref, 'tx_used_elsewhere')
 
 
 def confirm_bank_payment(order_ref: str, amount: Decimal, transacted_at: datetime,
@@ -96,8 +112,9 @@ def confirm_bank_payment(order_ref: str, amount: Decimal, transacted_at: datetim
     if order is None:
         return _refuse(order_ref, 'not_found')
 
-    if _already_logged(bank_tx_ref):
-        return BankPaymentResult(STATUS_DUPLICATE, None, order_ref)
+    owner = _logged_owner(bank_tx_ref)
+    if owner is not None:
+        return _logged_outcome(owner, kind, object_id, order_ref)
 
     reason = None
     if order.payment_status == 'refunded':
@@ -111,12 +128,18 @@ def confirm_bank_payment(order_ref: str, amount: Decimal, transacted_at: datetim
 
     # Банк віддає точну суму, тож і звіряємо до копійки. Допуск у 0.01, який
     # check_amount залишає для LiqPay, тут пропустив би недоплату на копійку.
+    # Замовлення без зафіксованої суми не має з чим звірятися: для LiqPay це
+    # історичні рядки, а переказ без еталона підтверджувати не можна.
     expected = order.payment_amount
-    if expected is not None and _cents(amount) != _cents(expected):
+    if expected is None or _cents(amount) != _cents(expected):
         return _refuse(order_ref, 'amount_mismatch')
 
     # PaymentOps зберігає LiqPay-сервіс, але цей шлях його не чіпає: ні
     # перевірки підпису, ні запитів до LiqPay тут немає.
+    # Оплата переказом -- це спосіб «рахунок», навіть якщо користувач
+    # обирав картку: звіт по фінансах не має називати її LiqPay. Зміна
+    # лягає в ту саму транзакцію, що й оплата; при відмові сесію відкочуємо.
+    order.payment_method = 'invoice'
     ops = PaymentOps(None)
     update = (ops.update_payment_status if kind == 'registration'
               else ops.update_enrollment_status)
@@ -144,12 +167,15 @@ def confirm_bank_payment(order_ref: str, amount: Decimal, transacted_at: datetim
 
     logger.warning('Bank payment refused for %s (%s): %s',
                    order_ref, bank_tx_ref, message)
+    # Невдача не повинна лишити в сесії непідтверджену зміну способу оплати.
+    db.session.rollback()
     if message == 'amount mismatch':
         return _refuse(order_ref, 'amount_mismatch')
     # Унікальний індекс на bank_tx_ref відсік запис, що проскочив повз
-    # _already_logged: PaymentOps відкотив сесію, і переможець уже видимий.
-    if _already_logged(bank_tx_ref):
-        return BankPaymentResult(STATUS_DUPLICATE, None, order_ref)
+    # _logged_owner: сесію відкочено, і переможець уже видимий.
+    owner = _logged_owner(bank_tx_ref)
+    if owner is not None:
+        return _logged_outcome(owner, kind, object_id, order_ref)
     return _refuse(order_ref, 'db_error')
 
 
@@ -163,13 +189,19 @@ _PAID_VIA_BY_SOURCE = {
 }
 
 
-def paid_via_map(kind: str, ids: list) -> dict:
-    """Чим закрито оплату: {id: 'liqpay' | 'manual' | 'bank'}.
+# Пріоритет походження: картка сильніша за банк, банк -- за ручну позначку.
+# Ручний рядок зʼявляється і тоді, коли адмін лише поправив дату вже
+# оплаченої реєстрації, тож «останній виграє» видавав би картку за ручну.
+_PAID_VIA_PRIORITY = ('liqpay', 'bank', 'manual')
 
-    kind: 'registration' чи 'enrollment'. «Останній» -- рядок журналу з
-    mapped_status='paid' із найбільшим id: ручна позначка, яку згодом
-    перезаписав status_check LiqPay, вважається карткою. Id без такого
-    рядка в мапі немає. Один запит на весь список, без N+1.
+
+def paid_via_map(kind: str, ids: list) -> dict:
+    """Чим закрито оплату: {id: 'liqpay' | 'bank' | 'manual'}.
+
+    kind: 'registration' чи 'enrollment'. Береться НАЙСИЛЬНІШЕ джерело серед
+    рядків журналу з mapped_status='paid', а не останнє: liqpay (callback,
+    status_check), інакше bank, інакше manual. Id без такого рядка в мапі
+    немає. Один запит на весь список, без N+1.
 
     Чи оплачено зараз, мапа не знає: реєстрація, повернена пізніше, тут
     теж матиме значення -- відсікає це викликач за payment_status.
@@ -182,8 +214,12 @@ def paid_via_map(kind: str, ids: list) -> dict:
         db.session.query(column, PaymentTransaction.source)
         .filter(column.in_(ids), PaymentTransaction.mapped_status == 'paid',
                 PaymentTransaction.source.in_(list(_PAID_VIA_BY_SOURCE)))
-        .order_by(PaymentTransaction.id)
         .all()
     )
-    # Порядок за id зростає, тож пізніший рядок перезаписує ранній.
-    return {owner_id: _PAID_VIA_BY_SOURCE[source] for owner_id, source in rows}
+    rank = {via: n for n, via in enumerate(_PAID_VIA_PRIORITY)}
+    result = {}
+    for owner_id, source in rows:
+        via = _PAID_VIA_BY_SOURCE[source]
+        if owner_id not in result or rank[via] < rank[result[owner_id]]:
+            result[owner_id] = via
+    return result

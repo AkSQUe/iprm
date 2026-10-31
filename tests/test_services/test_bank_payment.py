@@ -193,6 +193,7 @@ def test_confirms_online_enrollment(app, user):
         assert enr.payment_status == 'paid'
         assert enr.status == 'active'
         assert enr.paid_at_precision == 'datetime'
+        assert enr.payment_method == 'invoice'
         txn = PaymentTransaction.query.filter_by(
             enrollment_id=enr.id, source='bank').one()
         assert txn.payment_id == 'bt-onl'
@@ -203,10 +204,11 @@ def test_confirms_online_enrollment(app, user):
         db.session.commit()
 
 
-def test_concurrent_same_ref_integrity_error_is_duplicate(
+def test_concurrent_same_ref_integrity_error_is_tx_used_elsewhere(
         app, user, instance, sent, monkeypatch):
     """Той самий bank_tx_ref, що проскочив повз перевірку, не є помилкою БД:
-    унікальний індекс його відсікає, а відповідь -- duplicate."""
+    унікальний індекс його відсікає, а відповідь -- відмова «операцію вже
+    привʼязано до іншого замовлення»; друге замовлення лишається неоплаченим."""
     from app.services import bank_payment
 
     other = User.create_with_password(
@@ -218,14 +220,118 @@ def test_concurrent_same_ref_integrity_error_is_duplicate(
     assert confirm_bank_payment(f'REG-{first.id}', Decimal('1500'), MOMENT,
                                 'bt-race').status == 'paid'
 
-    real = bank_payment._already_logged
+    real = bank_payment._logged_owner
     seen = []
 
     def blind_once(ref):
         seen.append(ref)
-        return False if len(seen) == 1 else real(ref)
+        return None if len(seen) == 1 else real(ref)
 
-    monkeypatch.setattr(bank_payment, '_already_logged', blind_once)
+    monkeypatch.setattr(bank_payment, '_logged_owner', blind_once)
     r = confirm_bank_payment(f'REG-{second.id}', Decimal('1500'), MOMENT,
                              'bt-race')
-    assert (r.status, r.reason) == ('duplicate', None)
+    assert (r.status, r.reason) == ('refused', 'tx_used_elsewhere')
+    assert len(_bank_rows(payment_id='bt-race')) == 1
+    db.session.refresh(second)
+    assert second.payment_status == 'unpaid'
+
+
+# ---- фінальні правки ревʼю ----
+
+def _second_user():
+    other = User.create_with_password(
+        f'bank-{_uid()}@test.com', 'password123', first_name='O', last_name='U',
+    )
+    db.session.flush()
+    return other
+
+
+def test_same_bank_row_for_other_order_is_tx_used_elsewhere(
+        app, user, instance, sent):
+    """Той самий рядок виписки, привʼязаний до іншої реєстрації, не є
+    duplicate: друга реєстрація лишається неоплаченою."""
+    first = _make_reg(user, instance)
+    second = _make_reg(_second_user(), instance)
+    assert confirm_bank_payment(f'REG-{first.id}', Decimal('1500'), MOMENT,
+                                'bt-elsewhere').status == 'paid'
+    r = confirm_bank_payment(f'REG-{second.id}', Decimal('1500'), MOMENT,
+                             'bt-elsewhere')
+    assert (r.status, r.reason) == ('refused', 'tx_used_elsewhere')
+    db.session.refresh(second)
+    assert second.payment_status == 'unpaid'
+    assert len(PaymentTransaction.query.filter_by(
+        source=SOURCE_BANK, payment_id='bt-elsewhere').all()) == 1
+
+
+def _add_paid_row(reg, source):
+    db.session.add(PaymentTransaction(
+        registration_id=reg.id, order_id=f'REG-{reg.id}', mapped_status='paid',
+        source=source,
+    ))
+    db.session.flush()
+
+
+def test_paid_via_card_then_manual_date_edit_is_liqpay(app, user, instance):
+    from app.services.bank_payment import paid_via_map
+    reg = _make_reg(user, instance, payment_status='paid')
+    _add_paid_row(reg, 'callback')
+    _add_paid_row(reg, 'manual')
+    assert paid_via_map('registration', [reg.id]) == {reg.id: 'liqpay'}
+
+
+def test_paid_via_bank_then_manual_date_edit_is_bank(app, user, instance):
+    from app.services.bank_payment import paid_via_map
+    reg = _make_reg(user, instance, payment_status='paid')
+    _add_paid_row(reg, SOURCE_BANK)
+    _add_paid_row(reg, 'manual')
+    assert paid_via_map('registration', [reg.id]) == {reg.id: 'bank'}
+
+
+def test_paid_via_manual_then_status_check_is_liqpay(app, user, instance):
+    from app.services.bank_payment import paid_via_map
+    reg = _make_reg(user, instance, payment_status='paid')
+    _add_paid_row(reg, 'manual')
+    _add_paid_row(reg, 'status_check')
+    assert paid_via_map('registration', [reg.id]) == {reg.id: 'liqpay'}
+
+
+def test_completed_registration_stays_completed_after_bank_payment(
+        app, user, instance, sent):
+    reg = _make_reg(user, instance, status='completed')
+    r = confirm_bank_payment(f'REG-{reg.id}', Decimal('1500'), MOMENT, 'bt-done')
+    assert r.status == 'paid'
+    db.session.refresh(reg)
+    assert reg.status == 'completed'
+    assert reg.payment_status == 'paid'
+    assert sent.count == 1
+
+
+def test_completed_registration_stays_completed_after_card_payment(
+        app, user, instance, sent):
+    from app.services.payment_ops import PaymentOps
+    reg = _make_reg(user, instance, status='completed')
+    ok, _ = PaymentOps(None).update_payment_status(
+        reg, 'paid', amount=Decimal('1500'), source='callback',
+        raw_payload={})
+    assert ok
+    db.session.refresh(reg)
+    assert reg.status == 'completed'
+    assert reg.payment_status == 'paid'
+
+
+def test_missing_expected_amount_is_refused_on_bank_path(
+        app, user, instance, sent):
+    reg = _make_reg(user, instance, payment_amount=None)
+    r = confirm_bank_payment(f'REG-{reg.id}', Decimal('1500'), MOMENT, 'bt-none')
+    assert (r.status, r.reason) == ('refused', 'amount_mismatch')
+    db.session.refresh(reg)
+    assert reg.payment_status == 'unpaid'
+
+
+def test_bank_confirmation_sets_invoice_method_for_registration(
+        app, user, instance, sent):
+    reg = _make_reg(user, instance, payment_method='liqpay')
+    assert confirm_bank_payment(f'REG-{reg.id}', Decimal('1500'), MOMENT,
+                                'bt-method').status == 'paid'
+    db.session.refresh(reg)
+    assert reg.payment_method == 'invoice'
