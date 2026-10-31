@@ -1,6 +1,6 @@
 """Журнал оплат: одна банківська операція -- один рядок
 
-Revision ID: payment_txn_bank_ref_unique_20261031
+Revision ID: pay_txn_bank_ref_uniq_20261031
 Revises: payment_txn_bank_source_20261031
 Create Date: 2026-10-31
 
@@ -22,7 +22,7 @@ from alembic import op
 import sqlalchemy as sa
 
 
-revision = 'payment_txn_bank_ref_unique_20261031'
+revision = 'pay_txn_bank_ref_uniq_20261031'
 down_revision = 'payment_txn_bank_source_20261031'
 branch_labels = None
 depends_on = None
