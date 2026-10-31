@@ -466,8 +466,13 @@ class PaymentOps:
 
     def update_enrollment_status(self, enrollment, new_status, payment_id=None,
                                  amount=None, source='manual', liqpay_status=None,
-                                 raw_payload=None):
+                                 raw_payload=None, paid_at=None, txn_ref=None):
         """Перехід статусу оплати для замовлення онлайн-курсу.
+
+        `paid_at` -- готова пара (момент, точність) замість моменту з
+        відповіді LiqPay (банківська виписка знає свій час). `txn_ref`
+        пишеться в `payment_id` рядка журналу, але НЕ в поле замовлення:
+        ідентифікатор банківської операції не є платежем LiqPay.
 
         Правила переходів і звірка суми -- спільні з реєстраціями
         (ALLOWED_TRANSITIONS, check_amount). Відрізняються лише наслідки:
@@ -498,7 +503,7 @@ class PaymentOps:
             enrollment.payment_id = payment_id
 
         if new_status == 'paid':
-            enrollment.set_paid_at(*liqpay_paid_moment(raw_payload))
+            enrollment.set_paid_at(*(paid_at or liqpay_paid_moment(raw_payload)))
             enrollment.status = 'active'
         elif new_status == 'refunded':
             enrollment.status = 'cancelled'
@@ -513,7 +518,7 @@ class PaymentOps:
         _log_transaction(
             reg_id=None, enrollment_id=enrollment.id, order_id=order_id,
             mapped_status=new_status, source=source,
-            liqpay_status=liqpay_status, payment_id=payment_id,
+            liqpay_status=liqpay_status, payment_id=payment_id or txn_ref,
             amount=amount, raw_payload=raw_payload,
         )
 
@@ -572,7 +577,15 @@ class PaymentOps:
     # ---- реєстрації на заходи (order_id REG-<id>) ----
 
     def update_payment_status(self, reg, new_status, payment_id=None, amount=None,
-                              source='manual', liqpay_status=None, raw_payload=None):
+                              source='manual', liqpay_status=None, raw_payload=None,
+                              paid_at=None, txn_ref=None):
+        """Перехід статусу оплати реєстрації.
+
+        `paid_at` -- готова пара (момент, точність) замість моменту з
+        відповіді LiqPay (банківська виписка знає свій час). `txn_ref`
+        пишеться в `payment_id` рядка журналу, але НЕ в `reg.payment_id`:
+        ідентифікатор банківської операції не є платежем LiqPay.
+        """
         if new_status == 'paid':
             problem = check_amount(reg.payment_amount, amount, f'REG-{reg.id}')
             if problem:
@@ -596,7 +609,7 @@ class PaymentOps:
             reg.payment_id = payment_id
 
         if new_status == 'paid':
-            reg.set_paid_at(*liqpay_paid_moment(raw_payload))
+            reg.set_paid_at(*(paid_at or liqpay_paid_moment(raw_payload)))
             reg.status = 'confirmed'
             # Призначити порядковий номер місця per-instance. Робимо до
             # commit, щоб номер опинився в одній транзакції з статусом.
@@ -618,7 +631,7 @@ class PaymentOps:
             mapped_status=new_status,
             source=source,
             liqpay_status=liqpay_status,
-            payment_id=payment_id,
+            payment_id=payment_id or txn_ref,
             amount=amount,
             raw_payload=raw_payload,
         )

@@ -42,7 +42,7 @@ class PaymentTransaction(TimestampMixin, db.Model):
             'registration_id', 'created_at',
         ),
         db.CheckConstraint(
-            "source IN ('callback', 'status_check', 'refund', 'manual')",
+            "source IN ('callback', 'status_check', 'refund', 'manual', 'bank')",
             name='ck_payment_transactions_source',
         ),
         db.CheckConstraint(
@@ -69,6 +69,7 @@ class PaymentTransaction(TimestampMixin, db.Model):
         ('status_check', 'Перевірка статусу'),
         ('refund', 'Повернення'),
         ('manual', 'Ручне оновлення'),
+        ('bank', 'Банківська виписка'),
     ]
 
     @property
