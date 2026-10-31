@@ -34,6 +34,7 @@ from app.models.medical_profile import MedicalProfile
 from app.models.registration import EventRegistration
 from app.models.user import User
 from app.services import finance_report
+from app.services.bank_payment import paid_via_map
 
 MAX_PER_PAGE = 200
 DEFAULT_PER_PAGE = 100
@@ -267,6 +268,7 @@ def list_registrations():
     # повернення -- одним запитом на сторінку.
     page_requests = finance_report.refund_requests_for(
         registration_ids=[reg.id for reg, *_rest in pagination.items])
+    via = paid_via_map('registration', [reg.id for reg, *_rest in pagination.items])
 
     items = []
     for reg, instance, user, profile in pagination.items:
@@ -290,6 +292,11 @@ def list_registrations():
             'payment_amount': (
                 float(reg.payment_amount) if reg.payment_amount is not None else None
             ),
+            # Як закрито оплату: 'liqpay' | 'manual' | 'bank'; None -- не
+            # оплачено чи журнал порожній. Потрібне звірнику банку, щоб не
+            # зарахувати вдруге.
+            'paid_via': (via.get(reg.id)
+                         if reg.payment_status == 'paid' else None),
             'paid_at': _iso(reg.paid_at),
             # 'datetime' -- момент відомий; 'date' -- лише день (час у paid_at
             # тоді умовний полудень за Києвом). None -- дати немає.
@@ -470,6 +477,7 @@ def list_online_enrollments():
 
     page_requests = finance_report.refund_requests_for(
         enrollment_ids=[item.id for item, *_rest in pagination.items])
+    via = paid_via_map('enrollment', [item.id for item, *_rest in pagination.items])
 
     items = []
     for enrollment, course, user, profile in pagination.items:
@@ -494,6 +502,8 @@ def list_online_enrollments():
                 if enrollment.payment_amount is not None else None
             ),
             'currency': course.currency,
+            'paid_via': (via.get(enrollment.id)  # як у /registrations
+                         if enrollment.payment_status == 'paid' else None),
             'paid_at': _iso(enrollment.paid_at),
             'paid_at_precision': enrollment.paid_at_precision,  # як у /registrations
             'refunded_amount': float(enrollment.refunded_total),  # як у /registrations

@@ -271,6 +271,151 @@ class TestRegistrations:
         assert row['phone_e164'] == '+380671112233'
 
 
+class TestPaidVia:
+    """`paid_via`: чим саме закрито оплату -- щоб банківський звірник
+    не зарахував вдруге те, що вже оплачено карткою."""
+
+    def _reg(self, payment_status='unpaid'):
+        user = _user()
+        course = Course(title='Курс', slug=f'c-{_uid()}', event_type='course',
+                        base_price=1000, is_active=True, created_by=user.id)
+        db.session.add(course)
+        db.session.flush()
+        inst = CourseInstance(course_id=course.id, status='published',
+                              event_format='offline', price=1000,
+                              start_date=datetime.now(timezone.utc) + timedelta(days=5))
+        db.session.add(inst)
+        db.session.flush()
+        reg = EventRegistration(
+            user_id=user.id, instance_id=inst.id, phone='+380671112233',
+            specialty='S', workplace='W', status='confirmed',
+            payment_status=payment_status, payment_amount=1000)
+        db.session.add(reg)
+        db.session.commit()
+        return reg
+
+    def _journal(self, reg, source, mapped='paid'):
+        from app.models.payment_transaction import PaymentTransaction
+        db.session.add(PaymentTransaction(
+            registration_id=reg.id, order_id=f'REG-{reg.id}',
+            mapped_status=mapped, source=source))
+        db.session.commit()
+
+    def _via(self, client, reg):
+        data = client.get('/api/v1/registrations?per_page=200',
+                          headers=HEADERS).get_json()
+        return next(i for i in data['items'] if i['id'] == reg.id)['paid_via']
+
+    def test_callback_is_liqpay(self, client, partner_settings):
+        reg = self._reg('paid')
+        self._journal(reg, 'callback')
+        assert self._via(client, reg) == 'liqpay'
+
+    def test_manual_status_change_is_manual(self, client, partner_settings):
+        from app.services.payment_ops import apply_manual_payment_status
+        reg = self._reg()
+        apply_manual_payment_status(reg, 'paid', actor='tester')
+        db.session.commit()
+        assert self._via(client, reg) == 'manual'
+
+    def test_bank_confirmation_is_bank(self, client, partner_settings, monkeypatch):
+        from decimal import Decimal
+        from app.services.bank_payment import confirm_bank_payment
+        from app.services.email_service import EmailService
+        monkeypatch.setattr(EmailService, 'send_payment_confirmation',
+                            staticmethod(lambda registration: None))
+        reg = self._reg()
+        reg_id = reg.id
+        result = confirm_bank_payment(
+            f'REG-{reg_id}', Decimal('1000'),
+            datetime(2026, 10, 30, 9, 15, tzinfo=timezone.utc), 'bt-via')
+        db.session.rollback()
+        assert result.status == 'paid'
+        data = client.get('/api/v1/registrations?per_page=200',
+                          headers=HEADERS).get_json()
+        row = next(i for i in data['items'] if i['id'] == reg_id)
+        assert row['paid_via'] == 'bank'
+
+    def test_unpaid_is_null(self, client, partner_settings):
+        reg = self._reg('unpaid')
+        assert self._via(client, reg) is None
+
+    def test_refunded_later_is_null(self, client, partner_settings):
+        reg = self._reg('refunded')
+        self._journal(reg, 'callback')
+        assert self._via(client, reg) is None
+
+    def test_paid_without_journal_is_null(self, client, partner_settings):
+        reg = self._reg('paid')
+        assert self._via(client, reg) is None
+
+    def test_last_paid_row_wins(self, client, partner_settings):
+        reg = self._reg('paid')
+        self._journal(reg, 'manual')
+        self._journal(reg, 'status_check')
+        assert self._via(client, reg) == 'liqpay'
+
+    def test_refund_rows_are_ignored(self, client, partner_settings):
+        reg = self._reg('paid')
+        self._journal(reg, 'manual')
+        self._journal(reg, 'refund')
+        assert self._via(client, reg) == 'manual'
+
+    def test_online_enrollment_has_paid_via(self, client, partner_settings):
+        from decimal import Decimal
+        from app.models.online_course import OnlineCourse
+        from app.models.online_enrollment import OnlineEnrollment
+        from app.models.payment_transaction import PaymentTransaction
+        user = _user()
+        course = OnlineCourse(
+            sintegrum_id=int(uuid4().int % 10_000_000), remote_name='Курс',
+            slug=f'onl-{_uid()}', price=Decimal('4500'),
+            access_url='https://example.test/register/abc', is_published=True)
+        db.session.add(course)
+        db.session.flush()
+        enr = OnlineEnrollment(
+            user_id=user.id, online_course_id=course.id,
+            payment_amount=Decimal('4500'), payment_status='paid', status='pending')
+        db.session.add(enr)
+        db.session.flush()
+        db.session.add(PaymentTransaction(
+            enrollment_id=enr.id, order_id=f'ONL-{enr.id}',
+            mapped_status='paid', source='bank'))
+        db.session.commit()
+
+        data = client.get('/api/v1/online-enrollments?per_page=200',
+                          headers=HEADERS).get_json()
+        row = next(i for i in data['items'] if i['id'] == enr.id)
+        assert row['paid_via'] == 'bank'
+
+    def test_query_count_does_not_grow_with_page_size(self, client, partner_settings):
+        from sqlalchemy import event
+
+        def selects():
+            counted = []
+
+            def _count(_c, _cur, statement, _p, _ctx, _many):
+                if ('FROM payment_transactions' in statement
+                        and statement.lstrip().upper().startswith('SELECT')):
+                    counted.append(statement)
+
+            event.listen(db.engine, 'before_cursor_execute', _count)
+            try:
+                assert client.get('/api/v1/registrations?per_page=200',
+                                  headers=HEADERS).status_code == 200
+            finally:
+                event.remove(db.engine, 'before_cursor_execute', _count)
+            return len(counted)
+
+        reg = self._reg('paid')
+        self._journal(reg, 'callback')
+        baseline = selects()
+        for _ in range(5):
+            r = self._reg('paid')
+            self._journal(r, 'callback')
+        assert selects() == baseline == 1
+
+
 class TestLeads:
     def test_two_sources_in_one_stream(self, client, partner_settings):
         """Для менеджера це один список «хтось залишив контакти»."""

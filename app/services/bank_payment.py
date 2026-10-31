@@ -151,3 +151,39 @@ def confirm_bank_payment(order_ref: str, amount: Decimal, transacted_at: datetim
     if _already_logged(bank_tx_ref):
         return BankPaymentResult(STATUS_DUPLICATE, None, order_ref)
     return _refuse(order_ref, 'db_error')
+
+
+# Походження оплати для API: рядок журналу -> що бачить партнер. `refund`
+# сюди не входить свідомо: повернення не є способом оплати.
+_PAID_VIA_BY_SOURCE = {
+    'callback': 'liqpay',
+    'status_check': 'liqpay',
+    'manual': 'manual',
+    SOURCE_BANK: 'bank',
+}
+
+
+def paid_via_map(kind: str, ids: list) -> dict:
+    """Чим закрито оплату: {id: 'liqpay' | 'manual' | 'bank'}.
+
+    kind: 'registration' чи 'enrollment'. «Останній» -- рядок журналу з
+    mapped_status='paid' із найбільшим id: ручна позначка, яку згодом
+    перезаписав status_check LiqPay, вважається карткою. Id без такого
+    рядка в мапі немає. Один запит на весь список, без N+1.
+
+    Чи оплачено зараз, мапа не знає: реєстрація, повернена пізніше, тут
+    теж матиме значення -- відсікає це викликач за payment_status.
+    """
+    if not ids:
+        return {}
+    column = (PaymentTransaction.registration_id if kind == 'registration'
+              else PaymentTransaction.enrollment_id)
+    rows = (
+        db.session.query(column, PaymentTransaction.source)
+        .filter(column.in_(ids), PaymentTransaction.mapped_status == 'paid',
+                PaymentTransaction.source.in_(list(_PAID_VIA_BY_SOURCE)))
+        .order_by(PaymentTransaction.id)
+        .all()
+    )
+    # Порядок за id зростає, тож пізніший рядок перезаписує ранній.
+    return {owner_id: _PAID_VIA_BY_SOURCE[source] for owner_id, source in rows}
