@@ -22,7 +22,7 @@ from app.models.site_settings import SiteSettings
 from app.services.number_to_words_ua import number_to_words_ua
 from app.services.payment_purpose import build_payment_purpose, order_ref
 from app.services.payment_qr import build_nbu_qr_payload, qr_svg_data_uri
-from app.utils import ensure_utc
+from app.utils import KYIV, ensure_utc
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +73,9 @@ class InvoiceError(Exception):
 
 
 def _date_phrase(dt):
-    dt = ensure_utc(dt) or utcnow()
+    # Київський час, як і в призначенні платежу: на межі доби дата в шапці
+    # й у призначенні не повинні розходитися.
+    dt = (ensure_utc(dt) or utcnow()).astimezone(KYIV)
     return f'{dt.day} {_MONTHS[dt.month]} {dt.year} р.'
 
 

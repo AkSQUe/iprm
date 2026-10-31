@@ -52,3 +52,11 @@ def test_purpose_date_is_kyiv_not_utc():
 def test_order_ref():
     assert order_ref(_reg(None, NOON)) == 'REG-1234'
     assert order_ref(_enrollment(None, NOON)) == 'ONL-56'
+
+
+def test_invoice_header_date_matches_purpose_in_kyiv_time():
+    """30.10 22:30 UTC = 31.10 00:30 за Києвом: шапка й призначення -- 31 жовтня."""
+    from app.services.invoice_service import _date_phrase
+    late = datetime(2026, 10, 30, 22, 30, tzinfo=timezone.utc)
+    assert _date_phrase(late) == '31 жовтня 2026 р.'
+    assert build_payment_purpose(_reg(None, late)).endswith('від 31.10.2026')
