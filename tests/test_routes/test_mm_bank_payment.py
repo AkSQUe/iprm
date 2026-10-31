@@ -139,6 +139,9 @@ def test_missing_field_400(client, signed, mm_enabled, reg_unpaid_1500):
 
 @pytest.mark.parametrize('field,value', [
     ('amount', 'abc'), ('amount', '-5'), ('transacted_at', 'yesterday'),
+    ('transacted_at', '2026-10-30T09:15:00'),
+    ('amount', '1E+30'), ('amount', '1500.004'), ('amount', '100000000'),
+    ('amount', '0'),
 ])
 def test_unparsable_field_400(client, signed, mm_enabled, reg_unpaid_1500,
                               field, value):

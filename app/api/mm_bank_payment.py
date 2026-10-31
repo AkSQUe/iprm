@@ -5,6 +5,24 @@
 статусів резервів (див. mm_signature). Бізнес-відмова (вже оплачено, інша
 сума, скасовано) -- це 200 із status='refused' і причиною, а не помилка
 протоколу: відправнику потрібно відрізнити «не зараховано» від «не дійшло».
+
+Контракт запиту (JSON):
+  order_ref     'REG-<id>' | 'ONL-<id>'
+  amount        сума переказу, > 0, до 2 знаків після коми, <= 99999999.99
+  transacted_at ISO-8601 З часовим поясом (без поясу -- 400); точність
+                завжди 'datetime': Privat Autoclient віддає час операції
+  bank_tx_ref   стабільний ідентифікатор рядка виписки (mm-bt-<id>)
+  actor         null -- збіг знайдено автоматично; рядок -- менеджер
+                привʼязав операцію вручну (хто саме)
+
+Відповідь 200: {status, reason, order_ref}.
+  status 'paid'       -- оплату зараховано (reason null)
+  status 'duplicate'  -- ця операція вже зарахована ТЕМ САМИМ замовленням
+  status 'refused'    -- reason: bad_ref | not_found | already_paid |
+                         cancelled | refunded | amount_mismatch |
+                         tx_used_elsewhere (операцію вже зараховано до
+                         іншого замовлення) | db_error
+Відповідь 400: {status: 'malformed', field}.
 """
 from datetime import datetime, timezone
 from decimal import Decimal, InvalidOperation
@@ -17,6 +35,9 @@ from app.services.bank_payment import confirm_bank_payment
 
 mm_bank_payment_bp = Blueprint(
     'mm_bank_payment', __name__, url_prefix='/api/partner/mm-medic')
+
+
+_MAX_AMOUNT = Decimal('99999999.99')
 
 
 class _BadField(Exception):
@@ -40,7 +61,10 @@ def _amount(payload):
         value = Decimal(str(raw))
     except InvalidOperation:
         raise _BadField('amount')
-    if not value.is_finite() or value <= 0:
+    if not value.is_finite() or value <= 0 or value > _MAX_AMOUNT:
+        raise _BadField('amount')
+    # Копійки -- межа: 1500.004 не має округлюватися до збігу з 1500.00.
+    if value != value.quantize(Decimal('0.01')):
         raise _BadField('amount')
     return value
 
@@ -53,8 +77,10 @@ def _moment(payload):
         value = datetime.fromisoformat(raw.replace('Z', '+00:00'))
     except ValueError:
         raise _BadField('transacted_at')
+    # Час без поясу двозначний: мовчки вважати його UTC означало б
+    # зсунути дату оплати на 2-3 години.
     if value.tzinfo is None:
-        return value.replace(tzinfo=timezone.utc)
+        raise _BadField('transacted_at')
     return value.astimezone(timezone.utc)
 
 
