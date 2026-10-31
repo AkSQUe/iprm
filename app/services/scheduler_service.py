@@ -101,8 +101,12 @@ def init_scheduler(app):
     if os.environ.get('WERKZEUG_RUN_MAIN') != 'true' and app.debug:
         return
 
-    db_uri = app.config['SQLALCHEMY_DATABASE_URI']
-    jobstore = SQLAlchemyJobStore(url=db_uri)
+    # Сховище джоб ходить через пул застосунку. З url=... APScheduler будував
+    # у кожному gunicorn-воркері ще один engine із власним пулом, і його
+    # зʼєднання висіло на спільному інстансі БД поруч із пулом застосунку.
+    from app.extensions import db
+    with app.app_context():
+        jobstore = SQLAlchemyJobStore(engine=db.engine)
     scheduler.configure(
         jobstores={'default': jobstore},
         job_defaults={

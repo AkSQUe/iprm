@@ -190,11 +190,19 @@ class ProductionConfig(Config):
     POSTHOG_ENABLED = os.environ.get('POSTHOG_ENABLED', 'true').lower() == 'true'
     POSTHOG_PROJECT_API_KEY = os.environ.get(
         'POSTHOG_PROJECT_API_KEY', 'phc_wi73dtG77zD6oQua7i8xFERD9CYDqHYac9xcRBvEMKof')
+    # Пул -- на ОДИН gunicorn-воркер (їх 3), а інстанс БД спільний з іншими
+    # сайтами: 100 зʼєднань на всіх. pool_size -- скільки зʼєднань воркер
+    # тримає простоюючи; з 10 пул роздувався джобами планувальника і не
+    # віддавав їх (31.10.2026: 11 зʼєднань на воркер). Стелю
+    # pool_size + max_overflow не опускати нижче 13: до 10 джоб у потоках
+    # APScheduler тримають по зʼєднанню під advisory-замок і чекають ще одне
+    # на сесію, плюс запит і сховище джоб -- на меншій стелі вони чекали б
+    # одна одну до pool_timeout.
     SQLALCHEMY_ENGINE_OPTIONS = {
-        'pool_size': 10,
+        'pool_size': 5,
         'pool_recycle': 3600,
         'pool_pre_ping': True,
-        'max_overflow': 20,
+        'max_overflow': 10,
     }
 
     @staticmethod
