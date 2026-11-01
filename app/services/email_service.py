@@ -42,6 +42,12 @@ _LINK_RE = re.compile(r'<a\b[^>]*?href=["\']([^"\']+)["\'][^>]*>(.*?)</a>', re.I
 _BR_RE = re.compile(r'<br\s*/?>', re.IGNORECASE)
 _BLOCK_RE = re.compile(r'</?(?:p|div|tr|h[1-6]|li|ul|ol|table|td)\b[^>]*>', re.IGNORECASE)
 _HTML_TAG_RE = re.compile(r'<[^>]+>')
+# Елемент, що має сенс лише поруч із картинкою (підпис до QR): у текстовій
+# частині картинки немає, і «відскануйте» там читалось би як інструкція до
+# того, чого в листі нема. Позначається атрибутом data-html-only; тег не
+# має вкладатись сам у себе (підпис -- це один <p>).
+_HTML_ONLY_RE = re.compile(
+    r'<(\w+)\b[^>]*\bdata-html-only\b[^>]*>.*?</\1>', re.IGNORECASE | re.DOTALL)
 # Невидимі символи: м'який перенос, CGJ, zero-width, figure/narrow space, BOM
 # (ними напхано прихований preview-блок у base.html -- у тексті це сміття).
 _INVISIBLE_RE = re.compile('[' + ''.join(map(chr, (0x00ad, 0x034f, 0x200b, 0x200c, 0x200d, 0x200e, 0x200f, 0x2007, 0x202f, 0xfeff))) + ']')
@@ -78,6 +84,7 @@ def _html_to_plaintext(html):
     SpamAssassin MPART_ALT_DIFF_COUNT (через що листи летіли у спам).
     """
     text = _COMMENT_RE.sub('', html)
+    text = _HTML_ONLY_RE.sub('', text)
     text = _HEAD_RE.sub('', text)
     text = _STYLE_SCRIPT_RE.sub('', text)
     text = _LINK_RE.sub(lambda m: '{} ({})'.format(m.group(2), m.group(1)), text)
@@ -680,33 +687,28 @@ class EmailService:
     def _registration_bank_transfer(registration):
         """(реквізити, QR-вкладення або None) для листа, або (None, None).
 
-        Умова та сама, що й для блока реквізитів на сторінці реєстрації:
-        реєстрація жива, не оплачена, платна, і оплату за рахунком увімкнено.
+        Коли переказ пропонувати, вирішує та сама умова, що й на сторінках
+        (payment_transfer.transfer_offered): реєстрація не скасована, оплата
+        саме `unpaid`, сума більша за нуль, оплату за рахунком увімкнено.
         Обраний LiqPay переказ не скасовує -- сторінка теж показує обидва.
 
         QR -- PNG вбудованим зображенням (cid:), а не посиланням на сервер
         (пошта блокує зовнішні картинки) і не data:-URI (частина клієнтів
-        його не показує). Некоректні реквізити -- текст без QR, як у рахунку.
-        Збій побудови QR не має забирати з собою лист.
+        його не показує). Flask-Mail кладе його в multipart/mixed, а не в
+        multipart/related, тож частина клієнтів (Outlook, мобільна пошта)
+        покаже QR-REG-<id>.png ще й у списку вкладень -- картинка в тексті
+        листа від цього не зникає. Некоректні реквізити -- текст без QR, як
+        у рахунку. Збій побудови QR не має забирати з собою лист.
         """
-        from app.models.site_settings import SiteSettings
-
-        if registration.status == 'cancelled':
-            return None, None
-        if registration.payment_status != 'unpaid':
-            return None, None
-        if not (registration.payment_amount and registration.payment_amount > 0):
-            return None, None
-        if not SiteSettings.enabled_payment_methods().invoice:
-            return None, None
-
-        from app.services.payment_transfer import transfer_details
+        from app.services.payment_transfer import bank_details_for
         try:
-            details = transfer_details(registration)
-            png = details.qr_png()
+            details = bank_details_for(registration)
+            png = details.qr_png() if details else None
         except Exception:
             logger.exception('REG-%s: реквізити переказу не додано до листа',
                              registration.id)
+            return None, None
+        if details is None:
             return None, None
         if not png:
             return details, None

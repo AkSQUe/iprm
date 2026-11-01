@@ -152,6 +152,16 @@ class TestUnpaid:
             log.html_body)
         assert build_payment_purpose(registration) in sent[-1].body
 
+    def test_plain_text_has_no_qr_caption(self, registration, sent,
+                                          mail_enabled):
+        """У текстовій частині картинки немає -- і підпис до неї там
+        лише заплутав би."""
+        log = _send(registration)
+
+        assert 'Відскануйте' in log.html_body
+        assert 'Відскануйте' not in _html_to_plaintext(log.html_body)
+        assert 'Відскануйте' not in sent[-1].body
+
     def test_qr_stored_with_content_id_for_retry(self, registration, sent,
                                                  mail_enabled):
         """Автоповтор і «переслати» збирають лист зі збереженого: без
@@ -189,6 +199,17 @@ class TestNoTransfer:
         assert _cid(log.html_body) is None
         parsed = message_from_bytes(sent[-1].as_bytes())
         assert 'image/png' not in [p.get_content_type() for p in parsed.walk()]
+
+    def test_pending_payment_has_no_block(self, registration, sent,
+                                          mail_enabled):
+        """Гроші вже в дорозі -- QR запрошував би заплатити вдруге."""
+        registration.payment_status = 'pending'
+        db.session.flush()
+
+        log = _send(registration)
+
+        assert f'REG-{registration.id}' not in log.html_body
+        assert _cid(log.html_body) is None
 
     def test_invoice_method_off_has_no_block(self, registration, sent,
                                              mail_enabled, settings):

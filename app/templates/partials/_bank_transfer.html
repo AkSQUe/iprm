@@ -50,7 +50,8 @@
       <div class="bank-transfer__row bank-transfer__row--purpose">
         <dt class="bank-transfer__label">{{ _('Призначення платежу') }}</dt>
         <dd class="bank-transfer__value">
-          <span class="bank-transfer__purpose" data-payment-purpose>{{ transfer.purpose }}</span>
+          {% set before, ref, after = transfer.purpose_parts %}
+          <span class="bank-transfer__purpose" data-payment-purpose>{{ before }}{% if ref %}<span class="bank-transfer__ref">{{ ref }}</span>{% endif %}{{ after }}</span>
           <button type="button" class="apple-btn apple-btn--outline apple-btn--sm bank-transfer__copy"
                   data-copy="{{ transfer.purpose }}" data-copy-reveal hidden>{{ _('Копіювати') }}</button>
         </dd>

@@ -267,7 +267,13 @@
     посилання пошта блокує, data:-URI частина клієнтів не показує, SVG
     Gmail не малює. qr_cid порожній (некоректні реквізити) -- блок без QR.
     Розкладка в одну колонку: QR під реквізитами читається однаково й на
-    телефоні, і в Outlook. -#}
+    телефоні, і в Outlook.
+
+    Flask-Mail кладе вбудоване зображення в multipart/mixed (не
+    multipart/related), тож частина клієнтів покаже QR-REG-<id>.png ще й у
+    списку вкладень -- у тексті листа картинка лишається. Підпис до QR
+    позначено data-html-only: у текстовій частині листа картинки немає, і
+    _html_to_plaintext його пропускає. -#}
 {%- macro bank_transfer(details, qr_cid=None) -%}
 <table role="presentation" style="width: 100%; margin: 24px 0; background-color: #F7F4FB; border: 1px solid #E9E4EF; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
     <tr>
@@ -286,7 +292,7 @@
                 <tr>
                     <td align="center">
                         <img src="cid:{{ qr_cid }}" width="180" height="180" alt="{{ _('QR-код для оплати переказом') }}" style="display: block; width: 180px; height: 180px; border: 1px solid #E9E4EF; border-radius: 6px; background-color: #FFFFFF;">
-                        <p style="margin: 8px 0 0 0; font-size: 13px; color: #625A6D; line-height: 1.5; text-align: center;">{{ _('Відскануйте в банківському застосунку — отримувач, сума й призначення заповняться самі.') }}</p>
+                        <p data-html-only style="margin: 8px 0 0 0; font-size: 13px; color: #625A6D; line-height: 1.5; text-align: center;">{{ _('Відскануйте в банківському застосунку — отримувач, сума й призначення заповняться самі.') }}</p>
                     </td>
                 </tr>
             </table>

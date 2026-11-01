@@ -12,6 +12,7 @@
 """
 import io
 import logging
+import re
 from dataclasses import dataclass
 from decimal import Decimal
 from typing import Optional
@@ -24,6 +25,9 @@ logger = logging.getLogger(__name__)
 
 #: Отримувач за замовчуванням -- той самий, що в шапці рахунка.
 DEFAULT_RECIPIENT = 'ІПРМ'
+
+#: Номер замовлення в призначенні (REG-/ONL-/SUR-<id>).
+_ORDER_REF = re.compile(r'(?:REG|ONL|SUR)-\d+')
 
 
 def payment_qr_payload(settings, amount, purpose) -> Optional[str]:
@@ -77,6 +81,16 @@ class TransferDetails:
         """SVG для `<img>` на сторінці -- той самий, що в PDF-рахунку."""
         return qr_svg_data_uri(self.qr_payload) if self.qr_payload else None
 
+    @property
+    def purpose_parts(self):
+        """(до, номер, після) -- щоб сторінка не розривала «REG-» і число
+        по різних рядках. Без номера -- (призначення, '', '')."""
+        found = _ORDER_REF.search(self.purpose)
+        if not found:
+            return self.purpose, '', ''
+        return (self.purpose[:found.start()], found.group(0),
+                self.purpose[found.end():])
+
     def qr_png(self) -> Optional[bytes]:
         return qr_png_bytes(self.qr_payload) if self.qr_payload else None
 
@@ -100,3 +114,31 @@ def transfer_details(order, *, amount=None, purpose=None) -> TransferDetails:
         purpose=text,
         qr_payload=payment_qr_payload(settings, value, text),
     )
+
+
+def transfer_offered(order) -> bool:
+    """Чи пропонувати учаснику оплату переказом -- ОДНА умова на всі місця.
+
+    Сторінка реєстрації, токен-оплата, оформлення онлайн-курсу й лист «Реєстрацію
+    підтверджено» беруть її звідси. Поки кожне місце мало свою, токен-оплата
+    й оформлення показували QR при `pending` -- коли LiqPay уже тримає гроші,
+    тобто запрошували заплатити вдруге, -- і на скасованій реєстрації, де
+    переказ ІПРМ відхилить, а гроші доведеться повертати вручну.
+
+    Реєстрація (REG-) чи онлайн-запис (ONL-) не скасовані, оплата саме
+    `unpaid` (не `pending`, не `paid`, не `refunded`), сума більша за нуль і
+    оплату за рахунком увімкнено в налаштуваннях.
+    """
+    if getattr(order, 'status', None) == 'cancelled':
+        return False
+    if getattr(order, 'payment_status', None) != 'unpaid':
+        return False
+    amount = getattr(order, 'payment_amount', None)
+    if not (amount and amount > 0):
+        return False
+    return bool(SiteSettings.enabled_payment_methods().invoice)
+
+
+def bank_details_for(order) -> Optional[TransferDetails]:
+    """Реквізити переказу замовлення або None, якщо переказ не пропонується."""
+    return transfer_details(order) if transfer_offered(order) else None

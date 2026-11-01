@@ -627,8 +627,7 @@ def confirmation(registration_id):
         and reg.payment_status != 'paid'
         and reg.payment_amount and reg.payment_amount > 0
     )
-    bank_details = (_bank_details(reg)
-                    if needs_payment and invoice_available else None)
+    bank_details = _bank_details(reg)
 
     # Крос-сел показуємо лише коли платіжний шлях завершено: поки на сторінці
     # головна дія -- "оплатіть участь" (або платіж ще в обробці), інші курси її
@@ -721,10 +720,11 @@ def invoice_download(registration_id):
 # ======================================================================
 
 def _bank_details(reg):
-    """Реквізити переказу для реєстрації: призначення з REG-<id> і QR --
-    ті самі, що в PDF-рахунку (payment_transfer)."""
-    from app.services.payment_transfer import transfer_details
-    return transfer_details(reg)
+    """Реквізити переказу для реєстрації (призначення з REG-<id> і QR, ті
+    самі, що в PDF-рахунку) або None. Коли їх показувати, вирішує одна
+    умова на сторінки й лист -- payment_transfer.transfer_offered."""
+    from app.services.payment_transfer import bank_details_for
+    return bank_details_for(reg)
 
 
 def _load_reg_by_token(token):
@@ -900,8 +900,10 @@ def complete_payment(token):
         liqpay_result_url=liqpay_result_url,
         invoice_url=(url_for('registration.complete_invoice', token=token)
                      if methods.invoice else None),
-        bank_details=(_bank_details(reg)
-                      if needs_payment and methods.invoice else None),
+        # Не needs_payment: той пропускає `pending` (гроші вже в дорозі) і
+        # не дивиться на скасування -- реквізити тоді запрошували б платити
+        # вдруге або на скасовану реєстрацію. Умова одна з листом.
+        bank_details=_bank_details(reg),
         **recommend,
     )
 

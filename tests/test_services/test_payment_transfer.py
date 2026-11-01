@@ -16,7 +16,8 @@ from app.services.payment_purpose import (
     build_payment_purpose, build_surcharge_purpose,
 )
 from app.services.payment_transfer import (
-    TransferDetails, qr_png_bytes, transfer_details,
+    TransferDetails, bank_details_for, qr_png_bytes, transfer_details,
+    transfer_offered,
 )
 
 NOON = datetime(2026, 10, 31, 12, 0, tzinfo=timezone.utc)
@@ -123,3 +124,41 @@ def test_details_is_immutable(requisites):
     assert isinstance(details, TransferDetails)
     with pytest.raises(Exception):
         details.purpose = 'інше'
+
+
+def _order(**kw):
+    values = dict(id=4313, user=SimpleNamespace(full_name='Береза Олена'),
+                  created_at=NOON, payment_amount=Decimal('1500'),
+                  status='pending', payment_status='unpaid')
+    values.update(kw)
+    return SimpleNamespace(**values)
+
+
+class TestTransferOffered:
+    """Одна умова на сторінки й лист: розійшовшись, вони показували QR
+    там, де лист його свідомо не дає."""
+
+    def test_unpaid_live_paid_for_order(self, requisites):
+        assert transfer_offered(_order())
+        assert bank_details_for(_order()).purpose.startswith(
+            'Оплата згідно рахунку № REG-4313')
+
+    @pytest.mark.parametrize('kw', [
+        {'payment_status': 'pending'},
+        {'payment_status': 'paid'},
+        {'payment_status': 'refunded'},
+        {'status': 'cancelled'},
+        {'payment_amount': Decimal('0')},
+        {'payment_amount': None},
+    ])
+    def test_not_offered(self, requisites, kw):
+        assert not transfer_offered(_order(**kw))
+        assert bank_details_for(_order(**kw)) is None
+
+    def test_not_offered_when_invoice_method_off(self, requisites):
+        before = requisites.pay_invoice_enabled
+        requisites.pay_invoice_enabled = False
+        try:
+            assert not transfer_offered(_order())
+        finally:
+            requisites.pay_invoice_enabled = before

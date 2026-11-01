@@ -5,6 +5,7 @@
 показує й те саме призначення з кнопкою «Копіювати» і той самий QR.
 """
 import html as htmllib
+import re
 from decimal import Decimal
 from uuid import uuid4
 
@@ -66,6 +67,11 @@ def enrollment(app, buyer, course):
     return item
 
 
+def _shown(page):
+    """Текст без тегів і без вставлених пробілів (номер -- у span)."""
+    return htmllib.unescape(re.sub(r'<[^>]+>', '', page))
+
+
 def _page(client, buyer, course):
     with client.session_transaction() as session:
         session.clear()
@@ -85,9 +91,8 @@ def test_unpaid_shows_onl_purpose_copy_and_qr(client, buyer, course, enrollment,
 
     purpose = build_payment_purpose(enrollment)
     assert f'ONL-{enrollment.id}' in purpose
-    text = htmllib.unescape(page)
-    assert purpose in text
-    assert f'data-copy="{purpose}"' in text
+    assert purpose in _shown(page)
+    assert f'data-copy="{purpose}"' in htmllib.unescape(page)
     assert 'data-payment-qr' in page
     assert 'css/bank-transfer.css' in page
 
@@ -118,5 +123,18 @@ def test_bad_iban_keeps_text_drops_qr(client, buyer, course, enrollment,
 
     page = _page(client, buyer, course)
 
-    assert build_payment_purpose(enrollment) in htmllib.unescape(page)
+    assert build_payment_purpose(enrollment) in _shown(page)
     assert 'data-payment-qr' not in page
+
+
+@pytest.mark.parametrize('payment_status', ['pending', 'refunded'])
+def test_pending_or_refunded_shows_no_requisites(client, buyer, course,
+                                                 enrollment, payment_status):
+    """pending -- гроші вже в дорозі, refunded -- їх повернули: переказ за
+    тим самим ONL- був би другою оплатою, яку зарахувати нікуди."""
+    enrollment.payment_status = payment_status
+    db.session.flush()
+
+    page = _page(client, buyer, course)
+
+    assert 'bank-transfer' not in page

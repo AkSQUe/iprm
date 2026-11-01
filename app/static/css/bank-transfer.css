@@ -88,6 +88,12 @@
   user-select: all;
 }
 
+/* Номер замовлення не розривається: «ONL-» в кінці рядка й «1» на
+   наступному на телефоні читались як два різні числа. */
+.bank-transfer__ref {
+  white-space: nowrap;
+}
+
 .bank-transfer__qr {
   flex: 0 0 auto;
   display: flex;

@@ -113,9 +113,15 @@ def _text(page):
     return htmllib.unescape(re.sub(r'<[^>]+>', ' ', page))
 
 
+def _shown(page):
+    """Текст сторінки без тегів і БЕЗ вставлених пробілів: номер у
+    призначенні загорнуто в span, і рядок має збігтися як є."""
+    return htmllib.unescape(re.sub(r'<[^>]+>', '', page))
+
+
 def _assert_transfer_block(page, purpose):
     assert 'bank-transfer' in page
-    assert purpose in htmllib.unescape(page)
+    assert purpose in _shown(page)
     assert f'data-copy="{purpose}"' in htmllib.unescape(page)
     assert COPY_MARKER in page
     assert QR_MARKER in page
@@ -164,7 +170,7 @@ class TestConfirmationPage:
         _login(client, buyer)
         page = client.get(f'/registration/{unpaid_reg.id}').get_data(as_text=True)
 
-        assert build_payment_purpose(unpaid_reg) in htmllib.unescape(page)
+        assert build_payment_purpose(unpaid_reg) in _shown(page)
         assert QR_MARKER not in page
 
     def test_component_css_linked_only_with_block(self, client, buyer, unpaid_reg):
@@ -195,6 +201,41 @@ class TestTokenPayPage:
         page = client.get(f'/registration/complete/{token}/pay').get_data(as_text=True)
 
         assert 'bank-transfer' not in page
+
+
+    def test_pending_payment_shows_no_requisites(self, client, unpaid_reg):
+        """pending -- гроші вже в дорозі (LiqPay processing/wait_accept):
+        QR тут запрошував би заплатити вдруге."""
+        token = unpaid_reg.issue_completion_token()
+        unpaid_reg.payment_status = 'pending'
+        db.session.flush()
+
+        page = client.get(f'/registration/complete/{token}/pay').get_data(as_text=True)
+
+        assert 'bank-transfer' not in page
+        assert QR_MARKER not in page
+
+    def test_cancelled_registration_shows_no_requisites(self, client, unpaid_reg):
+        """Переказ на скасовану реєстрацію ІПРМ відхилить -- і гроші
+        доведеться повертати вручну."""
+        token = unpaid_reg.issue_completion_token()
+        unpaid_reg.status = 'cancelled'
+        db.session.flush()
+
+        page = client.get(f'/registration/complete/{token}/pay').get_data(as_text=True)
+
+        assert 'bank-transfer' not in page
+
+
+class TestPurposeWrapping:
+    def test_order_number_does_not_break(self, client, buyer, unpaid_reg):
+        """«REG-» і номер не мають розходитись по рядках на телефоні."""
+        _login(client, buyer)
+        page = client.get(f'/registration/{unpaid_reg.id}').get_data(as_text=True)
+
+        assert re.search(
+            r'<span class="bank-transfer__ref">REG-%d</span>' % unpaid_reg.id,
+            page)
 
 
 class TestSurchargePage:
