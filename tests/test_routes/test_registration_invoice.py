@@ -157,8 +157,36 @@ class TestInvoiceContent:
         ws = load_workbook(build_invoice_xlsx(reg)).active
         values = [str(c.value) for row in ws.iter_rows() for c in row if c.value]
 
+        from app.services.payment_purpose import build_payment_purpose
+
+        # Сама КОМІРКА призначення (колонка значень), а не підпис у шапці.
+        assert ws.cell(row=self._purpose_row(ws), column=3).value ==             build_payment_purpose(reg)
         assert any(f'Оплата згідно рахунку № REG-{reg.id}' in v for v in values)
         assert any(v.startswith(f'№ REG-{reg.id} від') for v in values)
+
+    @staticmethod
+    def _purpose_row(ws):
+        return next(c.row for c in ws['A'] if c.value == 'Призначення платежу')
+
+    def test_xlsx_purpose_row_grows_with_long_text(self, app, user, instance):
+        """Фіксована висота різала б довге призначення: висота рядка
+        рахується від довжини тексту."""
+        import math
+        from openpyxl import load_workbook
+        from app.services.invoice_service import build_invoice_xlsx
+        from app.services.payment_purpose import build_payment_purpose
+
+        user.first_name = 'Олександр-Іванович-Петрович'
+        user.last_name = 'Прізвище-Подвійне-Дуже-Довге-Складне'
+        reg = _make_reg(user, instance)
+        purpose = build_payment_purpose(reg)
+        ws = load_workbook(build_invoice_xlsx(reg)).active
+        row = self._purpose_row(ws)
+
+        assert ws.cell(row=row, column=3).value == purpose
+        # Ширина C:F -- 44 символи; на рядок беремо менше, бо шрифт жирний.
+        assert ws.row_dimensions[row].height >= 15 * math.ceil(len(purpose) / 44)
+        assert ws.cell(row=row, column=3).alignment.wrap_text
 
     def test_filename_uses_order_ref(self, app, user, instance):
         from app.services.invoice_service import invoice_filename

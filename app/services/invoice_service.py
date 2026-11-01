@@ -68,6 +68,20 @@ _COLS = ['A', 'B', 'C', 'D', 'E', 'F']
 _WIDTHS = {'A': 5, 'B': 46, 'C': 9, 'D': 7, 'E': 13, 'F': 15}
 
 
+# Колонки C:F разом -- 44 символи; жирний шрифт ширший за середній, тож на
+# рядок рахуємо менше. Excel не підганяє висоту обʼєднаних клітинок сам.
+_VALUE_CHARS_PER_LINE = 38
+_LINE_HEIGHT = 15
+_MIN_PURPOSE_HEIGHT = 28
+
+
+def _wrapped_height(text) -> float:
+    """Висота рядка під текст, що переноситься: довге призначення не має
+    обрізатись."""
+    lines = -(-len(str(text or '')) // _VALUE_CHARS_PER_LINE)
+    return max(_MIN_PURPOSE_HEIGHT, _LINE_HEIGHT * lines)
+
+
 class InvoiceError(Exception):
     """Помилка генерації/конвертації рахунка (показується користувачу)."""
 
@@ -219,7 +233,7 @@ def build_invoice_xlsx(reg) -> io.BytesIO:
         for c in range(1, 7):
             ws.cell(row=r, column=c).fill = _FILL_SECTION
         if label == 'Призначення платежу':
-            ws.row_dimensions[r].height = 28
+            ws.row_dimensions[r].height = _wrapped_height(value)
         r += 1
     r += 1
 

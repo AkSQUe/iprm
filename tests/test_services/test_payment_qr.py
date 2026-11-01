@@ -54,3 +54,18 @@ def test_qr_fails_closed(iban, code, amount):
 def test_svg_data_uri():
     uri = qr_svg_data_uri(build_nbu_qr_payload('ТОВ', IBAN, '10', 'x', '45871060'))
     assert uri.startswith('data:image/svg+xml')
+
+
+def test_qr_clips_long_purpose_at_name_tail_and_still_encodes():
+    """Довге призначення обрізається з хвоста (ім'я), номер замовлення на
+    початку лишається, а QR усе одно будується в межах URL v002."""
+    purpose = ('Оплата згідно рахунку № REG-123 від 31.10.2026 за '
+               + "Прізвище-Дуже-Довге Ім'я По-батькові " * 6)
+    assert len(purpose) > 140
+    url = build_nbu_qr_payload('ТОВ', IBAN, '1500', purpose, '45871060')
+
+    lines = decode(url)
+    assert len(lines) == 13
+    assert lines[11] == purpose[:140]
+    assert lines[11].startswith('Оплата згідно рахунку № REG-123 від 31.10.2026')
+    assert qr_svg_data_uri(url).startswith('data:image/svg+xml')
