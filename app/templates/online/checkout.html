@@ -1,11 +1,13 @@
 {% extends 'base.html' %}
 {% from 'partials/_money.html' import money %}
+{% from 'partials/_bank_transfer.html' import bank_transfer with context %}
 
 {% block title %}{{ _('Оплата курсу') }} | {{ course.effective_title }} | ІПРМ{% endblock %}
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/online-course.css') }}?v={{ assets_version }}">
+{% if bank_details %}<link rel="stylesheet" href="{{ url_for('static', filename='css/bank-transfer.css') }}?v={{ assets_version }}">{% endif %}
 {% endblock %}
 
 {% block extra_head %}
@@ -171,6 +173,13 @@
           </p>
           {% endif %}
         </div>
+
+        {#- Реквізити переказу -- той самий спосіб, що й рахунок, тільки без
+            PDF: призначення з ONL-<id> і QR, як у документі. Роут дає їх лише
+            неоплаченому платному замовленню з увімкненою оплатою за рахунком. -#}
+        {% if bank_details %}
+        {{ bank_transfer(bank_details) }}
+        {% endif %}
 
         {# Кабінет пропонуємо ПІСЛЯ оплати й лише покупцю без пароля: до
            оплати це був би той самий бар'єр, який ми прибрали, а власнику

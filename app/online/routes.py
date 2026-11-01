@@ -353,8 +353,16 @@ def _order_context(enrollment, course, token=None):
     входу ще не має. Тому маршрути тут -- параметр, а не хардкод у шаблоні.
     """
     pay_methods = SiteSettings.enabled_payment_methods()
+    # Реквізити з призначенням ONL-<id> і QR -- там само, де пропонується
+    # рахунок: за номером у призначенні mm-medic зіставляє переказ одразу.
+    bank_details = None
+    if (pay_methods.invoice and not enrollment.is_paid
+            and enrollment.payment_amount and enrollment.payment_amount > 0):
+        from app.services.payment_transfer import transfer_details
+        bank_details = transfer_details(enrollment)
     return dict(
         active_nav='online',
+        bank_details=bank_details,
         course=course,
         enrollment=enrollment,
         # Сума до знижки -- щоб підсумок у картці показував, від чого саме
