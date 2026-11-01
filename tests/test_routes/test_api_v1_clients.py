@@ -390,13 +390,18 @@ class TestPaidVia:
 
     def test_query_count_does_not_grow_with_page_size(self, client, partner_settings):
         from sqlalchemy import event
+        from app.models.payment_transaction import PaymentTransaction
+
+        # Таблиця береться з моделі, а не з тексту SQL: перейменування чи
+        # зміна форми запиту (JOIN замість FROM) не ховає його від лічильника.
+        table = PaymentTransaction.__table__.name
 
         def selects():
             counted = []
 
             def _count(_c, _cur, statement, _p, _ctx, _many):
-                if ('FROM payment_transactions' in statement
-                        and statement.lstrip().upper().startswith('SELECT')):
+                if (statement.lstrip().upper().startswith('SELECT')
+                        and table in statement):
                     counted.append(statement)
 
             event.listen(db.engine, 'before_cursor_execute', _count)

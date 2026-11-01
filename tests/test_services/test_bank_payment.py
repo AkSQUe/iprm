@@ -151,12 +151,23 @@ def test_amount_tolerance(app, user, instance, sent):
         f'bank-{_uid()}@test.com', 'password123', first_name='Other', last_name='User',
     )
     db.session.flush()
+    third = User.create_with_password(
+        f'bank-{_uid()}@test.com', 'password123', first_name='Third', last_name='User',
+    )
+    db.session.flush()
     ok = _make_reg(user, instance)
     bad = _make_reg(other, instance)
+    over = _make_reg(third, instance)
     r_ok = confirm_bank_payment(f'REG-{ok.id}', Decimal('1500'), MOMENT, 'bt-ok')
     r_bad = confirm_bank_payment(f'REG-{bad.id}', Decimal('1499.99'), MOMENT, 'bt-bad')
+    r_over = confirm_bank_payment(f'REG-{over.id}', Decimal('1500.01'), MOMENT, 'bt-over')
     assert (r_ok.status, r_ok.reason) == ('paid', None)
     assert (r_bad.status, r_bad.reason) == ('refused', 'amount_mismatch')
+    assert (r_over.status, r_over.reason) == ('refused', 'amount_mismatch')
+    # Відмова не лишає сліду: перечитуємо з БД, а не з кешу сесії.
+    for refused in (bad, over):
+        db.session.refresh(refused)
+        assert refused.payment_status == 'unpaid'
     assert sent.count == 1
 
 
@@ -232,6 +243,8 @@ def test_concurrent_same_ref_integrity_error_is_tx_used_elsewhere(
                              'bt-race')
     assert (r.status, r.reason) == ('refused', 'tx_used_elsewhere')
     assert len(_bank_rows(payment_id='bt-race')) == 1
+    assert _bank_rows(payment_id='bt-race')[0].registration_id == first.id
+    assert _bank_rows(registration_id=second.id) == []
     db.session.refresh(second)
     assert second.payment_status == 'unpaid'
 
@@ -393,3 +406,9 @@ def test_logged_owner_failure_in_fallback_raises_unavailable(
                         lambda self, *a, **k: (False, 'boom'))
     with pytest.raises(bank_payment.BankPaymentUnavailable):
         confirm_bank_payment(f'REG-{reg.id}', Decimal('1500'), MOMENT, 'bt-flaky')
+
+
+def test_paid_via_map_rejects_unknown_kind(app):
+    from app.services.bank_payment import paid_via_map
+    with pytest.raises(ValueError):
+        paid_via_map('invoice', [1])

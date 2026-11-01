@@ -226,10 +226,16 @@ def paid_via_map(kind: str, ids: list) -> dict:
     Чи оплачено зараз, мапа не знає: реєстрація, повернена пізніше, тут
     теж матиме значення -- відсікає це викликач за payment_status.
     """
+    columns = {
+        'registration': PaymentTransaction.registration_id,
+        'enrollment': PaymentTransaction.enrollment_id,
+    }
+    if kind not in columns:
+        raise ValueError('unknown kind: %r' % (kind,))
+    ids = list(ids)
     if not ids:
         return {}
-    column = (PaymentTransaction.registration_id if kind == 'registration'
-              else PaymentTransaction.enrollment_id)
+    column = columns[kind]
     rows = (
         db.session.query(column, PaymentTransaction.source)
         .filter(column.in_(ids), PaymentTransaction.mapped_status == 'paid',
