@@ -33,3 +33,21 @@ def build_payment_purpose(order) -> str:
     if name:
         purpose = f'{purpose} за {name}'
     return purpose
+
+
+def build_surcharge_purpose(transfer) -> str:
+    """«Доплата різниці тарифу SUR-7 за Прізвище Ім'я По-батькові».
+
+    Номер -- той самий order_id SUR-<id перенесення>, що й у LiqPay. Для
+    mm-medic він означає «не зіставляти автоматично»: доплата -- окремий
+    платіж, а сума різниці може випадково дорівнювати ціні іншої реєстрації
+    тієї ж людини, і правило «ПІБ + сума» підтвердило б не те. Без номера
+    саме так і сталося б.
+    """
+    purpose = f'Доплата різниці тарифу SUR-{transfer.id}'
+    reg = getattr(transfer, 'registration', None)
+    user = getattr(reg, 'user', None)
+    name = ((user.full_name if user else '') or '').strip()
+    if name:
+        purpose = f'{purpose} за {name}'
+    return purpose

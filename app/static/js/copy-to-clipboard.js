@@ -3,6 +3,10 @@
    Розмітка:  <button data-copy="текст для копіювання">...</button>
    Якщо data-copy порожній — копіюється textContent елемента.
 
+   data-copy-reveal + hidden: кнопка, без JS безглузда, у розмітці прихована
+   і показується тут, коли скрипт уже може нею керувати (прогресивне
+   покращення -- напр. призначення платежу в partials/_bank_transfer.html).
+
    Опціонально використовує window.iprmToast (toast.js) для фідбеку.
    Vanilla JS. Single Responsibility. */
 (function () {
@@ -48,6 +52,7 @@
     document.querySelectorAll('[data-copy]').forEach(function (el) {
       if (el.__iprmCopyBound) return;
       el.__iprmCopyBound = true;
+      if (el.hasAttribute('data-copy-reveal')) el.hidden = false;
       el.addEventListener('click', function (e) {
         e.preventDefault();
         var text = (el.getAttribute('data-copy') || el.textContent || '').trim();

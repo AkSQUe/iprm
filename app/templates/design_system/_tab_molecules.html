@@ -1145,6 +1145,17 @@
     </div>
   </div>
 
+  <!-- ===== BANK TRANSFER ===== -->
+  {% from 'partials/_bank_transfer.html' import bank_transfer with context %}
+  <div class="ds-section" id="bank-transfer">
+    <p class="ds-label">Components</p>
+    <h2 class="ds-title">Bank Transfer</h2>
+    <div class="ds-demo">
+      {{ bank_transfer(bank_transfer_demo) }}
+    </div>
+    <p class="ds-hint">Реквізити для оплати переказом: отримувач, ЄДРПОУ, банк, IBAN, сума, призначення з номером REG-/ONL-/SUR- і платіжний QR НБУ (SVG, той самий, що в PDF-рахунку). Один макрос partials/_bank_transfer.html (bank_transfer; css/bank-transfer.css сторінка підключає сама) на registration (confirmation, complete_pay через _pay_options; transfer_surcharge) і online (checkout). Дані -- services/payment_transfer.TransferDetails; некоректні реквізити в налаштуваннях -- QR не рендериться, текст лишається. Кнопка «Копіювати» прихована без JS (hidden + data-copy-reveal, показує copy-to-clipboard.js), саме призначення виділяється одним дотиком (user-select: all). Розкладка за шириною самого блока (container query): вузько -- підпис над значенням і QR під реквізитами, від 400px -- підпис ліворуч, від 620px -- QR колонкою праворуч. Тут показано з вигаданими реквізитами.</p>
+  </div>
+
   <!-- ===== НЕ ПОКАЗУЄТЬСЯ ===== -->
   <div class="ds-section" id="molecules-not-shown">
     <p class="ds-label">Components</p>

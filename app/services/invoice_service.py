@@ -21,7 +21,8 @@ from app.models.mixins import utcnow
 from app.models.site_settings import SiteSettings
 from app.services.number_to_words_ua import number_to_words_ua
 from app.services.payment_purpose import build_payment_purpose, order_ref
-from app.services.payment_qr import build_nbu_qr_payload, qr_svg_data_uri
+from app.services.payment_qr import qr_svg_data_uri
+from app.services.payment_transfer import payment_qr_payload
 from app.utils import KYIV, ensure_utc
 
 logger = logging.getLogger(__name__)
@@ -323,21 +324,11 @@ def _money(value):
 def _payment_qr_data_uri(settings, amount, purpose):
     """SVG-QR для оплати або None, якщо реквізити не годяться для QR.
 
-    Некоректний IBAN чи ЄДРПОУ в налаштуваннях не повинен ламати сам рахунок:
-    документ без QR лишається чинним, а QR, який банк відхилить, -- ні.
+    Правило «некоректні реквізити -- документ без QR» спільне зі сторінками
+    й листом (payment_transfer.payment_qr_payload).
     """
-    try:
-        payload = build_nbu_qr_payload(
-            recipient_name=settings.company_full_name or 'ІПРМ',
-            iban=settings.bank_iban,
-            amount=amount,
-            purpose=purpose,
-            recipient_code=settings.edrpou,
-        )
-        return qr_svg_data_uri(payload)
-    except ValueError as exc:
-        logger.warning('Payment QR skipped: %s', exc)
-        return None
+    payload = payment_qr_payload(settings, amount, purpose)
+    return qr_svg_data_uri(payload) if payload else None
 
 
 def _invoice_template_ctx(reg):

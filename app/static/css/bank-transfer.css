@@ -1,0 +1,144 @@
+/* bank-transfer.css -- реквізити для оплати переказом + платіжний QR.
+
+   Компонент partials/_bank_transfer.html: сторінки реєстрації, токен-оплати,
+   доплати різниці тарифу й оформлення онлайн-курсу. Mobile-first, але
+   розкладка залежить від ШИРИНИ БЛОКА (container query), а не вікна: у
+   вузькій картці оформлення онлайн-курсу на десктопі колонки за шириною
+   вікна стискали значення до кількох літер у рядку. Вузько -- підпис над
+   значенням і QR під реквізитами, ширше -- підпис ліворуч, ще ширше -- QR
+   колонкою праворуч.
+   Ширина -- від контейнера сторінки; текст не клампиться (мірою служить
+   сама коробка блока). */
+
+.bank-transfer {
+  container-type: inline-size;
+  margin: 16px 0 24px;
+  padding: 20px;
+  background: var(--iprm-white);
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-md);
+}
+
+.bank-transfer__title {
+  margin: 0 0 12px;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--iprm-text);
+}
+
+.bank-transfer__body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.bank-transfer__list {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+}
+
+.bank-transfer__row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--iprm-border);
+}
+
+.bank-transfer__row:last-child {
+  border-bottom: none;
+}
+
+.bank-transfer__label {
+  font-size: 0.8125rem;
+  color: var(--iprm-text-light);
+}
+
+.bank-transfer__value {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--iprm-text);
+  overflow-wrap: anywhere;
+}
+
+.bank-transfer__value--mono {
+  font-family: var(--iprm-font-mono);
+  letter-spacing: 0.02em;
+}
+
+/* Призначення -- головне в блоці: переписане з помилкою, воно позбавляє
+   mm-medic номера, за яким переказ зіставляється з реєстрацією. Тому воно
+   на тлі й виділяється одним дотиком навіть без JS. */
+.bank-transfer__row--purpose .bank-transfer__value {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.bank-transfer__purpose {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--iprm-surface-inset);
+  border-radius: var(--iprm-radius-sm);
+  line-height: 1.45;
+  user-select: all;
+}
+
+.bank-transfer__qr {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.bank-transfer__qr-img {
+  display: block;
+  width: 180px;
+  height: 180px;
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-sm);
+}
+
+.bank-transfer__qr-caption {
+  max-width: 220px;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--iprm-text-light);
+  text-align: center;
+}
+
+.bank-transfer__note {
+  margin: 16px 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--iprm-text-light);
+}
+
+@media (min-width: 640px) {
+  .bank-transfer {
+    padding: 24px;
+  }
+}
+
+@container (min-width: 400px) {
+  .bank-transfer__row {
+    display: grid;
+    grid-template-columns: minmax(120px, 30%) 1fr;
+    gap: 16px;
+    align-items: baseline;
+  }
+}
+
+@container (min-width: 620px) {
+  .bank-transfer__body {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 32px;
+  }
+}

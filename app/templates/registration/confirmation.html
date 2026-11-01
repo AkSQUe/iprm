@@ -8,6 +8,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/registration.css') }}?v={{ assets_version }}">
+{% if bank_details %}<link rel="stylesheet" href="{{ url_for('static', filename='css/bank-transfer.css') }}?v={{ assets_version }}">{% endif %}
 {% if rec_courses %}<link rel="stylesheet" href="{{ url_for('static', filename='css/course-recommend.css') }}?v={{ assets_version }}">{% endif %}
 {% endblock %}
 

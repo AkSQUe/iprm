@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from 'partials/_money.html' import money %}
+{% from 'partials/_bank_transfer.html' import bank_transfer with context %}
 
 {% block title %}{{ _('Доплата різниці тарифу | ІПРМ') }}{% endblock %}
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
@@ -7,6 +8,7 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/registration.css') }}?v={{ assets_version }}">
+{% if bank_details %}<link rel="stylesheet" href="{{ url_for('static', filename='css/bank-transfer.css') }}?v={{ assets_version }}">{% endif %}
 {% endblock %}
 
 {% block extra_head %}
@@ -48,13 +50,15 @@
           liqpay_result_url=liqpay_result_url %}
     {% include 'registration/partials/_pay_options.html' %}
   {% endwith %}
-  {% else %}
-  {#- Онлайн-оплату вимкнено, а PDF-рахунка на доплату не існує: рахунок
-      будується з payment_amount реєстрації, і для різниці тарифу видав би
-      неправильну суму. Тому реквізити -- текстом, вручну. -#}
-  {% with purpose=_('Доплата різниці тарифу, реєстрація №%(id)s', id=reg.id) %}
-    {% include 'registration/partials/_bank_requisites.html' %}
-  {% endwith %}
+  {% endif %}
+  {#- Реквізити -- коли форми LiqPay немає (вимкнено або не налаштовано).
+      PDF-рахунка на доплату не існує: рахунок будується з payment_amount
+      реєстрації, і для різниці тарифу видав би неправильну суму. Тому
+      реквізити текстом і QR, з власним номером доплати SUR-<id> у
+      призначенні (роут, payment_purpose.build_surcharge_purpose). -#}
+  {% if bank_details %}
+  {{ bank_transfer(bank_details,
+                   note=_('Сплатіть за реквізитами через банк, вказавши призначення платежу без змін, і повідомте менеджера — ми підтвердимо оплату вручну.')) }}
   {% endif %}
 
   <a href="{{ url_for('registration.transfer_consent', token=transfer.consent_token) }}"

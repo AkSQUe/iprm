@@ -1,0 +1,74 @@
+{#- Реквізити для оплати переказом: отримувач, ЄДРПОУ, банк, IBAN, сума,
+    призначення з кнопкою «Копіювати» і платіжний QR НБУ.
+
+    Один блок на сторінку реєстрації, токен-оплату, доплату різниці тарифу
+    й оформлення онлайн-курсу. Дані -- payment_transfer.TransferDetails, тож
+    призначення й QR тут ті самі, що в PDF-рахунку: номер REG-/ONL- у
+    призначенні -- те, за чим mm-medic зіставляє переказ із реєстрацією.
+
+    QR немає, якщо реквізити в налаштуваннях для нього не годяться (те саме
+    правило, що в рахунку) -- текст лишається.
+
+    Кнопка «Копіювати» -- прогресивне покращення: без JS вона прихована
+    (`hidden`), а саме призначення виділяється одним дотиком (user-select:
+    all). copy-to-clipboard.js (підключений у base.html) показує кнопку,
+    коли може нею керувати.
+
+    Стилі -- css/bank-transfer.css; сторінка підключає його сама у
+    extra_css (під тією ж умовою, що й блок), бо партіал до <head> не
+    дістає.
+
+    Імпорт -- `with context`: макросу потрібен контекст перекладів. -#}
+
+{% from 'partials/_money.html' import money %}
+
+{% macro bank_transfer(transfer, title=None, note=None) %}
+<section class="bank-transfer" aria-labelledby="bank-transfer-title">
+  <h3 class="bank-transfer__title" id="bank-transfer-title">{{ title or _('Реквізити для переказу') }}</h3>
+  <div class="bank-transfer__body">
+    <dl class="bank-transfer__list">
+      <div class="bank-transfer__row">
+        <dt class="bank-transfer__label">{{ _('Отримувач') }}</dt>
+        <dd class="bank-transfer__value">{{ transfer.recipient }}</dd>
+      </div>
+      <div class="bank-transfer__row">
+        <dt class="bank-transfer__label">{{ _('Код ЄДРПОУ') }}</dt>
+        <dd class="bank-transfer__value">{{ transfer.edrpou }}</dd>
+      </div>
+      <div class="bank-transfer__row">
+        <dt class="bank-transfer__label">{{ _('Банк отримувача') }}</dt>
+        <dd class="bank-transfer__value">{{ transfer.bank }}</dd>
+      </div>
+      <div class="bank-transfer__row">
+        <dt class="bank-transfer__label">{{ _('Рахунок (IBAN)') }}</dt>
+        <dd class="bank-transfer__value bank-transfer__value--mono">{{ transfer.iban }}</dd>
+      </div>
+      <div class="bank-transfer__row">
+        <dt class="bank-transfer__label">{{ _('Сума') }}</dt>
+        <dd class="bank-transfer__value">{{ money(transfer.amount) }}</dd>
+      </div>
+      <div class="bank-transfer__row bank-transfer__row--purpose">
+        <dt class="bank-transfer__label">{{ _('Призначення платежу') }}</dt>
+        <dd class="bank-transfer__value">
+          <span class="bank-transfer__purpose" data-payment-purpose>{{ transfer.purpose }}</span>
+          <button type="button" class="apple-btn apple-btn--outline apple-btn--sm bank-transfer__copy"
+                  data-copy="{{ transfer.purpose }}" data-copy-reveal hidden>{{ _('Копіювати') }}</button>
+        </dd>
+      </div>
+    </dl>
+    {% set qr = transfer.qr_svg_data_uri %}
+    {% if qr %}
+    <figure class="bank-transfer__qr">
+      <img class="bank-transfer__qr-img" src="{{ qr }}" width="180" height="180"
+           alt="{{ _('QR-код для оплати переказом') }}" data-payment-qr>
+      <figcaption class="bank-transfer__qr-caption">
+        {{ _('Відскануйте в банківському застосунку — отримувач, сума й призначення заповняться самі.') }}
+      </figcaption>
+    </figure>
+    {% endif %}
+  </div>
+  <p class="bank-transfer__note">
+    {{ note or _('Вкажіть призначення платежу без змін — за номером у ньому ми впізнаємо вашу оплату.') }}
+  </p>
+</section>
+{% endmacro %}

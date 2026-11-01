@@ -12,12 +12,17 @@
       liqpay_result_url  -- куди вести після оплати у віджеті (опц.; без нього
                             працює звичайний POST на сторінку LiqPay)
       invoice_url        -- URL завантаження рахунка; falsy -> блок рахунка прихований
+      bank_details       -- payment_transfer.TransferDetails (опц.): реквізити,
+                            призначення з REG-<id> і QR під варіантами оплати.
+                            Показуються лише разом із рахунком -- це той самий
+                            спосіб оплати, тільки без завантаження PDF.
 
     Плашка «Онлайн-оплата тимчасово недоступна» показується лише коли спосіб
     УВІМКНЕНО, але форми немає -- тобто ключі не налаштовані чи щось зламалось.
     Вимкнений в адмінці спосіб просто зникає: нічого не зламано, і читати про
     поломку покупцеві нема за що.
 -#}
+{% from 'partials/_bank_transfer.html' import bank_transfer with context %}
 {% set _chosen = chosen | default('liqpay') %}
 {% set _liqpay_on = liqpay_enabled if liqpay_enabled is defined else true %}
 <div class="reg-pay-options">
@@ -63,3 +68,6 @@
   </div>
   {% endif %}
 </div>
+{% if invoice_url and bank_details %}
+{{ bank_transfer(bank_details) }}
+{% endif %}

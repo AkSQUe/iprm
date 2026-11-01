@@ -627,6 +627,8 @@ def confirmation(registration_id):
         and reg.payment_status != 'paid'
         and reg.payment_amount and reg.payment_amount > 0
     )
+    bank_details = (_bank_details(reg)
+                    if needs_payment and invoice_available else None)
 
     # Крос-сел показуємо лише коли платіжний шлях завершено: поки на сторінці
     # головна дія -- "оплатіть участь" (або платіж ще в обробці), інші курси її
@@ -651,6 +653,7 @@ def confirmation(registration_id):
         liqpay_result_url=liqpay_result_url,
         invoice_available=bool(invoice_available),
         invoice_url=url_for('registration.invoice_download', registration_id=reg.id),
+        bank_details=bank_details,
         certificate_data_complete=bool(profile and profile.is_complete),
         **recommend,
     )
@@ -716,6 +719,13 @@ def invoice_download(registration_id):
 # заповнює повну анкету (усі поля обов'язкові) і обирає спосіб оплати.
 # Публічні роути -- авторизація через сам токен (без login).
 # ======================================================================
+
+def _bank_details(reg):
+    """Реквізити переказу для реєстрації: призначення з REG-<id> і QR --
+    ті самі, що в PDF-рахунку (payment_transfer)."""
+    from app.services.payment_transfer import transfer_details
+    return transfer_details(reg)
+
 
 def _load_reg_by_token(token):
     return (
@@ -890,6 +900,8 @@ def complete_payment(token):
         liqpay_result_url=liqpay_result_url,
         invoice_url=(url_for('registration.complete_invoice', token=token)
                      if methods.invoice else None),
+        bank_details=(_bank_details(reg)
+                      if needs_payment and methods.invoice else None),
         **recommend,
     )
 
@@ -1079,11 +1091,24 @@ def transfer_surcharge(token):
             )
         )
 
+    # Реквізити -- лише коли онлайн-оплати немає (див. transfer_surcharge.html).
+    # Призначення з власним номером SUR-<id>: для mm-medic це окремий платіж,
+    # і без номера правило «ПІБ + сума» могло б зарахувати його не туди.
+    bank_details = None
+    if not liqpay_data:
+        from app.services.payment_purpose import build_surcharge_purpose
+        from app.services.payment_transfer import transfer_details
+        bank_details = transfer_details(
+            reg, amount=transfer.difference,
+            purpose=build_surcharge_purpose(transfer),
+        )
+
     return render_template(
         'registration/transfer_surcharge.html',
         transfer=transfer,
         reg=reg,
         amount=transfer.difference,
+        bank_details=bank_details,
         liqpay_data=liqpay_data,
         liqpay_signature=liqpay_signature,
         liqpay_checkout_url=liqpay_checkout_url,
