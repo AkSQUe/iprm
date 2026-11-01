@@ -23,6 +23,7 @@
                          tx_used_elsewhere (операцію вже зараховано до
                          іншого замовлення) | db_error
 Відповідь 400: {status: 'malformed', field}.
+Відповідь 503: {status: 'unavailable'} -- тимчасова помилка БД; повторити.
 """
 from datetime import datetime, timezone
 from decimal import Decimal, InvalidOperation
@@ -31,7 +32,7 @@ from flask import Blueprint, jsonify
 
 from app.api.mm_signature import verify_signed_request
 from app.extensions import db, csrf, limiter
-from app.services.bank_payment import confirm_bank_payment
+from app.services.bank_payment import BankPaymentUnavailable, confirm_bank_payment
 
 mm_bank_payment_bp = Blueprint(
     'mm_bank_payment', __name__, url_prefix='/api/partner/mm-medic')
@@ -113,6 +114,10 @@ def bank_payment():
     try:
         result = confirm_bank_payment(order_ref, amount, transacted_at,
                                       bank_tx_ref, actor=actor)
+    except BankPaymentUnavailable:
+        # Тимчасова помилка БД: відмова db_error для відправника остаточна,
+        # а 5xx він повторює.
+        return jsonify({'status': 'unavailable'}), 503
     finally:
         # Рядок замовлення заблоковано FOR UPDATE; ранні відмови сервісу сесію
         # не відкочують. Після успішного commit rollback нічого не скасовує,

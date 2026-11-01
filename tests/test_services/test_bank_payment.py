@@ -348,3 +348,48 @@ def test_card_payment_on_cancelled_registration_behaves_as_before(
     db.session.refresh(reg)
     assert reg.payment_status == 'paid'
     assert reg.status == 'confirmed'
+
+
+# ---- залишкові знахідки ----
+
+def test_post_commit_failure_in_ops_with_own_row_is_paid(
+        app, user, instance, sent, monkeypatch):
+    """Збій у PaymentOps ПІСЛЯ commit: рядок журналу цього виклику вже є, тож
+    відповідь -- paid, а не duplicate (кінцевий стан той самий)."""
+    from app.services.payment_ops import PaymentOps
+    reg = _make_reg(user, instance)
+    real = PaymentOps.update_payment_status
+
+    def commit_then_fail(self, *args, **kwargs):
+        real(self, *args, **kwargs)
+        return False, 'post-commit failure'
+
+    monkeypatch.setattr(PaymentOps, 'update_payment_status', commit_then_fail)
+    r = confirm_bank_payment(f'REG-{reg.id}', Decimal('1500'), MOMENT, 'bt-post')
+    assert (r.status, r.reason) == ('paid', None)
+    assert len(_bank_rows(payment_id='bt-post')) == 1
+
+
+def test_logged_owner_failure_in_fallback_raises_unavailable(
+        app, user, instance, sent, monkeypatch):
+    """Тимчасова помилка БД у запасному шляху -- не 500 і не остаточна
+    відмова: сервіс відкочує сесію й сигналізує, що повторити можна."""
+    from sqlalchemy.exc import OperationalError
+    from app.services import bank_payment
+    from app.services.payment_ops import PaymentOps
+
+    reg = _make_reg(user, instance)
+    calls = []
+    real = bank_payment._logged_owner
+
+    def flaky(ref):
+        calls.append(ref)
+        if len(calls) == 1:
+            return real(ref)
+        raise OperationalError('select', {}, Exception('db gone'))
+
+    monkeypatch.setattr(bank_payment, '_logged_owner', flaky)
+    monkeypatch.setattr(PaymentOps, 'update_payment_status',
+                        lambda self, *a, **k: (False, 'boom'))
+    with pytest.raises(bank_payment.BankPaymentUnavailable):
+        confirm_bank_payment(f'REG-{reg.id}', Decimal('1500'), MOMENT, 'bt-flaky')

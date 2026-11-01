@@ -51,6 +51,12 @@ class BankPaymentResult:
     order_ref: str
 
 
+class BankPaymentUnavailable(Exception):
+    """Тимчасова помилка БД там, де вердикту ще немає: відповідати відмовою
+    не можна, бо відправник вважає відмову остаточною. Ендпоінт віддає 503,
+    і відправник повторить запит."""
+
+
 def _refuse(order_ref, reason):
     return BankPaymentResult(STATUS_REFUSED, reason, order_ref)
 
@@ -76,15 +82,20 @@ def _logged_owner(bank_tx_ref):
     ).filter_by(source=SOURCE_BANK, payment_id=bank_tx_ref).first()
 
 
-def _logged_outcome(owner, kind, object_id, order_ref):
+def _logged_outcome(owner, kind, object_id, order_ref,
+                    same_order_status=STATUS_DUPLICATE):
     """Відповідь для вже зарахованої операції: те саме замовлення -- повтор
     (duplicate), інше -- відмова, бо рядок виписки не може закрити два
     замовлення (менеджер міг відвʼязати хибний збіг і привʼязати рядок
-    до правильної реєстрації)."""
+    до правильної реєстрації).
+
+    same_order_status: що відповісти, коли рядок належить цьому ж замовленню.
+    Для запасного шляху після збою PaymentOps це 'paid': перед викликом
+    операції в журналі не було, тож рядок записав саме цей виклик."""
     registration_id, enrollment_id = owner
     owner_id = registration_id if kind == 'registration' else enrollment_id
     if owner_id == object_id:
-        return BankPaymentResult(STATUS_DUPLICATE, None, order_ref)
+        return BankPaymentResult(same_order_status, None, order_ref)
     return _refuse(order_ref, 'tx_used_elsewhere')
 
 
@@ -172,10 +183,19 @@ def confirm_bank_payment(order_ref: str, amount: Decimal, transacted_at: datetim
     if message == 'amount mismatch':
         return _refuse(order_ref, 'amount_mismatch')
     # Унікальний індекс на bank_tx_ref відсік запис, що проскочив повз
-    # _logged_owner: сесію відкочено, і переможець уже видимий.
-    owner = _logged_owner(bank_tx_ref)
+    # _logged_owner, або збій стався вже ПІСЛЯ commit: сесію відкочено, і
+    # рядок видно. Належить він цьому замовленню -- оплату зараховано саме
+    # цим викликом (перед ним операції в журналі не було), тож це paid.
+    try:
+        owner = _logged_owner(bank_tx_ref)
+    except SQLAlchemyError as exc:
+        db.session.rollback()
+        logger.warning('Bank payment fallback lookup failed for %s (%s): %s',
+                       order_ref, bank_tx_ref, type(exc).__name__)
+        raise BankPaymentUnavailable() from exc
     if owner is not None:
-        return _logged_outcome(owner, kind, object_id, order_ref)
+        return _logged_outcome(owner, kind, object_id, order_ref,
+                               same_order_status=STATUS_PAID)
     return _refuse(order_ref, 'db_error')
 
 

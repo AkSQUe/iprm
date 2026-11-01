@@ -166,3 +166,18 @@ def test_reservation_status_still_verifies(client, signed, mm_enabled):
     ok = signed('/api/partner/mm-medic/reservation-status', body)
     assert ok.status_code == 200
     assert ok.get_json()['status'] == 'unknown_ref'
+
+
+def test_unavailable_db_gives_503_so_sender_retries(
+        client, signed, mm_enabled, reg_unpaid_1500, monkeypatch):
+    """mm-medic повторює лише не-200: тимчасова помилка БД не має ставати
+    остаточною відмовою db_error, яку побачить менеджер."""
+    from app.api import mm_bank_payment
+    from app.services.bank_payment import BankPaymentUnavailable
+
+    def boom(*args, **kwargs):
+        raise BankPaymentUnavailable()
+
+    monkeypatch.setattr(mm_bank_payment, 'confirm_bank_payment', boom)
+    resp = signed(URL, _payload(reg_unpaid_1500))
+    assert resp.status_code == 503
