@@ -35,6 +35,9 @@ STATUS_PAID = 'paid'
 STATUS_DUPLICATE = 'duplicate'
 STATUS_REFUSED = 'refused'
 
+# Текст, яким PaymentOps позначає збій commit (payment_ops.py, _fail).
+_OPS_DB_ERROR = 'db error'
+
 
 @dataclass(frozen=True)
 class BankPaymentResult:
@@ -55,6 +58,15 @@ class BankPaymentUnavailable(Exception):
     """Тимчасова помилка БД там, де вердикту ще немає: відповідати відмовою
     не можна, бо відправник вважає відмову остаточною. Ендпоінт віддає 503,
     і відправник повторить запит."""
+
+
+def safe_rollback():
+    """Відкат, що сам не падає: зламане зʼєднання не має ховати за собою
+    справжню відповідь (503 для повтору). У лог іде лише клас помилки."""
+    try:
+        db.session.rollback()
+    except Exception as exc:
+        logger.warning('Session rollback failed: %s', type(exc).__name__)
 
 
 def _refuse(order_ref, reason):
@@ -109,7 +121,7 @@ def confirm_bank_payment(order_ref: str, amount: Decimal, transacted_at: datetim
     у яких гроші зараховувати не можна, і лише тоді -- сама оплата.
 
     Обов'язок викликача: після повернення завершити сесію
-    (`db.session.rollback()`). Рядок замовлення заблоковано FOR UPDATE, а
+    (`safe_rollback()`). Рядок замовлення заблоковано FOR UPDATE, а
     ранні відмови сесію не відкочують -- без цього блокування висітиме до
     кінця запиту. Після успішного commit rollback нічого не скасовує.
     """
@@ -171,7 +183,7 @@ def confirm_bank_payment(order_ref: str, amount: Decimal, transacted_at: datetim
         # встиг записати паралельний запит. Виняток виходить то як
         # IntegrityError, то як PendingRollbackError на наступному запиті
         # зламаної сесії, тому ловимо загальний клас.
-        db.session.rollback()
+        safe_rollback()
         ok, message = False, 'db error'
     if ok:
         return BankPaymentResult(STATUS_PAID, None, order_ref)
@@ -179,7 +191,7 @@ def confirm_bank_payment(order_ref: str, amount: Decimal, transacted_at: datetim
     logger.warning('Bank payment refused for %s (%s): %s',
                    order_ref, bank_tx_ref, message)
     # Невдача не повинна лишити в сесії непідтверджену зміну способу оплати.
-    db.session.rollback()
+    safe_rollback()
     if message == 'amount mismatch':
         return _refuse(order_ref, 'amount_mismatch')
     # Унікальний індекс на bank_tx_ref відсік запис, що проскочив повз
@@ -189,13 +201,22 @@ def confirm_bank_payment(order_ref: str, amount: Decimal, transacted_at: datetim
     try:
         owner = _logged_owner(bank_tx_ref)
     except SQLAlchemyError as exc:
-        db.session.rollback()
+        safe_rollback()
         logger.warning('Bank payment fallback lookup failed for %s (%s): %s',
                        order_ref, bank_tx_ref, type(exc).__name__)
         raise BankPaymentUnavailable() from exc
     if owner is not None:
         return _logged_outcome(owner, kind, object_id, order_ref,
                                same_order_status=STATUS_PAID)
+    if message == _OPS_DB_ERROR:
+        # PaymentOps повертає це, коли не вдався commit (обрив зʼєднання,
+        # дедлок): рядка журналу немає, оплату не зараховано. Остаточну
+        # відмову менеджер побачив би як db_error, тож відповідаємо 503 --
+        # відправник повторить. Інші відмови PaymentOps (недопустимий
+        # перехід тощо) повтор не виправить, вони лишаються відмовою.
+        logger.warning('Bank payment commit failed for %s (%s)',
+                       order_ref, bank_tx_ref)
+        raise BankPaymentUnavailable()
     return _refuse(order_ref, 'db_error')
 
 

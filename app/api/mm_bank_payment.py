@@ -31,8 +31,10 @@ from decimal import Decimal, InvalidOperation
 from flask import Blueprint, jsonify
 
 from app.api.mm_signature import verify_signed_request
-from app.extensions import db, csrf, limiter
-from app.services.bank_payment import BankPaymentUnavailable, confirm_bank_payment
+from app.extensions import csrf, limiter
+from app.services.bank_payment import (
+    BankPaymentUnavailable, confirm_bank_payment, safe_rollback,
+)
 
 mm_bank_payment_bp = Blueprint(
     'mm_bank_payment', __name__, url_prefix='/api/partner/mm-medic')
@@ -123,6 +125,6 @@ def bank_payment():
         # не відкочують. Після успішного commit rollback нічого не скасовує,
         # а блокування й відкрита транзакція зникають одразу, не чекаючи
         # кінця запиту.
-        db.session.rollback()
+        safe_rollback()
     return jsonify({'status': result.status, 'reason': result.reason,
                     'order_ref': result.order_ref}), 200

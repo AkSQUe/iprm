@@ -181,3 +181,69 @@ def test_unavailable_db_gives_503_so_sender_retries(
     monkeypatch.setattr(mm_bank_payment, 'confirm_bank_payment', boom)
     resp = signed(URL, _payload(reg_unpaid_1500))
     assert resp.status_code == 503
+
+
+def test_transient_commit_failure_gives_503_then_retry_pays(
+        client, signed, mm_enabled, reg_unpaid_1500, monkeypatch):
+    """Збій commit у PaymentOps -- не остаточна відмова db_error (її побачив би
+    менеджер), а 503: відправник повторить, і повтор зараховує оплату."""
+    from sqlalchemy.exc import OperationalError
+    from app.models.payment_transaction import PaymentTransaction
+
+    payload = _payload(reg_unpaid_1500)
+    real_commit = db.session.commit
+    calls = []
+
+    def flaky_commit():
+        calls.append(1)
+        if len(calls) == 1:
+            raise OperationalError('commit', {}, Exception('connection lost'))
+        return real_commit()
+
+    monkeypatch.setattr(db.session, 'commit', flaky_commit)
+    resp = signed(URL, payload)
+    assert resp.status_code == 503
+    db.session.refresh(reg_unpaid_1500)
+    assert reg_unpaid_1500.payment_status == 'unpaid'
+    assert PaymentTransaction.query.filter_by(
+        source='bank', payment_id=payload['bank_tx_ref']).count() == 0
+
+    resp = signed(URL, payload)
+    assert resp.status_code == 200
+    assert resp.get_json()['status'] == 'paid'
+    db.session.refresh(reg_unpaid_1500)
+    assert reg_unpaid_1500.payment_status == 'paid'
+
+
+def test_rollback_failure_in_fallback_still_gives_503(
+        client, signed, mm_enabled, reg_unpaid_1500, monkeypatch):
+    from sqlalchemy.exc import OperationalError
+    from app.services import bank_payment
+    from app.services.payment_ops import PaymentOps
+
+    real_owner = bank_payment._logged_owner
+    seen = []
+
+    def owner(ref):
+        seen.append(ref)
+        if len(seen) == 1:
+            return real_owner(ref)
+        raise OperationalError('select', {}, Exception('gone'))
+
+    real_rollback = db.session.rollback
+    state = {'armed': False}
+
+    def rollback():
+        if state['armed']:
+            raise OperationalError('rollback', {}, Exception('gone'))
+        return real_rollback()
+
+    def fail_update(self, *args, **kwargs):
+        state['armed'] = True
+        return False, 'boom'
+
+    monkeypatch.setattr(bank_payment, '_logged_owner', owner)
+    monkeypatch.setattr(PaymentOps, 'update_payment_status', fail_update)
+    monkeypatch.setattr(db.session, 'rollback', rollback)
+    resp = signed(URL, _payload(reg_unpaid_1500))
+    assert resp.status_code == 503

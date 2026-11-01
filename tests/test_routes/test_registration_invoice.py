@@ -160,7 +160,8 @@ class TestInvoiceContent:
         from app.services.payment_purpose import build_payment_purpose
 
         # Сама КОМІРКА призначення (колонка значень), а не підпис у шапці.
-        assert ws.cell(row=self._purpose_row(ws), column=3).value ==             build_payment_purpose(reg)
+        assert ws.cell(row=self._purpose_row(ws), column=3).value == (
+            build_payment_purpose(reg))
         assert any(f'Оплата згідно рахунку № REG-{reg.id}' in v for v in values)
         assert any(v.startswith(f'№ REG-{reg.id} від') for v in values)
 
