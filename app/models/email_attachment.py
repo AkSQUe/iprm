@@ -29,6 +29,11 @@ class EmailAttachment(TimestampMixin, db.Model):
     filename = db.Column(db.String(255), nullable=False)
     mimetype = db.Column(db.String(100), nullable=False)
     data = db.Column(db.LargeBinary)
+    # Вбудоване зображення (платіжний QR у листі про реєстрацію): HTML
+    # посилається на нього через `cid:<content_id>`. Без збереженого
+    # content_id повтор відправив би картинку звичайним вкладенням, а в
+    # тілі листа лишилась би порожня рамка. NULL -- звичайне вкладення.
+    content_id = db.Column(db.String(255))
 
     @property
     def is_purged(self):

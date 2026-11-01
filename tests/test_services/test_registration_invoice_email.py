@@ -77,6 +77,13 @@ def _attachments_of(send_email_mock):
     raise AssertionError('Лист про реєстрацію не надсилався')
 
 
+def _pdfs(send_email_mock):
+    """Лише PDF-рахунки серед вкладень: поруч може їхати вбудований QR
+    реквізитів переказу (test_registration_transfer_email.py)."""
+    return [a for a in (_attachments_of(send_email_mock) or [])
+            if a[1] == 'application/pdf']
+
+
 class TestInvoiceAttachment:
     @patch('app.services.email_service.EmailService.send_email')
     @patch('app.services.invoice_service.render_invoice_pdf', return_value=PDF)
@@ -99,7 +106,7 @@ class TestInvoiceAttachment:
 
         EmailService.send_registration_confirmation(registration)
 
-        assert not _attachments_of(send_email)
+        assert not _pdfs(send_email)
         render.assert_not_called()
 
     @patch('app.services.email_service.EmailService.send_email')
@@ -132,7 +139,7 @@ class TestInvoiceAttachment:
         """Лист важливіший за вкладення -- він єдине підтвердження."""
         EmailService.send_registration_confirmation(registration)
 
-        assert _attachments_of(send_email) is None
+        assert not _pdfs(send_email)
 
     @patch('app.services.email_service.EmailService.send_email')
     @patch('app.services.invoice_service.render_invoice_pdf', return_value=PDF)

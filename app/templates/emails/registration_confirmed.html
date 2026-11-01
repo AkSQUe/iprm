@@ -1,5 +1,5 @@
 {% extends "emails/base.html" %}
-{% from "emails/_macros.html" import button_primary, detail_row, alert_warning, alert_info, spacer %}
+{% from "emails/_macros.html" import button_primary, detail_row, alert_warning, alert_info, spacer, bank_transfer %}
 
 {% block title %}{{ _('Реєстрацію підтверджено') }}{% endblock %}
 
@@ -53,6 +53,13 @@
     {{ alert_info(_('Оплата на рахунок IBAN'), _('Рахунок на оплату (PDF) додано до цього листа. Сплатіть його через банк за реквізитами — після надходження коштів ми підтвердимо вашу участь. Рахунок також доступний на сторінці реєстрації та в особистому кабінеті.')) }}
     {% elif registration.payment_method == 'invoice' %}
     {{ alert_info(_('Оплата на рахунок IBAN'), _('Завантажте рахунок (PDF) на сторінці реєстрації або в особистому кабінеті та сплатіть через банк за реквізитами. Після оплати повідомте менеджера для підтвердження участі.')) }}
+    {% endif %}
+    {#- Реквізити з призначенням REG-<id> і QR -- у самому листі: переказ
+        із телефона роблять, читаючи лист, а не PDF. Відправник передає їх
+        лише тоді, коли оплату за рахунком увімкнено (EmailService.
+        _registration_bank_transfer); прев'ю в адмінці їх не передає. -#}
+    {% if bank_details %}
+    {{ bank_transfer(bank_details, payment_qr_cid) }}
     {% endif %}
     {{ button_primary(_('Перейти до оплати'), pay_url | default(site_settings.website_url)) }}
     {%- elif registration.payment_status == 'pending' %}

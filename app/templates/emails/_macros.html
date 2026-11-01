@@ -256,3 +256,42 @@
 {% trans n=n %}{{ n }} днів{% endtrans %}
 {%- endif -%}
 {%- endmacro -%}
+
+{#- Реквізити для оплати переказом: ті самі отримувач, IBAN, сума й
+    призначення (з номером REG-/ONL-), що в PDF-рахунку, плюс платіжний QR
+    НБУ. За номером у призначенні mm-medic зіставляє переказ із реєстрацією,
+    тож призначення стоїть окремою плашкою -- його переписують чи копіюють
+    без змін.
+
+    QR -- вбудоване PNG (`cid:`), яке додає відправник листа. Зовнішнє
+    посилання пошта блокує, data:-URI частина клієнтів не показує, SVG
+    Gmail не малює. qr_cid порожній (некоректні реквізити) -- блок без QR.
+    Розкладка в одну колонку: QR під реквізитами читається однаково й на
+    телефоні, і в Outlook. -#}
+{%- macro bank_transfer(details, qr_cid=None) -%}
+<table role="presentation" style="width: 100%; margin: 24px 0; background-color: #F7F4FB; border: 1px solid #E9E4EF; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+        <td style="padding: 20px 24px;">
+            <p style="margin: 0 0 12px 0; font-size: 16px; font-weight: 600; color: #17131D; line-height: 1.4;">{{ _('Оплата переказом') }}</p>
+            {{ detail_row(_('Отримувач'), details.recipient, '130px') }}
+            {{ detail_row(_('Код ЄДРПОУ'), details.edrpou, '130px') }}
+            {{ detail_row(_('Банк отримувача'), details.bank, '130px') }}
+            {{ detail_row(_('Рахунок (IBAN)'), details.iban, '130px') }}
+            {{ detail_row(_('Сума'), details.amount | money, '130px') }}
+            <p style="margin: 12px 0 6px 0; font-size: 14px; color: #625A6D; line-height: 1.5;">{{ _('Призначення платежу') }}</p>
+            <p style="margin: 0; padding: 12px 14px; background-color: #FFFFFF; border: 1px solid #D8C7ED; border-radius: 6px; font-size: 15px; font-weight: 600; color: #17131D; line-height: 1.5;">{{ details.purpose }}</p>
+            <p style="margin: 8px 0 0 0; font-size: 13px; color: #6E667A; line-height: 1.5;">{{ _('Вкажіть призначення платежу без змін — за номером у ньому ми впізнаємо вашу оплату.') }}</p>
+            {% if qr_cid %}
+            <table role="presentation" style="width: 100%; margin-top: 20px;" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                    <td align="center">
+                        <img src="cid:{{ qr_cid }}" width="180" height="180" alt="{{ _('QR-код для оплати переказом') }}" style="display: block; width: 180px; height: 180px; border: 1px solid #E9E4EF; border-radius: 6px; background-color: #FFFFFF;">
+                        <p style="margin: 8px 0 0 0; font-size: 13px; color: #625A6D; line-height: 1.5; text-align: center;">{{ _('Відскануйте в банківському застосунку — отримувач, сума й призначення заповняться самі.') }}</p>
+                    </td>
+                </tr>
+            </table>
+            {% endif %}
+        </td>
+    </tr>
+</table>
+{%- endmacro -%}

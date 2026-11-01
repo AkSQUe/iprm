@@ -92,6 +92,21 @@ def _html_to_plaintext(html):
     return text.strip()
 
 
+def _attachment_parts(attachment):
+    """(filename, mimetype, data[, content_id]) -> чотири поля."""
+    filename, mimetype, data, *rest = attachment
+    return filename, mimetype, data, (rest[0] if rest else None)
+
+
+def _attach(msg, filename, mimetype, data, content_id=None):
+    """Прикласти файл; з content_id -- як вбудоване зображення (cid:)."""
+    if content_id:
+        msg.attach(filename, mimetype, data, disposition='inline',
+                   headers={'Content-ID': f'<{content_id}>'})
+    else:
+        msg.attach(filename, mimetype, data)
+
+
 def _get_smtp_config(app):
     """Read SMTP settings from DB and return as an isolated dict (thread-safe)."""
     from app.models.email_settings import EmailSettings
@@ -372,6 +387,8 @@ class EmailService:
         Guards: disabled check, deduplication, circuit breaker.
         attachments -- optional list of (filename, mimetype, data_bytes) tuples,
         attached to the message before sending (e.g. certificate PDF).
+        Четвертий елемент кортежу (content_id) робить вкладення вбудованим
+        зображенням: HTML посилається на нього як `cid:<content_id>`.
         lang -- явна мова листа ('uk'/'ru'/'en'); якщо не задано, береться
         preferred_language отримувача з context['user'] (див. _recipient_locale).
         subject -- рядок АБО callable без аргументів. Callable викликається в
@@ -489,9 +506,11 @@ class EmailService:
         # Разом із журналом, одним комітом: повтор після збою SMTP і кнопка
         # «переслати» збирають лист зі збереженого, і без цих рядків лист
         # ішов би без файлу, про який у ньому пише.
+        attachments = [_attachment_parts(a) for a in (attachments or [])]
         log_entry.attachments = [
-            EmailAttachment(filename=filename, mimetype=mimetype, data=data)
-            for filename, mimetype, data in (attachments or [])
+            EmailAttachment(filename=filename, mimetype=mimetype, data=data,
+                            content_id=content_id)
+            for filename, mimetype, data, content_id in attachments
         ]
         db.session.add(log_entry)
         db.session.commit()
@@ -507,9 +526,8 @@ class EmailService:
             extra_headers=extra_headers,
         )
 
-        for attachment in (attachments or []):
-            filename, mimetype, data = attachment
-            msg.attach(filename, mimetype, data)
+        for filename, mimetype, data, content_id in attachments:
+            _attach(msg, filename, mimetype, data, content_id)
 
         thread = Thread(
             target=EmailService._send_in_thread,
@@ -659,6 +677,43 @@ class EmailService:
         return (invoice_filename(registration, 'pdf'), 'application/pdf', pdf)
 
     @staticmethod
+    def _registration_bank_transfer(registration):
+        """(реквізити, QR-вкладення або None) для листа, або (None, None).
+
+        Умова та сама, що й для блока реквізитів на сторінці реєстрації:
+        реєстрація жива, не оплачена, платна, і оплату за рахунком увімкнено.
+        Обраний LiqPay переказ не скасовує -- сторінка теж показує обидва.
+
+        QR -- PNG вбудованим зображенням (cid:), а не посиланням на сервер
+        (пошта блокує зовнішні картинки) і не data:-URI (частина клієнтів
+        його не показує). Некоректні реквізити -- текст без QR, як у рахунку.
+        Збій побудови QR не має забирати з собою лист.
+        """
+        from app.models.site_settings import SiteSettings
+
+        if registration.status == 'cancelled':
+            return None, None
+        if registration.payment_status != 'unpaid':
+            return None, None
+        if not (registration.payment_amount and registration.payment_amount > 0):
+            return None, None
+        if not SiteSettings.enabled_payment_methods().invoice:
+            return None, None
+
+        from app.services.payment_transfer import transfer_details
+        try:
+            details = transfer_details(registration)
+            png = details.qr_png()
+        except Exception:
+            logger.exception('REG-%s: реквізити переказу не додано до листа',
+                             registration.id)
+            return None, None
+        if not png:
+            return details, None
+        cid = f'payment-qr-reg-{registration.id}@iprm'
+        return details, (f'QR-REG-{registration.id}.png', 'image/png', png, cid)
+
+    @staticmethod
     def send_registration_confirmation(registration):
         event = EmailService._event_from_registration(registration)
         if event is None:
@@ -675,13 +730,19 @@ class EmailService:
         base = (SiteSettings.get().website_url or '').rstrip('/')
         certdata_url = f'{base}/auth/account/certificate-data'
         invoice = EmailService._registration_invoice_attachment(registration)
+        bank_details, qr = EmailService._registration_bank_transfer(registration)
+        attachments = [a for a in (invoice, qr) if a]
         result = EmailService.send_email(
             to=user.email,
             subject=lambda: _('Реєстрацію підтверджено: %(title)s', title=event.title),
             template_name='registration_confirmed',
-            attachments=[invoice] if invoice else None,
+            attachments=attachments or None,
             context={
                 'user': user, 'event': event, 'registration': registration,
+                # Реквізити з призначенням REG-<id> і QR -- у самому листі:
+                # переказ із телефона роблять, читаючи лист, а не PDF.
+                'bank_details': bank_details,
+                'payment_qr_cid': qr[3] if qr else None,
                 # Шаблон розрізняє «рахунок у вкладенні» і «рахунок на сайті»:
                 # обіцяти вкладення, якого немає, гірше, ніж не обіцяти нічого.
                 'invoice_attached': invoice is not None,
@@ -2592,7 +2653,8 @@ class EmailService:
         for attachment in entry.attachments:
             if attachment.is_purged:
                 return False
-            msg.attach(attachment.filename, attachment.mimetype, attachment.data)
+            _attach(msg, attachment.filename, attachment.mimetype,
+                    attachment.data, attachment.content_id)
         return True
 
     @staticmethod
