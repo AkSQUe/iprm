@@ -916,6 +916,8 @@ def registrations_export():
             .joinedload(CourseInstance.course).selectinload(Course.trainers),
             joinedload(EventRegistration.certificate),
             joinedload(EventRegistration.promo_code),
+            # Колонки тесту (час, результат) -- один SELECT на весь зріз.
+            selectinload(EventRegistration.quiz_attempts),
         ),
         filters,
     )

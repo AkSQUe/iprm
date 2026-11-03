@@ -148,6 +148,9 @@ from .participants import (  # noqa: F401
     PAYMENT_STATUS_FILLS,
     PAYMENT_STATUS_KEY_BY_LABEL,
     PAYMENT_STATUS_LABEL,
+    QUIZ_REPORT_COLS,
+    QUIZ_REPORT_LABELS,
+    QUIZ_REPORT_WIDTHS,
     ParticipantChange,
     ParticipantsImportPlan,
     REG_STATUS_FILLS,
@@ -174,6 +177,7 @@ from .participants import (  # noqa: F401
     apply_participants_plan,
     export_participants_xlsx,
     parse_participants_xlsx,
+    quiz_report_values,
 )
 from .materials import (  # noqa: F401
     _MATERIALS_COLS,

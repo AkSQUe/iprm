@@ -17,6 +17,9 @@ from app.services.xlsx_io import (
     PARTICIPANT_TYPE_LABEL,
     PAYMENT_STATUS_FILLS,
     PAYMENT_STATUS_LABEL,
+    QUIZ_REPORT_COLS,
+    QUIZ_REPORT_LABELS,
+    QUIZ_REPORT_WIDTHS,
     REG_STATUS_FILLS,
     REG_STATUS_LABEL,
     STATUS_FILLS,
@@ -28,6 +31,7 @@ from app.services.xlsx_io import (
     _set_column_widths,
     _style_header,
     _to_kyiv_naive,
+    quiz_report_values,
     write_cell,
 )
 
@@ -84,7 +88,7 @@ _REGISTRATION_COLS = [
     'referrer', 'referrer_type', 'status', 'payment_status', 'payment_method',
     'payment_amount', 'refunded_amount', 'promo_code', 'discount_amount',
     'attended',
-    'cpd_points_awarded', 'certificate', 'created_at',
+    'cpd_points_awarded', 'certificate', *QUIZ_REPORT_COLS, 'created_at',
 ]
 _REGISTRATION_LABELS = {
     'reg_id': 'ID реєстрації', 'event': 'Захід', 'event_date': 'Дата заходу',
@@ -98,6 +102,7 @@ _REGISTRATION_LABELS = {
     'promo_code': 'Промокод', 'discount_amount': 'Знижка (грн)',
     'attended': 'Присутній', 'cpd_points_awarded': 'Бали БПР',
     'certificate': 'Сертифікат', 'created_at': 'Дата реєстрації',
+    **QUIZ_REPORT_LABELS,
 }
 _REGISTRATION_WIDTHS = {
     'reg_id': 12, 'event': 46, 'event_date': 14, 'location': 18, 'trainer': 26,
@@ -108,6 +113,7 @@ _REGISTRATION_WIDTHS = {
     'discount_amount': 14,
     'attended': 12, 'cpd_points_awarded': 12, 'certificate': 22,
     'created_at': 18,
+    **QUIZ_REPORT_WIDTHS,
 }
 _FILTERS_SHEET = 'Фільтри'
 
@@ -189,7 +195,8 @@ def export_registrations_xlsx(regs, referrer_map=None,
     """Реєстр реєстрацій (сторінка /admin/registrations) -> xlsx.
 
     regs -- уже відфільтрований і відсортований список EventRegistration із
-    підвантаженими user / instance+course+trainer / promo_code / certificate.
+    підвантаженими user / instance+course+trainer / promo_code / certificate /
+    quiz_attempts.
     referrer_map -- {code: {kind, name}} для колонки «Реферер».
     applied_filters -- пари (назва, значення) для аркуша «Фільтри».
 
@@ -238,6 +245,7 @@ def export_registrations_xlsx(regs, referrer_map=None,
             # Відкликаний сертифікат лишається в реєстрі, але з поміткою --
             # інакше звіт стверджував би, що документ чинний.
             (f'{cert.number} (відкликано)' if cert.revoked else cert.number) if cert else '',
+            *quiz_report_values(reg),
             _to_kyiv_naive(reg.created_at),
         ])
         # Кольори за статусом / оплатою -- як в експорті учасників.

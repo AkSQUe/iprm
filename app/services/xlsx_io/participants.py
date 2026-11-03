@@ -31,7 +31,7 @@ from openpyxl import (
 )
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 
 from app.extensions import db
 from app.models.course_instance import CourseInstance
@@ -59,6 +59,7 @@ from ._common import (
     _set_column_widths,
     _str,
     _style_header,
+    _to_kyiv_naive,
     logger,
     record_row_error,
     write_cell,
@@ -104,11 +105,35 @@ PARTICIPANT_LABELS = {
     'discount_amount': 'Знижка (грн)',
 }
 
+# Тестування після заходу -- колонки ЛИШЕ на вивантаження, спільні для
+# шаблону учасників і звіту реєстрацій (xlsx_reports). Значення бере
+# quiz_report_values: два файли з різними правилами «котра спроба» давали б
+# різний час для тієї самої людини.
+QUIZ_REPORT_COLS = [
+    'quiz_result', 'quiz_score', 'quiz_attempts',
+    'quiz_started_at', 'quiz_submitted_at', 'quiz_duration_min',
+]
+QUIZ_REPORT_LABELS = {
+    'quiz_result': 'Тест',
+    'quiz_score': 'Результат тесту',
+    'quiz_attempts': 'Спроб тесту',
+    'quiz_started_at': 'Тест розпочато',
+    'quiz_submitted_at': 'Тест завершено',
+    'quiz_duration_min': 'Тривалість тесту (хв)',
+}
+QUIZ_REPORT_WIDTHS = {
+    'quiz_result': 14, 'quiz_score': 14, 'quiz_attempts': 12,
+    'quiz_started_at': 18, 'quiz_submitted_at': 18, 'quiz_duration_min': 14,
+}
+PARTICIPANT_LABELS.update(QUIZ_REPORT_LABELS)
+
 # Колонки ЛИШЕ на вивантаження: промокод і знижка -- довідкові, ними
 # володіє promo_service, тож імпорт їх не читає (невідомі заголовки
 # _read_sheet просто ігнорує, тож round-trip "вивантажив -> завантажив"
 # лишається робочим).
-PARTICIPANT_EXPORT_COLS = PARTICIPANT_COLS + ['promo_code', 'discount_amount']
+PARTICIPANT_EXPORT_COLS = (
+    PARTICIPANT_COLS + ['promo_code', 'discount_amount'] + QUIZ_REPORT_COLS
+)
 
 PARTICIPANT_WIDTHS = {
     'reg_id': 12,
@@ -135,6 +160,7 @@ PARTICIPANT_WIDTHS = {
     'admin_notes': 40,
     'promo_code': 18,
     'discount_amount': 14,
+    **QUIZ_REPORT_WIDTHS,
 }
 
 REG_STATUS_LABEL = dict(EventRegistration.STATUSES)
@@ -195,6 +221,52 @@ PAYMENT_STATUS_FILLS = {
 
 _EVENTS_SHEET_NAME = 'Заходи'
 _SPEC_SHEET_NAME = 'Спеціалізації (довідник)'
+
+
+def quiz_report_values(reg) -> list:
+    """Значення колонок QUIZ_REPORT_COLS для реєстрації.
+
+    Час -- тієї спроби, що представляє учасника (quiz_service.report_attempt):
+    першої складеної, інакше останньої завершеної. Тривалість -- від «Почати»
+    до «Завершити» за годинником, а не чистий час над питаннями: спроба
+    переживає закриту вкладку, і повернення наступного дня теж сюди входить.
+    Очікує підвантажені reg.quiz_attempts (selectinload), інакше -- запит на рядок.
+    """
+    from app.services import quiz_service
+    from app.utils import ensure_utc
+
+    attempts = list(reg.quiz_attempts or [])
+    attempt = quiz_service.report_attempt(attempts)
+    if attempt is None:
+        return [''] + [None] * (len(QUIZ_REPORT_COLS) - 1)
+
+    finished = [a for a in attempts if a.is_finished]
+    if reg.quiz_passed_at or attempt.passed:
+        result = 'Склав'
+    elif finished:
+        result = 'Не склав'
+    else:
+        result = 'Проходить'
+
+    # ensure_utc: SQLite повертає час без поясу, і _to_kyiv_naive прийняв
+    # би UTC за київський. На PostgreSQL -- no-op.
+    started = ensure_utc(attempt.started_at)
+    submitted = ensure_utc(attempt.submitted_at)
+    duration = None
+    if submitted and started:
+        seconds = (submitted - started).total_seconds()
+        # Хвилина -- найменша одиниця колонки: тест за 40 секунд не «0 хв».
+        duration = max(1, round(seconds / 60)) if seconds > 0 else 0
+
+    return [
+        result,
+        (f'{attempt.score}/{attempt.total}'
+         if attempt.is_finished and attempt.score is not None else ''),
+        len(finished) or None,
+        _to_kyiv_naive(started),
+        _to_kyiv_naive(submitted),
+        duration,
+    ]
 
 
 def _date(v) -> date | None:
@@ -372,6 +444,8 @@ def export_participants_xlsx(instance_id=None, blank=False) -> io.BytesIO:
             .options(
                 joinedload(EventRegistration.user).joinedload(User.medical_profile),
                 joinedload(EventRegistration.instance).joinedload(CourseInstance.course),
+                # Колонки тесту -- один SELECT на всі рядки, не по рядку.
+                selectinload(EventRegistration.quiz_attempts),
             )
             .order_by(EventRegistration.created_at.desc())
         )
@@ -420,6 +494,7 @@ def export_participants_xlsx(instance_id=None, blank=False) -> io.BytesIO:
             reg.admin_notes or '',
             reg.promo_code.code if reg.promo_code else '',
             float(reg.discount_amount) if reg.discount_amount is not None else None,
+            *quiz_report_values(reg),
         ]
         for col_idx, v in enumerate(values, start=1):
             cell = write_cell(ws, row_idx, col_idx, v)

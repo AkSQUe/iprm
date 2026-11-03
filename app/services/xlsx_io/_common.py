@@ -120,6 +120,11 @@ NUMBER_FORMATS = {
     'fulfilled_at': FMT_DATETIME,
     'payment_date': FMT_DATETIME,
     'net_amount': FMT_CURRENCY_UAH,
+    # Тестування (QUIZ_REPORT_COLS)
+    'quiz_attempts': FMT_INT,
+    'quiz_started_at': FMT_DATETIME,
+    'quiz_submitted_at': FMT_DATETIME,
+    'quiz_duration_min': FMT_INT,
 }
 
 # ----- Color fills для enum-полів ------------------------------------

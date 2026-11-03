@@ -113,9 +113,9 @@ def test_data_export_adds_promo_columns_and_reimports(client, tmp_path):
 
     ws = load_workbook(xlsx_io.export_participants_xlsx())['Учасники']
     header = [c.value for c in ws[1]]
-    assert header[-2:] == ['Промокод', 'Знижка (грн)']
-    row = [c.value for c in ws[2]]
-    assert row[-2:] == ['XLSX-CODE', 500.0]
+    row = dict(zip(header, [c.value for c in ws[2]]))
+    assert row['Промокод'] == 'XLSX-CODE'
+    assert row['Знижка (грн)'] == 500.0
 
     # Шаблон для заповнення лишається без довідкових колонок.
     blank = load_workbook(xlsx_io.export_participants_xlsx(blank=True))['Учасники']

@@ -327,6 +327,27 @@ def attempts_left(registration, quiz, context=None):
     return max(allowed - _finished_attempts_count(registration, context), 0)
 
 
+def report_attempt(attempts):
+    """Спроба, яка представляє учасника у звіті, або None.
+
+    Перша складена -- саме за нею ставиться quiz_passed_at і видається
+    сертифікат, тож пізніші спроби (якщо адмін видав додаткову) звіт не
+    мусить підміняти. Не склав -- остання завершена. Завершених немає --
+    незавершена: видно, що людина почала, хоч і не здала.
+
+    Працює зі списком, а не з запитом: звіт підвантажує спроби одним
+    selectinload на всі рядки.
+    """
+    attempts = sorted(attempts or [], key=lambda a: a.attempt_number)
+    finished = [a for a in attempts if a.is_finished]
+    passed = [a for a in finished if a.passed]
+    if passed:
+        return passed[0]
+    if finished:
+        return finished[-1]
+    return attempts[-1] if attempts else None
+
+
 def deadline_for(quiz, instance):
     """Мить, коли тест закривається, або None якщо обмеження немає.
 
