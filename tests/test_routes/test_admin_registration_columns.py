@@ -668,3 +668,16 @@ def test_participation_column_on_instance_page_and_filter(client, admin):
     page = resp.get_data(as_text=True)
     assert absent.user.email in page
     assert other.user.email not in page
+
+
+def test_participation_is_editable_on_instance_page(client, admin):
+    """Менеджер з заходів відмічає участь саме на сторінці заходу -- під час
+    заходу вона працює зі списком його учасників, а не з загальним реєстром.
+    Тож тут той самий вибір, що й у реєстрі, і скрипт, що його зберігає."""
+    inst = _instance()
+    reg = _registration(inst)
+    _login(client, admin)
+    html = _html(client, inst)
+    assert f'/admin/registrations/{reg.id}/participation' in html
+    assert 'data-inline-field="attendance"' in html
+    assert 'js/admin-inline-edit.js' in html

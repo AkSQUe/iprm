@@ -14,7 +14,7 @@
 {% from 'admin/partials/_filter_bar.html' import filter_bar, pager, empty_state  %}
 {% from 'admin/partials/_registration_actions.html' import registration_actions %}
 {% import 'admin/partials/_registration_progress.html' as progress %}
-{% from 'admin/partials/_registration_participation.html' import participation_badge, no_certificate_note %}
+{% from 'admin/partials/_registration_participation.html' import participation_select, participation_badge, no_certificate_note %}
 {% from 'partials/_bpr_points.html' import points_by_format %}
 
 {% block content %}
@@ -142,7 +142,10 @@
             <span class="badge badge--{{ reg.status_badge }}">{{ reg.status_label }}</span>
             {{ no_certificate_note(reg) }}
           </td>
-          <td>{{ participation_badge(reg) }}</td>
+          {# Участь відмічають саме тут, під час заходу, тож вибір, а не
+             бейдж -- для того, кому дозволено (той самий маршрут і право,
+             що й у загальному реєстрі). #}
+          <td>{% if can('registrations.manage') %}{{ participation_select(reg) }}{% else %}{{ participation_badge(reg) }}{% endif %}</td>
           <td>
             <span class="badge badge--{{ reg.payment_badge }}">
               {{ reg.payment_status_label }}
@@ -195,6 +198,7 @@
 {% block extra_scripts %}
 {{ super() }}
 <script src="{{ url_for('static', filename='js/admin-copy-link.js') }}?v={{ assets_version }}" defer></script>
+<script src="{{ url_for('static', filename='js/admin-inline-edit.js') }}?v={{ assets_version }}" defer></script>
 <script src="{{ url_for('static', filename='js/modal.js') }}?v={{ assets_version }}" defer></script>
 <script src="{{ url_for('static', filename='js/admin-transfer.js') }}?v={{ assets_version }}" defer></script>
 {% endblock %}
