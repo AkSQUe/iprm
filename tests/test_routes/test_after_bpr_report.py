@@ -102,3 +102,15 @@ def test_issue_button_stays_for_revoked_certificate_after_report(
     _login(client, admin)
 
     assert _issue_button_shown(client, reg) is True
+
+
+def test_issue_button_shown_after_report_for_passed_without_certificate(
+        client, app, admin):
+    from datetime import datetime, timezone
+    reg, _ = _setup()
+    reg.quiz_passed_at = datetime.now(timezone.utc)
+    reg.instance.bpr_report_submitted_on = date.today()
+    db.session.commit()
+    _login(client, admin)
+
+    assert _issue_button_shown(client, reg) is True

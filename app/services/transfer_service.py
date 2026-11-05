@@ -21,7 +21,7 @@ from app.models.registration_transfer import (
 from app.models.refund_request import RefundRequest, STATUS_NEW
 from app.models.mixins import utcnow
 from app.models.site_settings import SiteSettings
-from app.services import refund_policy, refund_requests, registration_service
+from app.services import bpr_report, refund_policy, refund_requests, registration_service
 from app.services.refund_requests import MAX_PAYOUT, MAX_REASON
 from app.utils import ensure_utc, uk_plural
 
@@ -125,7 +125,7 @@ def _registration_problems(reg):
 
     # Після подачі звіту учасників закрито в Центрі тестування: на інший захід
     # їх уже не переносять.
-    if reg.instance is not None and reg.instance.bpr_report_submitted:
+    if bpr_report.is_closed(reg.instance):
         problems.append('Звіт до Центру тестування за цим заходом подано — '
                         'перенесення закрито')
 

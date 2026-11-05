@@ -91,7 +91,7 @@
     </form>
     {# Звіт подано і запису про сертифікат немає зовсім: новий не видається.
        Відкликаний запис лишає кнопку -- повторна видача зберігає номер. #}
-    {% elif reg.status != 'cancelled' and not (reg.certificate is none and reg.instance.bpr_report_submitted) %}
+    {% elif reg.status != 'cancelled' and not (reg.certificate is none and reg.instance.bpr_report_submitted and not reg.quiz_passed_at) %}
     <form method="POST" action="{{ url_for('admin.registration_certificate_issue', reg_id=reg.id) }}" data-confirm="Видати сертифікат і надіслати на email?" data-confirm-ok="Видати">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="hidden" name="next" value="{{ back_url }}">

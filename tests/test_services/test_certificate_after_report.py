@@ -47,3 +47,12 @@ def test_valid_certificate_returned_after_report(app, no_pdf):
     db.session.flush()
 
     assert certificate_service.issue_certificate(reg).id == cert.id
+
+
+def test_passed_before_report_without_certificate_can_still_be_issued(app, no_pdf):
+    reg = _registration()
+    reg.quiz_passed_at = datetime.now(timezone.utc)
+    reg.instance.bpr_report_submitted_on = date.today()
+    db.session.flush()
+
+    assert certificate_service.issue_certificate(reg).number

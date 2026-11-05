@@ -770,7 +770,9 @@ def issue_certificate(registration, issued_by=None):
 
     # Звіт до Центру тестування подано -- НОВИЙ сертифікат не видаємо. Повторна
     # видача відкликаного (existing) сюди не доходить: номер уже в реєстрі.
-    if existing is None:
+    # Виняток: тест складено ДО подачі (після неї скласти його вже не можна), а
+    # автовидача не спрацювала -- людина є у звіті й сертифікат їй належить.
+    if existing is None and registration.quiz_passed_at is None:
         from app.services import bpr_report
         if bpr_report.is_closed(registration.instance):
             raise ValueError(
