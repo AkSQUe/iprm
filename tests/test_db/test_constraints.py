@@ -115,7 +115,7 @@ class TestDefaultValues:
 
         assert reg.status == 'pending'
         assert reg.payment_status == 'unpaid'
-        assert reg.attended is False
+        assert reg.attended is None
 
     def test_clinic_defaults(self, db_session):
         """Клініка створюється з правильними defaults."""

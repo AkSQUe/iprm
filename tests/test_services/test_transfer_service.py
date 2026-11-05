@@ -743,7 +743,7 @@ def test_past_event_no_show_can_be_transferred(world):
     reg, src, dst, _, _ = world
     src.start_date = utcnow() - timedelta(days=5)
     db.session.commit()
-    assert reg.attended is False
+    assert reg.attended is None
     assert reg.status == 'confirmed'
     assert transfer_service.check(reg, dst) == []
     assert [i.id for i in transfer_service.eligible_instances(reg)] == [dst.id]

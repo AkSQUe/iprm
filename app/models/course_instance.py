@@ -75,6 +75,16 @@ class CourseInstance(TranslatableMixin, TimestampMixin, db.Model):
     # під одним номером реєстру.
     bpr_event_number = db.Column(db.String(20))
 
+    # Дата подачі звіту про захід до Центру тестування БПР. NULL -- звіт не
+    # подано. Після подачі участь зафіксована: статус «Завершено» проставлено
+    # підтвердженим реєстраціям, нові сертифікати не видаються.
+    bpr_report_submitted_on = db.Column(db.Date)
+    bpr_report_submitted_by_id = db.Column(
+        db.BigInteger,
+        db.ForeignKey('users.id', ondelete='SET NULL'),
+        nullable=True,
+    )
+
     # Перевизначення рівня складності (шкала Course.DIFFICULTY_LEVELS, 1..3).
     # NULL -- беремо рівень курсу (див. effective_difficulty_level). Потрібне,
     # коли дати одного курсу мають різну підготовку: та сама програма раз іде
@@ -312,6 +322,10 @@ class CourseInstance(TranslatableMixin, TimestampMixin, db.Model):
             return list(self.bpr_specialty_codes)
         course = self.course
         return list(course.bpr_specialty_codes or []) if course else []
+
+    @property
+    def bpr_report_submitted(self):
+        return self.bpr_report_submitted_on is not None
 
     @property
     def effective_bpr_event_number(self):

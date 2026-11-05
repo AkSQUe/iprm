@@ -14,6 +14,14 @@ from app.models.mixins import (
 # Термін дії токена посилання на самостійне завершення реєстрації учасником.
 COMPLETION_TOKEN_TTL_DAYS = 30
 
+# Підписи станів присутності (ключ -- значення `attendance`). Єдине місце
+# для текстів: адмінка, xlsx і API беруть їх звідси.
+ATTENDANCE_LABELS = {
+    'present': 'Був',
+    'absent': "Не з'явився",
+    None: 'Не відмічено',
+}
+
 
 class EventRegistration(TimestampMixin, PaidAtMixin, RefundableMixin, CancellableMixin,
                         DiscountedMixin, db.Model):
@@ -93,7 +101,16 @@ class EventRegistration(TimestampMixin, PaidAtMixin, RefundableMixin, Cancellabl
     )
     discount_amount = db.Column(db.Numeric(10, 2))
 
-    attended = db.Column(db.Boolean, default=False)
+    # Присутність -- три стани, а не так/ні: NULL = не відмічено, False =
+    # не з'явився, True = був. Нова реєстрація не відмічена: «не з'явився»
+    # ставить людина або масова дія, а не значення за замовчуванням.
+    attended = db.Column(db.Boolean, nullable=True, default=None)
+    # Статус «Завершено» виставлено подачею звіту до Центру тестування, а не
+    # відміткою присутності. Потрібно, щоб скасування подачі повернуло лише
+    # такі рядки й не зачепило ті, що адмін завершив вручну.
+    completed_by_report = db.Column(
+        db.Boolean, nullable=False, default=False, server_default=db.false(),
+    )
     cpd_points_awarded = db.Column(db.Numeric(5, 2))
     admin_notes = db.Column(db.Text)
 
@@ -278,6 +295,17 @@ class EventRegistration(TimestampMixin, PaidAtMixin, RefundableMixin, Cancellabl
         self.completion_token = None
         self.completion_token_expires_at = None
         self.completion_token_used_at = None
+
+    @property
+    def attendance(self):
+        """'present' | 'absent' | None (не відмічено)."""
+        if self.attended is None:
+            return None
+        return 'present' if self.attended else 'absent'
+
+    @property
+    def attendance_label(self):
+        return ATTENDANCE_LABELS[self.attendance]
 
     @property
     def completion_token_active(self):
