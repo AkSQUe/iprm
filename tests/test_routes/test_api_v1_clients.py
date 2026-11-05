@@ -181,6 +181,24 @@ class TestRegistrations:
         # Знімок анкети на момент реєстрації, а не поточний профіль.
         assert row['specialty'] == 'Гінекологія'
 
+    def test_attendance_three_states(self, client, partner_settings):
+        """present / absent / null; attended лишається bool для сумісності."""
+        starts = datetime.now(timezone.utc) + timedelta(days=5)
+        rows = {
+            flag: self._paid_registration(starts, attended=flag)
+            for flag in (True, False, None)
+        }
+        data = client.get('/api/v1/registrations?per_page=200',
+                          headers=HEADERS).get_json()
+        by_user = {i['user_id']: i for i in data['items']}
+
+        present = by_user[rows[True].user_id]
+        absent = by_user[rows[False].user_id]
+        unmarked = by_user[rows[None].user_id]
+        assert (present['attended'], present['attendance']) == (True, 'present')
+        assert (absent['attended'], absent['attendance']) == (False, 'absent')
+        assert (unmarked['attended'], unmarked['attendance']) == (False, None)
+
     def _paid_registration(self, starts_at, **kwargs):
         user = _user()
         course = Course(title='Курс', slug=f'c-{_uid()}', event_type='course',

@@ -239,6 +239,27 @@ class TestEventsList:
         assert card['registration_url'].endswith(f'/registration/instance/{inst_id}/register')
         assert card['detail_url'].endswith(f'/courses/{published_event.slug}')
 
+    def test_card_carries_bpr_report_date(self, client, partner_settings,
+                                          published_event):
+        from datetime import date
+        url = '/api/v1/events'
+
+        def card():
+            resp = client.get(url, headers={'X-API-Key': API_KEY})
+            return next(e for e in resp.get_json()['items']
+                        if e['slug'] == published_event.slug)
+
+        assert card()['bpr_report_submitted_on'] is None
+        inst = db.session.get(CourseInstance, published_event._test_instance.id)
+        inst.bpr_report_submitted_on = date(2026, 11, 20)
+        db.session.commit()
+        assert card()['bpr_report_submitted_on'] == '2026-11-20'
+
+        detail = client.get(f'/api/v1/events/{published_event.slug}',
+                            headers={'X-API-Key': API_KEY}).get_json()
+        assert detail['bpr_report_submitted_on'] == '2026-11-20'
+        assert detail['instances'][0]['bpr_report_submitted_on'] == '2026-11-20'
+
     def test_card_carries_trainer_identity(self, client, partner_settings,
                                            published_event):
         """MM Medic звʼязує свого користувача з тренером за id (email -- для

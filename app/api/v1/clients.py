@@ -310,6 +310,9 @@ def list_registrations():
             'fulfilled_at': _iso(finance_report.fulfilled_at(
                 reg, page_requests.get(('reg', reg.id), ()))),
             'attended': bool(reg.attended),
+            # 'present' / 'absent' / None (не відмічено). `attended` їх не
+            # розрізняє: «не з'явився» і «не відмічено» дають False.
+            'attendance': reg.attendance,
             'cpd_points_awarded': _points(reg.cpd_points_awarded),
             # Знімок анкети на момент реєстрації: людина могла відтоді
             # змінити місце роботи, а партнеру потрібен саме той стан.

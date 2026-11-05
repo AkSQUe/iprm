@@ -171,6 +171,10 @@ def pick_representative_instance(course, allowed_statuses=None,
     return past[0] if past else None
 
 
+def _iso_date(value):
+    return value.isoformat() if value else None
+
+
 def serialize_instance(instance) -> dict:
     """Компактна серіалізація одного CourseInstance для API."""
     return {
@@ -189,6 +193,7 @@ def serialize_instance(instance) -> dict:
         'price_is_from': bool(instance.price_is_from),
         'is_registration_open': bool(instance.is_registration_open),
         'registration_url': _registration_url(instance),
+        'bpr_report_submitted_on': _iso_date(instance.bpr_report_submitted_on),
     }
 
 
@@ -255,6 +260,9 @@ def serialize_event_card(course, instance=None) -> dict:
         'is_registration_open': bool(instance.is_registration_open) if instance else False,
         'registration_url': _registration_url(instance),
         'detail_url': _detail_url(course),
+        # Дата подачі звіту до Центру тестування (YYYY-MM-DD) або null.
+        'bpr_report_submitted_on': (
+            _iso_date(instance.bpr_report_submitted_on) if instance else None),
         # Масив, порядок position -- перший є головним лектором. Ключ
         # `trainer` (однина) видалено без гілки сумісності: другий,
         # паралельний формат назавжди означав би, що ніхто не знає, який
