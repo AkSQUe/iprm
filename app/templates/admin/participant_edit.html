@@ -210,9 +210,9 @@
           <label for="license_number">Номер ліцензії</label>
           {{ form.license_number(class="form-input", id="license_number") }}
         </div>
-        <div class="form-group admin-form__full form-checkbox">
-          {{ form.attended(id="attended") }}
-          <label for="attended">Був присутній на заході</label>
+        <div class="form-group">
+          <label for="attended">Участь</label>
+          {{ form.attended(class="form-input", id="attended") }}
         </div>
         <div class="form-group admin-form__full">
           <label for="admin_notes">Нотатки адміністратора</label>

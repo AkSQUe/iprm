@@ -80,3 +80,12 @@ def test_gate_allows_offline_participant_when_only_offline_filled(app):
     assert quiz_service.bpr_is_configured(
         reg.instance, registration=reg,
     ) is True
+
+
+def test_quiz_pass_sets_present_for_marked_absent(app):
+    """Складений тест -- доказ участі: відмітка «Не з'явився» не заважає."""
+    reg = _hybrid_registration('offline')
+    reg.attended = False
+    db.session.commit()
+    quiz_service.award_and_issue(reg)
+    assert reg.attended is True

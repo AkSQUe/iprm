@@ -198,7 +198,10 @@ def apply_registration_fields(reg, data, profile):
     # payment_status тут НЕ ставимо: його разом із датою оплати й записом у
     # журнал ставить _apply_payment_status, коли реєстрація вже має id.
     reg.payment_amount = data.get('payment_amount')
-    reg.attended = bool(data.get('attended'))
+    # Рівно обраний стан (True / False / None). Відсутній ключ -- «не чіпати»:
+    # так xlsx-імпорт лишає присутність, коли в клітинці нічого зрозумілого.
+    if 'attended' in data:
+        reg.attended = data['attended']
     reg.cpd_points_awarded = data.get('cpd_points_awarded')
     reg.participation_format = data.get('participation_format')
     reg.admin_notes = _strip_or_none(data.get('admin_notes'))
@@ -261,7 +264,9 @@ def upsert_participant(data, reg=None, on_duplicate='error'):
         data: нормалізований dict (instance_id, last_name, first_name,
             middle_name, email, phone, participant_type, birth_date,
             education, workplace, position, specializations[list codes],
-            status, payment_status, paid_on (date|None), payment_amount, attended,
+            status, payment_status, paid_on (date|None), payment_amount,
+            attended (True «Був» | False «Не з'явився» | None «Не відмічено»;
+            без ключа -- не змінювати),
             cpd_points_awarded, participation_format, experience_years,
             license_number, admin_notes).
         reg: наявний EventRegistration для редагування, або None (створення).

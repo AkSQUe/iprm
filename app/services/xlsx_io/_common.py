@@ -463,6 +463,34 @@ def _bool(v) -> bool:
     return s in {'true', 'yes', 'y', '1', 'так', 'да'}
 
 
+_ATTENDANCE_PRESENT_CELL = 'Так'
+_ATTENDANCE_ABSENT_CELL = "Не з'явився"
+
+
+def _attendance_cell(attended) -> str:
+    """Клітинка «Присутній»: «Так» / «Не з'явився» / порожньо (не відмічено)."""
+    if attended is None:
+        return ''
+    return _ATTENDANCE_PRESENT_CELL if attended else _ATTENDANCE_ABSENT_CELL
+
+
+def _attendance_from_cell(v) -> bool | None:
+    """«Так» -> True, «Не з'явився» -> False, усе інше -> None (не чіпати).
+
+    «Ні» зі старих вивантажень свідомо нічого не означає: раніше воно стояло
+    в кожного, кого просто не відмітили, і повторний імпорт позначив би їх
+    усіх «Не з'явився».
+    """
+    if v is None:
+        return None
+    s = str(v).strip().lower().replace('’', "'").replace('ʼ', "'")
+    if s in {'так', 'да', 'yes', 'y', 'true', '1'}:
+        return True
+    if s == _ATTENDANCE_ABSENT_CELL.lower():
+        return False
+    return None
+
+
 def _decimal(v) -> Decimal | None:
     if v is None or v == '':
         return None

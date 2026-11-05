@@ -20,7 +20,7 @@ from app.rbac import permission_required
 from app.admin.forms import ParticipantForm
 from app.extensions import db
 from app.models.course_instance import CourseInstance
-from app.models.registration import EventRegistration
+from app.models.registration import ATTENDANCE_CHOICES, EventRegistration
 from app.models.user import User
 from app.services import participant_service, promo_service, xlsx_io
 from app.services.participant_service import ParticipantError
@@ -93,7 +93,7 @@ def _form_to_data(form, instance_id):
         'payment_status': form.payment_status.data,
         'paid_on': form.paid_on.data,
         'payment_amount': form.payment_amount.data,
-        'attended': form.attended.data,
+        'attended': ATTENDANCE_CHOICES.get(form.attended.data),
         'cpd_points_awarded': form.cpd_points_awarded.data,
         'participation_format': form.participation_format.data or None,
         'experience_years': form.experience_years.data,
@@ -313,7 +313,7 @@ def _form_from_registration(reg):
         # застосувало б відсоток удруге, вже до зменшеної суми.
         'payment_amount': reg.amount_before_discount,
         'promo_code': reg.promo_code.code if reg.promo_code else '',
-        'attended': reg.attended,
+        'attended': reg.attendance or 'unmarked',
         'cpd_points_awarded': reg.cpd_points_awarded,
         'participation_format': reg.participation_format or '',
         'experience_years': reg.experience_years,

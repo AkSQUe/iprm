@@ -301,3 +301,83 @@ def test_reg_ids_without_email_are_prefetched(client, tmp_path):
         f'запити ростуть із кількістю рядків: {few} на 2 рядки, '
         f'{many} на 10 -- це N+1'
     )
+
+
+# --- присутність: три стани -------------------------------------------------
+
+def _import(tmp_path, rows):
+    plan = xlsx_io.parse_participants_xlsx(_write(tmp_path, rows))
+    assert plan.is_valid, plan.errors
+    assert xlsx_io.apply_participants_plan(plan)['ok']
+    return plan
+
+
+def _reg_by_email(email):
+    user = User.query.filter_by(email=email).one()
+    return EventRegistration.query.filter_by(user_id=user.id).one()
+
+
+@pytest.mark.parametrize('cell, expected', [
+    ('Так', True), ("Не з'явився", False), ('Ні', None), ('', None), (None, None),
+])
+def test_import_creates_with_cell_state(client, tmp_path, cell, expected):
+    inst = _instance()
+    email = f'att-{uuid4().hex[:6]}@test.com'
+    _import(tmp_path, [_row(inst, email=email, attended=cell)])
+    assert _reg_by_email(email).attended is expected
+
+
+def test_import_yes_and_no_show_update_existing(client, tmp_path):
+    inst = _instance()
+    email = f'att-{uuid4().hex[:6]}@test.com'
+    _import(tmp_path, [_row(inst, email=email, attended='')])
+    _import(tmp_path, [_row(inst, email=email, attended='Так')])
+    assert _reg_by_email(email).attended is True
+    _import(tmp_path, [_row(inst, email=email, attended="Не з'явився")])
+    assert _reg_by_email(email).attended is False
+
+
+def test_reimport_old_export_with_ni_does_not_mark_absent(client, tmp_path):
+    """Старе вивантаження мало «Ні» у всіх, кого просто не відмітили. Повторний
+    імпорт не повинен зробити їх «Не з'явився» -- ні в нових, ні в наявних."""
+    inst = _instance()
+    new_email = f'att-{uuid4().hex[:6]}@test.com'
+    kept_email = f'att-{uuid4().hex[:6]}@test.com'
+    true_email = f'att-{uuid4().hex[:6]}@test.com'
+    _import(tmp_path, [_row(inst, email=kept_email, attended=''),
+                       _row(inst, email=true_email, attended='Так')])
+    _import(tmp_path, [_row(inst, email=new_email, attended='Ні'),
+                       _row(inst, email=kept_email, attended='Ні'),
+                       _row(inst, email=true_email, attended='Ні')])
+    assert _reg_by_email(new_email).attended is None
+    assert _reg_by_email(kept_email).attended is None
+    assert _reg_by_email(true_email).attended is True
+
+
+def test_blank_cell_does_not_change_row_in_preview(client, tmp_path):
+    inst = _instance()
+    email = f'att-{uuid4().hex[:6]}@test.com'
+    _import(tmp_path, [_row(inst, email=email, attended="Не з'явився")])
+    plan = xlsx_io.parse_participants_xlsx(
+        _write(tmp_path, [_row(inst, email=email, attended='Ні')]))
+    assert plan.counts['unchanged'] == 1
+
+
+def test_export_three_states(client):
+    inst = _instance()
+    for attended in (True, False, None):
+        user = User.create_with_password(
+            f'ex-{uuid4().hex[:6]}@test.com', 'password123',
+            first_name='Ол', last_name=f'С{attended}')
+        db.session.flush()
+        db.session.add(EventRegistration(
+            user_id=user.id, instance_id=inst.id, phone='+380501112233',
+            specialty='Дерматолог', workplace='Клініка', attended=attended))
+    db.session.commit()
+    ws = load_workbook(xlsx_io.export_participants_xlsx())['Учасники']
+    header = [c.value for c in ws[1]]
+    idx = header.index('Присутній')
+    cells = {row[header.index('Прізвище')].value: row[idx].value
+             for row in ws.iter_rows(min_row=2)
+             if row[header.index('Прізвище')].value in ('СTrue', 'СFalse', 'СNone')}
+    assert cells == {'СTrue': 'Так', 'СFalse': "Не з'явився", 'СNone': None}

@@ -48,7 +48,8 @@ from ._common import (
     _apply_number_formats,
     _apply_table_style,
     _apply_zebra,
-    _bool,
+    _attendance_cell,
+    _attendance_from_cell,
     _decimal,
     _fill,
     _find_sheet,
@@ -478,7 +479,7 @@ def export_participants_xlsx(instance_id=None, blank=False) -> io.BytesIO:
             REG_STATUS_LABEL.get(reg.status, reg.status or ''),
             PAYMENT_STATUS_LABEL.get(reg.payment_status, reg.payment_status or ''),
             float(reg.payment_amount) if reg.payment_amount is not None else None,
-            'Так' if reg.attended else 'Ні',
+            _attendance_cell(reg.attended),
             reg.cpd_points_awarded,
             # Сира колонка, а не effective_participation_format: імпорт кладе
             # значення саме туди, тож віддавати обчислене з тарифу означало б
@@ -542,8 +543,9 @@ def export_participants_xlsx(instance_id=None, blank=False) -> io.BytesIO:
         hint='Не оплачено / Очікує оплати / Оплачено / Повернено',
     )
     _add_inline_dropdown(
-        ws, 'attended', PARTICIPANT_COLS, options=['Так', 'Ні'],
-        last_data_row=last_row, title='Присутній', hint='Так / Ні',
+        ws, 'attended', PARTICIPANT_COLS, options=['Так', "Не з'явився"],
+        last_data_row=last_row, title='Присутній',
+        hint="Так / Не з'явився / порожньо", allow_blank=True,
     )
 
     _apply_table_style(ws, cols, 'tblParticipants', last_row)
@@ -613,7 +615,7 @@ def _diff_participant(reg, data):
         changed.append(_PARTICIPANT_DIFF_LABELS['status'])
     if (data.get('payment_status') or 'unpaid') != reg.payment_status:
         changed.append(_PARTICIPANT_DIFF_LABELS['payment_status'])
-    if bool(data.get('attended')) != bool(reg.attended):
+    if 'attended' in data and data['attended'] != reg.attended:
         changed.append(_PARTICIPANT_DIFF_LABELS['attended'])
     if data.get('cpd_points_awarded') != reg.cpd_points_awarded:
         changed.append(_PARTICIPANT_DIFF_LABELS['cpd_points_awarded'])
@@ -777,13 +779,18 @@ def parse_participants_xlsx(path: Path) -> ParticipantsImportPlan:
                 'status': status,
                 'payment_status': payment_status,
                 'payment_amount': payment_amount,
-                'attended': _bool(raw.get('attended')),
                 'cpd_points_awarded': cpd,
                 'participation_format': participation_format,
                 'experience_years': experience,
                 'license_number': _str(raw.get('license_number')),
                 'admin_notes': _str(raw.get('admin_notes')),
             }
+
+            # Присутність: лише «Так» і «Не з'явився» щось ставлять; решта
+            # (зокрема «Ні» зі старих файлів і порожньо) поле не чіпає.
+            attended = _attendance_from_cell(raw.get('attended'))
+            if attended is not None:
+                data['attended'] = attended
 
             # Дія для preview: reg_id або наявна активна реєстрація за email
             # -> update (або unchanged, якщо нічого не змінюється); інакше create.

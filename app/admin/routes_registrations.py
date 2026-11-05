@@ -17,7 +17,7 @@ from app.auth._helpers import is_safe_redirect_url
 from app.extensions import db
 from app.models.course import Course
 from app.models.course_instance import CourseInstance
-from app.models.registration import EventRegistration
+from app.models.registration import ATTENDANCE_CHOICES, EventRegistration
 from app.models.trainer import Trainer
 from app.models.user import User
 from app.utils import format_points, parse_points
@@ -202,6 +202,52 @@ def registration_status(reg_id):
         flash(f'Статус змінено на "{reg.status_label}"', 'success')
     except Exception:
         logger.exception('Failed to update registration %d status', reg_id)
+        db.session.rollback()
+        if xhr:
+            return jsonify({'ok': False, 'error': 'Помилка при оновленні'}), 500
+        flash('Помилка при оновленні', 'error')
+
+    return _redirect_after_action(reg)
+
+
+@admin_bp.route('/registrations/<int:reg_id>/participation', methods=['POST'])
+@permission_required('registrations.manage')
+def registration_participation(reg_id):
+    """Відмітити участь: був / не з'явився / не відмічено (inline-select).
+
+    Статус, бали БПР і сертифікат не змінює -- на відміну від
+    `registration_attendance`, яка підтверджує присутність разом з балами.
+    """
+    xhr = _wants_json()
+    reg = db.session.get(EventRegistration, reg_id)
+    if not reg:
+        if xhr:
+            return jsonify({'ok': False, 'error': 'Реєстрацію не знайдено'}), 404
+        flash('Реєстрацію не знайдено', 'error')
+        return redirect(url_for('admin.dashboard'))
+
+    value = request.form.get('attendance')
+    if value not in ATTENDANCE_CHOICES:
+        if xhr:
+            return jsonify({'ok': False, 'error': 'Невідомий стан участі'}), 400
+        return _redirect_after_action(reg)
+
+    old_label = reg.attendance_label
+    reg.attended = ATTENDANCE_CHOICES[value]
+    try:
+        db.session.commit()
+        audit_logger.info(
+            'Admin %s changed reg %d participation: %s -> %s',
+            current_user.email, reg_id, old_label, reg.attendance_label,
+        )
+        if xhr:
+            return jsonify({
+                'ok': True, 'value': reg.attendance or 'unmarked',
+                'label': reg.attendance_label,
+            })
+        flash(f'Участь: "{reg.attendance_label}"', 'success')
+    except Exception:
+        logger.exception('Failed to update registration %d participation', reg_id)
         db.session.rollback()
         if xhr:
             return jsonify({'ok': False, 'error': 'Помилка при оновленні'}), 500

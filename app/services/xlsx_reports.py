@@ -26,6 +26,7 @@ from app.services.xlsx_io import (
     STATUS_LABEL,
     WRAP,
     _apply_number_formats,
+    _attendance_cell,
     _apply_table_style,
     _apply_zebra,
     _set_column_widths,
@@ -240,7 +241,7 @@ def export_registrations_xlsx(regs, referrer_map=None,
             float(reg.refunded_total) if reg.has_refund else None,
             reg.promo_code.code if reg.promo_code else '',
             float(reg.discount_amount) if reg.discount_amount is not None else None,
-            'Так' if reg.attended else 'Ні',
+            _attendance_cell(reg.attended),
             reg.cpd_points_awarded,
             # Відкликаний сертифікат лишається в реєстрі, але з поміткою --
             # інакше звіт стверджував би, що документ чинний.

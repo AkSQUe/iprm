@@ -1219,7 +1219,12 @@ class ParticipantForm(FlaskForm):
                     'знімає раніше застосований код і повертає його ліміт.',
         render_kw={'autocomplete': 'off'},
     )
-    attended = BooleanField('Був присутній')
+    attended = SelectField(
+        'Участь',
+        choices=[('unmarked', 'Не відмічено'), ('present', 'Був'),
+                 ('absent', "Не з'явився")],
+        default='unmarked',
+    )
     cpd_points_awarded = PointsField(
         'Нараховані бали БПР',
         validators=[Optional(), NumberRange(min=0)],

@@ -128,3 +128,165 @@ def test_value_over_the_cap_is_rejected(admin_client):
         assert reg.cpd_points_awarded is None
     finally:
         _cleanup(reg, user)
+
+
+# --- відмітка участі: був / не з'явився / не відмічено -----------------------
+
+XHR = {'X-Requested-With': 'XMLHttpRequest'}
+
+
+def test_mark_absent_keeps_status_and_points(admin_client):
+    reg, user = _hybrid_registration('offline')
+    try:
+        resp = admin_client.post(
+            f'/admin/registrations/{reg.id}/participation',
+            data={'attendance': 'absent'}, headers=XHR,
+        )
+        assert resp.status_code == 200
+        assert resp.json == {'ok': True, 'value': 'absent', 'label': "Не з'явився"}
+        db.session.refresh(reg)
+        assert reg.attended is False
+        assert reg.status == 'confirmed'
+        assert reg.cpd_points_awarded is None
+    finally:
+        _cleanup(reg, user)
+
+
+@pytest.mark.parametrize('value, attended, label', [
+    ('present', True, 'Був'),
+    ('unmarked', None, 'Не відмічено'),
+])
+def test_mark_other_states(admin_client, value, attended, label):
+    reg, user = _hybrid_registration('offline')
+    try:
+        reg.attended = False
+        db.session.commit()
+        resp = admin_client.post(
+            f'/admin/registrations/{reg.id}/participation',
+            data={'attendance': value}, headers=XHR,
+        )
+        assert resp.json == {'ok': True, 'value': value, 'label': label}
+        db.session.refresh(reg)
+        assert reg.attended is attended
+        assert reg.status == 'confirmed'
+        assert reg.cpd_points_awarded is None
+    finally:
+        _cleanup(reg, user)
+
+
+def test_unknown_value_is_rejected(admin_client):
+    reg, user = _hybrid_registration('offline')
+    try:
+        resp = admin_client.post(
+            f'/admin/registrations/{reg.id}/participation',
+            data={'attendance': 'maybe'}, headers=XHR,
+        )
+        assert resp.status_code == 400
+        assert resp.json['ok'] is False
+        db.session.refresh(reg)
+        assert reg.attended is None
+    finally:
+        _cleanup(reg, user)
+
+
+def test_participation_requires_permission(app, client):
+    reg, user = _hybrid_registration('offline')
+    plain = User.create_with_password(
+        f'attn-plain-{uuid4().hex[:8]}@test.com', 'password123',
+        first_name='Без', last_name='Прав', email_confirmed=True,
+    )
+    db.session.commit()
+    try:
+        with client.session_transaction() as session:
+            session['_user_id'] = str(plain.id)
+        resp = client.post(
+            f'/admin/registrations/{reg.id}/participation',
+            data={'attendance': 'absent'}, headers=XHR,
+        )
+        assert resp.status_code == 403
+        db.session.refresh(reg)
+        assert reg.attended is None
+    finally:
+        db.session.delete(plain)
+        _cleanup(reg, user)
+
+
+def _bulk_world(days_ago):
+    """Захід із трьома реєстраціями: без відмітки, була, скасована без відмітки."""
+    reg1, user1 = _hybrid_registration('offline')
+    inst = reg1.instance
+    inst.start_date = datetime.now(timezone.utc) - timedelta(days=days_ago)
+    rows = [(reg1, user1)]
+    for status, attended in (('confirmed', True), ('cancelled', None)):
+        user = User.create_with_password(
+            f'attn-b-{uuid4().hex[:8]}@test.com', 'password123',
+            first_name='Учасник', last_name='Масовий', email_confirmed=True,
+        )
+        db.session.flush()
+        reg = EventRegistration(
+            user_id=user.id, instance_id=inst.id, phone='+380501234567',
+            specialty='Терапія', workplace='Клініка', status=status,
+            payment_status='paid', attended=attended,
+        )
+        db.session.add(reg)
+        rows.append((reg, user))
+    db.session.commit()
+    return rows
+
+
+def test_bulk_marks_only_unmarked(admin_client):
+    rows = _bulk_world(days_ago=3)
+    inst_id = rows[0][0].instance_id
+    try:
+        resp = admin_client.post(
+            f'/admin/instances/{inst_id}/participation/absent-unmarked',
+            follow_redirects=True,
+        )
+        assert resp.status_code == 200
+        assert 'Позначено &#34;Не з&#39;явився&#34;: 1' in resp.get_data(as_text=True)
+        for reg, _ in rows:
+            db.session.refresh(reg)
+        assert [r.attended for r, _ in rows] == [False, True, None]
+        assert rows[0][0].status == 'confirmed'
+    finally:
+        for reg, user in rows:
+            _cleanup(reg, user)
+
+
+def test_bulk_refused_for_future_event(admin_client):
+    rows = _bulk_world(days_ago=-3)
+    inst_id = rows[0][0].instance_id
+    try:
+        resp = admin_client.post(
+            f'/admin/instances/{inst_id}/participation/absent-unmarked',
+            follow_redirects=True,
+        )
+        assert 'Захід ще не закінчився' in resp.get_data(as_text=True)
+        for reg, _ in rows:
+            db.session.refresh(reg)
+        assert [r.attended for r, _ in rows] == [None, True, None]
+    finally:
+        for reg, user in rows:
+            _cleanup(reg, user)
+
+
+def test_bulk_requires_permission(app, client):
+    rows = _bulk_world(days_ago=3)
+    plain = User.create_with_password(
+        f'attn-plain2-{uuid4().hex[:8]}@test.com', 'password123',
+        first_name='Без', last_name='Прав', email_confirmed=True,
+    )
+    db.session.commit()
+    try:
+        with client.session_transaction() as session:
+            session['_user_id'] = str(plain.id)
+        resp = client.post(
+            f'/admin/instances/{rows[0][0].instance_id}/participation/absent-unmarked',
+        )
+        assert resp.status_code == 403
+        db.session.refresh(rows[0][0])
+        assert rows[0][0].attended is None
+    finally:
+        db.session.delete(plain)
+        for reg, user in rows:
+            _cleanup(reg, user)

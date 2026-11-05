@@ -80,6 +80,8 @@ from ._common import (  # noqa: F401
     _apply_number_formats,
     _apply_table_style,
     _apply_zebra,
+    _attendance_cell,
+    _attendance_from_cell,
     _bool,
     _check_min_values,
     _decimal,

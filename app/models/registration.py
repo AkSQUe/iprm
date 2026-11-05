@@ -22,6 +22,14 @@ ATTENDANCE_LABELS = {
     None: 'Не відмічено',
 }
 
+# Значення поля «Участь» у формах і запитах -> `attended`. 'unmarked' -- не
+# відмічено (None), а не «не з'явився».
+ATTENDANCE_CHOICES = {
+    'unmarked': None,
+    'present': True,
+    'absent': False,
+}
+
 
 class EventRegistration(TimestampMixin, PaidAtMixin, RefundableMixin, CancellableMixin,
                         DiscountedMixin, db.Model):

@@ -20,6 +20,7 @@ from app.extensions import db, limiter
 from app.models.course import Course
 from app.models.course_instance import CourseInstance
 from app.models.registration import EventRegistration
+from app.services import attendance as attendance_service
 from app.services import course_service, event_types
 from app.services.course_service import InvalidStatusTransition
 from app.services.seating import occupied_clause, occupied_counts
@@ -834,6 +835,32 @@ def instance_status_update(instance_id):
         })
     flash(f'Статус змінено на "{instance.status_label}"', 'success')
     return redirect(url_for('admin.instances_list'))
+
+
+@admin_bp.route('/instances/<int:instance_id>/participation/absent-unmarked',
+                methods=['POST'])
+@permission_required('registrations.manage')
+def instance_mark_unmarked_absent(instance_id):
+    """Усім невідміченим після заходу -- «Не з'явився»."""
+    instance = db.session.get(CourseInstance, instance_id)
+    if not instance:
+        flash('Проведення не знайдено', 'error')
+        return redirect(url_for('admin.instances_list'))
+
+    back = redirect(url_for('admin.instance_registrations', instance_id=instance.id))
+    try:
+        marked = attendance_service.mark_unmarked_absent(instance, current_user)
+    except attendance_service.AttendanceError as exc:
+        flash(str(exc), 'error')
+        return back
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception(
+            'Failed to mark unmarked absent for instance %s', instance_id)
+        flash('Помилка при оновленні', 'error')
+        return back
+    flash(f"Позначено \"Не з'явився\": {marked}", 'success')
+    return back
 
 
 @admin_bp.route('/instances/<int:instance_id>/delete', methods=['POST'])

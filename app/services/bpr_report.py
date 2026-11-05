@@ -32,11 +32,20 @@ def _actor(by_user) -> str:
     return getattr(by_user, 'email', None) or str(by_user)
 
 
-def _event_ended(instance) -> bool:
+def event_has_ended(instance) -> bool:
+    """Чи закінчився захід: `end_date`, а без неї `start_date`, у минулому (UTC).
+
+    Без жодної дати -- False. Єдине правило «захід закінчився» для подачі
+    звіту і для масової відмітки «не з'явився».
+    """
     finished_at = ensure_utc(instance.end_date or instance.start_date)
-    if finished_at is None:
+    return finished_at is not None and finished_at < datetime.now(timezone.utc)
+
+
+def _event_ended(instance) -> bool:
+    if instance.end_date is None and instance.start_date is None:
         raise ReportError('У заходу немає дати проведення')
-    return finished_at < datetime.now(timezone.utc)
+    return event_has_ended(instance)
 
 
 def submit_report(instance, submitted_on: date, by_user) -> int:
