@@ -147,7 +147,7 @@
               {% else %}
               <span class="admin-text-muted">–</span>
               {% endif %}
-              {% if row.reg.quiz_passed_at and (not cert or cert.revoked) and can('certificates.manage') %}
+              {% if row.reg.quiz_passed_at and (not cert or cert.revoked) and not (not cert and row.reg.instance.bpr_report_submitted) and can('certificates.manage') %}
               <form method="POST"
                     action="{{ url_for('admin.registration_certificate_issue', reg_id=row.reg.id) }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

@@ -78,6 +78,8 @@ def _closed_registration(attempt):
     Сторінка умов сама пояснить причину (той самий `eligibility`).
     """
     reason = quiz_service.attempt_block_reason(attempt.registration)
+    if reason is None and quiz_service.report_is_closed(attempt.registration.instance):
+        reason = quiz_service.REPORT_SUBMITTED
     if reason is None:
         return None
     logger.info('Quiz attempt %s blocked: %s', attempt.id, reason)

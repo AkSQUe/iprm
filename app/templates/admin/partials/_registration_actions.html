@@ -89,7 +89,9 @@
       <input type="hidden" name="next" value="{{ back_url }}">
       <button type="submit" class="admin-actions-menu__item">{{ icon('refresh') }} Перевидати сертифікат</button>
     </form>
-    {% elif reg.status != 'cancelled' %}
+    {# Звіт подано і запису про сертифікат немає зовсім: новий не видається.
+       Відкликаний запис лишає кнопку -- повторна видача зберігає номер. #}
+    {% elif reg.status != 'cancelled' and not (reg.certificate is none and reg.instance.bpr_report_submitted) %}
     <form method="POST" action="{{ url_for('admin.registration_certificate_issue', reg_id=reg.id) }}" data-confirm="Видати сертифікат і надіслати на email?" data-confirm-ok="Видати">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="hidden" name="next" value="{{ back_url }}">

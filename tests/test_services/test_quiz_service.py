@@ -8,7 +8,7 @@
 одну з трьох, набір питань не перемішується між заходами на сторінку, а
 правильність відповіді не потрапляє у представлення для учасника.
 """
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from itertools import count
 from uuid import uuid4
 
@@ -1224,3 +1224,57 @@ class TestDeadline:
 
         states = quiz_service.eligibility_map([reg])
         assert states[reg.id].status == quiz_service.DEADLINE_PASSED
+
+
+# ---- звіт до Центру тестування закриває тест -------------------------------
+
+def test_eligibility_closed_after_report(app):
+    reg, _ = _setup()
+    reg.instance.bpr_report_submitted_on = date.today()
+    assert quiz_service.eligibility(reg).status == quiz_service.REPORT_SUBMITTED
+
+
+def test_in_progress_attempt_closed_after_report(app):
+    reg, _ = _setup()
+    quiz_service.start_attempt(reg)
+    reg.instance.bpr_report_submitted_on = date.today()
+    assert quiz_service.eligibility(reg).status == quiz_service.REPORT_SUBMITTED
+
+
+def test_passed_stays_passed_after_report(app):
+    reg, _ = _setup()
+    reg.quiz_passed_at = datetime.now(timezone.utc)
+    reg.instance.bpr_report_submitted_on = date.today()
+    assert quiz_service.eligibility(reg).status == quiz_service.PASSED
+
+
+def test_cancelled_and_unpaid_keep_their_message_after_report(app):
+    reg, _ = _setup(paid=False)
+    reg.instance.bpr_report_submitted_on = date.today()
+    assert quiz_service.eligibility(reg).status == quiz_service.NOT_PAID
+    reg.status = 'cancelled'
+    assert quiz_service.eligibility(reg).status == quiz_service.CANCELLED
+
+
+def test_batch_eligibility_matches_after_report(app):
+    reg, _ = _setup()
+    reg.instance.bpr_report_submitted_on = date.today()
+    states = quiz_service.eligibility_map([reg])
+    assert states[reg.id].status == quiz_service.REPORT_SUBMITTED
+
+
+def test_unfinished_attempt_cannot_be_submitted_after_report(app, no_pdf):
+    """Спроба, розпочата до подачі звіту, не дає ні балу, ні сертифіката."""
+    reg, _ = _setup()
+    attempt = quiz_service.start_attempt(reg)
+    _answer_all(attempt, 10)
+    reg.instance.bpr_report_submitted_on = date.today()
+    db.session.flush()
+
+    with pytest.raises(quiz_service.AttemptBlocked) as exc:
+        quiz_service.submit_attempt(attempt)
+
+    assert exc.value.status == quiz_service.REPORT_SUBMITTED
+    assert attempt.submitted_at is None
+    assert reg.quiz_passed_at is None
+    assert Certificate.query.filter_by(registration_id=reg.id).count() == 0

@@ -4,7 +4,7 @@
 кнопка неактивна" має бути видно з падіння одного тесту, а не з'ясовуватись
 перебором.
 """
-from datetime import timedelta
+from datetime import date, timedelta
 
 import pytest
 
@@ -139,6 +139,24 @@ def test_guard_7_certificate_issued(world):
     ))
     db.session.commit()
     assert any('сертифікат' in p for p in transfer_service.check(reg, dst))
+
+
+def test_guard_report_submitted(world):
+    """Звіт подано: учасників закрито в Центрі тестування, переносити нікого."""
+    reg, src, dst, _, _ = world
+    src.bpr_report_submitted_on = date.today()
+    db.session.commit()
+    assert any('звіт' in p.lower() for p in transfer_service.check(reg, dst))
+
+
+def test_no_show_transfer_allowed_before_report(world):
+    """Не з'явився на минулий захід, звіту ще немає -- перенесення не закрите."""
+    reg, src, dst, _, _ = world
+    src.start_date = utcnow() - timedelta(days=1)
+    reg.attended = False
+    db.session.commit()
+    problems = transfer_service.check(reg, dst)
+    assert not any('відвідав' in p or 'звіт' in p.lower() for p in problems)
 
 
 def test_guard_8_quiz_passed(world):

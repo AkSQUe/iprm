@@ -768,6 +768,15 @@ def issue_certificate(registration, issued_by=None):
     if existing is not None and not existing.revoked:
         return existing
 
+    # Звіт до Центру тестування подано -- НОВИЙ сертифікат не видаємо. Повторна
+    # видача відкликаного (existing) сюди не доходить: номер уже в реєстрі.
+    if existing is None:
+        from app.services import bpr_report
+        if bpr_report.is_closed(registration.instance):
+            raise ValueError(
+                'Звіт до Центру тестування за цим заходом подано -- '
+                'новий сертифікат видати не можна.')
+
     snapshot = _event_snapshot(registration)
     issued_at = utcnow()
 

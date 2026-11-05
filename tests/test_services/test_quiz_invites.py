@@ -4,7 +4,7 @@
 лишається без сертифіката), і лист, що йде зайвий раз або учасникам давно
 минулих заходів. Обидві тут закріплено.
 """
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from itertools import count
 from uuid import uuid4
 
@@ -162,6 +162,16 @@ def test_exhausted_attempts_are_marked_without_email(app, captured):
 
     assert _invited(captured, reg) == []
     assert reg.quiz_invite_sent_at is not None
+
+
+def test_no_invite_after_bpr_report(app, captured):
+    """Після подачі звіту тест закрито: лист «тестування відкрито» не йде."""
+    reg = _reg()
+    reg.instance.bpr_report_submitted_on = date.today()
+    db.session.flush()
+    quiz_service.send_quiz_invites()
+
+    assert _invited(captured, reg) == []
 
 
 def test_second_run_does_not_resend(app, captured):

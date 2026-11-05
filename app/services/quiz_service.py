@@ -44,6 +44,7 @@ CANCELLED = 'cancelled'                    # реєстрацію скасова
 NOT_PAID = 'not_paid'                      # участь не оплачена
 NOT_STARTED = 'not_started'                # захід ще не розпочався
 PASSED = 'passed'                          # уже склав
+REPORT_SUBMITTED = 'report_submitted'      # звіт до Центру тестування подано -- тест закрито
 IN_PROGRESS = 'in_progress'                # є незавершена спроба -- продовжити
 QUIZ_NOT_READY = 'quiz_not_ready'          # банк питань недостатній/зіпсований
 BPR_NOT_CONFIGURED = 'bpr_not_configured'  # немає номерів/балів БПР
@@ -386,6 +387,13 @@ def deadline_label(deadline):
     return ensure_utc(deadline).astimezone(KYIV).strftime('%d.%m.%Y, %H:%M')
 
 
+def report_is_closed(instance):
+    """Чи подано звіт до Центру тестування по заході (єдина перевірка)."""
+    from app.services import bpr_report
+
+    return bpr_report.is_closed(instance)
+
+
 def eligibility(registration, context=None):
     """Чи може учасник проходити тест зараз -- і якщо ні, то чому.
 
@@ -411,6 +419,12 @@ def eligibility(registration, context=None):
 
     if registration.quiz_passed_at is not None:
         return Eligibility(PASSED, quiz=quiz)
+
+    # Звіт подано -- реєстр БПР закрито, нових результатів і сертифікатів уже
+    # не буде. Перевірка стоїть ПІСЛЯ PASSED (хто склав, лишається складачем) і
+    # ДО IN_PROGRESS: розпочата до подачі спроба далі не завершується.
+    if report_is_closed(instance):
+        return Eligibility(REPORT_SUBMITTED, quiz=quiz)
 
     # Незавершена спроба -- перед рештою заборон: спробу, яку вже почали, треба
     # дати завершити, навіть якщо тим часом змінились налаштування чи анкета.
@@ -786,6 +800,11 @@ def submit_attempt(attempt):
         # повернення скасують, людина продовжить із того ж місця.
         raise AttemptBlocked(blocked)
 
+    # Звіт подано після початку спроби: оцінка не фіксується і сертифікат не
+    # видається. Спробу лишаємо незавершеною, як і за блокування вище.
+    if report_is_closed(attempt.registration.instance):
+        raise AttemptBlocked(REPORT_SUBMITTED)
+
     attempt.score = grade_attempt(attempt)
     attempt.passed = attempt.score >= attempt.passing_score
     attempt.submitted_at = utcnow()
@@ -999,6 +1018,8 @@ def send_quiz_invites(now=None):
         .filter(
             CourseInstance.start_date <= now - QUIZ_INVITE_DELAY,
             CourseInstance.start_date >= now - QUIZ_INVITE_LOOKBACK,
+            # Звіт подано -- тест закрито, кликати на нього вже нікого.
+            CourseInstance.bpr_report_submitted_on.is_(None),
             EventRegistration.status != 'cancelled',
             EventRegistration.payment_status == 'paid',
             EventRegistration.quiz_passed_at.is_(None),

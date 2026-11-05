@@ -100,6 +100,8 @@
       <strong>Для цього заходу тест не налаштований.</strong>
       {% elif state.status == statuses.CANCELLED %}
       <strong>Реєстрацію скасовано.</strong>
+      {% elif state.status == statuses.REPORT_SUBMITTED %}
+      <strong>Звіт за цим заходом подано до Центру тестування -- тестування закрито.</strong>
       {% endif %}
     </div>
     {% endif %}
