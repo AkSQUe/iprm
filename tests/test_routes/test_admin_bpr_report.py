@@ -111,6 +111,50 @@ def test_submit_rejects_bad_date_without_changes(client, admin):
     assert reg.status == 'confirmed'
 
 
+def test_submit_rejects_future_date_with_flash(client, admin):
+    from app.admin._listing import now_kyiv
+    inst = _instance()
+    reg = _reg(inst)
+    _login(client, admin)
+    tomorrow = (now_kyiv().date() + timedelta(days=1)).isoformat()
+    html = _submit(client, inst, submitted_on=tomorrow).get_data(as_text=True)
+    db.session.refresh(inst)
+    assert inst.bpr_report_submitted_on is None
+    assert reg.status == 'confirmed'
+    assert 'не може бути в майбутньому' in html
+
+
+def test_submit_rejects_date_before_event_start(client, admin):
+    from app.utils import to_kyiv
+    inst = _instance()
+    reg = _reg(inst)
+    _login(client, admin)
+    before = (to_kyiv(inst.start_date).date() - timedelta(days=1)).isoformat()
+    html = _submit(client, inst, submitted_on=before).get_data(as_text=True)
+    db.session.refresh(inst)
+    assert inst.bpr_report_submitted_on is None
+    assert reg.status == 'confirmed'
+    assert 'раніше за початок заходу' in html
+
+
+def test_submit_accepts_boundary_dates(client, admin):
+    from app.admin._listing import now_kyiv
+    inst = _instance()
+    _reg(inst)
+    _login(client, admin)
+    _submit(client, inst, submitted_on=now_kyiv().date().isoformat())
+    db.session.refresh(inst)
+    assert inst.bpr_report_submitted_on == now_kyiv().date()
+
+
+def test_edit_page_date_input_has_max_today(client, admin):
+    from app.admin._listing import now_kyiv
+    inst = _instance()
+    _login(client, admin)
+    html = client.get(f'/admin/instances/{inst.id}/edit').get_data(as_text=True)
+    assert f'max="{now_kyiv().date().isoformat()}"' in html
+
+
 def test_submit_without_permission_is_forbidden(client, app):
     inst = _instance()
     _login(client, _user())

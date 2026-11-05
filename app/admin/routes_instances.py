@@ -25,6 +25,7 @@ from app.services import attendance as attendance_service
 from app.services import bpr_report as bpr_report_service
 from app.services import course_service, event_types
 from app.services.course_service import InvalidStatusTransition
+from app.utils import to_kyiv
 from app.services.seating import occupied_clause, occupied_counts
 
 audit_logger = logging.getLogger('audit')
@@ -869,11 +870,19 @@ def instance_bpr_report_submit(instance_id):
         return redirect(url_for('admin.instances_list'))
 
     raw = (request.form.get('submitted_on') or '').strip()
+    today = _listing.now_kyiv().date()
     try:
-        submitted_on = (date.fromisoformat(raw) if raw
-                        else _listing.now_kyiv().date())
+        submitted_on = date.fromisoformat(raw) if raw else today
     except ValueError:
         flash('Некоректна дата подачі звіту', 'error')
+        return _bpr_report_back(instance)
+    if submitted_on > today:
+        flash('Дата подачі звіту не може бути в майбутньому', 'error')
+        return _bpr_report_back(instance)
+    # Захід, що ще не закінчився, відхилить сам submit_report зі своїм текстом.
+    if (instance.start_date and bpr_report_service.event_has_ended(instance)
+            and submitted_on < to_kyiv(instance.start_date).date()):
+        flash('Дата подачі звіту не може бути раніше за початок заходу', 'error')
         return _bpr_report_back(instance)
 
     try:

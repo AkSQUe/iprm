@@ -10,8 +10,6 @@
 import logging
 from datetime import date, datetime, timezone
 
-from sqlalchemy import or_
-
 from app.extensions import db
 from app.models.registration import EventRegistration
 from app.utils import ensure_utc
@@ -79,9 +77,12 @@ def submit_report(instance, submitted_on: date, by_user) -> int:
 def undo_report(instance, by_user) -> int:
     """Скасувати подачу: повернути «Підтверджено» рівно тим, кого перевела подача.
 
-    Рядок, де адмін уже відмітив присутність (`attended` = True), лишається
-    «Завершено»: це його власне рішення. Прапорець `completed_by_report`
-    скидається в усіх. Повертає кількість повернених. Комітить сам.
+    Повертаються всі рядки з `completed_by_report` і статусом «Завершено»,
+    хоч би що стояло в `attended`: відмітка «Був» під час заходу статус не
+    змінює, тож цей рядок «Завершено» зробила саме подача. Рядок, де адмін
+    підтвердив присутність ПІСЛЯ подачі (`registration_attendance`), прапорець
+    уже скинув сам і лишається «Завершено». Прапорець скидається в усіх.
+    Повертає кількість повернених. Комітить сам.
     """
     if not instance.bpr_report_submitted:
         return 0
@@ -92,8 +93,6 @@ def undo_report(instance, by_user) -> int:
     )
     returned = by_report.filter(
         EventRegistration.status == 'completed',
-        or_(EventRegistration.attended.is_(None),
-            EventRegistration.attended.is_(False)),
     ).update({'status': 'confirmed'}, synchronize_session='fetch')
     by_report.update({'completed_by_report': False}, synchronize_session='fetch')
 

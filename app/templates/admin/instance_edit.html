@@ -414,7 +414,7 @@
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="form-group">
         <label for="bpr-submitted-on">Дата подачі</label>
-        <input type="date" class="form-input" id="bpr-submitted-on" name="submitted_on" value="{{ bpr_report.today.isoformat() }}">
+        <input type="date" class="form-input" id="bpr-submitted-on" name="submitted_on" value="{{ bpr_report.today.isoformat() }}" max="{{ bpr_report.today.isoformat() }}">
       </div>
       <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm">
         {{ icon('check') }} Звіт подано

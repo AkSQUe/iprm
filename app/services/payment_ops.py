@@ -612,8 +612,17 @@ class PaymentOps:
             reg.set_paid_at(*(paid_at or liqpay_paid_moment(raw_payload)))
             # Запізнілий переказ не повертає проведений захід (completed) у
             # confirmed; решта статусів поводиться як раніше.
+            # Якщо звіт по заходу вже подано, оплата, що надійшла після
+            # нього, одразу дає «Завершено» (як усім підтвердженим на момент
+            # подачі) і прапорець звіту, щоб скасування звіту її повернуло.
+            # Листа про зміну статусу тут свідомо немає.
             if reg.status != 'completed':
-                reg.status = 'confirmed'
+                from app.services import bpr_report
+                if bpr_report.is_closed(reg.instance):
+                    reg.status = 'completed'
+                    reg.completed_by_report = True
+                else:
+                    reg.status = 'confirmed'
             # Призначити порядковий номер місця per-instance. Робимо до
             # commit, щоб номер опинився в одній транзакції з статусом.
             try:

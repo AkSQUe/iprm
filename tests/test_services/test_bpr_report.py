@@ -155,12 +155,84 @@ def test_undo_returns_only_moved(instance_past, regs, admin):
     assert is_closed(instance_past) is False
 
 
-def test_undo_keeps_manual_attendance(instance_past, regs, admin):
-    submit_report(instance_past, date(2026, 11, 20), admin)
+def test_undo_returns_inline_attended_row(instance_past, regs, admin):
+    """«Був» з inline-вибору до подачі статус не міняє: подача його завершила,
+    скасування мусить повернути."""
     regs[0].attended = True
     db.session.commit()
+    submit_report(instance_past, date(2026, 11, 20), admin)
+    assert undo_report(instance_past, admin) == 1
+    assert regs[0].status == 'confirmed'
+    assert regs[0].completed_by_report is False
+
+
+def test_undo_returns_row_marked_through_participation_route(
+        client, instance_past, regs, admin):
+    from tests.support.rbac import grant_role
+    grant_role(admin, 'super_admin')
+    db.session.commit()
+    with client.session_transaction() as s:
+        s['_user_id'] = str(admin.id)
+    client.post(f'/admin/registrations/{regs[0].id}/participation',
+                data={'attendance': 'present'})
+    db.session.refresh(regs[0])
+    assert regs[0].attended is True and regs[0].status == 'confirmed'
+    submit_report(instance_past, date(2026, 11, 20), admin)
+    assert undo_report(instance_past, admin) == 1
+    db.session.refresh(regs[0])
+    assert regs[0].status == 'confirmed'
+
+
+def test_undo_keeps_manual_attendance(client, instance_past, regs, admin):
+    """Присутність, підтверджена реальною дією ПІСЛЯ подачі, -- рішення
+    адміна, а не звіту."""
+    from tests.support.rbac import grant_role
+    grant_role(admin, 'super_admin')
+    db.session.commit()
+    submit_report(instance_past, date(2026, 11, 20), admin)
+    with client.session_transaction() as s:
+        s['_user_id'] = str(admin.id)
+    client.post(f'/admin/registrations/{regs[0].id}/attendance', data={})
+    db.session.refresh(regs[0])
+    assert regs[0].completed_by_report is False
     undo_report(instance_past, admin)
-    assert regs[0].status == 'completed' and regs[0].completed_by_report is False
+    db.session.refresh(regs[0])
+    assert regs[0].status == 'completed' and regs[0].attended is True
+
+
+def _pending_payment_reg(instance):
+    reg = _reg(instance, 'pending')
+    reg.payment_status = 'pending'
+    reg.payment_amount = 1000
+    db.session.commit()
+    return reg
+
+
+def _pay(reg):
+    from decimal import Decimal
+    from app.services.payment_ops import PaymentOps
+    ok, _ = PaymentOps(None).update_payment_status(
+        reg, 'paid', amount=Decimal('1000'), source='callback', raw_payload={})
+    assert ok
+    db.session.refresh(reg)
+
+
+def test_late_payment_after_report_gives_completed(
+        instance_past, admin, mail_calls):
+    submit_report(instance_past, date(2026, 11, 20), admin)
+    reg = _pending_payment_reg(instance_past)
+    _pay(reg)
+    assert reg.status == 'completed' and reg.completed_by_report is True
+    assert mail_calls == []
+    assert undo_report(instance_past, admin) == 1
+    db.session.refresh(reg)
+    assert reg.status == 'confirmed' and reg.completed_by_report is False
+
+
+def test_payment_on_open_instance_gives_confirmed(instance_past, mail_calls):
+    reg = _pending_payment_reg(instance_past)
+    _pay(reg)
+    assert reg.status == 'confirmed' and reg.completed_by_report is False
 
 
 def test_undo_without_submission_is_noop(instance_past, regs, admin):

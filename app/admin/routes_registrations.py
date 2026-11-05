@@ -336,6 +336,9 @@ def registration_attendance(reg_id):
 
     reg.attended = True
     reg.status = 'completed'
+    # «Завершено» тепер від ручної відмітки, а не від звіту: скасування
+    # звіту цей рядок не повертає.
+    reg.completed_by_report = False
     try:
         cpd = parse_points(request.form.get('cpd_points'))
     except ValueError:
