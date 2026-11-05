@@ -89,6 +89,15 @@
         <select class="admin-inline-select" data-state="unpaid" aria-label="Оплата: не оплачено">
           <option selected>Не оплачено</option>
         </select>
+        <select class="admin-inline-select" data-state="present" aria-label="Участь: був">
+          <option selected>Був</option>
+        </select>
+        <select class="admin-inline-select" data-state="absent" aria-label="Участь: не з'явився">
+          <option selected>Не з'явився</option>
+        </select>
+        <select class="admin-inline-select" data-state="unmarked" aria-label="Участь: не відмічено">
+          <option selected>Не відмічено</option>
+        </select>
       </div>
     </div>
     <p class="ds-hint">Вигляд задає атрибут data-state, а не клас-модифікатор: значення приходить із поля моделі, тож окремий стан не треба заводити в CSS двічі. Кольори -- семантичні токени (--iprm-success-*, --iprm-warning-*, --iprm-error-*), тому тёмну тему стани знають самі й ручного [data-theme="dark"] перекриття не мають. Тут демо статичне: у реєстрі селект несе ще data-inline-url, і саме цей атрибут вмикає надсилання зміни через admin-inline-edit.js.</p>

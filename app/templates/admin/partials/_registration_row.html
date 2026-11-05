@@ -11,6 +11,7 @@
 {% from 'partials/_money.html' import money %}
 {% from 'admin/partials/_registration_actions.html' import registration_actions %}
 {% import 'admin/partials/_registration_progress.html' as progress %}
+{% from 'admin/partials/_registration_participation.html' import participation_select, no_certificate_note %}
 
 {% macro registration_headers() %}
 <th class="admin-cell-title">Захід</th>
@@ -19,6 +20,7 @@
 <th>Реферер</th>
 <th>Телефон</th>
 <th>Статус</th>
+<th>Участь</th>
 <th>Оплата</th>
 <th>Сума</th>
 {{ progress.headers() }}
@@ -68,7 +70,9 @@
       <option value="{{ val }}"{% if reg.status == val %} selected{% endif %}>{{ label }}</option>
       {% endfor %}
     </select>
+    {{ no_certificate_note(reg) }}
   </td>
+  <td>{{ participation_select(reg) }}</td>
   <td>
     <select class="admin-inline-select" data-state="{{ reg.payment_status }}"
             data-inline-url="{{ url_for('admin.registration_payment', reg_id=reg.id) }}"

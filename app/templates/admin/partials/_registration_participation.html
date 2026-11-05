@@ -1,0 +1,32 @@
+{# Участь учасника (був / не з'явився / не відмічено) і підпис «Завершено ·
+   без сертифіката» -- спільні для двох таблиць реєстрацій: плаского реєстру
+   (`_registration_row.html`) і реєстрацій одного заходу
+   (`instance_registrations.html`). Макросом, а не копією: стани й підписи
+   мусять розійтись в обох місцях одночасно або не розходитись взагалі.
+
+   Підписи беремо з моделі (`reg.attendance_label`), а не пишемо тут: їх
+   читають ще xlsx, API й картка учасника. #}
+
+{% macro participation_select(reg) %}
+{% set state = reg.attendance or 'unmarked' %}
+<select class="admin-inline-select" data-state="{{ state }}"
+        data-inline-url="{{ url_for('admin.registration_participation', reg_id=reg.id) }}"
+        data-inline-field="attendance" data-csrf="{{ csrf_token() }}" aria-label="Участь">
+  {% for val, label in [('unmarked', 'Не відмічено'), ('present', 'Був'), ('absent', "Не з'явився")] %}
+  <option value="{{ val }}"{% if state == val %} selected{% endif %}>{{ label }}</option>
+  {% endfor %}
+</select>
+{% endmacro %}
+
+{% macro participation_badge(reg) %}
+<span class="badge badge--{{ {'present': 'active', 'absent': 'danger'}.get(reg.attendance, 'draft') }}">{{ reg.attendance_label }}</span>
+{% endmacro %}
+
+{# Рядок «Завершено» без чинного сертифіката на заході, де звіт уже подано:
+   тест закрито, тож сертифіката не буде. Це підпис, а не окремий статус. #}
+{% macro no_certificate_note(reg) %}
+{% if reg.status == 'completed' and reg.instance and reg.instance.bpr_report_submitted
+      and not (reg.certificate and not reg.certificate.revoked) %}
+<div class="admin-text-muted">Завершено · без сертифіката</div>
+{% endif %}
+{% endmacro %}

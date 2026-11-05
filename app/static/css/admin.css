@@ -2997,8 +2997,17 @@ a.admin-stat-card:focus-visible {
 .admin-inline-select[data-state="completed"] {
   background-color: var(--iprm-accent-light); color: var(--iprm-accent); border-color: var(--iprm-border-strong);
 }
-.admin-inline-select[data-state="unpaid"] {
+.admin-inline-select[data-state="unpaid"],
+.admin-inline-select[data-state="unmarked"] {
   background-color: var(--iprm-card-bg); color: var(--iprm-text-secondary);
+}
+/* Участь: «Був» -- як підтверджене, «Не з'явився» -- як скасоване; «Не відмічено»
+   сіре, як «Не оплачено» (рішення ще не прийнято). */
+.admin-inline-select[data-state="present"] {
+  background-color: var(--iprm-success-bg); color: var(--iprm-success); border-color: var(--iprm-success-light);
+}
+.admin-inline-select[data-state="absent"] {
+  background-color: var(--iprm-error-bg); color: var(--iprm-error-text); border-color: var(--iprm-error-light);
 }
 
 /* Підтвердження збереження / помилки */

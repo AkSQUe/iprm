@@ -651,3 +651,20 @@ def test_expired_deadline_is_named_not_hidden(client, admin, app):
     html = _html(client, inst)
     assert 'Термін вийшов' in html
     assert 'Не починав' not in html
+
+
+def test_participation_column_on_instance_page_and_filter(client, admin):
+    inst = _instance()
+    absent = _registration(inst)
+    absent.attended = False
+    other = _registration(inst)
+    _login(client, admin)
+    html = _html(client, inst)
+    assert '>Участь<' in html
+    assert 'Не з&#39;явився' in html and 'Не відмічено' in html
+
+    resp = client.get(
+        f'/admin/instances/{inst.id}/registrations?attendance=absent')
+    page = resp.get_data(as_text=True)
+    assert absent.user.email in page
+    assert other.user.email not in page

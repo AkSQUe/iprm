@@ -1,6 +1,6 @@
 """Admin CRUD для CourseInstance (проведення)."""
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from flask import render_template, redirect, url_for, flash, request, jsonify, current_app
 from flask_login import current_user
@@ -20,7 +20,9 @@ from app.extensions import db, limiter
 from app.models.course import Course
 from app.models.course_instance import CourseInstance
 from app.models.registration import EventRegistration
+from app.models.user import User
 from app.services import attendance as attendance_service
+from app.services import bpr_report as bpr_report_service
 from app.services import course_service, event_types
 from app.services.course_service import InvalidStatusTransition
 from app.services.seating import occupied_clause, occupied_counts
@@ -492,6 +494,21 @@ def _lecturer_certs_by_trainer(instance):
     return {lc.trainer_id: lc for lc in rows}
 
 
+def _bpr_report_context(instance):
+    """Стан блоку «Звіт до Центру тестування» на сторінці проведення."""
+    if instance is None:
+        return None
+    submitted_by = (db.session.get(User, instance.bpr_report_submitted_by_id)
+                    if instance.bpr_report_submitted_by_id else None)
+    return {
+        'submitted': instance.bpr_report_submitted,
+        'submitted_on': instance.bpr_report_submitted_on,
+        'submitted_by': submitted_by.full_name if submitted_by else None,
+        'ended': bpr_report_service.event_has_ended(instance),
+        'today': _listing.now_kyiv().date(),
+    }
+
+
 def _render_instance_form(form, instance, preselected_course_id=None):
     """Єдиний вхід у шаблон форми проведення.
 
@@ -530,6 +547,7 @@ def _render_instance_form(form, instance, preselected_course_id=None):
         cert_delivery=lc_svc.delivery_statuses(list(certs.values())),
         resume_columns=rs.available_columns(current_user),
         resume_default_keys=rs.DEFAULT_KEYS,
+        bpr_report=_bpr_report_context(instance),
     )
 
 
@@ -835,6 +853,63 @@ def instance_status_update(instance_id):
         })
     flash(f'Статус змінено на "{instance.status_label}"', 'success')
     return redirect(url_for('admin.instances_list'))
+
+
+def _bpr_report_back(instance):
+    return redirect(url_for('admin.instance_edit', instance_id=instance.id))
+
+
+@admin_bp.route('/instances/<int:instance_id>/bpr-report', methods=['POST'])
+@permission_required('instances.manage')
+def instance_bpr_report_submit(instance_id):
+    """Подати звіт до Центру тестування: підтверджені -> «Завершено»."""
+    instance = db.session.get(CourseInstance, instance_id)
+    if not instance:
+        flash('Проведення не знайдено', 'error')
+        return redirect(url_for('admin.instances_list'))
+
+    raw = (request.form.get('submitted_on') or '').strip()
+    try:
+        submitted_on = (date.fromisoformat(raw) if raw
+                        else _listing.now_kyiv().date())
+    except ValueError:
+        flash('Некоректна дата подачі звіту', 'error')
+        return _bpr_report_back(instance)
+
+    try:
+        moved = bpr_report_service.submit_report(
+            instance, submitted_on, current_user)
+    except bpr_report_service.ReportError as exc:
+        flash(str(exc), 'error')
+        return _bpr_report_back(instance)
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception(
+            'Failed to submit BPR report for instance %s', instance_id)
+        flash('Помилка при збереженні', 'error')
+        return _bpr_report_back(instance)
+    flash(f'Звіт подано. Переведено в «Завершено»: {moved}', 'success')
+    return _bpr_report_back(instance)
+
+
+@admin_bp.route('/instances/<int:instance_id>/bpr-report/undo', methods=['POST'])
+@permission_required('instances.manage')
+def instance_bpr_report_undo(instance_id):
+    """Скасувати подачу звіту: повернути рівно тих, кого перевела подача."""
+    instance = db.session.get(CourseInstance, instance_id)
+    if not instance:
+        flash('Проведення не знайдено', 'error')
+        return redirect(url_for('admin.instances_list'))
+    try:
+        returned = bpr_report_service.undo_report(instance, current_user)
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception(
+            'Failed to undo BPR report for instance %s', instance_id)
+        flash('Помилка при збереженні', 'error')
+        return _bpr_report_back(instance)
+    flash(f'Подачу скасовано. Повернуто в «Підтверджено»: {returned}', 'success')
+    return _bpr_report_back(instance)
 
 
 @admin_bp.route('/instances/<int:instance_id>/participation/absent-unmarked',

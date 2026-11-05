@@ -14,6 +14,7 @@
 {% from 'admin/partials/_filter_bar.html' import filter_bar, pager, empty_state  %}
 {% from 'admin/partials/_registration_actions.html' import registration_actions %}
 {% import 'admin/partials/_registration_progress.html' as progress %}
+{% from 'admin/partials/_registration_participation.html' import participation_badge, no_certificate_note %}
 {% from 'partials/_bpr_points.html' import points_by_format %}
 
 {% block content %}
@@ -73,6 +74,7 @@
          fields=[
            {'name': 'status', 'label': 'Статус', 'placeholder': 'Всі статуси', 'options': status_options},
            {'name': 'payment', 'label': 'Оплата', 'placeholder': 'Всі оплати', 'options': payment_options},
+           {'name': 'attendance', 'label': 'Участь', 'placeholder': 'Будь-яка', 'options': attendance_options},
          ],
          base_args={'instance_id': instance.id},
          export_endpoint='admin.registrations_export',
@@ -114,6 +116,7 @@
           <th>Учасник</th>
           <th>Телефон</th>
           <th>Статус</th>
+          <th>Участь</th>
           <th>Оплата</th>
           <th>Сума</th>
           {{ progress.headers() }}
@@ -135,7 +138,11 @@
             <small><a href="{{ url_for('admin.user_detail', user_id=reg.user.id) }}">{{ reg.user.email }}</a></small>
           </td>
           <td>{{ reg.phone }}</td>
-          <td><span class="badge badge--{{ reg.status_badge }}">{{ reg.status_label }}</span></td>
+          <td>
+            <span class="badge badge--{{ reg.status_badge }}">{{ reg.status_label }}</span>
+            {{ no_certificate_note(reg) }}
+          </td>
+          <td>{{ participation_badge(reg) }}</td>
           <td>
             <span class="badge badge--{{ reg.payment_badge }}">
               {{ reg.payment_status_label }}

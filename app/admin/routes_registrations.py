@@ -17,7 +17,9 @@ from app.auth._helpers import is_safe_redirect_url
 from app.extensions import db
 from app.models.course import Course
 from app.models.course_instance import CourseInstance
-from app.models.registration import ATTENDANCE_CHOICES, EventRegistration
+from app.models.registration import (
+    ATTENDANCE_CHOICES, ATTENDANCE_LABELS, EventRegistration,
+)
 from app.models.trainer import Trainer
 from app.models.user import User
 from app.utils import format_points, parse_points
@@ -60,6 +62,7 @@ def instance_registrations(instance_id):
         'status': _listing.choice_arg('status', dict(EventRegistration.STATUSES)),
         'payment': _listing.choice_arg(
             'payment', dict(EventRegistration.PAYMENT_STATUSES)),
+        'attendance': _listing.choice_arg('attendance', ATTENDANCE_CHOICES),
     }
 
     # medical_profile вантажимо одразу -- для колонки "Анкета" (менеджер бачить,
@@ -86,6 +89,9 @@ def instance_registrations(instance_id):
         query = query.filter(EventRegistration.status == filters['status'])
     if filters['payment']:
         query = query.filter(EventRegistration.payment_status == filters['payment'])
+    if filters['attendance']:
+        query = query.filter(
+            EventRegistration.attended.is_(ATTENDANCE_CHOICES[filters['attendance']]))
 
     # Пагінація тут не про сьогоднішній обсяг (у проді ~10 реєстрацій на
     # проведення), а про те, що сторінка будує на кожен рядок стан тестування,
@@ -152,6 +158,7 @@ def instance_registrations(instance_id):
         filters=filters,
         status_options=EventRegistration.STATUSES,
         payment_options=EventRegistration.PAYMENT_STATUSES,
+        attendance_options=ATTENDANCE_FILTER_OPTIONS,
         quiz_states=quiz_states,
         quiz_statuses=quiz_service,
         quiz=quiz_service.resolve_quiz(instance, quiz_context),
@@ -622,6 +629,14 @@ def _registration_rows_context(rows):
     )
 
 
+# Перелік для фільтра «Участь»: підписи ті самі, що в колонці й у формі.
+ATTENDANCE_FILTER_OPTIONS = [
+    ('present', ATTENDANCE_LABELS['present']),
+    ('absent', ATTENDANCE_LABELS['absent']),
+    ('unmarked', ATTENDANCE_LABELS[None]),
+]
+
+
 def _registration_filters():
     """Фільтри списку реєстрацій з query-string.
 
@@ -645,6 +660,7 @@ def _registration_filters():
         'date_from': _listing.date_arg('date_from'),
         'date_to': _listing.date_arg('date_to'),
         'no_certificate': _listing.choice_arg('no_certificate', ('1',)),
+        'attendance': _listing.choice_arg('attendance', ATTENDANCE_CHOICES),
         'surcharge': _listing.choice_arg('surcharge', ('due',)),
         'scope': scope,
         'per_page': _listing.choice_arg('per_page', _listing.PER_PAGE_CHOICES),
@@ -682,6 +698,12 @@ def _apply_registration_filters(query, filters):
         query, EventRegistration.created_at,
         filters['date_from'], filters['date_to'],
     )
+    attendance = filters.get('attendance')
+    if attendance:
+        # 'unmarked' -- це NULL, а не False: «не відмічено» і «не з'явився»
+        # різні рішення, і фільтр їх не змішує.
+        query = query.filter(
+            EventRegistration.attended.is_(ATTENDANCE_CHOICES[attendance]))
     if filters['no_certificate']:
         # Кому ще не видали документ: підстава для пресету «Без сертифіката».
         query = query.filter(~EventRegistration.certificate.has())
@@ -735,6 +757,7 @@ def _registration_page_context(filters, stats):
         status_options=EventRegistration.STATUSES,
         payment_options=EventRegistration.PAYMENT_STATUSES,
         method_options=EventRegistration.PAYMENT_METHODS,
+        attendance_options=ATTENDANCE_FILTER_OPTIONS,
         per_page_options=_listing.PER_PAGE_OPTIONS,
         **_registration_select_options(),
     )

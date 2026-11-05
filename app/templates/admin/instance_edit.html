@@ -382,6 +382,62 @@
     {% endif %}
   </div>
 
+  {% if instance and bpr_report %}
+  {# Звіт до Центру тестування -- факт про ЗАХІД, не про людину: подача одним
+     махом закриває тест і нові сертифікати, а підтверджені реєстрації стають
+     «Завершено» (без листів). Скасування повертає рівно тих, кого перевела
+     подача. #}
+  <div class="form-section" id="bpr-report">
+    <h3 class="admin-form__section-title">Звіт до Центру тестування</h3>
+    {% if bpr_report.submitted %}
+    <p class="admin-form__section-hint">
+      Звіт подано {{ bpr_report.submitted_on.strftime('%d.%m.%Y') }}{% if bpr_report.submitted_by %}, подав(ла): {{ bpr_report.submitted_by }}{% endif %}.
+      Тест закрито, нові сертифікати не видаються.
+    </p>
+    <form method="POST" action="{{ url_for('admin.instance_bpr_report_undo', instance_id=instance.id) }}"
+          class="admin-mt-sm"
+          data-confirm="Скасувати подачу звіту? Реєстрації, яким подача поставила «Завершено», повернуться в «Підтверджено», тест і видача сертифікатів знову відкриються."
+          data-confirm-ok="Скасувати подачу" data-confirm-danger>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">
+        {{ icon('refresh') }} Скасувати подачу
+      </button>
+    </form>
+    {% elif bpr_report.ended %}
+    <p class="admin-form__section-hint">
+      Захід закінчився. Після подачі звіту тест закриється, нові сертифікати видати буде неможливо, а підтверджені реєстрації стануть «Завершено».
+    </p>
+    <form method="POST" action="{{ url_for('admin.instance_bpr_report_submit', instance_id=instance.id) }}"
+          class="admin-mt-sm"
+          data-confirm="Після подачі тест закриється, нові сертифікати видати буде неможливо, усі підтверджені реєстрації отримають статус «Завершено». Подати?"
+          data-confirm-ok="Подати звіт">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="form-group">
+        <label for="bpr-submitted-on">Дата подачі</label>
+        <input type="date" class="form-input" id="bpr-submitted-on" name="submitted_on" value="{{ bpr_report.today.isoformat() }}">
+      </div>
+      <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm">
+        {{ icon('check') }} Звіт подано
+      </button>
+    </form>
+    {% else %}
+    <p class="admin-form__section-hint">Звіт можна подати, коли захід закінчиться.</p>
+    {% endif %}
+
+    {% if bpr_report.ended and can('registrations.manage') %}
+    <form method="POST" action="{{ url_for('admin.instance_mark_unmarked_absent', instance_id=instance.id) }}"
+          class="admin-mt-sm"
+          data-confirm="Усім невідміченим учасникам буде поставлено «Не з'явився». Статус, бали й оплата не зміняться. Продовжити?"
+          data-confirm-ok="Позначити">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">
+        {{ icon('block') }} Усім невідміченим -- «Не з'явився»
+      </button>
+    </form>
+    {% endif %}
+  </div>
+  {% endif %}
+
   {% if renumber and can('certificates.manage') %}
   {# Блок з'являється лише тоді, коли номери заходу не йдуть по порядку:
      сертифікати видані ще за загальним лічильником або під номером заходу,
