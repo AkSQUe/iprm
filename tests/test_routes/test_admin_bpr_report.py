@@ -1,6 +1,6 @@
 """Адмінка: подача звіту до Центру тестування і її скасування, фільтр і
 колонка «Участь», підпис «Завершено · без сертифіката»."""
-from datetime import date, datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 import pytest
@@ -51,6 +51,13 @@ def _instance(ended=True):
     return inst
 
 
+def _report_day(inst):
+    """Дата подачі, допустима за будь-якого дня запуску: день початку заходу
+    (Kyiv). Захід стартує відносно «зараз», тож дата не дрейфує."""
+    from app.utils import to_kyiv
+    return to_kyiv(inst.start_date).date()
+
+
 def _reg(inst, status='confirmed', attended=None):
     reg = EventRegistration(
         user_id=_user().id, instance_id=inst.id, phone='+380501234567',
@@ -71,10 +78,10 @@ def test_submit_sets_date_and_reports_moved_count(client, admin):
     r1, r2 = _reg(inst), _reg(inst)
     pending = _reg(inst, status='pending')
     _login(client, admin)
-    resp = _submit(client, inst, submitted_on='2026-11-03')
+    resp = _submit(client, inst, submitted_on=_report_day(inst).isoformat())
     html = resp.get_data(as_text=True)
     db.session.refresh(inst)
-    assert inst.bpr_report_submitted_on == date(2026, 11, 3)
+    assert inst.bpr_report_submitted_on == _report_day(inst)
     assert inst.bpr_report_submitted_by_id == admin.id
     assert (r1.status, r2.status, pending.status) == (
         'completed', 'completed', 'pending')
@@ -137,6 +144,15 @@ def test_submit_rejects_date_before_event_start(client, admin):
     assert 'раніше за початок заходу' in html
 
 
+def test_submit_accepts_event_start_date(client, admin):
+    inst = _instance()
+    _reg(inst)
+    _login(client, admin)
+    _submit(client, inst, submitted_on=_report_day(inst).isoformat())
+    db.session.refresh(inst)
+    assert inst.bpr_report_submitted_on == _report_day(inst)
+
+
 def test_submit_accepts_boundary_dates(client, admin):
     from app.admin._listing import now_kyiv
     inst = _instance()
@@ -169,7 +185,7 @@ def test_undo_is_forbidden_without_permission(client, app):
     # першим входом, тож вхід під двома користувачами в одному тесті не працює.
     inst = _instance()
     reg = _reg(inst)
-    bpr_report_service.submit_report(inst, date(2026, 11, 3), _user())
+    bpr_report_service.submit_report(inst, _report_day(inst), _user())
     _login(client, _user())
     assert client.post(
         f'/admin/instances/{inst.id}/bpr-report/undo').status_code == 403
@@ -182,7 +198,7 @@ def test_undo_returns_registrations_and_clears_date(client, admin):
     inst = _instance()
     reg = _reg(inst)
     _login(client, admin)
-    _submit(client, inst, submitted_on='2026-11-03')
+    _submit(client, inst, submitted_on=_report_day(inst).isoformat())
     assert reg.status == 'completed'
     html = client.post(f'/admin/instances/{inst.id}/bpr-report/undo',
                        follow_redirects=True).get_data(as_text=True)
@@ -202,9 +218,9 @@ def test_edit_page_shows_block_before_and_after_submission(client, admin):
     assert 'bpr-report/undo' not in before
     assert 'participation/absent-unmarked' in before
 
-    _submit(client, inst, submitted_on='2026-11-03')
+    _submit(client, inst, submitted_on=_report_day(inst).isoformat())
     after = client.get(url).get_data(as_text=True)
-    assert '03.11.2026' in after
+    assert _report_day(inst).strftime('%d.%m.%Y') in after
     assert 'bpr-report/undo' in after
     assert f'/admin/instances/{inst.id}/bpr-report"' not in after
 
@@ -270,7 +286,7 @@ def test_completed_without_certificate_is_labeled_only_after_report(client, admi
     reg = _reg(inst, status='confirmed')
     _login(client, admin)
     assert NO_CERT not in _list(client, instance_id=inst.id)
-    _submit(client, inst, submitted_on='2026-11-03')
+    _submit(client, inst, submitted_on=_report_day(inst).isoformat())
     assert reg.status == 'completed'
     assert 'Завершено · ' + NO_CERT in _list(client, instance_id=inst.id)
 
@@ -279,6 +295,6 @@ def test_completed_with_certificate_is_not_labeled(client, admin):
     inst = _instance()
     reg = _reg(inst, status='confirmed')
     _login(client, admin)
-    _submit(client, inst, submitted_on='2026-11-03')
+    _submit(client, inst, submitted_on=_report_day(inst).isoformat())
     _issue_cert(reg)
     assert NO_CERT not in _list(client, instance_id=inst.id)
