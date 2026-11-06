@@ -18,6 +18,7 @@ import re
 import smtplib
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
+from email.utils import make_msgid, parseaddr
 from threading import Thread
 from urllib.parse import quote
 
@@ -114,6 +115,43 @@ def _attach(msg, filename, mimetype, data, content_id=None):
         msg.attach(filename, mimetype, data)
 
 
+def _address_domain(sender):
+    """Домен адреси відправника (рядок або (name, addr)); None, якщо нема."""
+    if isinstance(sender, (tuple, list)):
+        sender = sender[1] if len(sender) > 1 else sender[0]
+    _name, addr = parseaddr(sender or '')
+    domain = addr.rpartition('@')[2].strip().lower()
+    return domain or None
+
+
+class OutgoingMessage(Message):
+    """flask_mail.Message без двох вад, за які спам-фільтри знімають бали.
+
+    * Message-ID на домені відправника: штатний make_msgid() бере ім'я
+      сервера (`vps-57566`, без крапки) -- правило MID_RHS_NOT_FQDN.
+    * Лист без вкладень -- одразу multipart/alternative. Flask-Mail завжди
+      загортає текст і HTML у multipart/mixed, а mixed без вкладень
+      фільтри позначають як CTYPE_MIXED_BOGUS.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        domain = _address_domain(self.sender)
+        if domain:
+            self.msgId = make_msgid(domain=domain)
+
+    def _message(self):
+        msg = super()._message()
+        if self.attachments or not self.alts:
+            return msg
+        alternative = msg.get_payload()[0]
+        for key, value in msg.items():
+            if key.lower() not in ('content-type', 'mime-version'):
+                alternative[key] = value
+        alternative.policy = msg.policy
+        return alternative
+
+
 def _get_smtp_config(app):
     """Read SMTP settings from DB and return as an isolated dict (thread-safe)."""
     from app.models.email_settings import EmailSettings
@@ -142,14 +180,7 @@ def _smtp_send(msg, smtp_cfg):
 
     This avoids mutating app.config, making it safe to call from any thread.
     """
-    host_cls = smtplib.SMTP_SSL if smtp_cfg['use_ssl'] else smtplib.SMTP
-    with host_cls(smtp_cfg['server'], smtp_cfg['port'], timeout=SMTP_TIMEOUT_SECONDS) as host:
-        host.ehlo()
-        if smtp_cfg['use_tls'] and not smtp_cfg['use_ssl']:
-            host.starttls()
-            host.ehlo()
-        if smtp_cfg['username'] and smtp_cfg['password']:
-            host.login(smtp_cfg['username'], smtp_cfg['password'])
+    with _open_smtp(smtp_cfg) as host:
         host.sendmail(smtp_cfg['username'], msg.send_to, msg.as_bytes())
 
 
@@ -230,9 +261,15 @@ def _per_recipient_key(base, to):
 
 
 def _open_smtp(smtp_cfg):
-    """Відкрити автентифіковане SMTP-з'єднання за конфігом."""
+    """Відкрити автентифіковане SMTP-з'єднання за конфігом.
+
+    EHLO -- доменом відправника: без явного імені smtplib бере getfqdn(), а
+    на VPS це `[127.0.1.1]`, що потрапляє в перший Received листа.
+    """
     host_cls = smtplib.SMTP_SSL if smtp_cfg['use_ssl'] else smtplib.SMTP
-    host = host_cls(smtp_cfg['server'], smtp_cfg['port'], timeout=SMTP_TIMEOUT_SECONDS)
+    helo = _address_domain(smtp_cfg.get('sender')) or _address_domain(smtp_cfg.get('username'))
+    host = host_cls(smtp_cfg['server'], smtp_cfg['port'], timeout=SMTP_TIMEOUT_SECONDS,
+                    local_hostname=helo)
     host.ehlo()
     if smtp_cfg['use_tls'] and not smtp_cfg['use_ssl']:
         host.starttls()
@@ -523,7 +560,7 @@ class EmailService:
         db.session.commit()
 
         plain_body = _html_to_plaintext(html_body)
-        msg = Message(
+        msg = OutgoingMessage(
             subject=subject,
             recipients=[to],
             html=html_body,
@@ -2610,7 +2647,7 @@ class EmailService:
 
         html_body = render_template('emails/test.html', to_email=to)
         plain_body = _html_to_plaintext(html_body)
-        msg = Message(
+        msg = OutgoingMessage(
             subject='Тестовий лист | ІПРМ',
             recipients=[to],
             html=html_body,
@@ -2742,7 +2779,7 @@ class EmailService:
         for entry in failed:
             if not entry.is_retryable:
                 continue
-            msg = Message(
+            msg = OutgoingMessage(
                 subject=entry.subject,
                 recipients=[entry.to_email],
                 html=entry.html_body,
@@ -2824,7 +2861,7 @@ class EmailService:
 
         smtp_cfg = _get_smtp_config(current_app._get_current_object())
 
-        msg = Message(
+        msg = OutgoingMessage(
             subject=entry.subject,
             recipients=[entry.to_email],
             html=entry.html_body,
